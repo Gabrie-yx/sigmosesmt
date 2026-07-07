@@ -9874,6 +9874,7 @@ export type Database = {
         | "extra_sabado_marcador"
         | "supervisor_extra_geral"
         | "hora_extra_marcador"
+        | "porteiro"
       extintor_status: "ATIVO" | "EM_MANUTENCAO" | "BAIXADO" | "VENCIDO"
       extintor_tipo_agente:
         | "ABC"
@@ -10060,6 +10061,7 @@ export const Constants = {
         "extra_sabado_marcador",
         "supervisor_extra_geral",
         "hora_extra_marcador",
+        "porteiro",
       ],
       extintor_status: ["ATIVO", "EM_MANUTENCAO", "BAIXADO", "VENCIDO"],
       extintor_tipo_agente: [
