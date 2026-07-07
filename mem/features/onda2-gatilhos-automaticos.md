@@ -58,7 +58,10 @@ Migração 20260707_184822:
 - Aparece automaticamente no painel /app/sesmt/convocacoes-aso e no card Hoje do TST.
 
 ## Onda 2 concluída ✅
-Itens 1-3 + C-01 + C-04.b + C-10 implementados. Próximo: **C-08 (ASO RETORNO_TRABALHO ao fechar acidente c/ afastamento)**.
+Itens 1-3 + C-01 + C-04.b + C-10 implementados.
+
+## ⏸️ Pausado — retomar depois
+- **C-08 — ASO RETORNO_TRABALHO ao fechar acidente c/ afastamento**: gatilho ainda não implementado. Ideia: quando acidente com afastamento for encerrado (retorno do funcionário), inserir convocacoes_exames janela='RETORNO_TRABALHO', tipos_exame=['Exame Médico de Retorno ao Trabalho'], data_limite=data_retorno, citando NR-07 7.5.1.IV. Idempotente por employee_id+janela PENDENTE. Retomar quando o usuário pedir.
 
 ## ⚠️ Pendente de teste pelo Francisco (avisar no próximo pedido de teste)
 - Item 1 (Onda 2): desligar um funcionário e conferir se convocações PENDENTES viram CANCELADA + safety_overrides revogados. Ver audit_logs action='desligamento_cascata'.
