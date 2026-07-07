@@ -515,6 +515,9 @@ export type Database = {
       aprs: {
         Row: {
           atividade_descricao: string
+          cancelada_em: string | null
+          cancelada_motivo: string | null
+          cancelada_por: string | null
           casco_id: string | null
           condicoes_climaticas: string | null
           created_at: string
@@ -549,6 +552,9 @@ export type Database = {
         }
         Insert: {
           atividade_descricao: string
+          cancelada_em?: string | null
+          cancelada_motivo?: string | null
+          cancelada_por?: string | null
           casco_id?: string | null
           condicoes_climaticas?: string | null
           created_at?: string
@@ -583,6 +589,9 @@ export type Database = {
         }
         Update: {
           atividade_descricao?: string
+          cancelada_em?: string | null
+          cancelada_motivo?: string | null
+          cancelada_por?: string | null
           casco_id?: string | null
           condicoes_climaticas?: string | null
           created_at?: string
@@ -3001,6 +3010,118 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "vw_colaborador_pgr"
             referencedColumns: ["employee_id"]
+          },
+        ]
+      }
+      employee_company_history: {
+        Row: {
+          aprs_arquivadas: number | null
+          aprs_reatribuidas: number | null
+          created_at: string
+          employee_id: string
+          empresa_antiga_id: string | null
+          empresa_nova_id: string
+          ghe_alerta: string | null
+          id: string
+          motivo: string
+          ptes_arquivadas: number | null
+          ptes_reatribuidas: number | null
+          transferido_em: string
+          transferido_por: string | null
+        }
+        Insert: {
+          aprs_arquivadas?: number | null
+          aprs_reatribuidas?: number | null
+          created_at?: string
+          employee_id: string
+          empresa_antiga_id?: string | null
+          empresa_nova_id: string
+          ghe_alerta?: string | null
+          id?: string
+          motivo: string
+          ptes_arquivadas?: number | null
+          ptes_reatribuidas?: number | null
+          transferido_em?: string
+          transferido_por?: string | null
+        }
+        Update: {
+          aprs_arquivadas?: number | null
+          aprs_reatribuidas?: number | null
+          created_at?: string
+          employee_id?: string
+          empresa_antiga_id?: string | null
+          empresa_nova_id?: string
+          ghe_alerta?: string | null
+          id?: string
+          motivo?: string
+          ptes_arquivadas?: number | null
+          ptes_reatribuidas?: number | null
+          transferido_em?: string
+          transferido_por?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_company_history_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_company_history_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligados_sem_pacote"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "employee_company_history_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "employee_company_history_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_termos_consentimento_status"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "employee_company_history_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "employee_company_history_empresa_antiga_id_fkey"
+            columns: ["empresa_antiga_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_company_history_empresa_antiga_id_fkey"
+            columns: ["empresa_antiga_id"]
+            isOneToOne: false
+            referencedRelation: "v_contratada_dossie_status"
+            referencedColumns: ["company_id"]
+          },
+          {
+            foreignKeyName: "employee_company_history_empresa_nova_id_fkey"
+            columns: ["empresa_nova_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_company_history_empresa_nova_id_fkey"
+            columns: ["empresa_nova_id"]
+            isOneToOne: false
+            referencedRelation: "v_contratada_dossie_status"
+            referencedColumns: ["company_id"]
           },
         ]
       }
@@ -8155,6 +8276,9 @@ export type Database = {
       ptes: {
         Row: {
           apr_id: string | null
+          cancelada_em: string | null
+          cancelada_motivo: string | null
+          cancelada_por: string | null
           casco_id: string | null
           company_id: string | null
           created_at: string
@@ -8186,6 +8310,9 @@ export type Database = {
         }
         Insert: {
           apr_id?: string | null
+          cancelada_em?: string | null
+          cancelada_motivo?: string | null
+          cancelada_por?: string | null
           casco_id?: string | null
           company_id?: string | null
           created_at?: string
@@ -8217,6 +8344,9 @@ export type Database = {
         }
         Update: {
           apr_id?: string | null
+          cancelada_em?: string | null
+          cancelada_motivo?: string | null
+          cancelada_por?: string | null
           casco_id?: string | null
           company_id?: string | null
           created_at?: string
