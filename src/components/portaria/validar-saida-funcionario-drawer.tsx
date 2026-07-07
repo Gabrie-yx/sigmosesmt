@@ -7,6 +7,7 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { SignedAvatarImg } from "@/components/signed-avatar-img";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";

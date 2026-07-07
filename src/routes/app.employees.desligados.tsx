@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { SignedAvatarImg } from "@/components/signed-avatar-img";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, ArrowLeft, UserRoundX, RotateCcw, Building2, Briefcase, CalendarClock, ShieldAlert, FileCheck2 } from "lucide-react";

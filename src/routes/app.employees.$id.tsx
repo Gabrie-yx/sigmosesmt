@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { z } from "zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { SignedAvatarImg } from "@/components/signed-avatar-img";
 import { useAuth } from "@/hooks/use-auth";
 import { toTitleCasePT } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
