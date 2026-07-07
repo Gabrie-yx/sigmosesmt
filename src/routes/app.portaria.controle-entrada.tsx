@@ -1,42 +1,270 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { DoorOpen } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+// Painel operacional da Portaria (mobile-first).
+// Estrutura Mês > Semana > Dia com card do dia atual sempre expandido.
+// Cards de visita com borda vermelha pulsando quando saida_at é NULL.
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState, useMemo, lazy, Suspense } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { DoorOpen, Plus, LogOut, ChevronRight, AlertTriangle, Users, Clock, Car, Building2, BarChart3 } from "lucide-react";
+
+const NovaEntradaWizard = lazy(() => import("@/components/portaria/nova-entrada-wizard").then((m) => ({ default: m.NovaEntradaWizard })));
+const ValidarSaidaFuncionarioDrawer = lazy(() => import("@/components/portaria/validar-saida-funcionario-drawer").then((m) => ({ default: m.ValidarSaidaFuncionarioDrawer })));
+const RegistrarSaidaVisitaDialog = lazy(() => import("@/components/portaria/registrar-saida-visita-dialog").then((m) => ({ default: m.RegistrarSaidaVisitaDialog })));
 
 export const Route = createFileRoute("/app/portaria/controle-entrada")({
   component: ControleEntradaPage,
   head: () => ({
     meta: [
-      { title: "Controle de Entrada — Portaria · SIGMO" },
-      { name: "description", content: "Registro e controle de entrada de pessoas e veículos na portaria." },
+      { title: "Portaria · SIGMO" },
+      { name: "description", content: "Controle de entrada e saída de visitantes, fornecedores e validação de saídas de funcionários." },
     ],
   }),
 });
 
-function ControleEntradaPage() {
-  return (
-    <div className="p-3 sm:p-6 space-y-4">
-      <header className="flex items-start gap-3 min-w-0">
-        <div className="shrink-0 rounded-lg bg-red-100 p-2 text-red-700">
-          <DoorOpen className="h-5 w-5" />
-        </div>
-        <div className="min-w-0">
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Controle de Entrada</h1>
-          <p className="text-sm text-slate-600">
-            Registro de entrada e saída de pessoas, visitantes e veículos.
-          </p>
-        </div>
-      </header>
+const DIAS = ["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"];
+const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Em construção</CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm text-slate-600">
-          Este módulo está sendo estruturado. Em breve: registro de visitantes,
-          liberação de acesso, histórico de entradas e integração com o cadastro
-          de funcionários e contratadas.
-        </CardContent>
-      </Card>
+function startOfDay(d: Date) { const x = new Date(d); x.setHours(0,0,0,0); return x; }
+function startOfWeek(d: Date) { const x = startOfDay(d); const dow = (x.getDay() + 6) % 7; x.setDate(x.getDate() - dow); return x; }
+function startOfMonth(d: Date) { const x = startOfDay(d); x.setDate(1); return x; }
+function fmtHora(iso: string) { return new Date(iso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }); }
+
+function ControleEntradaPage() {
+  const hoje = startOfDay(new Date());
+  const inicioMes = startOfMonth(hoje);
+  const [wizOpen, setWizOpen] = useState(false);
+  const [saidaFuncOpen, setSaidaFuncOpen] = useState(false);
+  const [saidaVisita, setSaidaVisita] = useState<any | null>(null);
+
+  // Todas as visitas do mês atual (com joins essenciais)
+  const { data: visitas, isLoading } = useQuery({
+    queryKey: ["portaria-visitas", inicioMes.toISOString()],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("portaria_visitas")
+        .select(`
+          id, tipo, status, entrada_at, saida_at, motivo_visita, foto_rosto_url,
+          pessoa:pessoa_id(id,nome,cpf),
+          veiculo:veiculo_id(id,placa,modelo),
+          empresa:empresa_visitada_id(id,name)
+        `)
+        .gte("entrada_at", inicioMes.toISOString())
+        .order("entrada_at", { ascending: false })
+        .limit(500);
+      if (error) throw error;
+      return data ?? [];
+    },
+    refetchInterval: 30_000,
+  });
+
+  // KPIs
+  const { data: kpis } = useQuery({
+    queryKey: ["portaria-kpis"],
+    queryFn: async () => {
+      const { count: dentro } = await supabase.from("portaria_visitas")
+        .select("*", { count: "exact", head: true }).eq("status","DENTRO");
+      const hoje0 = startOfDay(new Date()).toISOString();
+      const { count: entradasHoje } = await supabase.from("portaria_visitas")
+        .select("*", { count: "exact", head: true }).gte("entrada_at", hoje0);
+      return { dentro: dentro ?? 0, entradasHoje: entradasHoje ?? 0 };
+    },
+    refetchInterval: 30_000,
+  });
+
+  const grupos = useMemo(() => {
+    const porDia = new Map<string, any[]>();
+    (visitas ?? []).forEach((v: any) => {
+      const d = startOfDay(new Date(v.entrada_at)).toISOString().slice(0,10);
+      const arr = porDia.get(d) ?? []; arr.push(v); porDia.set(d, arr);
+    });
+    return Array.from(porDia.entries()).sort((a,b) => b[0].localeCompare(a[0]));
+  }, [visitas]);
+
+  const hojeIso = hoje.toISOString().slice(0,10);
+  const gruposHoje = grupos.find(([d]) => d === hojeIso)?.[1] ?? [];
+  const gruposOutros = grupos.filter(([d]) => d !== hojeIso);
+
+  return (
+    <div className="min-h-screen bg-slate-50 pb-24">
+      {/* Header fixo */}
+      <div className="sticky top-0 z-30 bg-white border-b shadow-sm">
+        <div className="px-4 py-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="h-9 w-9 rounded-xl bg-slate-900 text-white grid place-items-center shrink-0">
+              <DoorOpen className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="font-black text-sm truncate">Portaria</h1>
+              <p className="text-[9px] uppercase tracking-widest text-slate-500">{DIAS[hoje.getDay()]} · {hoje.toLocaleDateString("pt-BR")}</p>
+            </div>
+          </div>
+          <Link to="/app/portaria/controle"
+            className="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-emerald-600 inline-flex items-center gap-1">
+            <BarChart3 className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Painel SESMT</span>
+          </Link>
+        </div>
+        <div className="grid grid-cols-2 divide-x border-t bg-slate-50">
+          <div className="px-4 py-2 text-center">
+            <p className="text-[9px] uppercase tracking-widest font-bold text-slate-500">Dentro agora</p>
+            <p className="font-black text-2xl text-emerald-600">{kpis?.dentro ?? 0}</p>
+          </div>
+          <div className="px-4 py-2 text-center">
+            <p className="text-[9px] uppercase tracking-widest font-bold text-slate-500">Entradas hoje</p>
+            <p className="font-black text-2xl text-slate-800">{kpis?.entradasHoje ?? 0}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Ações principais */}
+      <div className="p-3 grid grid-cols-2 gap-2">
+        <Button onClick={() => setWizOpen(true)} className="h-16 bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase text-xs tracking-widest rounded-2xl shadow-lg">
+          <Plus className="h-5 w-5 mr-1" /> Nova entrada
+        </Button>
+        <Button onClick={() => setSaidaFuncOpen(true)} className="h-16 bg-amber-500 hover:bg-amber-600 text-white font-black uppercase text-xs tracking-widest rounded-2xl shadow-lg">
+          <LogOut className="h-5 w-5 mr-1" /> Saída funcionário
+        </Button>
+      </div>
+
+      {/* Card do DIA */}
+      <div className="px-3">
+        <div className="rounded-3xl bg-white border-2 border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-4 py-3 bg-gradient-to-r from-slate-900 to-slate-800 text-white flex items-center justify-between">
+            <div>
+              <p className="text-[9px] uppercase tracking-widest font-bold text-white/60">Hoje</p>
+              <h2 className="font-black text-lg">{DIAS[hoje.getDay()]} · {hoje.toLocaleDateString("pt-BR")}</h2>
+            </div>
+            <div className="text-right">
+              <p className="text-[9px] uppercase tracking-widest font-bold text-white/60">Visitas</p>
+              <p className="font-black text-2xl">{gruposHoje.length}</p>
+            </div>
+          </div>
+          <div className="divide-y">
+            {isLoading && <div className="p-6 text-center text-slate-400 text-sm">Carregando…</div>}
+            {!isLoading && gruposHoje.length === 0 && (
+              <div className="p-8 text-center text-slate-500">
+                <Users className="h-8 w-8 mx-auto text-slate-300 mb-2" />
+                <p className="text-sm font-bold uppercase tracking-widest">Nenhuma visita hoje</p>
+                <p className="text-xs text-slate-400 mt-1">Toque em "Nova entrada" para começar</p>
+              </div>
+            )}
+            {gruposHoje.map((v: any) => <VisitaRow key={v.id} visita={v} onRegistrarSaida={() => setSaidaVisita(v)} />)}
+          </div>
+        </div>
+      </div>
+
+      {/* Semana e Mês (colapsados) */}
+      <div className="p-3 space-y-3">
+        <SemanaCard grupos={gruposOutros} onRegistrarSaida={setSaidaVisita} />
+        <MesCard grupos={grupos} />
+      </div>
+
+      <Suspense fallback={null}>
+        {wizOpen && <NovaEntradaWizard open={wizOpen} onClose={() => setWizOpen(false)} />}
+        {saidaFuncOpen && <ValidarSaidaFuncionarioDrawer open={saidaFuncOpen} onClose={() => setSaidaFuncOpen(false)} />}
+        {saidaVisita && <RegistrarSaidaVisitaDialog open={!!saidaVisita} visita={saidaVisita} onClose={() => setSaidaVisita(null)} />}
+      </Suspense>
+    </div>
+  );
+}
+
+function VisitaRow({ visita, onRegistrarSaida }: { visita: any; onRegistrarSaida: () => void }) {
+  const pendente = visita.status === "DENTRO";
+  return (
+    <button
+      onClick={() => pendente && onRegistrarSaida()}
+      disabled={!pendente}
+      className={`w-full text-left flex items-center gap-3 px-3 py-3 hover:bg-slate-50 transition ${pendente ? "border-l-4 border-red-500 bg-red-50/40" : ""}`}
+    >
+      <div className="relative shrink-0">
+        {visita.foto_rosto_url ? (
+          <img src={visita.foto_rosto_url} className="h-12 w-12 rounded-full object-cover ring-2 ring-white shadow" alt="" />
+        ) : (
+          <div className="h-12 w-12 rounded-full bg-slate-300 text-white font-black text-xs flex items-center justify-center shadow">
+            {visita.pessoa?.nome?.split(/\s+/).map((p: string) => p[0]).slice(0,2).join("").toUpperCase()}
+          </div>
+        )}
+        {pendente && <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-red-500 animate-pulse ring-2 ring-white" />}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="font-black text-sm truncate">{visita.pessoa?.nome}</p>
+        <div className="flex flex-wrap items-center gap-1 mt-0.5">
+          <span className="text-[9px] font-black uppercase tracking-widest bg-slate-100 text-slate-700 rounded-full px-2 py-0.5">{visita.tipo}</span>
+          {visita.veiculo?.placa && (
+            <span className="text-[9px] font-black uppercase tracking-widest bg-blue-100 text-blue-700 rounded-full px-2 py-0.5 inline-flex items-center gap-0.5">
+              <Car className="h-2.5 w-2.5" /> {visita.veiculo.placa}
+            </span>
+          )}
+          {visita.empresa?.name && (
+            <span className="text-[9px] text-slate-500 inline-flex items-center gap-0.5">
+              <Building2 className="h-2.5 w-2.5" /> {visita.empresa.name}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-500">
+          <Clock className="h-2.5 w-2.5" />
+          <span>Entrada {fmtHora(visita.entrada_at)}</span>
+          {visita.saida_at && <span>· Saída {fmtHora(visita.saida_at)}</span>}
+          {pendente && <span className="text-red-600 font-black uppercase tracking-widest">· Pendente</span>}
+        </div>
+      </div>
+      {pendente && <ChevronRight className="h-5 w-5 text-slate-400" />}
+    </button>
+  );
+}
+
+function SemanaCard({ grupos, onRegistrarSaida }: { grupos: [string, any[]][]; onRegistrarSaida: (v: any) => void }) {
+  const iniSem = startOfWeek(new Date()).toISOString().slice(0,10);
+  const gruposSemana = grupos.filter(([d]) => d >= iniSem);
+  const total = gruposSemana.reduce((s, [,arr]) => s + arr.length, 0);
+  return (
+    <Collapsible defaultOpen={false}>
+      <div className="rounded-3xl bg-white border-2 border-slate-200 shadow-sm overflow-hidden">
+        <CollapsibleTrigger className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50">
+          <div className="text-left">
+            <p className="text-[9px] uppercase tracking-widest font-bold text-slate-500">Esta semana</p>
+            <h3 className="font-black text-sm">{total} visitas</h3>
+          </div>
+          <ChevronRight className="h-4 w-4 text-slate-400" />
+        </CollapsibleTrigger>
+        <CollapsibleContent className="divide-y">
+          {gruposSemana.length === 0 && <p className="p-4 text-xs text-slate-400 text-center">Sem visitas nos outros dias da semana</p>}
+          {gruposSemana.map(([d, arr]) => (
+            <div key={d}>
+              <div className="px-4 py-2 bg-slate-50 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                {new Date(d + "T00:00:00").toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "short" })} · {arr.length}
+              </div>
+              {arr.map((v) => <VisitaRow key={v.id} visita={v} onRegistrarSaida={() => onRegistrarSaida(v)} />)}
+            </div>
+          ))}
+        </CollapsibleContent>
+      </div>
+    </Collapsible>
+  );
+}
+
+function MesCard({ grupos }: { grupos: [string, any[]][] }) {
+  const total = grupos.reduce((s, [,arr]) => s + arr.length, 0);
+  const pend = grupos.reduce((s, [,arr]) => s + arr.filter((v: any) => v.status === "DENTRO").length, 0);
+  const hoje = new Date();
+  return (
+    <div className="rounded-3xl bg-white border-2 border-slate-200 shadow-sm overflow-hidden">
+      <div className="px-4 py-3">
+        <p className="text-[9px] uppercase tracking-widest font-bold text-slate-500">{MESES[hoje.getMonth()]} · {hoje.getFullYear()}</p>
+        <div className="grid grid-cols-2 gap-3 mt-2">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Total</p>
+            <p className="font-black text-2xl">{total}</p>
+          </div>
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 inline-flex items-center gap-1">
+              <AlertTriangle className="h-3 w-3 text-red-500" /> Pendentes
+            </p>
+            <p className={`font-black text-2xl ${pend > 0 ? "text-red-600" : "text-slate-400"}`}>{pend}</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
