@@ -266,8 +266,11 @@ export function AppSidebar() {
   // Quando a sidebar está colapsada (icon mode), o label clicável some, então
   // forçamos o conteúdo a aparecer sempre — assim os ícones de cada item ficam
   // visíveis e acessíveis. No modo expandido, mantém o Collapsible normal.
+  // No modo colapsado (desktop icon) e no mobile (Sheet, sem hover), o conteúdo
+  // dos grupos precisa ficar sempre visível — caso contrário o usuário toca no
+  // cabeçalho e "nada acontece" porque o hover nunca dispara em toque.
   const Body = ({ children }: { children: React.ReactNode }) =>
-    collapsed ? <>{children}</> : <CollapsibleContent>{children}</CollapsibleContent>;
+    collapsed || isMobile ? <>{children}</> : <CollapsibleContent>{children}</CollapsibleContent>;
 
   return (
     <Sidebar
