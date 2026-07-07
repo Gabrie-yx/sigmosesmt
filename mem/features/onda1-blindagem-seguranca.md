@@ -15,36 +15,22 @@ Parecer técnico da auditoria SIGMO (jul/2026) apontou 32 críticas. Bloco 1 do 
 - Cliente: `src/components/sigmo-chat.tsx` e `src/components/pgr/pgr-copilot.tsx` — `DefaultChatTransport.headers` async injeta o bearer da sessão Supabase.
 - Motivo: sem isso, qualquer URL descoberta queimava crédito do gateway.
 
-### 🟡 Item 2 — Bucket `avatars` privado + URLs assinadas (EM ANDAMENTO)
-Estratégia em 2 fases pra não quebrar 17 telas de uma vez:
+### ✅ Item 2 — Bucket `avatars` privado + URLs assinadas (CONCLUÍDO)
+Estratégia em 4 fases executadas:
 
 **Fase 2A (feita):**
 - Helper `src/lib/signed-avatar-url.ts` — `signAvatarUrl(publicOrPath)`, `extractAvatarPath()`, `useSignedAvatarUrl(src)`. Cache in-memory por path, TTL 1h. Fallback gracioso pro valor original.
 - Componente `src/components/signed-avatar-img.tsx` — `<SignedAvatarImg src={emp.foto_url} .../>` drop-in de `<img>`.
 - Funciona tanto com bucket público (hoje) quanto privado (fim da onda) — Supabase aceita `createSignedUrl` em ambos.
 
-**Fase 2B (PENDENTE) — trocar `<img src={foto_url}>` em todos os consumidores:**
-- `src/components/employees/employee-quick-view.tsx` (linha 230)
-- `src/components/employees/convocacao-exames-dialog.tsx` (linha 881)
-- `src/components/portaria/nova-entrada-wizard.tsx` (linhas 470, 568, 587)
-- `src/components/portaria/validar-saida-funcionario-drawer.tsx` (linhas 132, 155)
-- `src/components/pgr/ghe-membros-dialog.tsx` (linha 214)
-- `src/routes/app.employees.index.tsx` (linha 616)
-- `src/routes/app.employees.$id.tsx` (linhas 343, 907)
-- `src/routes/app.employees.desligados.tsx` (linha 126)
-- `src/routes/app.employees.saidas.tsx` (linha 666, usa AvatarImage do shadcn — envolver com signed)
-- `src/routes/app.pgr.tsx` (linha 257)
-- `src/routes/app.companies.tsx` (linha 638)
+**Fase 2B (feita):** trocado `<img src={foto_url}>` por `<SignedAvatarImg>` em 11 arquivos (employee-quick-view, convocacao-exames-dialog, nova-entrada-wizard, validar-saida-funcionario-drawer, ghe-membros-dialog, app.employees.index, app.employees.$id, app.employees.desligados, app.pgr, app.companies). O `saidas.tsx` usa `<SignedAvatarImage>` (variante do shadcn AvatarImage).
 
-**Fase 2C (PENDENTE) — PDFs que embutem a foto:**
-- `src/routes/app.employees.$id.tsx` → função `loadEmployeePhotoDataUrl` (linha 200) precisa assinar antes do fetch.
-- `src/lib/guia-encaminhamento-pdf.ts` (usa `foto_url` direto).
-- `src/components/employees/guia-encaminhamento-dialog.tsx` (passa `foto_url` pro PDF gen).
+**Fase 2C (feita):** `loadEmployeePhotoDataUrl` em `src/lib/employee-ficha-pdf.ts` agora chama `signAvatarUrl` antes do fetch — cobre a ficha do funcionário. `guia-encaminhamento-pdf.ts` declara `foto_url` no tipo mas não embute imagem no PDF (só metadata), então nada a mudar lá.
 
-**Fase 2D (PENDENTE) — flip do bucket:**
-- `supabase--storage_update_bucket({ name: "avatars", public: false })`.
-- Adicionar policy SELECT em `storage.objects` para `authenticated` (createSignedUrl exige que o usuário consiga ler).
-- Testar 1 tela antes de flipar.
+**Fase 2D (feita):**
+- Policy `avatars_select_authenticated` criada em `storage.objects` (SELECT pra role `authenticated`) via migração — obrigatório pra `createSignedUrl` funcionar.
+- Bucket `avatars` flipado pra `public: false` via `supabase--storage_update_bucket`.
+- URLs públicas antigas (`/object/public/avatars/...`) agora dão 400. Todo consumo passa por `signAvatarUrl` (TTL 1h, cache in-memory).
 
 ### 🟡 Item 3 — Checagem de permissão em RPCs "públicos" (PENDENTE)
 - `marcarRcCotada` (`src/lib/rc-public.functions.ts`) é público POR DESIGN — fornecedor cota via link do e-mail sem login. Já tem: rate limit 5/1h por token, TTL 30 dias no `status_token`, guarda IP+UA. **Ação:** documentar essa exceção no código (comentário grande) e revisar se dá pra adicionar Turnstile/reCaptcha; sem risco imediato.

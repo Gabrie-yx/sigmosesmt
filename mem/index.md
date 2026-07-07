@@ -31,4 +31,4 @@ Horas extras pertencem ao módulo de origem; não usar SESMT como caixa geral ne
 - [RBAC com fonte única](mem://preferences/rbac-fonte-unica.md) — Nunca exibir módulo/papel na tela se backend/banco/guards não aceitarem; revisar tudo junto ao criar módulo.
 - [Nada de cores hardcoded em overlays](mem://constraints/nada-de-cores-hardcoded.md) — Regra dura contra bg-white/text-slate/bg-red-50 em popover/drawer/dropdown. Lista de proibidos + obrigatórios.
 - [Scrollbar glassmorph global](mem://constraints/scrollbar-glassmorph.md) — Regra global de scrollbar fina estilo vidro com flares aplicada em `*::-webkit-scrollbar*`. Proibido scrollbar padrão.
-- [Onda 1 - Blindagem](mem://features/onda1-blindagem-seguranca.md) — Bloco 1 do parecer: endpoints IA fechados ✅; bucket avatars privado + URL assinada 🟡 (helper pronto, faltam 17 trocas + PDFs + flip); RPCs sensíveis 🟡. Retomar até finalizar.
+- [Onda 1 - Blindagem](mem://features/onda1-blindagem-seguranca.md) — Bloco 1 do parecer: endpoints IA fechados ✅; bucket `avatars` privado + URLs assinadas ✅ (2B UI + 2C PDFs + 2D flip concluídos). Pendente: item 3 (auditar RPCs públicos).
