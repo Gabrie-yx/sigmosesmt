@@ -400,46 +400,56 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
                   </div>
                 )}
               </div>
-              {isEditor && (
-                emp.status === "DESLIGADO" ? (
-                  <button
-                    type="button"
-                    onClick={() => setDesligamentoOpen(true)}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-emerald-700 hover:bg-emerald-800 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white shadow-sm transition-colors"
-                    title="Reativar funcionário"
-                  >
-                    <RotateCcw className="h-3.5 w-3.5" /> Reativar
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setDesligamentoOpen(true)}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-rose-800 hover:bg-rose-900 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white shadow-sm transition-colors"
-                    title="Registrar desligamento do funcionário"
-                  >
-                    <UserMinus className="h-3.5 w-3.5" /> Desligamento
-                  </button>
-                )
-              )}
-              {isAdmin && (
-                <button
-                  type="button"
-                  onClick={() => setExcluirOpen(true)}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-slate-900 hover:bg-black px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white shadow-sm transition-colors"
-                  title="Excluir permanentemente (apenas duplicidade / cadastro errado)"
-                >
-                  <Trash className="h-3.5 w-3.5" /> Excluir
-                </button>
-              )}
-              {(isAdmin || isModerator) && !isDesligado && (
-                <button
-                  type="button"
-                  onClick={() => setTransferOpen(true)}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-indigo-700 hover:bg-indigo-800 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white shadow-sm transition-colors"
-                  title="Transferir para outra empresa"
-                >
-                  <ArrowRightLeft className="h-3.5 w-3.5" /> Transferir
-                </button>
+              {(isEditor || isAdmin || isModerator) && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 hover:bg-white/10 hover:border-white/25 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-slate-100 shadow-sm backdrop-blur-sm transition-all"
+                      title="Ações do funcionário"
+                    >
+                      <MoreHorizontal className="h-3.5 w-3.5" /> Ações
+                      <ChevronDown className="h-3 w-3 opacity-70" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                      Gerenciar funcionário
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {(isAdmin || isModerator) && !isDesligado && (
+                      <DropdownMenuItem onClick={() => setTransferOpen(true)} className="gap-2 cursor-pointer">
+                        <ArrowRightLeft className="h-4 w-4 text-muted-foreground" />
+                        <span>Transferir empresa</span>
+                      </DropdownMenuItem>
+                    )}
+                    {isEditor && (
+                      emp.status === "DESLIGADO" ? (
+                        <DropdownMenuItem onClick={() => setDesligamentoOpen(true)} className="gap-2 cursor-pointer">
+                          <RotateCcw className="h-4 w-4 text-emerald-500" />
+                          <span>Reativar funcionário</span>
+                        </DropdownMenuItem>
+                      ) : (
+                        <DropdownMenuItem onClick={() => setDesligamentoOpen(true)} className="gap-2 cursor-pointer">
+                          <UserMinus className="h-4 w-4 text-amber-500" />
+                          <span>Registrar desligamento</span>
+                        </DropdownMenuItem>
+                      )
+                    )}
+                    {isAdmin && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => setExcluirOpen(true)}
+                          className="gap-2 cursor-pointer text-destructive focus:text-destructive"
+                        >
+                          <Trash className="h-4 w-4" />
+                          <span>Excluir permanentemente</span>
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
             </div>
           </div>
