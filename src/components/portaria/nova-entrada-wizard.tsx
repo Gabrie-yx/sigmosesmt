@@ -708,29 +708,77 @@ export function NovaEntradaWizard({
   );
 }
 
-function FotoField({ label, value, onChange, fallbackHint }: { label: string; value: File | null; onChange: (f: File | null) => void; fallbackHint?: string }) {
+function FotoField({ label, value, onChange, fallbackHint, validar }: { label: string; value: File | null; onChange: (f: File | null) => void; fallbackHint?: string; validar?: "rosto" | "documento" }) {
   const [preview, setPreview] = useState<string | null>(null);
+  const [validando, setValidando] = useState(false);
+  const [erroValidacao, setErroValidacao] = useState<string | null>(null);
+  const validar$ = useServerFn(validatePortariaFoto);
   useEffect(() => {
     if (!value) { setPreview(null); return; }
     const url = URL.createObjectURL(value);
     setPreview(url);
     return () => URL.revokeObjectURL(url);
   }, [value]);
+
+  async function fileToB64(f: File): Promise<string> {
+    const buf = await f.arrayBuffer();
+    let bin = ""; const bytes = new Uint8Array(buf); const CHUNK = 0x8000;
+    for (let i = 0; i < bytes.length; i += CHUNK) {
+      bin += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + CHUNK)) as any);
+    }
+    return btoa(bin);
+  }
+
+  async function handlePick(f: File | null) {
+    setErroValidacao(null);
+    if (!f || !validar) { onChange(f); return; }
+    // Aceita já pra mostrar preview enquanto valida; se falhar, remove.
+    onChange(f);
+    setValidando(true);
+    try {
+      const b64 = await fileToB64(f);
+      const r = await validar$({ data: { fileBase64: b64, mime: f.type || "image/jpeg", tipo: validar } });
+      if (!r.ok) {
+        setErroValidacao(r.motivo ?? (validar === "rosto"
+          ? "A foto não parece um rosto humano. Enquadre o rosto e tente de novo."
+          : "A foto não parece um documento oficial (RG/CNH/CPF). Fotografe o documento e tente de novo."));
+        onChange(null);
+        toast.error(validar === "rosto" ? "Foto de rosto inválida" : "Foto de documento inválida");
+      }
+    } catch (e: any) {
+      // Falha de rede não bloqueia o porteiro.
+      console.warn("[FotoField] validação falhou:", e?.message);
+    } finally {
+      setValidando(false);
+    }
+  }
+
   return (
     <div>
       <Label className="text-xs font-black uppercase tracking-widest">{label}</Label>
       {fallbackHint && <p className="text-[10px] text-slate-500 mt-0.5">{fallbackHint}</p>}
-      <label className="mt-1 flex items-center gap-3 rounded-xl border-2 border-dashed border-slate-300 p-3 cursor-pointer hover:border-emerald-400 bg-white">
+      <label className={`mt-1 flex items-center gap-3 rounded-xl border-2 border-dashed p-3 cursor-pointer bg-white ${
+        erroValidacao ? "border-red-400" : "border-slate-300 hover:border-emerald-400"
+      }`}>
         {preview
           ? <img src={preview} alt="" className="h-16 w-16 rounded-lg object-cover" />
           : <div className="h-16 w-16 rounded-lg bg-slate-100 flex items-center justify-center"><Camera className="h-6 w-6 text-slate-400" /></div>}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-slate-700">{preview ? "Foto capturada" : "Toque para capturar"}</p>
-          <p className="text-[10px] text-slate-500 truncate">{value?.name ?? "Câmera traseira será usada"}</p>
+          <p className="text-sm font-bold text-slate-700 flex items-center gap-1">
+            {validando ? <><Loader2 className="h-3 w-3 animate-spin" /> Validando…</> : preview ? "Foto capturada" : "Toque para capturar"}
+          </p>
+          <p className="text-[10px] text-slate-500 truncate">
+            {validar ? (validar === "rosto" ? "Rosto humano em primeiro plano" : "RG / CNH / CPF impresso") : (value?.name ?? "Câmera traseira será usada")}
+          </p>
         </div>
         <input type="file" accept="image/*" capture="environment" className="hidden"
-          onChange={(e) => onChange(e.target.files?.[0] ?? null)} />
+          onChange={(e) => handlePick(e.target.files?.[0] ?? null)} />
       </label>
+      {erroValidacao && (
+        <p className="mt-1 text-[11px] font-bold text-red-600 leading-tight">
+          <AlertTriangle className="h-3 w-3 inline mr-1" /> {erroValidacao}
+        </p>
+      )}
     </div>
   );
 }
