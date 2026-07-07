@@ -77,6 +77,7 @@ export const MENU_CATALOG: MenuEntry[] = [
 
   // ----- PORTARIA -----
   { key: "/app/portaria/controle-entrada", label: "Controle de Entrada", module: "portaria" },
+  { key: "/app/portaria/controle", label: "Painel SESMT — Portaria", module: "portaria" },
 
   // ----- ELÉTRICA -----
   { key: "/app/modulo/eletrica/hora-extra", label: "Hora Extra", module: "eletrica" },
