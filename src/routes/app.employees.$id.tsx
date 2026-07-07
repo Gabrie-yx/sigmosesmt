@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { z } from "zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { SignedAvatarImg } from "@/components/signed-avatar-img";
 import { useAuth } from "@/hooks/use-auth";
 import { toTitleCasePT } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -340,7 +341,7 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
         <div className="relative h-16 w-16 sm:h-20 sm:w-20 shrink-0">
           <label className={`relative h-16 w-16 sm:h-20 sm:w-20 rounded-full overflow-hidden border-2 border-slate-200 flex items-center justify-center bg-gradient-to-br from-brand/80 to-brand text-white ${canEditHeader ? "cursor-pointer hover:border-brand transition-colors" : ""}`}>
             {emp.foto_url ? (
-              <img src={emp.foto_url} alt={emp.nome} className="h-full w-full object-cover" />
+              <SignedAvatarImg src={emp.foto_url} alt={emp.nome} className="h-full w-full object-cover" />
             ) : (
               <span className="text-xl font-black tracking-wider select-none">{initialsOf(emp.nome)}</span>
             )}
@@ -904,7 +905,7 @@ function EmployeeContextSidebar({ id }: { id: string }) {
                   >
                     <div className={`relative h-9 w-9 shrink-0 rounded-full overflow-hidden bg-gradient-to-br ${grad} text-white text-[11px] font-black flex items-center justify-center ring-2 ring-white shadow-sm`}>
                       {c.foto_url ? (
-                        <img src={c.foto_url} alt={c.nome} className="h-full w-full object-cover" />
+                        <SignedAvatarImg src={c.foto_url} alt={c.nome} className="h-full w-full object-cover" />
                       ) : (
                         <span className="select-none">{initials}</span>
                       )}

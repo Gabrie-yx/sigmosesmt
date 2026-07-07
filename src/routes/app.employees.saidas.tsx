@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Plus, Eye, Pencil, Trash2, PenLine, LogOut, MousePointerClick, Copy, FileText, Calendar as CalIcon, ChevronRight } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { SignedAvatarImage } from "@/components/signed-avatar-img";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
@@ -663,7 +664,7 @@ function MesDetalheDialog({
                   return (
                     <div key={r.id} className="group relative rounded-xl border border-white/15 bg-white/5 backdrop-blur-xl p-3 shadow-lg hover:shadow-xl hover:border-cyan-300/40 hover:bg-white/10 transition-all flex items-center gap-3">
                       <Avatar className="h-11 w-11 ring-2 ring-white/20 shrink-0">
-                        {emp?.foto_url ? <AvatarImage src={emp.foto_url} alt={emp.nome} className="object-cover" /> : null}
+                        {emp?.foto_url ? <SignedAvatarImage src={emp.foto_url} alt={emp.nome} className="object-cover" /> : null}
                         <AvatarFallback className="text-xs font-black text-cyan-100 bg-white/10">{iniciais || "?"}</AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">

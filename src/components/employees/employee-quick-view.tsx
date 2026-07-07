@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { SignedAvatarImg } from "@/components/signed-avatar-img";
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from "@/components/ui/sheet";
@@ -227,7 +228,7 @@ export function EmployeeQuickView({ employeeId, open, onClose }: Props) {
               <div className="flex items-center gap-4">
                 <div className="h-16 w-16 rounded-2xl overflow-hidden border border-rose-100/20 bg-rose-100/5 shrink-0">
                   {emp.foto_url ? (
-                    <img src={emp.foto_url} alt={emp.nome} className="h-full w-full object-cover" />
+                    <SignedAvatarImg src={emp.foto_url} alt={emp.nome} className="h-full w-full object-cover" />
                   ) : (
                     <div className="h-full w-full grid place-items-center text-rose-200/40">
                       <User className="h-7 w-7" />

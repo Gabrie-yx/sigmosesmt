@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { SignedAvatarImg } from "@/components/signed-avatar-img";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -635,7 +636,7 @@ function CompaniesPage() {
                     <div className="avatar-ring shrink-0">
                       <div className="w-11 h-11 rounded-full bg-slate-100 flex items-center justify-center text-base font-black text-slate-400 group-hover:text-[#991b1b] overflow-hidden">
                         {emp.foto_url
-                          ? <img src={emp.foto_url} className="w-full h-full object-cover object-[center_20%]" alt="" />
+                          ? <SignedAvatarImg src={emp.foto_url} className="w-full h-full object-cover object-[center_20%]" alt="" />
                           : (emp.nome?.charAt(0) || "?")}
                       </div>
                     </div>

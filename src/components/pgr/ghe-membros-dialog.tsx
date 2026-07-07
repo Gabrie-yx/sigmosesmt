@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { SignedAvatarImg } from "@/components/signed-avatar-img";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -211,7 +212,7 @@ export function GheMembrosDialog({
                 {filtrados.map((m) => (
                   <div key={m.employee_id} className="flex items-center gap-3 p-2 border rounded-md hover:bg-slate-50">
                     <div className="h-9 w-9 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden text-xs font-bold text-slate-600 shrink-0">
-                      {m.foto_url ? <img src={m.foto_url} alt={m.nome} className="h-full w-full object-cover" /> : m.nome.charAt(0)}
+                      {m.foto_url ? <SignedAvatarImg src={m.foto_url} alt={m.nome} className="h-full w-full object-cover" /> : m.nome.charAt(0)}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm truncate">{m.nome}</p>

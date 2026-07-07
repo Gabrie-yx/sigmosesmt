@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { SignedAvatarImg } from "@/components/signed-avatar-img";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, ArrowLeft, UserRoundX, RotateCcw, Building2, Briefcase, CalendarClock, ShieldAlert, FileCheck2 } from "lucide-react";
@@ -123,7 +124,7 @@ function DesligadosPage() {
               <div className="absolute inset-x-0 top-0 h-1 bg-slate-400" />
               <div className="flex items-start gap-3">
                 {e.foto_url ? (
-                  <img src={e.foto_url} alt={e.nome} className="h-12 w-12 rounded-full object-cover grayscale ring-2 ring-white shadow" />
+                  <SignedAvatarImg src={e.foto_url} alt={e.nome} className="h-12 w-12 rounded-full object-cover grayscale ring-2 ring-white shadow" />
                 ) : (
                   <div className="h-12 w-12 rounded-full bg-slate-300 text-white font-black text-sm flex items-center justify-center shadow ring-2 ring-white">
                     {e.nome?.split(/\s+/).map((p: string) => p[0]).slice(0, 2).join("").toUpperCase()}

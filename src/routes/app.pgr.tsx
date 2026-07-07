@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { SignedAvatarImg } from "@/components/signed-avatar-img";
 import { useServerFn } from "@tanstack/react-start";
 import { sugerirEpisIA } from "@/lib/pgr-epi-ai.functions";
 import {
@@ -254,7 +255,7 @@ function GheTab() {
                               className="h-7 w-7 rounded-full border-2 border-white bg-slate-200 overflow-hidden flex items-center justify-center text-[10px] font-bold text-slate-600"
                               title={p.nome}
                             >
-                              {p.foto_url ? <img src={p.foto_url} alt={p.nome} className="h-full w-full object-cover" /> : p.nome.charAt(0)}
+                              {p.foto_url ? <SignedAvatarImg src={p.foto_url} alt={p.nome} className="h-full w-full object-cover" /> : p.nome.charAt(0)}
                             </div>
                           ))}
                           {extras > 0 && (

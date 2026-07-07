@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { SignedAvatarImg } from "@/components/signed-avatar-img";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -878,7 +879,7 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
                       />
                       <div className="h-11 w-11 rounded-full bg-white/10 overflow-hidden flex-shrink-0 ring-1 ring-white/20">
                         {emp.foto_url ? (
-                          <img src={emp.foto_url} alt="" className="h-full w-full object-cover" />
+                          <SignedAvatarImg src={emp.foto_url} alt="" className="h-full w-full object-cover" />
                         ) : (
                           <div className="h-full w-full flex items-center justify-center text-xs font-bold text-white/70">
                             {(emp.nome ?? "?").split(" ").slice(0, 2).map((p: string) => p[0]).join("")}
