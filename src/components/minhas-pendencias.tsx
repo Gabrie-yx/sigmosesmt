@@ -19,10 +19,11 @@ function diaSemanaPt() {
 
 interface CardMeta {
   titulo: React.ReactNode;
-  descricaoPend: (n: number) => React.ReactNode;
+  descricaoPend: (n: number, detail?: any) => React.ReactNode;
   descricaoOk: React.ReactNode;
   to: string;
   search?: Record<string, unknown>;
+  searchFromDetail?: (detail: any) => Record<string, unknown> | undefined;
   icon: React.ComponentType<{ className?: string }>;
   ctaPend: string;
   ctaOk?: string;
@@ -131,9 +132,23 @@ const META: Record<string, CardMeta> = {
   },
   "oss-pendentes": {
     titulo: "OSS pendentes (NR-01)",
-    descricaoPend: (n) => `${n} Ordem(ns) de Serviço aguardando assinatura, vencidas ou substituídas por mudança de cargo/risco.`,
+    descricaoPend: (_n, d) => {
+      if (!d) return "Ordens de Serviço aguardando tratamento.";
+      const partes: string[] = [];
+      if (d.vencidas) partes.push(`${d.vencidas} vencida(s)`);
+      if (d.pendentes) partes.push(`${d.pendentes} aguardando assinatura`);
+      if (d.substituidas) partes.push(`${d.substituidas} substituída(s) por mudança de cargo/risco`);
+      return partes.join(" · ") || "Ordens de Serviço aguardando tratamento.";
+    },
     descricaoOk: "Todas as OSS estão em dia.",
     to: "/app/oss", icon: FileSignature, ctaPend: "Tratar OSS",
+    searchFromDetail: (d) => {
+      if (!d) return { filter: "acao" };
+      if (d.vencidas) return { filter: "vencida" };
+      if (d.pendentes) return { filter: "pendente" };
+      if (d.substituidas) return { filter: "substituida" };
+      return { filter: "acao" };
+    },
   },
   "convocacoes-pendentes": {
     titulo: <>Convocações de <Sigla>ASO</Sigla> pendentes</>,
@@ -211,6 +226,8 @@ function PendenciaCard({ item }: { item: PendenciaItem }) {
   const c = SEV_PALETTE[sev];
   const Icon = meta.icon;
   const snoozed = isSnoozed(item.key);
+  const linkSearch =
+    (!item.ok && meta.searchFromDetail ? meta.searchFromDetail(item.detail) : undefined) ?? meta.search;
 
   // Sugere abrir TNC apenas em pendências críticas concretas
   const canOpenTnc = !item.ok && item.severity === "critico" && item.count > 0;
@@ -285,7 +302,7 @@ function PendenciaCard({ item }: { item: PendenciaItem }) {
       <div className="relative mt-auto pt-3 flex items-center justify-between gap-2 border-t border-white/[0.06]">
         <Link
           to={meta.to}
-          search={meta.search as any}
+          search={linkSearch as any}
           className={cn("inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider transition-colors", c.cta)}
         >
           {item.ok ? (meta.ctaOk ?? "Ver detalhes") : meta.ctaPend}
