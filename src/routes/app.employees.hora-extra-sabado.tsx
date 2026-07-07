@@ -452,32 +452,38 @@ function HoraExtraSabadoPage() {
                     <button
                       key={f.id}
                       onClick={() => setDetalheId(f.id)}
-                      className={`w-full text-left rounded-xl border bg-white/[0.02] hover:bg-white/[0.06] hover:-translate-y-0.5 transition-all px-3 py-2.5 flex items-center gap-3 ${
+                      className={`group w-full text-left rounded-xl border bg-white/[0.02] hover:bg-white/[0.06] hover:-translate-y-0.5 transition-all px-3 py-2.5 grid grid-cols-[auto_1px_minmax(0,1fr)] items-center gap-3 ${
                         indeferida
                           ? "animate-indeferida"
                           : "border-white/10 hover:border-rose-400/40"
                       }`}
                     >
-                      <div className="flex flex-col items-center justify-center w-12 shrink-0">
+                      <div className="flex flex-col items-center justify-center w-11 shrink-0">
                         <span className="text-[9px] font-black uppercase tracking-widest text-rose-300">{dia.slice(0,3)}</span>
                         <span className="text-lg font-black tabular-nums text-slate-100 leading-none">{d.getDate().toString().padStart(2,"0")}</span>
                       </div>
                       <div className="h-9 w-px bg-white/10" />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs font-bold text-slate-100 truncate inline-flex items-center gap-1.5">
-                          <Building2 className="h-3 w-3 text-rose-300" />{f.companies?.name ?? "—"}
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <Building2 className="h-3 w-3 text-rose-300 shrink-0" />
+                          <span className="text-xs font-bold text-slate-100 truncate min-w-0 flex-1">{f.companies?.name ?? "—"}</span>
                           {indeferida && (
-                            <span className="ml-1 inline-flex items-center rounded border border-amber-400/60 bg-destructive/25 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-amber-200">
-                              Indeferida
+                            <span className="shrink-0 inline-flex items-center rounded border border-amber-400/60 bg-destructive/25 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-amber-200">
+                              Indef.
                             </span>
                           )}
                           {aprovada && (
-                            <span className="ml-1 inline-flex items-center rounded border border-emerald-400/50 bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-emerald-200">
-                              Aprovada
+                            <span className="shrink-0 inline-flex items-center rounded border border-emerald-400/50 bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-emerald-200">
+                              Aprov.
                             </span>
                           )}
                         </div>
-                        <div className="text-[11px] text-slate-300 truncate inline-flex items-center gap-1.5 mt-0.5"><Clock className="h-3 w-3 text-rose-300" />{f.horario_inicio ?? "—"}{f.horario_fim ? ` – ${f.horario_fim}` : ""} · {f.turno ?? "—"}º · <Users className="h-3 w-3" />{qtd}</div>
+                        <div className="text-[11px] text-slate-300 truncate flex items-center gap-1.5 mt-0.5 min-w-0">
+                          <Clock className="h-3 w-3 text-rose-300 shrink-0" />
+                          <span className="truncate">{f.horario_inicio ?? "—"}{f.horario_fim ? ` – ${f.horario_fim}` : ""} · {f.turno ?? "—"}º</span>
+                          <Users className="h-3 w-3 shrink-0 ml-1" />
+                          <span className="tabular-nums shrink-0">{qtd}</span>
+                        </div>
                         {indeferida && f.motivo_indeferimento && (
                           <div className="mt-1 text-[10px] text-rose-100/90 line-clamp-1">
                             <span className="font-black text-amber-300">Motivo:</span> {f.motivo_indeferimento}
