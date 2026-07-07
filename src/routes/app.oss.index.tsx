@@ -33,6 +33,9 @@ import type jsPDF from "jspdf";
 export const Route = createFileRoute("/app/oss/")({
   component: OssIndexPage,
   head: () => ({ meta: [{ title: "Ordens de Serviço de Segurança · SIGMO" }] }),
+  validateSearch: (search: Record<string, unknown>) => ({
+    filter: (search.filter as string | undefined) ?? undefined,
+  }),
 });
 
 type Emissao = {
@@ -100,11 +103,19 @@ const PAGE_SIZE = 50;
 function OssIndexPage() {
   const qc = useQueryClient();
   const { isEditor } = useAuth();
+  const { filter: urlFilter } = Route.useSearch();
   const [q, setQ] = useState("");
-  const [filterStatus, setFilterStatus] = useState<string>("ATIVAS");
+  const [filterStatus, setFilterStatus] = useState<string>(() => {
+    if (urlFilter === "pendente") return "PENDENTE_ASSINATURA";
+    if (urlFilter === "substituida") return "SUBSTITUIDO";
+    if (urlFilter === "vencida" || urlFilter === "acao") return "TODAS";
+    return "ATIVAS";
+  });
   const [filterCargo, setFilterCargo] = useState<string>("TODOS");
   const [filterMotivo, setFilterMotivo] = useState<string>("TODOS");
-  const [filterVenc, setFilterVenc] = useState<string>("TODOS");
+  const [filterVenc, setFilterVenc] = useState<string>(() =>
+    urlFilter === "vencida" ? "VENCIDA" : "TODOS",
+  );
   const [agruparCargo, setAgruparCargo] = useState(false);
   const [page, setPage] = useState(1);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
