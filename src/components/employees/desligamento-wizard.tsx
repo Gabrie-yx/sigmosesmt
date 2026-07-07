@@ -38,6 +38,8 @@ type Props = {
   role?: any;
   open: boolean;
   onClose: () => void;
+  /** "novo" (padrão) desliga agora · "regularizacao" reconstitui pacote para quem já está DESLIGADO */
+  modo?: "novo" | "regularizacao";
 };
 
 const STEPS = [
@@ -47,15 +49,24 @@ const STEPS = [
   { n: 4, label: "PPP & Confirmar", icon: ClipboardCheck },
 ];
 
-export function DesligamentoWizard({ emp, company, role, open, onClose }: Props) {
+export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "novo" }: Props) {
   const qc = useQueryClient();
   const [step, setStep] = useState(1);
   const [pacoteId, setPacoteId] = useState<string | null>(null);
   const [pppOpen, setPppOpen] = useState(false);
 
   // Passo 1
-  const [data, setData] = useState<string>(() => new Date().toISOString().slice(0, 10));
-  const [motivo, setMotivo] = useState<string>(MOTIVOS[0]);
+  const [data, setData] = useState<string>(() =>
+    modo === "regularizacao" && emp?.data_desligamento
+      ? String(emp.data_desligamento).slice(0, 10)
+      : new Date().toISOString().slice(0, 10),
+  );
+  const [motivo, setMotivo] = useState<string>(() => {
+    if (modo === "regularizacao" && emp?.motivo_desligamento) {
+      return MOTIVOS.includes(emp.motivo_desligamento) ? emp.motivo_desligamento : "Outro";
+    }
+    return MOTIVOS[0];
+  });
   const [motivoOutro, setMotivoOutro] = useState("");
   const [obs, setObs] = useState("");
 
@@ -147,6 +158,7 @@ export function DesligamentoWizard({ emp, company, role, open, onClose }: Props)
         employee_id: emp.id,
         data_desligamento: data,
         motivo: motivoFinal,
+        regularizacao: modo === "regularizacao",
         aso_exam_id: asoExamId,
         aso_dispensado: asoDispensado,
         aso_dispensa_justificativa: asoDispensado ? asoJustif : null,
