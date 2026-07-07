@@ -74,7 +74,7 @@ export function TransferirEmpresaDialog({ open, onClose, employee }: Props) {
         .eq("company_id", employee.company_id)
         .eq("status", "ATIVO")
         .neq("id", employee.id)
-        .order("nova");
+        .order("nome");
       if (error) throw error;
       return data ?? [];
     },
