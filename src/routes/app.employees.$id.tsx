@@ -705,6 +705,13 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
           onClose={() => setExcluirOpen(false)}
         />
       )}
+      {emp && (
+        <TransferirEmpresaDialog
+          open={transferOpen}
+          onClose={() => setTransferOpen(false)}
+          employee={{ id: emp.id, nome: emp.nome, company_id: emp.company_id ?? null }}
+        />
+      )}
     </div>
   );
 }
