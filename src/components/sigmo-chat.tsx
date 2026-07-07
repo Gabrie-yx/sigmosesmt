@@ -38,7 +38,9 @@ export function SigmoChat() {
       headers: async () => {
         const { data } = await supabase.auth.getSession();
         const token = data.session?.access_token;
-        return token ? { Authorization: `Bearer ${token}` } : {};
+        const h: Record<string, string> = {};
+        if (token) h.Authorization = `Bearer ${token}`;
+        return h;
       },
     }),
     onError: (err) => {
