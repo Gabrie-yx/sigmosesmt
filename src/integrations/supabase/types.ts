@@ -6413,6 +6413,433 @@ export type Database = {
           },
         ]
       }
+      portaria_auditoria: {
+        Row: {
+          acao: string
+          criado_em: string
+          entidade: string
+          entidade_id: string | null
+          id: number
+          origem_modulo: string
+          snapshot_json: Json
+          user_id: string | null
+        }
+        Insert: {
+          acao: string
+          criado_em?: string
+          entidade: string
+          entidade_id?: string | null
+          id?: number
+          origem_modulo?: string
+          snapshot_json: Json
+          user_id?: string | null
+        }
+        Update: {
+          acao?: string
+          criado_em?: string
+          entidade?: string
+          entidade_id?: string | null
+          id?: number
+          origem_modulo?: string
+          snapshot_json?: Json
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      portaria_fornecedores_recorrentes: {
+        Row: {
+          ativo: boolean
+          company_id: string | null
+          created_at: string
+          created_by: string | null
+          empresa_terceira_id: string | null
+          funcao: string | null
+          id: string
+          observacoes: string | null
+          pessoa_id: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          empresa_terceira_id?: string | null
+          funcao?: string | null
+          id?: string
+          observacoes?: string | null
+          pessoa_id: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          empresa_terceira_id?: string | null
+          funcao?: string | null
+          id?: string
+          observacoes?: string | null
+          pessoa_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portaria_fornecedores_recorrentes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portaria_fornecedores_recorrentes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "v_contratada_dossie_status"
+            referencedColumns: ["company_id"]
+          },
+          {
+            foreignKeyName: "portaria_fornecedores_recorrentes_empresa_terceira_id_fkey"
+            columns: ["empresa_terceira_id"]
+            isOneToOne: false
+            referencedRelation: "empresas_terceiras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portaria_fornecedores_recorrentes_pessoa_id_fkey"
+            columns: ["pessoa_id"]
+            isOneToOne: false
+            referencedRelation: "portaria_pessoas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portaria_pessoas: {
+        Row: {
+          bloqueado: boolean
+          cnpj: string | null
+          cpf: string
+          created_at: string
+          created_by: string | null
+          foto_documento_url: string | null
+          id: string
+          motivo_bloqueio: string | null
+          nome: string
+          observacoes: string | null
+          rg: string | null
+          updated_at: string
+        }
+        Insert: {
+          bloqueado?: boolean
+          cnpj?: string | null
+          cpf: string
+          created_at?: string
+          created_by?: string | null
+          foto_documento_url?: string | null
+          id?: string
+          motivo_bloqueio?: string | null
+          nome: string
+          observacoes?: string | null
+          rg?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bloqueado?: boolean
+          cnpj?: string | null
+          cpf?: string
+          created_at?: string
+          created_by?: string | null
+          foto_documento_url?: string | null
+          id?: string
+          motivo_bloqueio?: string | null
+          nome?: string
+          observacoes?: string | null
+          rg?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      portaria_saidas_funcionarios: {
+        Row: {
+          created_at: string
+          employee_id: string
+          id: string
+          observacao_portaria: string | null
+          saida_expediente_id: string
+          validada_at: string
+          validada_por_user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          employee_id: string
+          id?: string
+          observacao_portaria?: string | null
+          saida_expediente_id: string
+          validada_at?: string
+          validada_por_user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          employee_id?: string
+          id?: string
+          observacao_portaria?: string | null
+          saida_expediente_id?: string
+          validada_at?: string
+          validada_por_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portaria_saidas_funcionarios_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portaria_saidas_funcionarios_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligados_sem_pacote"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "portaria_saidas_funcionarios_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "portaria_saidas_funcionarios_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_termos_consentimento_status"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "portaria_saidas_funcionarios_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "portaria_saidas_funcionarios_saida_expediente_id_fkey"
+            columns: ["saida_expediente_id"]
+            isOneToOne: true
+            referencedRelation: "employee_saidas_expediente"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portaria_veiculos: {
+        Row: {
+          cor: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          modelo: string | null
+          observacoes: string | null
+          placa: string
+          tipo: string | null
+          updated_at: string
+        }
+        Insert: {
+          cor?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          modelo?: string | null
+          observacoes?: string | null
+          placa: string
+          tipo?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cor?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          modelo?: string | null
+          observacoes?: string | null
+          placa?: string
+          tipo?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      portaria_visita_acompanhantes: {
+        Row: {
+          created_at: string
+          foto_rosto_url: string | null
+          id: string
+          ordem: number
+          pessoa_id: string
+          visita_id: string
+        }
+        Insert: {
+          created_at?: string
+          foto_rosto_url?: string | null
+          id?: string
+          ordem?: number
+          pessoa_id: string
+          visita_id: string
+        }
+        Update: {
+          created_at?: string
+          foto_rosto_url?: string | null
+          id?: string
+          ordem?: number
+          pessoa_id?: string
+          visita_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portaria_visita_acompanhantes_pessoa_id_fkey"
+            columns: ["pessoa_id"]
+            isOneToOne: false
+            referencedRelation: "portaria_pessoas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portaria_visita_acompanhantes_visita_id_fkey"
+            columns: ["visita_id"]
+            isOneToOne: false
+            referencedRelation: "portaria_visitas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portaria_visitas: {
+        Row: {
+          created_at: string
+          empresa_visitada_id: string
+          entrada_at: string
+          entrada_por_user_id: string | null
+          foto_bagageiro_url: string | null
+          foto_placa_url: string | null
+          foto_rosto_url: string | null
+          funcionario_recebedor_id: string | null
+          id: string
+          motivo_cancelamento: string | null
+          motivo_visita: string | null
+          observacoes: string | null
+          pessoa_id: string
+          saida_at: string | null
+          saida_por_user_id: string | null
+          status: Database["public"]["Enums"]["portaria_visita_status"]
+          tipo: Database["public"]["Enums"]["portaria_visita_tipo"]
+          updated_at: string
+          veiculo_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          empresa_visitada_id: string
+          entrada_at?: string
+          entrada_por_user_id?: string | null
+          foto_bagageiro_url?: string | null
+          foto_placa_url?: string | null
+          foto_rosto_url?: string | null
+          funcionario_recebedor_id?: string | null
+          id?: string
+          motivo_cancelamento?: string | null
+          motivo_visita?: string | null
+          observacoes?: string | null
+          pessoa_id: string
+          saida_at?: string | null
+          saida_por_user_id?: string | null
+          status?: Database["public"]["Enums"]["portaria_visita_status"]
+          tipo: Database["public"]["Enums"]["portaria_visita_tipo"]
+          updated_at?: string
+          veiculo_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          empresa_visitada_id?: string
+          entrada_at?: string
+          entrada_por_user_id?: string | null
+          foto_bagageiro_url?: string | null
+          foto_placa_url?: string | null
+          foto_rosto_url?: string | null
+          funcionario_recebedor_id?: string | null
+          id?: string
+          motivo_cancelamento?: string | null
+          motivo_visita?: string | null
+          observacoes?: string | null
+          pessoa_id?: string
+          saida_at?: string | null
+          saida_por_user_id?: string | null
+          status?: Database["public"]["Enums"]["portaria_visita_status"]
+          tipo?: Database["public"]["Enums"]["portaria_visita_tipo"]
+          updated_at?: string
+          veiculo_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portaria_visitas_empresa_visitada_id_fkey"
+            columns: ["empresa_visitada_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portaria_visitas_empresa_visitada_id_fkey"
+            columns: ["empresa_visitada_id"]
+            isOneToOne: false
+            referencedRelation: "v_contratada_dossie_status"
+            referencedColumns: ["company_id"]
+          },
+          {
+            foreignKeyName: "portaria_visitas_funcionario_recebedor_id_fkey"
+            columns: ["funcionario_recebedor_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portaria_visitas_funcionario_recebedor_id_fkey"
+            columns: ["funcionario_recebedor_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligados_sem_pacote"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "portaria_visitas_funcionario_recebedor_id_fkey"
+            columns: ["funcionario_recebedor_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "portaria_visitas_funcionario_recebedor_id_fkey"
+            columns: ["funcionario_recebedor_id"]
+            isOneToOne: false
+            referencedRelation: "v_termos_consentimento_status"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "portaria_visitas_funcionario_recebedor_id_fkey"
+            columns: ["funcionario_recebedor_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "portaria_visitas_pessoa_id_fkey"
+            columns: ["pessoa_id"]
+            isOneToOne: false
+            referencedRelation: "portaria_pessoas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portaria_visitas_veiculo_id_fkey"
+            columns: ["veiculo_id"]
+            isOneToOne: false
+            referencedRelation: "portaria_veiculos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ppp_emissoes: {
         Row: {
           cancelado_em: string | null
@@ -9897,6 +10324,8 @@ export type Database = {
         | "VENCIDO"
         | "SUBSTITUIDO"
         | "CANCELADO"
+      portaria_visita_status: "DENTRO" | "SAIDA_VALIDADA" | "CANCELADA"
+      portaria_visita_tipo: "VISITANTE" | "FORNECEDOR" | "PRESTADOR"
       purchase_req_class: "MATERIAL" | "SERVICO" | "MEDICAMENTOS"
       purchase_req_status:
         | "PENDENTE"
@@ -10088,6 +10517,8 @@ export const Constants = {
         "SUBSTITUIDO",
         "CANCELADO",
       ],
+      portaria_visita_status: ["DENTRO", "SAIDA_VALIDADA", "CANCELADA"],
+      portaria_visita_tipo: ["VISITANTE", "FORNECEDOR", "PRESTADOR"],
       purchase_req_class: ["MATERIAL", "SERVICO", "MEDICAMENTOS"],
       purchase_req_status: [
         "PENDENTE",
