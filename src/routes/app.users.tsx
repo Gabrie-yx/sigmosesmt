@@ -421,6 +421,14 @@ function UsersPage() {
                         <DropdownMenuLabel className="truncate">{u.email}</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => {
+                          setProfileTarget(u);
+                          setProfileName(u.full_name ?? "");
+                          setProfileEmail(u.email ?? "");
+                          setProfileOpen(true);
+                        }}>
+                          <UserCog className="h-4 w-4 mr-2" /> Editar dados (nome/e-mail)
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => {
                           setEditing(u);
                           setFRole(role);
                           setFModules(u.modules);
