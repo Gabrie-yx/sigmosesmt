@@ -39,11 +39,19 @@ export const APP_ROLES = {
     label: "Compras",
     desc: "Opera RCs, cota fornecedores e envia requisições cotadas",
   },
+  tst: {
+    label: "Técnico de Segurança (TST)",
+    desc: "Opera SESMT, valida saídas de funcionários e libera módulos regulatórios",
+  },
+  porteiro: {
+    label: "Porteiro",
+    desc: "Registra entradas/saídas na Portaria e valida saída de funcionários",
+  },
 } as const;
 
-export type AppRole = keyof typeof APP_ROLES | "tst" | "extra_sabado_marcador";
+export type AppRole = keyof typeof APP_ROLES | "extra_sabado_marcador";
 
-export const MANAGED_APP_ROLE_VALUES = Object.keys(APP_ROLES) as [Exclude<AppRole, "tst">, ...Exclude<AppRole, "tst">[]];
+export const MANAGED_APP_ROLE_VALUES = Object.keys(APP_ROLES) as [AppRole, ...AppRole[]];
 
 export const appModuleSchema = z.enum(APP_MODULE_VALUES);
 export const managedAppRoleSchema = z.enum(MANAGED_APP_ROLE_VALUES);

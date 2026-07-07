@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { ShieldCheck, ShieldAlert, Trash2, Plus, Mail, RotateCcw, X, Settings2, Ban, Play, History as HistoryIcon, KeyRound, LogOut, MoreVertical, MonitorSmartphone } from "lucide-react";
+import { ShieldCheck, ShieldAlert, Trash2, Plus, Mail, RotateCcw, X, Settings2, Ban, Play, History as HistoryIcon, KeyRound, LogOut, MoreVertical, MonitorSmartphone, UserCog } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -37,6 +37,7 @@ import {
   adminResetUserPassword,
   adminCountUserSessions,
   adminForceSignOutUser,
+  updateUserProfile,
 } from "@/lib/users.functions";
 import { createInvestorAccess } from "@/lib/temp-investors.functions";
 import { MENU_CATALOG, MENU_BY_KEY, menusForModule, AVAILABLE_MODULES } from "@/lib/menu-catalog";
@@ -86,6 +87,7 @@ function UsersPage() {
   const resetPwdFn = useServerFn(adminResetUserPassword);
   const countSessionsFn = useServerFn(adminCountUserSessions);
   const signOutUserFn = useServerFn(adminForceSignOutUser);
+  const updateProfileFn = useServerFn(updateUserProfile);
 
   const [inviteOpen, setInviteOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -104,6 +106,13 @@ function UsersPage() {
   const [resetTarget, setResetTarget] = useState<any>(null);
   const [resetPwd, setResetPwd] = useState("");
   const [resetBusy, setResetBusy] = useState(false);
+
+  // Editar dados (nome/e-mail)
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [profileTarget, setProfileTarget] = useState<any>(null);
+  const [profileName, setProfileName] = useState("");
+  const [profileEmail, setProfileEmail] = useState("");
+  const [profileBusy, setProfileBusy] = useState(false);
 
   // form state
   const [fName, setFName] = useState("");
@@ -412,6 +421,14 @@ function UsersPage() {
                         <DropdownMenuLabel className="truncate">{u.email}</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => {
+                          setProfileTarget(u);
+                          setProfileName(u.full_name ?? "");
+                          setProfileEmail(u.email ?? "");
+                          setProfileOpen(true);
+                        }}>
+                          <UserCog className="h-4 w-4 mr-2" /> Editar dados (nome/e-mail)
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => {
                           setEditing(u);
                           setFRole(role);
                           setFModules(u.modules);
@@ -703,6 +720,63 @@ function UsersPage() {
           <DialogFooter className="px-6 py-4 border-t bg-background">
             <Button variant="ghost" onClick={() => setEditOpen(false)}>Cancelar</Button>
             <Button onClick={handleSaveEdit} disabled={submitting}>{submitting ? "Salvando..." : "Salvar"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Editar dados básicos (nome/e-mail) */}
+      <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar dados do usuário</DialogTitle>
+            <DialogDescription>
+              Atualiza nome exibido e e-mail de login. A troca de e-mail é confirmada automaticamente — o usuário passará a fazer login com o novo endereço.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label>Nome completo</Label>
+              <Input value={profileName} onChange={(e) => setProfileName(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>E-mail</Label>
+              <Input type="email" value={profileEmail} onChange={(e) => setProfileEmail(e.target.value)} />
+              {profileTarget && profileEmail.trim().toLowerCase() !== (profileTarget.email ?? "").toLowerCase() && (
+                <p className="text-xs text-amber-700">
+                  ⚠️ Trocar o e-mail invalida o link atual e o usuário passa a logar com o novo endereço.
+                </p>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setProfileOpen(false)}>Cancelar</Button>
+            <Button
+              disabled={profileBusy}
+              onClick={async () => {
+                if (!profileTarget) return;
+                const name = profileName.trim();
+                const email = profileEmail.trim();
+                if (!name && !email) { toast.error("Informe pelo menos um campo"); return; }
+                const payload: { user_id: string; full_name?: string; email?: string } = { user_id: profileTarget.id };
+                if (name && name !== (profileTarget.full_name ?? "")) payload.full_name = name;
+                if (email && email.toLowerCase() !== (profileTarget.email ?? "").toLowerCase()) payload.email = email;
+                if (!payload.full_name && !payload.email) { toast.info("Nada mudou"); setProfileOpen(false); return; }
+                setProfileBusy(true);
+                try {
+                  await updateProfileFn({ data: payload });
+                  toast.success("Dados atualizados");
+                  setProfileOpen(false);
+                  qc.invalidateQueries({ queryKey: ["users-admin"] });
+                  qc.invalidateQueries({ queryKey: ["users-audit-logs"] });
+                } catch (e: any) {
+                  toast.error(e.message ?? "Falha ao atualizar");
+                } finally {
+                  setProfileBusy(false);
+                }
+              }}
+            >
+              {profileBusy ? "Salvando..." : "Salvar alterações"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
