@@ -55,7 +55,7 @@ const EMPTY_FORM = (companyId?: string): EmployeeForm => ({
   status: "ATIVO",
   company_id: companyId ?? "",
   role_id: "",
-  tipo_cadastro: "NAO_MEI",
+  tipo_cadastro: "CLT",
   cnpj: "",
   mei_contrato_numero: "",
   mei_contrato_validade: "",
@@ -129,7 +129,7 @@ export function NewEmployeeDialog({ open, onOpenChange, defaultCompanyId, onCrea
         status: v.status,
         company_id: v.company_id || null,
         role_id: v.role_id || null,
-        tipo_cadastro: v.tipo_cadastro || "NAO_MEI",
+        tipo_cadastro: v.tipo_cadastro || "AVULSO",
         cnpj: v.tipo_cadastro === "MEI" ? v.cnpj || null : null,
         mei_contrato_numero:
           v.tipo_cadastro === "MEI" ? v.mei_contrato_numero || null : null,
@@ -289,7 +289,7 @@ export function NewEmployeeDialog({ open, onOpenChange, defaultCompanyId, onCrea
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="NAO_MEI">CLT</SelectItem>
+                  <SelectItem value="CLT">CLT</SelectItem>
                   <SelectItem value="MEI">MEI</SelectItem>
                   <SelectItem value="AVULSO">AVULSO</SelectItem>
                 </SelectContent>
@@ -354,7 +354,7 @@ export function NewEmployeeDialog({ open, onOpenChange, defaultCompanyId, onCrea
             ["Cargo", rName],
             ["Status", form.status],
             ["Vínculo", isTerceiro ? "TERCEIRO" : "PRÓPRIO (DMN)"],
-            ["Tipo", form.tipo_cadastro === "NAO_MEI" ? "CLT" : form.tipo_cadastro],
+            ["Tipo", form.tipo_cadastro],
             ...(form.tipo_cadastro === "MEI" ? [["CNPJ MEI", form.cnpj || "—"]] : []),
             ...(form.tipo_cadastro === "MEI" && form.mei_contrato_numero
               ? [["Contrato PJ", form.mei_contrato_numero]]

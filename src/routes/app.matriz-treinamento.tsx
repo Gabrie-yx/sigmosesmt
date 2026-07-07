@@ -742,7 +742,7 @@ function EmpDialog({ emp, companies, roles, onClose, isAdmin }:
         const { error } = await supabase.from("employees").update(payload).eq("id", emp.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("employees").insert({ ...payload, status: "ATIVO", tipo_cadastro: "NAO_MEI" });
+        const { error } = await supabase.from("employees").insert({ ...payload, status: "ATIVO", tipo_cadastro: "CLT" });
         if (error) throw error;
       }
     },
@@ -850,7 +850,7 @@ function BulkEmpDialog({ companies, employees, onClose }:
         if (nomesExist.has(nome.toUpperCase())) { ignorados.push(nome); continue; }
         novos.push({
           matricula: matricula || null, nome, setor, company_id: companyId,
-          status: "ATIVO", tipo_cadastro: "NAO_MEI",
+          status: "ATIVO", tipo_cadastro: "CLT",
         });
       }
       if (!novos.length) throw new Error("Nenhum novo funcionário para inserir");
