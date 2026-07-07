@@ -107,7 +107,7 @@ function EmployeeDetail() {
 
 export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { id: string; showHeader?: boolean; initialTab?: string }) {
   const qc = useQueryClient();
-  const { isEditor, isAdmin } = useAuth();
+  const { isEditor, isAdmin, isModerator } = useAuth();
   const VALID_TABS = ["profile","nrs","docs","epi","health"];
   const [tab, setTab] = useState<string>(VALID_TABS.includes(initialTab ?? "") ? (initialTab as string) : "profile");
   const [healthSub, setHealthSub] = useState<string>(initialTab === "vaccines" ? "vaccines" : "exams");
@@ -190,6 +190,7 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
   const [integOpen, setIntegOpen] = useState(false);
   const [termoOpen, setTermoOpen] = useState(false);
   const [desligamentoOpen, setDesligamentoOpen] = useState(false);
+  const [transferOpen, setTransferOpen] = useState(false);
   const [excluirOpen, setExcluirOpen] = useState(false);
 
   async function gerarFichaPdf() {
