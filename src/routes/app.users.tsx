@@ -724,11 +724,6 @@ function UsersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal Suspender */}
-      <Dialog open={suspendOpen} onOpenChange={setSuspendOpen}>
-
-      </Dialog>
-
       {/* Modal Editar dados básicos (nome/e-mail) */}
       <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
         <DialogContent className="max-w-md">
@@ -786,8 +781,8 @@ function UsersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* placeholder para manter estrutura anterior */}
-      <Dialog open={false} onOpenChange={() => {}}>
+      {/* Modal Suspender */}
+      <Dialog open={suspendOpen} onOpenChange={setSuspendOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Suspender usuário</DialogTitle>
