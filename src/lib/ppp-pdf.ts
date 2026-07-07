@@ -101,7 +101,10 @@ function s(v: string | null | undefined): string {
   return t.length ? t : "";
 }
 
-export function gerarPPPPdf(d: PPPDados, opts?: { numero?: string | null }): jsPDF {
+export function gerarPPPPdf(
+  d: PPPDados,
+  opts?: { numero?: string | null; assinaturaDataUrl?: string | null },
+): jsPDF {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageW = 210;
   const pageH = 297;
@@ -331,6 +334,20 @@ export function gerarPPPPdf(d: PPPDados, opts?: { numero?: string | null }): jsP
     columnStyles: { 0: { cellWidth: 35, valign: "middle" } },
   });
   y = (doc as any).lastAutoTable.finalY;
+
+  // Estampa a assinatura do trabalhador (quando disponível) sobre a linha da última linha da tabela 17/18
+  if (opts?.assinaturaDataUrl) {
+    try {
+      const lastY = y;
+      const sigW = 40;
+      const sigH = 14;
+      const sigX = margin + 35 + (contentW - 35) / 2 - sigW / 2;
+      const sigY = lastY - sigH - 2;
+      doc.addImage(opts.assinaturaDataUrl, "PNG", sigX, sigY, sigW, sigH);
+    } catch {
+      // se a imagem falhar, mantém a linha em branco
+    }
+  }
 
   // Observações
   autoTable(doc, {
