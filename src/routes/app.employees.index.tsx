@@ -612,7 +612,7 @@ function EmployeeCard({ emp, company, companyType, role, asoStatus }: {
       })()}
       <div className="flex items-start gap-3">
         {emp.foto_url ? (
-          <img
+          <SignedAvatarImg
             src={emp.foto_url}
             alt={emp.nome}
             className="h-12 w-12 rounded-full object-cover shadow ring-2 ring-white"

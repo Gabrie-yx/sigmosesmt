@@ -129,7 +129,7 @@ export function ValidarSaidaFuncionarioDrawer({
                     <button key={s.id} onClick={() => setSelecionada(s)}
                       className="w-full text-left rounded-2xl bg-white border-2 border-slate-200 hover:border-amber-400 p-3 flex items-center gap-3 shadow-sm">
                       {s.employees?.foto_url
-                        ? <img src={s.employees.foto_url} className="h-14 w-14 rounded-full object-cover ring-2 ring-white shadow" />
+                        ? <SignedAvatarImg src={s.employees.foto_url} className="h-14 w-14 rounded-full object-cover ring-2 ring-white shadow" />
                         : <div className="h-14 w-14 rounded-full bg-slate-300 text-white font-black flex items-center justify-center">
                             {s.employees?.nome?.split(/\s+/).map((p) => p[0]).slice(0,2).join("").toUpperCase()}
                           </div>}
@@ -152,7 +152,7 @@ export function ValidarSaidaFuncionarioDrawer({
             <div className="space-y-4">
               <div className="flex flex-col items-center text-center">
                 {selecionada.employees?.foto_url
-                  ? <img src={selecionada.employees.foto_url} className="h-40 w-40 rounded-3xl object-cover ring-4 ring-white shadow-lg" />
+                  ? <SignedAvatarImg src={selecionada.employees.foto_url} className="h-40 w-40 rounded-3xl object-cover ring-4 ring-white shadow-lg" />
                   : <div className="h-40 w-40 rounded-3xl bg-slate-300 text-white font-black text-4xl flex items-center justify-center ring-4 ring-white shadow-lg">
                       {selecionada.employees?.nome?.split(/\s+/).map((p) => p[0]).slice(0,2).join("").toUpperCase()}
                     </div>}

@@ -878,7 +878,7 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
                       />
                       <div className="h-11 w-11 rounded-full bg-white/10 overflow-hidden flex-shrink-0 ring-1 ring-white/20">
                         {emp.foto_url ? (
-                          <img src={emp.foto_url} alt="" className="h-full w-full object-cover" />
+                          <SignedAvatarImg src={emp.foto_url} alt="" className="h-full w-full object-cover" />
                         ) : (
                           <div className="h-full w-full flex items-center justify-center text-xs font-bold text-white/70">
                             {(emp.nome ?? "?").split(" ").slice(0, 2).map((p: string) => p[0]).join("")}

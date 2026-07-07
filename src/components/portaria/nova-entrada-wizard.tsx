@@ -467,7 +467,7 @@ export function NovaEntradaWizard({
                 }`}>
                   <div className="flex gap-3">
                     {employeeMatch.foto_url ? (
-                      <img src={employeeMatch.foto_url} alt={employeeMatch.nome}
+                      <SignedAvatarImg src={employeeMatch.foto_url} alt={employeeMatch.nome}
                         className="h-16 w-16 rounded-lg object-cover border-2 border-white shadow-sm flex-none" />
                     ) : (
                       <div className="h-16 w-16 rounded-lg bg-slate-200 flex items-center justify-center flex-none">
@@ -564,7 +564,7 @@ export function NovaEntradaWizard({
             <div className="space-y-3">
               {(pessoaExistente?.foto_documento_url || employeeMatch?.foto_url) && (
                 <div className="rounded-xl border-2 border-emerald-200 bg-emerald-50/50 p-3 flex items-center gap-3">
-                  <img
+                  <SignedAvatarImg
                     src={(pessoaExistente?.foto_documento_url ?? employeeMatch?.foto_url) as string}
                     alt="Foto do cadastro"
                     className="h-16 w-16 rounded-lg object-cover border-2 border-white shadow-sm"
