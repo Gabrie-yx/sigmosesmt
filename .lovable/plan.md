@@ -1,184 +1,131 @@
-## Contexto que já temos
 
-- **Servidor:** Ubuntu Server 24.04 LTS, 8 vCPUs, 32 GB RAM, 1 TB SSD NVMe + 1 TB backup, 1 Gbps interna (a config que definimos com o TI).
-- **Acesso:** VPN/rede interna DMN (Starlink não enxerga — precisa estar na rede da empresa).
-- **Escopo:** SIGMO (app TanStack Start) + Supabase self-hosted (banco, auth, storage, studio) TUDO no mesmo servidor.
-- **Sem domínio público** por enquanto — vamos usar IP interno + porta. Se depois quiser `sigmo.dmn.local`, é só o TI apontar no DNS interno.
+# Plano: Relatório de Admissões + Transferência entre Empresas + CLT
 
-## Divisão de responsabilidades (importante!)
-
-**TI faz** (você só valida que foi feito):
-1. Confirmar que Docker + Docker Compose estão instalados no servidor (ou instalar).
-2. Configurar firewall interno pra liberar as portas 80, 443, 3000, 8000, 22 só pra rede DMN/VPN.
-3. Configurar backup automático da pasta do Supabase pro disco de 1TB de backup.
-
-**Você (com meu apoio linha por linha)**:
-1. Clonar o Supabase self-hosted e subir os containers.
-2. Migrar o banco atual (Supabase Cloud → self-hosted).
-3. Clonar o SIGMO do GitHub e buildar.
-4. Subir o SIGMO com PM2 (roda 24/7, reinicia sozinho).
-5. Testar tudo pela VPN.
+Três frentes, executadas em ordem. Cada uma depende da anterior.
 
 ---
 
-## Fase 0 — Pré-requisitos (peça pro TI antes de começar)
+## Frente 1 — Renomear `NAO_MEI` → `CLT` no banco
 
-Envie esse checklist pro TI:
+**Migration (SQL):**
+1. `ALTER TYPE tipo_cadastro_enum ADD VALUE 'CLT'` (se for enum) — ou update direto se for text
+2. `UPDATE employees SET tipo_cadastro='CLT' WHERE tipo_cadastro='NAO_MEI'` (39 registros)
+3. Recriar enum sem `NAO_MEI` (drop/rename dance) — só depois de garantir que ninguém escreve mais `NAO_MEI`
+4. Trigger `employees_default_tipo_cadastro` **BEFORE INSERT**: se `tipo_cadastro` vier NULL, aplica default:
+   - empresa é DMN (companies.tipo='CLT' ou flag equivalente) → `MEI`
+   - senão → `AVULSO`
+   - Trigger só preenche default; **não bloqueia** override manual (usuário pode mudar depois)
 
-```text
-Preciso confirmar no servidor SIGMO:
-1. Docker Engine instalado e ativo (docker --version)
-2. Docker Compose v2 instalado (docker compose version)
-3. Git instalado (git --version)
-4. Node.js 20 LTS + Bun instalados
-5. Firewall UFW liberando apenas rede interna nas portas:
-   - 22 (SSH — só admin)
-   - 3000 (SIGMO web)
-   - 8000 (Supabase Studio — painel admin)
-   - 5432 (Postgres — só se precisar acessar direto)
-6. Usuário 'sigmo' criado com permissão de rodar Docker (grupo docker)
-7. Pasta /opt/sigmo criada com dono sigmo:sigmo
-8. Backup diário da pasta /opt/sigmo/supabase/volumes pro disco de 1TB
+**Código a varrer (search/replace `NAO_MEI` → `CLT`):**
+- `src/lib/constants.ts` — `COMPANY_TYPES`, tipos de cadastro
+- Formulário de funcionário (`src/components/employees/*`)
+- Filtros na listagem (`src/routes/app.employees.index.tsx`, `listagem.tsx`)
+- PDFs (`employee-ficha-pdf.ts`, `employees-listagem-pdf.ts`)
+- `safety-engine.ts` e regras que dependem de `tipo_cadastro`
+- Enum TS regenerado automaticamente após migration
+
+---
+
+## Frente 2 — Relatório de Admissões por Período
+
+Nova rota `src/routes/app.employees.relatorio-admissoes.tsx`.
+
+**Filtros no topo:**
+- Data admissão de/até (obrigatório)
+- Empresa (multi-select, opcional)
+- Tipo cadastro (MEI/CLT/AVULSO, multi, opcional)
+- Função/Cargo (opcional)
+
+**Colunas da tabela:**
+Nome · CPF · Função · Empresa · Tipo Cadastro (MEI/CLT/AVULSO) · Data Admissão
+
+**Ações:**
+- Botão **"Exportar PDF"** (usa `pdf-header.ts` padrão SIGMO)
+- Botão **"Exportar CSV"**
+
+**Acesso:** admin + moderador + RH (via `access-control.ts`).
+
+Item de menu na sidebar em Funcionários → "Relatório de Admissões".
+
+---
+
+## Frente 3 — Transferência de Funcionário entre Empresas
+
+### 3.1 Nova tabela `employee_company_history`
+
+```
+id, employee_id (FK), empresa_antiga_id, empresa_nova_id,
+transferido_em (timestamptz), transferido_por (FK auth.users),
+motivo (text NOT NULL), created_at
+```
+RLS: SELECT autenticados; INSERT via server function apenas.
+
+### 3.2 Server function `transferEmployee` (`src/lib/employees-transfer.functions.ts`)
+
+Middleware `requireSupabaseAuth` + checagem de role (admin OU moderador; senão 403).
+
+**Input:**
+```ts
+{
+  employeeId, novaEmpresaId, motivo (obrigatório),
+  reassignments: [{ documentoId, tipo: 'APR'|'PTE', novoFuncionarioId | 'ARQUIVAR' }]
+}
 ```
 
-Só siga adiante quando TI responder "tudo pronto".
+**Handler (transação):**
+1. Valida caller = admin/moderador
+2. Busca APRs/PTEs abertas do funcionário → confere que TODAS têm decisão em `reassignments`
+3. Para cada `novoFuncionarioId`: `UPDATE apr_assinaturas / pte_assinaturas SET employee_id=novo`
+4. Para cada `ARQUIVAR`: `UPDATE aprs/ptes SET status='CANCELADA_POR_TRANSFERENCIA', cancelada_em=now(), cancelada_motivo=motivo`
+5. **ASO vigente:** não mexe (segue valendo — é do funcionário)
+6. **GHE:** consulta `pgr_ghe` da empresa nova
+   - Se compatível (mesmo cargo/risco) → mantém
+   - Se não → grava alerta e limpa `ghe_id` do funcionário (aparecerá em pendências de realocação)
+7. `UPDATE employees SET company_id=novaEmpresaId`
+8. `INSERT employee_company_history (...)`
+9. Log em `audit_logs`
+
+### 3.3 UI — Dialog "Transferir Funcionário"
+
+Botão na ficha do funcionário (`app.employees.$id.tsx`), visível só para admin/moderador.
+
+**Wizard 3 passos:**
+1. **Destino + Motivo:** select empresa nova · textarea motivo (obrigatório)
+2. **Pendências abertas:** lista APRs/PTEs; para cada uma:
+   - dropdown "Reatribuir para funcionário da empresa antiga" (só ativos, mesma função quando possível)
+   - OU botão "Arquivar (cancelar por transferência)"
+   - Se não houver nenhum funcionário elegível E usuário não escolher arquivar → botão "Confirmar" desabilitado com mensagem
+3. **Revisão:** resumo (alerta GHE se incompatível) → confirmar
+
+Após sucesso: toast + invalidate queries + redirect pra ficha na empresa nova.
+
+### 3.4 Histórico visível
+
+Nova aba/card na ficha do funcionário: "Histórico de Empresas" listando `employee_company_history` em ordem cronológica.
 
 ---
 
-## Fase 1 — Subir Supabase self-hosted (banco + auth + storage)
+## Implicações no que já existe (impacto)
 
-Passos que você roda via SSH, na ordem exata. **Vou te acompanhar em cada um** — cola o output aqui se der erro.
-
-```text
-Passo 1.1 — Entrar no servidor
-  ssh sigmo@<IP-do-servidor>
-
-Passo 1.2 — Ir pra pasta base
-  cd /opt/sigmo
-
-Passo 1.3 — Clonar o Supabase oficial
-  git clone --depth 1 https://github.com/supabase/supabase
-  cd supabase/docker
-  cp .env.example .env
-
-Passo 1.4 — Gerar chaves seguras (te mando os comandos exatos)
-  openssl rand -hex 32  # POSTGRES_PASSWORD
-  openssl rand -hex 32  # JWT_SECRET
-  openssl rand -hex 32  # DASHBOARD_PASSWORD
-  # Anon key e service key: geramos com script que te passo
-
-Passo 1.5 — Editar .env com os valores gerados
-  nano .env
-  # Vou te mandar exatamente o que trocar
-
-Passo 1.6 — Subir os containers
-  docker compose pull
-  docker compose up -d
-
-Passo 1.7 — Verificar que subiu
-  docker compose ps  # todos "healthy"
-  curl http://localhost:8000  # Studio respondendo
-
-Passo 1.8 — Acessar Studio pela VPN
-  http://<IP-do-servidor>:8000
-  Login: supabase / <DASHBOARD_PASSWORD>
-```
+| Área | Impacto |
+|---|---|
+| APRs/PTEs assinadas antes | reatribuídas ou arquivadas — nunca ficam órfãs |
+| ASOs, atestados, vacinas | não mexem (são do funcionário) |
+| GHE | mantém se compatível; alerta+limpa se não |
+| `employee_role_history` | não afetado (só rastreia cargo) |
+| Onda 2 triggers | mudança de empresa NÃO dispara convocação de exame (só mudança de cargo já dispara) |
+| Portaria/DDS/Integrações históricas | permanecem vinculadas à empresa antiga (histórico correto) |
+| Relatórios existentes | passam a ler `CLT` em vez de `NAO_MEI` (search/replace) |
 
 ---
 
-## Fase 2 — Migrar dados do Supabase Cloud pro self-hosted
+## Ordem de execução
 
-O banco atual tá na Supabase Cloud (`mokuitocaihpgtlglrtg`). Vamos exportar tudo e importar no novo.
+1. Migration Frente 1 (rename + trigger default)
+2. Varredura de código `NAO_MEI` → `CLT`
+3. Migration Frente 3.1 (tabela histórico + status cancelamento em aprs/ptes)
+4. Server function `transferEmployee` + UI wizard
+5. Rota do Relatório de Admissões + PDF/CSV
+6. Item de menu
 
-```text
-Passo 2.1 — Dump do banco atual (rodo eu daqui, te mando o arquivo .sql)
-  pg_dump ...
-
-Passo 2.2 — Copiar o .sql pro servidor
-  scp backup.sql sigmo@<IP>:/opt/sigmo/
-
-Passo 2.3 — Restaurar no Supabase self-hosted
-  docker exec -i supabase-db psql -U postgres < backup.sql
-
-Passo 2.4 — Migrar Storage (fotos assinatura, PDFs, etc.)
-  # Script que te passo baixa tudo do Storage Cloud e sobe no self-hosted
-
-Passo 2.5 — Validar no Studio novo
-  # Ver se todas as tabelas, RLS, functions, triggers vieram
-```
-
----
-
-## Fase 3 — Subir o SIGMO (app)
-
-```text
-Passo 3.1 — Clonar o repo do GitHub
-  cd /opt/sigmo
-  git clone <URL-do-repo-lovable> app
-  cd app
-
-Passo 3.2 — Criar .env apontando pro Supabase local
-  VITE_SUPABASE_URL=http://<IP-servidor>:8000
-  VITE_SUPABASE_PUBLISHABLE_KEY=<anon-key-gerada-na-fase-1>
-  SUPABASE_URL=http://supabase-kong:8000  # interno docker
-  SUPABASE_SERVICE_ROLE_KEY=<service-key-gerada-na-fase-1>
-  # ... resto das variáveis
-
-Passo 3.3 — Instalar dependências
-  bun install
-
-Passo 3.4 — Buildar pra produção
-  bun run build
-
-Passo 3.5 — Instalar PM2 (mantém o app rodando 24/7)
-  sudo npm install -g pm2
-
-Passo 3.6 — Subir o SIGMO
-  pm2 start .output/server/index.mjs --name sigmo -i 4
-  pm2 save
-  pm2 startup  # inicia junto com o servidor
-```
-
----
-
-## Fase 4 — Acesso e teste
-
-```text
-Passo 4.1 — Testar acesso do teu PC (dentro da VPN DMN)
-  http://<IP-servidor>:3000       → SIGMO
-  http://<IP-servidor>:8000       → Supabase Studio
-
-Passo 4.2 — Testar login com um usuário conhecido
-Passo 4.3 — Testar uma rotina real (criar ASO, DDS, etc.)
-Passo 4.4 — Confirmar que pg_cron continua rodando os gatilhos automáticos
-```
-
----
-
-## Fase 5 — Depois (não bloqueia o go-live)
-
-- **Domínio interno bonito**: pedir pro TI apontar `sigmo.dmn.local` → IP do servidor.
-- **HTTPS interno**: gerar certificado autoassinado ou usar Certificado da própria DMN.
-- **Backup automatizado**: cron diário do `pg_dump` pro disco de 1TB (te passo o script).
-- **Monitoramento**: PM2 já tem `pm2 monit`; posso ajudar a plugar num Uptime Kuma se quiser.
-
----
-
-## Riscos que preciso te avisar antes
-
-1. **Supabase self-hosted é MUITO mais trabalhoso** que o gerenciado — se um serviço cair de madrugada, alguém tem que reiniciar. Sem SLA da Supabase.
-2. **Extensões `pg_cron`, `pg_net`, `vault`**: o SIGMO usa. Já vêm no Supabase self-hosted mas precisam ser habilitadas manualmente após restore. Vou te passar os comandos.
-3. **Emails de auth** (recuperar senha, confirmar email): Supabase self-hosted vem com SMTP DUMMY. Ou (a) integramos SMTP da DMN, (b) mantemos Lovable Email, (c) deixamos sem confirmação por email. Precisa decidir.
-4. **Google OAuth do Lovable broker**: NÃO funciona no self-hosted. Login via Google, se usarem, precisa ser reconfigurado com credenciais próprias no Google Cloud Console (te acompanho).
-5. **Lovable AI Gateway** (chats do SIGMO, extração OCR, etc.): as chaves são gerenciadas pela Lovable. No self-hosted, ou (a) você paga uma OpenAI/Google Gemini direto e troca as chamadas, (b) mantém o gateway apontando pra nuvem enquanto o resto fica local. Precisa decidir.
-
----
-
-## O que eu preciso que você me confirme antes de rodar a Fase 1
-
-1. **TI já instalou Docker + Bun + criou usuário `sigmo`?** (item 0)
-2. **IP interno do servidor** e teu usuário SSH (só o IP, sem senha).
-3. **Decisão de email**: SMTP da DMN, Lovable Email, ou sem confirmação de email por enquanto?
-4. **Decisão de IA**: mantém Lovable AI Gateway (rede sai pra internet) ou vamos trocar por chave própria?
-
-Com isso na mão, a gente vai fase por fase, comando por comando, sem pressa. Fecha?
+Confirma e eu vou executando na ordem, migration por migration.
