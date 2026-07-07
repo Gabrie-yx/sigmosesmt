@@ -23,12 +23,19 @@ Migração 20260707_174357:
 - Alimenta card "Hoje" do TST + painel de convocações. Bloqueio na portaria continua no safety-engine.
 - Log em audit_logs (action='aso_convocacao_automatica') só quando cria algo.
 
-### ⏳ Item 3 — Mudança de cargo recalcula matriz de treinamento
-Trigger em employee_role_history: quando cargo muda, calcular delta entre training_matrix_role_courses do cargo antigo x novo e criar convocações de treinamento para o delta.
+### ✅ Item 3 — Mudança de cargo recalcula matriz (CONCLUÍDO)
+Migração 20260707_175331:
+- Trigger `trg_employee_role_change` AFTER UPDATE OF role_id, ghe_id em employees → `tg_employee_role_change()` SECURITY DEFINER, search_path=public, EXECUTE revogado de anon/authenticated.
+- Idempotente: só dispara se role_id OU ghe_id realmente mudam.
+- Insere linha em `employee_role_history` (role/ghe anterior+novo, changed_by=auth.uid(), changed_at, company_id).
+- Calcula delta: cursos de training_matrix_role_courses do novo cargo que o funcionário nunca concluiu (training_matrix_entries.data_conclusao IS NOT NULL).
+- Grava audit_logs action='mudanca_cargo' com metadata: employee_nome, role_anterior/novo (id+nome), ghe_anterior/novo (id+nome), cursos_delta (jsonb), qtd_cursos_pendentes.
+- Matriz continua computada em tempo real (join role_courses × entries). Nenhuma linha "pendente" é criada — a tela já mostra o gap.
 
-## Retomada
-Próximo turno: Item 3 (mudança de cargo recalcula matriz de treinamento).
+## Onda 2 concluída ✅
+Todos os 3 itens implementados. Aguardando testes do Francisco.
 
 ## ⚠️ Pendente de teste pelo Francisco (avisar no próximo pedido de teste)
 - Item 1 (Onda 2): desligar um funcionário e conferir se convocações PENDENTES viram CANCELADA + safety_overrides revogados. Ver audit_logs action='desligamento_cascata'.
 - Item 2 (Onda 2): rodar manualmente `SELECT public.gerar_convocacoes_aso_automaticas();` no SQL Editor pra ver quantas criou hoje. Ou esperar 06h UTC (03h Brasília).
+- Item 3 (Onda 2): trocar cargo (ou GHE) de um funcionário e conferir: linha nova em employee_role_history + audit_logs action='mudanca_cargo' com cursos_delta preenchido.
