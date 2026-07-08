@@ -20,6 +20,7 @@ import {
 const NovaEntradaWizard = lazy(() => import("@/components/portaria/nova-entrada-wizard").then((m) => ({ default: m.NovaEntradaWizard })));
 const ValidarSaidaFuncionarioDrawer = lazy(() => import("@/components/portaria/validar-saida-funcionario-drawer").then((m) => ({ default: m.ValidarSaidaFuncionarioDrawer })));
 const RegistrarSaidaVisitaDialog = lazy(() => import("@/components/portaria/registrar-saida-visita-dialog").then((m) => ({ default: m.RegistrarSaidaVisitaDialog })));
+const HoraExtraHojeCard = lazy(() => import("@/components/portaria/hora-extra-hoje-card").then((m) => ({ default: m.HoraExtraHojeCard })));
 
 export const Route = createFileRoute("/app/portaria/controle-entrada")({
   component: ControleEntradaPage,
@@ -152,6 +153,9 @@ function ControleEntradaPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Card do DIA */}
           <div className="lg:col-span-2">
+            <Suspense fallback={null}>
+              <div className="mb-4"><HoraExtraHojeCard /></div>
+            </Suspense>
             <div className="rounded-2xl bg-card border border-border overflow-hidden">
               <div className="px-4 py-3 border-b border-border flex items-center justify-between bg-muted/30">
                 <div>

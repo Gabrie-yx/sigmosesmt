@@ -64,6 +64,9 @@ type Funcionario = {
   presenca: string | null;
   employee_id?: string | null;
   employees?: { companies?: { name: string | null } | null } | null;
+  permanencia_confirmada_at?: string | null;
+  entrada_confirmada_at?: string | null;
+  saida_confirmada_at?: string | null;
 };
 
 const STATUS_BADGE: Record<string, string> = {
@@ -198,7 +201,7 @@ function AdministrativoHoraExtraRecebidaPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("hora_extra_sabado_funcionarios")
-        .select("id,hora_extra_id,nome,funcao,externo,presenca,employee_id,employees(companies(name))")
+        .select("id,hora_extra_id,nome,funcao,externo,presenca,employee_id,permanencia_confirmada_at,entrada_confirmada_at,saida_confirmada_at,employees(companies(name))")
         .in("hora_extra_id", ids);
       if (error) throw error;
       return (data ?? []) as Funcionario[];
@@ -499,9 +502,36 @@ function FichaCard({ he, funcs }: { he: HoraExtra; funcs: Funcionario[] }) {
                                 {f.externo ? <span className="ml-1 text-[10px] text-amber-300">(externo)</span> : null}
                                 {f.funcao ? <span className="text-muted-foreground"> · {f.funcao}</span> : null}
                               </span>
-                              {f.presenca && (
-                                <span className="prism-pill px-1.5 py-0.5 text-[10px] text-foreground/80">{f.presenca}</span>
-                              )}
+                              <div className="flex items-center gap-1 shrink-0">
+                                {(() => {
+                                  // Sábado usa entrada; dia útil usa permanência.
+                                  const [y, m, d] = String(he.data).split("-").map(Number);
+                                  const dt = new Date(y, (m ?? 1) - 1, d ?? 1);
+                                  const isSab = dt.getDay() === 6;
+                                  const primeiro = isSab ? f.entrada_confirmada_at : f.permanencia_confirmada_at;
+                                  const segundo = f.saida_confirmada_at;
+                                  const cls =
+                                    primeiro && segundo
+                                      ? "bg-emerald-500/15 text-emerald-200 border-emerald-400/30"
+                                      : primeiro
+                                      ? "bg-amber-500/15 text-amber-200 border-amber-400/30"
+                                      : "bg-rose-500/15 text-rose-200 border-rose-400/30";
+                                  const label =
+                                    primeiro && segundo
+                                      ? "Validado"
+                                      : primeiro
+                                      ? isSab ? "Só entrada" : "Só permanência"
+                                      : "Sem validação";
+                                  return (
+                                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${cls}`}>
+                                      {label}
+                                    </span>
+                                  );
+                                })()}
+                                {f.presenca && (
+                                  <span className="prism-pill px-1.5 py-0.5 text-[10px] text-foreground/80">{f.presenca}</span>
+                                )}
+                              </div>
                             </li>
                           ))}
                         </ul>
