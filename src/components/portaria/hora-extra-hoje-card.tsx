@@ -336,17 +336,18 @@ function FuncionarioAvatar({ fotoUrl, iniciais, nome }: { fotoUrl: string | null
 
   if (!signed || broken) {
     return (
-      <div className="h-12 w-12 rounded-lg bg-muted text-muted-foreground font-bold text-xs flex items-center justify-center border border-border ring-1 ring-primary/10">
+      <div className="h-12 w-12 rounded-full bg-muted text-muted-foreground font-bold text-xs flex items-center justify-center border border-border ring-1 ring-primary/10">
         {iniciais}
       </div>
     );
   }
 
   return (
-    <div className="h-12 w-12 rounded-lg overflow-hidden border border-border bg-muted ring-1 ring-primary/10">
+    <div className="h-12 w-12 rounded-full overflow-hidden border border-border bg-muted ring-1 ring-primary/10">
       <img
         src={signed}
-        className="h-full w-full object-contain"
+        className="h-full w-full object-cover"
+        style={{ objectPosition: "center 18%" }}
         alt={`Foto de ${nome}`}
         loading="lazy"
         onError={() => setBroken(true)}
