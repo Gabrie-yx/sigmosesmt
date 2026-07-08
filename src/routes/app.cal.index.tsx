@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { parseCalPlanilha, mapStatusIusToCal, type CalRequisitoImportado } from "@/lib/cal-parser";
 import { CAL_STATUS_LABEL, CAL_STATUS_COLOR, CAL_STATUS_ORDER, CAL_CRITICIDADE_LABEL, CAL_CRITICIDADE_COLOR, daysUntil, type CalStatus } from "@/lib/cal-utils";
 import { Upload, Plus, Scale, AlertTriangle, CheckCircle2, Clock, Search, FileText, Trash2, Sparkles, ListChecks } from "lucide-react";
+import { PainelDinamicoRequisitos, PainelDinamicoPlanos } from "@/components/cal/painel-dinamico";
 
 export const Route = createFileRoute("/app/cal/")({
   component: CalDashboardPage,
@@ -459,12 +460,35 @@ function CalDashboardPage() {
         </DialogContent>
       </Dialog>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        <KpiCard label="Total" value={kpis.total} icon={<FileText className="h-4 w-4" />} onClick={() => aplicarKpi("total")} />
-        <KpiCard label="Sem análise" value={kpis.semAnalise} icon={<Clock className="h-4 w-4" />} tone="warning" onClick={() => aplicarKpi("sem_analise")} active={chip === "sem_analise"} />
+      {/* Painéis dinâmicos */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <PainelDinamicoRequisitos
+          requisitos={requisitos}
+          filtroAtivo={
+            chip === "sem_analise" ? "nao_avaliados"
+            : statusSel.size === 1 && statusSel.has("atendido") ? "atendidos"
+            : statusSel.size === 1 && statusSel.has("nao_aplicavel") ? "nao_aplicaveis"
+            : statusSel.size === 1 && statusSel.has("em_analise") ? "em_analise"
+            : statusSel.size === 1 && statusSel.has("monitoramento") ? "monitoramento"
+            : null
+          }
+          onFiltro={(k) => {
+            limparFiltros();
+            if (k === "atendidos") setStatusSel(new Set(["atendido"] as CalStatus[]));
+            else if (k === "nao_atendidos") setStatusSel(new Set(["aplicavel", "em_tratativa"] as CalStatus[]));
+            else if (k === "em_analise") setStatusSel(new Set(["em_analise"] as CalStatus[]));
+            else if (k === "nao_avaliados") setChip("sem_analise");
+            else if (k === "nao_aplicaveis") setStatusSel(new Set(["nao_aplicavel"] as CalStatus[]));
+            else if (k === "monitoramento") setStatusSel(new Set(["monitoramento"] as CalStatus[]));
+          }}
+        />
+        <PainelDinamicoPlanos planos={planosAcao as any} />
+      </div>
+
+      {/* Atalhos rápidos */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <KpiCard label="Total CALs" value={kpis.total} icon={<FileText className="h-4 w-4" />} onClick={() => aplicarKpi("total")} />
         <KpiCard label="Aplicáveis" value={kpis.aplicaveis} icon={<CheckCircle2 className="h-4 w-4" />} tone="success" onClick={() => aplicarKpi("aplicaveis")} />
-        <KpiCard label="Atendidos" value={kpis.atendidos} icon={<CheckCircle2 className="h-4 w-4" />} tone="success" onClick={() => aplicarKpi("atendidos")} />
         <KpiCard label="Vencendo 7d" value={kpis.vencendo7} icon={<AlertTriangle className="h-4 w-4" />} tone="warning" onClick={() => aplicarKpi("vencendo7")} active={chip === "vencendo7"} />
         <KpiCard label="Em atraso" value={kpis.emAtraso} icon={<AlertTriangle className="h-4 w-4" />} tone="danger" onClick={() => aplicarKpi("em_atraso")} active={chip === "em_atraso"} />
       </div>
