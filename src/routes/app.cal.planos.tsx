@@ -28,6 +28,9 @@ type PlanoRow = {
   requisito_id: string;
   codigo_pa: string | null;
   texto: string | null;
+  requisito_legal_texto: string | null;
+  area_pa: string | null;
+  observacoes: string | null;
   tipo: string | null;
   status: string | null;
   data_prevista: string | null;
@@ -45,6 +48,16 @@ type PlanoRow = {
     temas: string[] | null;
     criticidade: string | null;
   } | null;
+};
+
+type EvidenciaPA = {
+  id: string;
+  arquivo_nome: string | null;
+  arquivo_url: string;
+  mime: string | null;
+  tamanho_bytes: number | null;
+  descricao: string | null;
+  created_at: string;
 };
 
 type VencStatus = "concluido" | "vencido" | "vencendo" | "em_dia" | "sem_prazo";
