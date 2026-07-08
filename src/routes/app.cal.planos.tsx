@@ -621,3 +621,132 @@ function Sel({ value, onChange, placeholder, allLabel, options, allValue }: {
     </Select>
   );
 }
+
+function EvidenciasPA({ planoId }: { planoId: string }) {
+  const qc = useQueryClient();
+  const [descricao, setDescricao] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const { data: evs = [], isLoading } = useQuery({
+    queryKey: ["cal_evidencias_pa", planoId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("cal_evidencias")
+        .select("id, arquivo_nome, arquivo_url, mime, tamanho_bytes, descricao, created_at")
+        .eq("plano_id", planoId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as EvidenciaPA[];
+    },
+  });
+
+  async function upload(file: File) {
+    setBusy(true);
+    try {
+      const path = `pa/${planoId}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+      const { error: upErr } = await supabase.storage.from("cal-evidencias").upload(path, file, {
+        contentType: file.type || undefined,
+        upsert: false,
+      });
+      if (upErr) throw upErr;
+      const { data: userData } = await supabase.auth.getUser();
+      const { error: insErr } = await supabase.from("cal_evidencias").insert({
+        plano_id: planoId,
+        requisito_id: null as any,
+        tipo: "documento",
+        descricao: descricao || null,
+        arquivo_url: path,
+        arquivo_nome: file.name,
+        mime: file.type || null,
+        tamanho_bytes: file.size,
+        created_by: userData.user?.id ?? null,
+      });
+      if (insErr) throw insErr;
+      setDescricao("");
+      qc.invalidateQueries({ queryKey: ["cal_evidencias_pa", planoId] });
+      toast.success("Evidência anexada");
+    } catch (e: any) {
+      toast.error(e.message ?? "Falha ao anexar evidência");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function abrir(ev: EvidenciaPA) {
+    const { data, error } = await supabase.storage.from("cal-evidencias").createSignedUrl(ev.arquivo_url, 3600);
+    if (error || !data) return toast.error("Não foi possível abrir o arquivo");
+    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+  }
+
+  async function remover(ev: EvidenciaPA) {
+    if (!confirm(`Remover "${ev.arquivo_nome}"?`)) return;
+    try {
+      await supabase.storage.from("cal-evidencias").remove([ev.arquivo_url]);
+      const { error } = await supabase.from("cal_evidencias").delete().eq("id", ev.id);
+      if (error) throw error;
+      qc.invalidateQueries({ queryKey: ["cal_evidencias_pa", planoId] });
+      toast.success("Evidência removida");
+    } catch (e: any) {
+      toast.error(e.message ?? "Falha ao remover");
+    }
+  }
+
+  return (
+    <div className="rounded-md border border-border p-3 space-y-3">
+      <div className="flex items-center gap-2">
+        <Paperclip className="h-4 w-4 text-red-500" />
+        <h4 className="text-sm font-semibold">Evidências / Documentos / Relatórios</h4>
+        <Badge variant="outline" className="ml-auto text-[10px]">{evs.length}</Badge>
+      </div>
+
+      <div className="space-y-2">
+        <Input
+          placeholder="Descrição opcional do documento (ex.: Foto do aviso afixado)"
+          value={descricao}
+          onChange={(e) => setDescricao(e.target.value)}
+          className="h-8 text-xs"
+        />
+        <Input
+          type="file"
+          accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,.txt"
+          disabled={busy}
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) upload(f);
+            e.target.value = "";
+          }}
+          className="h-8 text-xs"
+        />
+        {busy && <p className="text-[11px] text-muted-foreground">Enviando...</p>}
+      </div>
+
+      {isLoading ? (
+        <p className="text-xs text-muted-foreground">Carregando anexos...</p>
+      ) : evs.length === 0 ? (
+        <p className="text-xs text-muted-foreground italic">Nenhuma evidência anexada ainda.</p>
+      ) : (
+        <ul className="space-y-1.5">
+          {evs.map((ev) => (
+            <li key={ev.id} className="flex items-center gap-2 text-xs rounded border border-border/60 bg-muted/20 px-2 py-1.5">
+              <FileText className="h-3.5 w-3.5 text-sky-400 shrink-0" />
+              <div className="min-w-0 flex-1">
+                <div className="font-medium truncate">{ev.arquivo_nome ?? "arquivo"}</div>
+                {ev.descricao && <div className="text-[10px] text-muted-foreground truncate">{ev.descricao}</div>}
+                <div className="text-[10px] text-muted-foreground">
+                  {ev.tamanho_bytes ? `${(ev.tamanho_bytes / 1024).toFixed(1)} KB · ` : ""}
+                  {new Date(ev.created_at).toLocaleString("pt-BR")}
+                </div>
+              </div>
+              <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => abrir(ev)} title="Abrir">
+                <ExternalLink className="h-3.5 w-3.5" />
+              </Button>
+              <Button size="sm" variant="ghost" className="h-7 px-2 text-red-400 hover:text-red-300" onClick={() => remover(ev)} title="Remover">
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
