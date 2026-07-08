@@ -391,9 +391,9 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
 
             {step === 4 && (
               <div className="space-y-4">
-                <div className="rounded-lg border border-violet-200 bg-violet-50 p-3">
-                  <div className="flex items-center gap-2 text-violet-900 font-black text-sm"><FileSignature className="h-4 w-4" /> PPP — Perfil Profissiográfico Previdenciário</div>
-                  <p className="text-xs text-violet-800 mt-1">
+                <div className="rounded-lg border border-violet-300 bg-violet-100 p-3">
+                  <div className="flex items-center gap-2 text-violet-950 font-black text-sm"><FileSignature className="h-4 w-4" /> PPP — Perfil Profissiográfico Previdenciário</div>
+                  <p className="text-xs text-violet-950 mt-1">
                     {pppEmissaoId && (pppExistente as any)?.numero
                       ? <>Já existe PPP emitido: <b>{(pppExistente as any).numero}</b>.</>
                       : pppEmissaoId
@@ -404,20 +404,20 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
                   <Button variant="outline" size="sm" className="mt-2" onClick={() => setPppOpen(true)}>
                     <FileSignature className="h-3.5 w-3.5 mr-1.5" /> Abrir editor de PPP
                   </Button>
-                  <p className="text-[10px] text-violet-700 mt-2">A entrega do PPP ao trabalhador é responsabilidade do RH / Representante Legal — o TST prepara o rascunho.</p>
+                  <p className="text-[10px] text-violet-900 mt-2">A entrega do PPP ao trabalhador é responsabilidade do RH / Representante Legal — o TST prepara o rascunho.</p>
                 </div>
 
-                <div className="rounded-lg bg-slate-50 border border-slate-200 p-3 text-xs space-y-1.5">
-                  <div className="font-black text-slate-700 uppercase tracking-widest text-[10px]">Resumo</div>
+                <div className="rounded-lg bg-white border border-slate-300 p-3 text-xs text-slate-900 space-y-1.5">
+                  <div className="font-black text-slate-900 uppercase tracking-widest text-[10px]">Resumo</div>
                   <div>Data: <b>{new Date(data + "T00:00:00").toLocaleDateString("pt-BR")}</b> · Motivo: <b>{motivoFinal}</b></div>
-                  <div>ASO: {asoDispensado ? <b className="text-amber-700">DISPENSADO</b> : <b className="text-emerald-700">{asos?.find((a: any) => a.id === asoExamId)?.tipo_exame ?? "—"}</b>}</div>
+                  <div>ASO: {asoDispensado ? <b className="text-amber-800">DISPENSADO</b> : <b className="text-emerald-800">{asos?.find((a: any) => a.id === asoExamId)?.tipo_exame ?? "—"}</b>}</div>
                   <div>EPIs devolvidos: <b>{Object.values(episDevolvidos).filter(Boolean).length}</b> / {(epis ?? []).length}</div>
                   <div>OSs a substituir: <b>{(oss ?? []).length}</b></div>
-                  <div>PPP: {pppEmissaoId ? <b className="text-emerald-700">vinculado</b> : <span className="text-amber-700">não vinculado</span>}</div>
+                  <div>PPP: {pppEmissaoId ? <b className="text-emerald-800">vinculado</b> : <span className="text-amber-800">não vinculado</span>}</div>
                 </div>
 
-                <div className="rounded-lg bg-rose-50 border border-rose-200 p-3 text-xs text-rose-800 space-y-1.5">
-                  <div className="flex items-center gap-1.5 font-black"><AlertTriangle className="h-3.5 w-3.5" />Ao emitir:</div>
+                <div className="rounded-lg bg-rose-100 border border-rose-300 p-3 text-xs text-rose-950 space-y-1.5">
+                  <div className="flex items-center gap-1.5 font-black text-rose-950"><AlertTriangle className="h-3.5 w-3.5" />Ao emitir:</div>
                   <ul className="list-disc ml-5 space-y-0.5">
                     {modo === "novo" ? (
                       <>
@@ -437,7 +437,7 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
 
                 <label className="flex items-start gap-2 cursor-pointer">
                   <Checkbox checked={confirmacao} onCheckedChange={(v) => setConfirmacao(!!v)} />
-                  <span className="text-xs text-slate-700">Confirmo, sob minha responsabilidade técnica, que as informações são verídicas e que o processo legal do desligamento foi (ou será) conduzido pelo RH.</span>
+                  <span className="text-xs text-slate-900">Confirmo, sob minha responsabilidade técnica, que as informações são verídicas e que o processo legal do desligamento foi (ou será) conduzido pelo RH.</span>
                 </label>
               </div>
             )}
