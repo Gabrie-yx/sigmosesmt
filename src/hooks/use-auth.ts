@@ -103,6 +103,12 @@ export function useAuth() {
     && !isAdmin && !isModerator
     && !roles.includes("editor") && !roles.includes("tst")
     && !roles.includes("compras");
+  // Porteiro puro: só o papel de porteiro (sem admin/mod/editor/tst/compras).
+  // Ao logar, cai direto no cockpit da Portaria (/app/portaria).
+  const isPorteiroPuro = roles.includes("porteiro" as AppRole)
+    && !isAdmin && !isModerator
+    && !roles.includes("editor") && !roles.includes("tst")
+    && !roles.includes("compras");
   // MFA obrigatório pra qualquer usuário com papel (regra de 03/07/2026).
   const requiresMfa = roles.length > 0;
   const graceActive = !!(mfaGraceUntil && mfaGraceUntil.getTime() > Date.now());
@@ -137,7 +143,7 @@ export function useAuth() {
   return {
     session, user, roles, modules, aal, mfaActive, loading,
     isAdmin, isModerator, isEditor, requiresMfa, mfaSatisfied,
-    isExtraSabadoMarcador, isMarcadorPuro, isSupervisorExtraGeral,
+    isExtraSabadoMarcador, isMarcadorPuro, isSupervisorExtraGeral, isPorteiroPuro,
     hasModule, hasMenu,
     menuKeys, modulesWithMenuConfig,
     mfaGraceUntil, graceActive, graceDaysLeft,
