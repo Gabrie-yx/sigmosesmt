@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { parseCalPlanoAcaoPlanilha } from "@/lib/cal-parser";
-import { ListChecks, Search, AlertTriangle, Clock, CheckCircle2, CircleDashed, Repeat, ArrowRight, ChevronLeft, ChevronRight, Upload } from "lucide-react";
+import { ListChecks, Search, AlertTriangle, Clock, CheckCircle2, CircleDashed, Repeat, ArrowRight, ChevronLeft, ChevronRight, Upload, Paperclip, FileText, Trash2, ExternalLink } from "lucide-react";
 
 export const Route = createFileRoute("/app/cal/planos")({
   component: PlanosCalPage,
@@ -103,13 +103,13 @@ function PlanosCalPage() {
     setTratando(p);
     setTStatus(p.status ?? "Pendente");
     setTConclusao(p.data_conclusao ?? "");
-    setTObs("");
+    setTObs(p.observacoes ?? "");
   }
 
   const salvarTratativa = useMutation({
     mutationFn: async () => {
       if (!tratando) return;
-      const payload: any = { status: tStatus || null, data_conclusao: tConclusao || null };
+      const payload: any = { status: tStatus || null, data_conclusao: tConclusao || null, observacoes: tObs || null };
       if (tStatus === "Concluído" && !tConclusao) payload.data_conclusao = new Date().toISOString().slice(0, 10);
       const { error } = await supabase.from("cal_planos_acao").update(payload).eq("id", tratando.id);
       if (error) throw error;
