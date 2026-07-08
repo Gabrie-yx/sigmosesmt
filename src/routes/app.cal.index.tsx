@@ -99,8 +99,8 @@ function CalDashboardPage() {
     return requisitos.filter((r) => {
       if (statusSel.size > 0 && !statusSel.has(r.status as CalStatus)) return false;
       if (areaSel !== "todas") {
-        const raw = (r.area_incidencia ?? r.area ?? "").trim();
-        const partes = raw.split(/[;,/|]/).map((x) => x.trim()).filter(Boolean);
+        const raw = String(r.area_incidencia ?? r.area ?? "").trim();
+        const partes = raw.split(/[;,/|]/).map((x: string) => x.trim()).filter(Boolean);
         if (!partes.includes(areaSel)) return false;
       }
       if (criticSel !== "todas" && r.criticidade !== criticSel) return false;
