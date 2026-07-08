@@ -15,8 +15,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Upload, Plus, Scale, AlertTriangle, CheckCircle2, Clock, Search, FileText } from "lucide-react";
 import { toast } from "sonner";
-import { parseCalPlanilha } from "@/lib/cal-parser";
+import { parseCalPlanilha, mapStatusIusToCal, type CalRequisitoImportado } from "@/lib/cal-parser";
 import { CAL_STATUS_LABEL, CAL_STATUS_COLOR, CAL_STATUS_ORDER, CAL_CRITICIDADE_LABEL, CAL_CRITICIDADE_COLOR, daysUntil, type CalStatus } from "@/lib/cal-utils";
+import { Upload, Plus, Scale, AlertTriangle, CheckCircle2, Clock, Search, FileText, Trash2, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/app/cal/")({
   component: CalDashboardPage,
@@ -30,6 +31,14 @@ function CalDashboardPage() {
   const [filtroStatus, setFiltroStatus] = useState<string>("todos");
   const [importOpen, setImportOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
+  const [deltaResult, setDeltaResult] = useState<null | {
+    novos: number;
+    atualizados: number;
+    revogados: number;
+    inalterados: number;
+    planosImportados: number;
+  }>(null);
+  const [purgeOpen, setPurgeOpen] = useState(false);
 
   const { data: requisitos = [], isLoading } = useQuery({
     queryKey: ["cal_requisitos"],
@@ -71,49 +80,192 @@ function CalDashboardPage() {
 
   const importar = useMutation({
     mutationFn: async (file: File) => {
-      const linhas = await parseCalPlanilha(file);
-      if (!linhas.length) throw new Error("Planilha sem CALs reconhecíveis");
+      const { requisitos, total_linhas } = await parseCalPlanilha(file);
+      if (!requisitos.length) throw new Error("Planilha sem requisitos reconhecíveis. Confirme se é a exportação de 'Requisito de CAL' do Ius Natura.");
+
+      // 1) Cria lote
       const { data: lote, error: eLote } = await supabase
         .from("cal_lote_importacao")
-        .insert({ nome_arquivo: file.name, total_linhas: linhas.length, created_by: user?.id ?? null })
+        .insert({ nome_arquivo: file.name, total_linhas, created_by: user?.id ?? null })
         .select()
         .single();
       if (eLote) throw eLote;
-      const rows = linhas.map((l) => ({
+
+      // 2) Busca hash+id existentes p/ delta
+      const { data: existentes, error: eExist } = await supabase
+        .from("cal_requisitos")
+        .select("id, numero_cal, content_hash")
+        .not("numero_cal", "is", null);
+      if (eExist) throw eExist;
+      const existMap = new Map((existentes ?? []).map((r) => [r.numero_cal, r]));
+      const plGroup: { novos: CalRequisitoImportado[]; atualizados: CalRequisitoImportado[]; inalterados: CalRequisitoImportado[] } = {
+        novos: [], atualizados: [], inalterados: [],
+      };
+      for (const r of requisitos) {
+        const ex = existMap.get(r.numero_cal);
+        if (!ex) plGroup.novos.push(r);
+        else if (ex.content_hash !== r.content_hash) plGroup.atualizados.push(r);
+        else plGroup.inalterados.push(r);
+      }
+      const planilhaCodes = new Set(requisitos.map((r) => r.numero_cal));
+      const revogar = (existentes ?? []).filter((e) => !planilhaCodes.has(e.numero_cal));
+
+      const toRow = (l: CalRequisitoImportado) => ({
         numero_cal: l.numero_cal,
+        codigo_requisito_generico: l.codigo_requisito_generico ?? null,
         norma: l.norma,
-        titulo: l.titulo ?? null,
         ementa: l.ementa,
         texto_legal: l.texto_legal ?? null,
-        orgao: l.orgao ?? null,
-        esfera: l.esfera ?? null,
-        data_publicacao: l.data_publicacao ?? null,
+        temas: l.temas,
+        tipo_evidencia: l.tipo_evidencia ?? null,
+        evidencia_texto: l.evidencia_texto ?? null,
+        justificativa: l.justificativa ?? null,
         area: l.area ?? null,
+        area_incidencia: l.area_incidencia ?? null,
+        status: mapStatusIusToCal(l.status_ius) as any,
+        status_vcl: l.status_vcl ?? null,
+        data_vcl: l.data_vcl ?? null,
+        data_ultima_alteracao_ius: l.data_ultima_alteracao_ius ?? null,
+        data_inclusao_cal: l.data_inclusao_cal ?? null,
         criticidade: l.criticidade,
-        prazo_atendimento: l.prazo_atendimento ?? null,
-        cliente: l.cliente ?? undefined,
+        cliente: l.cliente ?? null,
         origem: "planilha",
         raw_data: l.raw as any,
         lote_importacao_id: lote.id,
+        ultima_importacao_id: lote.id,
+        content_hash: l.content_hash,
         created_by: user?.id ?? null,
-      }));
-      const { error: eIns, count } = await supabase
-        .from("cal_requisitos")
-        .upsert(rows, { onConflict: "numero_cal", ignoreDuplicates: true, count: "exact" });
-      if (eIns) throw eIns;
-      const importados = count ?? 0;
-      await supabase
-        .from("cal_lote_importacao")
-        .update({ total_importados: importados, total_duplicados: linhas.length - importados })
-        .eq("id", lote.id);
-      return { importados, duplicados: linhas.length - importados };
+      });
+
+      // 3) Upsert em chunks (novos + atualizados)
+      const paraUpsert = [...plGroup.novos, ...plGroup.atualizados].map(toRow);
+      const chunk = 300;
+      for (let i = 0; i < paraUpsert.length; i += chunk) {
+        const { error } = await supabase
+          .from("cal_requisitos")
+          .upsert(paraUpsert.slice(i, i + chunk), { onConflict: "numero_cal" });
+        if (error) throw error;
+      }
+
+      // 4) Marcar precisa_revalidacao nos atualizados + gravar histórico
+      if (plGroup.atualizados.length) {
+        const codesAtualizados = plGroup.atualizados.map((r) => r.numero_cal);
+        await supabase
+          .from("cal_requisitos")
+          .update({ precisa_revalidacao: true })
+          .in("numero_cal", codesAtualizados);
+        // Histórico (opcional / best-effort)
+        const historico = plGroup.atualizados.map((r) => ({
+          requisito_id: existMap.get(r.numero_cal)!.id,
+          acao: "reimportacao_alterado",
+          descricao: `Conteúdo alterado no Ius Natura (data ${r.data_ultima_alteracao_ius ?? "?"}). Marcado para revalidação.`,
+          created_by: user?.id ?? null,
+        }));
+        await supabase.from("cal_historico").insert(historico as any);
+      }
+
+      // 5) Revogar os que sumiram
+      if (revogar.length) {
+        await supabase
+          .from("cal_requisitos")
+          .update({ status: "revogado" as any, revogado_em: new Date().toISOString() })
+          .in("id", revogar.map((r) => r.id));
+        const hist = revogar.map((r) => ({
+          requisito_id: r.id,
+          acao: "revogado_por_reimportacao",
+          descricao: "Requisito não presente na planilha reimportada — marcado como revogado.",
+          created_by: user?.id ?? null,
+        }));
+        await supabase.from("cal_historico").insert(hist as any);
+      }
+
+      // 6) Inserir normas vinculadas + planos de ação (novos e atualizados)
+      // pega ids atualizados
+      const codesAffected = [...plGroup.novos, ...plGroup.atualizados].map((r) => r.numero_cal);
+      let planosImportados = 0;
+      if (codesAffected.length) {
+        const { data: ids } = await supabase
+          .from("cal_requisitos")
+          .select("id, numero_cal")
+          .in("numero_cal", codesAffected);
+        const idMap = new Map((ids ?? []).map((x) => [x.numero_cal, x.id]));
+        // limpa e reinsere normas/planos dos afetados
+        await supabase.from("cal_normas_vinculadas").delete().in("requisito_id", Array.from(idMap.values()));
+        await supabase.from("cal_planos_acao").delete().in("requisito_id", Array.from(idMap.values()));
+
+        const normasRows: any[] = [];
+        const planosRows: any[] = [];
+        for (const r of [...plGroup.novos, ...plGroup.atualizados]) {
+          const rid = idMap.get(r.numero_cal);
+          if (!rid) continue;
+          for (const n of r.normas) {
+            normasRows.push({ requisito_id: rid, codigo_norma: n.codigo_norma, descricao_norma: n.descricao_norma ?? null, data_inclusao: n.data_inclusao ?? null });
+          }
+          for (const p of r.planos_acao) {
+            planosRows.push({
+              requisito_id: rid,
+              codigo_pa: p.codigo_pa ?? null,
+              texto: p.texto,
+              tipo: p.tipo ?? null,
+              status: p.status ?? null,
+              data_prevista: p.data_prevista ?? null,
+              data_conclusao: p.data_conclusao ?? null,
+              recorrente: p.recorrente,
+              intervalo_recorrencia_dias: p.intervalo_recorrencia_dias ?? null,
+              custo: p.custo ?? null,
+              natureza_custo: p.natureza_custo ?? null,
+              usuario_execucao: p.usuario_execucao ?? null,
+              usuario_gestao: p.usuario_gestao ?? null,
+            });
+          }
+        }
+        for (let i = 0; i < normasRows.length; i += chunk) {
+          await supabase.from("cal_normas_vinculadas").insert(normasRows.slice(i, i + chunk));
+        }
+        for (let i = 0; i < planosRows.length; i += chunk) {
+          await supabase.from("cal_planos_acao").insert(planosRows.slice(i, i + chunk));
+        }
+        planosImportados = planosRows.length;
+      }
+
+      // 7) Atualizar lote com contadores
+      await supabase.from("cal_lote_importacao").update({
+        total_importados: plGroup.novos.length + plGroup.atualizados.length,
+        total_duplicados: plGroup.inalterados.length,
+        total_novos: plGroup.novos.length,
+        total_atualizados: plGroup.atualizados.length,
+        total_revogados: revogar.length,
+        total_inalterados: plGroup.inalterados.length,
+      } as any).eq("id", lote.id);
+
+      return {
+        novos: plGroup.novos.length,
+        atualizados: plGroup.atualizados.length,
+        revogados: revogar.length,
+        inalterados: plGroup.inalterados.length,
+        planosImportados,
+      };
     },
     onSuccess: (r) => {
-      toast.success(`${r.importados} CALs importados · ${r.duplicados} duplicados ignorados`);
       qc.invalidateQueries({ queryKey: ["cal_requisitos"] });
       setImportOpen(false);
+      setDeltaResult(r);
     },
     onError: (e: any) => toast.error(e.message ?? "Falha ao importar"),
+  });
+
+  const limparBase = useMutation({
+    mutationFn: async () => {
+      // Trunca em ordem (FKs cascade)
+      const { error } = await supabase.from("cal_requisitos").delete().not("id", "is", null);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Base do CAL limpa. Pronta pra importar do zero.");
+      qc.invalidateQueries({ queryKey: ["cal_requisitos"] });
+      setPurgeOpen(false);
+    },
+    onError: (e: any) => toast.error(e.message ?? "Falha ao limpar"),
   });
 
   return (
@@ -127,6 +279,19 @@ function CalDashboardPage() {
           </div>
         </div>
         <div className="flex gap-2">
+          <Dialog open={purgeOpen} onOpenChange={setPurgeOpen}>
+            <DialogTrigger asChild>
+              <Button variant="ghost" className="text-red-400 hover:text-red-300"><Trash2 className="h-4 w-4 mr-2" />Limpar base</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader><DialogTitle>Limpar toda a base de CALs?</DialogTitle></DialogHeader>
+              <p className="text-sm text-muted-foreground">Apaga <strong>todos os requisitos, normas vinculadas e planos de ação do CAL</strong>. Use apenas antes de reimportar a planilha correta. Essa ação não pode ser desfeita.</p>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setPurgeOpen(false)}>Cancelar</Button>
+                <Button variant="destructive" onClick={() => limparBase.mutate()} disabled={limparBase.isPending}>{limparBase.isPending ? "Limpando..." : "Sim, limpar tudo"}</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
           <Dialog open={importOpen} onOpenChange={setImportOpen}>
             <DialogTrigger asChild>
               <Button variant="outline"><Upload className="h-4 w-4 mr-2" />Importar planilha</Button>
@@ -134,7 +299,7 @@ function CalDashboardPage() {
             <DialogContent>
               <DialogHeader><DialogTitle>Importar planilha do CAL (Ius Natura)</DialogTitle></DialogHeader>
               <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">Envie o .xlsx exportado do sistemacal.com.br. O sistema detecta as colunas automaticamente e deduplica pelo número do CAL.</p>
+                <p className="text-sm text-muted-foreground">Envie o <strong>Requisito_de_CAL.xlsx</strong> exportado do Ius Natura. O sistema agrupa por requisito, importa as normas vinculadas + planos de ação, e detecta automaticamente novos / alterados / revogados.</p>
                 <Input
                   type="file"
                   accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -144,13 +309,34 @@ function CalDashboardPage() {
                   }}
                   disabled={importar.isPending}
                 />
-                {importar.isPending && <p className="text-xs text-muted-foreground">Processando...</p>}
+                {importar.isPending && <p className="text-xs text-muted-foreground">Processando 2.000+ requisitos, aguarde ~30s...</p>}
               </div>
             </DialogContent>
           </Dialog>
           <ManualDialog open={manualOpen} onOpenChange={setManualOpen} onCreated={() => qc.invalidateQueries({ queryKey: ["cal_requisitos"] })} userId={user?.id ?? null} />
         </div>
       </div>
+
+      {/* Delta pós-importação */}
+      <Dialog open={!!deltaResult} onOpenChange={(o) => !o && setDeltaResult(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-emerald-400" />Importação concluída</DialogTitle>
+          </DialogHeader>
+          {deltaResult && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="rounded border p-3 bg-emerald-500/10"><div className="text-xs text-muted-foreground">Novos</div><div className="text-2xl font-bold text-emerald-300">{deltaResult.novos}</div></div>
+                <div className="rounded border p-3 bg-amber-500/10"><div className="text-xs text-muted-foreground">Alterados</div><div className="text-2xl font-bold text-amber-300">{deltaResult.atualizados}</div></div>
+                <div className="rounded border p-3 bg-red-500/10"><div className="text-xs text-muted-foreground">Revogados</div><div className="text-2xl font-bold text-red-300">{deltaResult.revogados}</div></div>
+                <div className="rounded border p-3 bg-slate-500/10"><div className="text-xs text-muted-foreground">Inalterados</div><div className="text-2xl font-bold">{deltaResult.inalterados}</div></div>
+              </div>
+              <p className="text-sm text-muted-foreground">Também importei <strong>{deltaResult.planosImportados}</strong> planos de ação vinculados. Requisitos alterados foram marcados para <strong>revalidação</strong>.</p>
+            </div>
+          )}
+          <DialogFooter><Button onClick={() => setDeltaResult(null)}>Ok</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
