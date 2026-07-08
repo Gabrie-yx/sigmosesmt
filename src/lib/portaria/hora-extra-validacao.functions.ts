@@ -47,6 +47,10 @@ export type HoraExtraHojeConvocacao = {
   setor: string | null;
   centro_custo: string | null;
   modulo_origem: string | null;
+  solicitante_key: string;
+  solicitante_nome: string;
+  solicitante_funcao: string | null;
+  solicitante_setor: string | null;
   is_sabado: boolean;
   company_name: string | null;
   funcionarios: HoraExtraHojeFuncionario[];
@@ -60,7 +64,12 @@ export const listHoraExtraHoje = createServerFn({ method: "GET" })
       .from("hora_extra_sabado")
       .select(`
         id, data, horario_inicio, horario_fim, setor, centro_custo, modulo_origem,
+        created_by, lider_id, aberto_por_nome, criado_automatico_por_nome,
         company:company_id(name),
+        lider:lider_id(
+          id, observacao,
+          employee:employee_id(id, nome, setor, roles(name))
+        ),
         funcionarios:hora_extra_sabado_funcionarios(
           id, hora_extra_id, nome, funcao, externo, employee_id,
           permanencia_confirmada_at, permanencia_confirmada_por_nome,
@@ -76,11 +85,32 @@ export const listHoraExtraHoje = createServerFn({ method: "GET" })
 
     if (error) throw new Error(error.message);
 
+    const one = (v: any) => Array.isArray(v) ? v[0] : v;
+    const createdByIds = Array.from(new Set((data ?? []).map((c: any) => c.created_by).filter(Boolean)));
+    const liderPorUser = new Map<string, any>();
+    if (createdByIds.length > 0) {
+      const { data: lideres } = await context.supabase
+        .from("hora_extra_lideres")
+        .select("user_id, observacao, employee:employee_id(id, nome, setor, roles(name))")
+        .in("user_id", createdByIds);
+      (lideres ?? []).forEach((l: any) => {
+        if (l.user_id) liderPorUser.set(l.user_id, l);
+      });
+    }
+
     return (data ?? []).map((c: any) => {
       // Detecta sábado pela data (evita depender de campo texto).
       const [y, m, d] = String(c.data).split("-").map(Number);
       const dt = new Date(y, (m ?? 1) - 1, d ?? 1);
       const is_sabado = dt.getDay() === 6;
+      const liderRel = one(c.lider);
+      const liderByUser = c.created_by ? liderPorUser.get(c.created_by) : null;
+      const liderEmployee = one(liderRel?.employee ?? liderRel?.employees ?? liderByUser?.employee ?? liderByUser?.employees);
+      const liderRole = one(liderEmployee?.roles);
+      const solicitanteNome =
+        liderEmployee?.nome ?? c.aberto_por_nome ?? c.criado_automatico_por_nome ?? "Solicitante";
+      const solicitanteFuncao = liderRole?.name ?? liderRel?.observacao ?? liderByUser?.observacao ?? null;
+      const solicitanteSetor = liderEmployee?.setor ?? c.setor ?? c.modulo_origem ?? null;
       const funcs = (c.funcionarios ?? [])
         .filter((f: any) => !f.deleted_at)
         .map((f: any) => ({
@@ -106,6 +136,10 @@ export const listHoraExtraHoje = createServerFn({ method: "GET" })
         setor: c.setor,
         centro_custo: c.centro_custo,
         modulo_origem: c.modulo_origem,
+        solicitante_key: String(c.lider_id ?? c.created_by ?? solicitanteNome ?? c.id),
+        solicitante_nome: solicitanteNome,
+        solicitante_funcao: solicitanteFuncao,
+        solicitante_setor: solicitanteSetor,
         is_sabado,
         company_name: c.company?.name ?? null,
         funcionarios: funcs,
