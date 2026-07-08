@@ -312,3 +312,131 @@ export function mapStatusIusToCal(status: string): string {
   if (n.includes("aplic")) return "aplicavel";
   return "recebido";
 }
+
+// ============================================================
+// Parser da planilha de "Plano de Ação" (export separado do Ius Natura)
+// ============================================================
+
+export type CalPlanoAcaoLinhaImportada = CalPlanoAcaoImportado & {
+  /** Código do Requisito de CAL (RQTCL...) — usado para vincular ao requisito */
+  numero_cal?: string;
+};
+
+export type CalPlanoAcaoParseResult = {
+  planos: CalPlanoAcaoLinhaImportada[];
+  total_linhas: number;
+};
+
+function findPlanoHeaderRow(rows: unknown[][]): number {
+  const scan = Math.min(rows.length, 20);
+  const targets = ["plano de acao", "requisito legal", "codigo"];
+  for (let i = 0; i < scan; i++) {
+    const row = (rows[i] ?? []).map(norm);
+    const hits = targets.filter((t) => row.some((c) => c.includes(t))).length;
+    if (hits >= 2) return i;
+  }
+  return 0;
+}
+
+function assertPlanoAcaoSheet(headers: string[], sheetName: string) {
+  const set = new Set(headers.map(norm));
+  const hasPA =
+    [...set].some((h) => h.includes("plano de acao")) ||
+    [...set].some((h) => h.includes("texto do plano"));
+  const hasReq =
+    [...set].some((h) => h.includes("requisito legal")) ||
+    [...set].some((h) => h.includes("codigo do requisito"));
+  if (!hasPA || !hasReq) {
+    // Se parece a planilha de Requisitos, avisa
+    const pareceReq =
+      [...set].some((h) => h.includes("codigo do requisito de cal")) &&
+      [...set].some((h) => h.includes("descricao do requisito"));
+    if (pareceReq) {
+      throw new CalPlanilhaInvalidaError(
+        `Este arquivo é a exportação de "Requisito de CAL" do Ius Natura (aba "${sheetName}"). ` +
+          `Para importar apenas Planos de Ação, envie a exportação "Plano de Ação".`,
+      );
+    }
+    throw new CalPlanilhaInvalidaError(
+      `Planilha não reconhecida como "Plano de Ação" do Ius Natura (aba "${sheetName}"). ` +
+        `Esperado colunas como 'Código', 'Requisito Legal' e 'Plano de Ação'.`,
+    );
+  }
+}
+
+export async function parseCalPlanoAcaoPlanilha(file: File): Promise<CalPlanoAcaoParseResult> {
+  const buf = await file.arrayBuffer();
+  const wb = XLSX.read(buf, { type: "array" });
+  const sheetName = wb.SheetNames[0];
+  const sheet = wb.Sheets[sheetName];
+  const matrix = XLSX.utils.sheet_to_json<unknown[]>(sheet, {
+    header: 1,
+    defval: null,
+    raw: true,
+  });
+  if (!matrix.length) return { planos: [], total_linhas: 0 };
+  const headerIdx = findPlanoHeaderRow(matrix);
+  const headers = (matrix[headerIdx] as unknown[]).map((h, i) => String(h ?? `col_${i}`));
+  assertPlanoAcaoSheet(headers, sheetName);
+
+  const planos: CalPlanoAcaoLinhaImportada[] = [];
+  let totalLinhas = 0;
+
+  for (let i = headerIdx + 1; i < matrix.length; i++) {
+    const rawRow = matrix[i] as unknown[];
+    if (!rawRow || rawRow.every((v) => v == null || String(v).trim() === "")) continue;
+    const rec: Record<string, unknown> = {};
+    headers.forEach((h, idx) => (rec[h] = rawRow[idx]));
+    totalLinhas++;
+
+    const texto =
+      pick(rec, "Texto do Plano de Ação", "Plano de Ação", "Plano de Acao", "Descrição do Plano de Ação") ?? "";
+    if (!texto) continue;
+
+    const codigo_pa = pick(
+      rec,
+      "Código de Requisito de Plano de Açao",
+      "Código do Plano de Ação",
+      "Código do Plano de Acao",
+      "Código",
+      "Codigo",
+    );
+
+    const numero_cal = pick(
+      rec,
+      "Código do Requisito de CAL",
+      "Requisito Legal",
+      "Requisito de CAL",
+      "Código do Requisito Legal",
+    );
+
+    planos.push({
+      codigo_pa,
+      numero_cal,
+      texto,
+      tipo: pick(rec, "Tipo do Plano de Ação", "Tipo"),
+      status: pick(rec, "Status do Plano de Ação", "Status"),
+      data_prevista: parseDate(pick(rec, "Data prevista avaliação", "Data prevista", "Prazo")),
+      data_conclusao: parseDate(pick(rec, "Data de conclusão", "Data conclusão", "Concluído em")),
+      recorrente: norm(pick(rec, "Plano de Ação recorrente", "Recorrente")).startsWith("s"),
+      intervalo_recorrencia_dias:
+        Number(pick(rec, "Intervalo de recorrência (dias)", "Intervalo de recorrência") ?? 0) || undefined,
+      custo: Number(pick(rec, "Custo") ?? 0) || undefined,
+      natureza_custo: pick(rec, "Natureza do custo"),
+      usuario_execucao: pick(
+        rec,
+        "Usuário responsável pela execução",
+        "Responsável pela execução",
+        "Responsável",
+      ),
+      usuario_gestao: pick(
+        rec,
+        "Usuário responsável pela gestão",
+        "Responsável pela gestão",
+        "Gestor",
+      ),
+    });
+  }
+
+  return { planos, total_linhas: totalLinhas };
+}
