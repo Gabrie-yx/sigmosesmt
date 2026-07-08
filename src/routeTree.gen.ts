@@ -47,6 +47,7 @@ import { Route as AppAcoesRouteImport } from './routes/app.acoes'
 import { Route as AppAcidentesRouteImport } from './routes/app.acidentes'
 import { Route as ApiSigmoChatRouteImport } from './routes/api/sigmo-chat'
 import { Route as ApiPgrChatRouteImport } from './routes/api/pgr-chat'
+import { Route as AppPortariaIndexRouteImport } from './routes/app.portaria.index'
 import { Route as AppOssIndexRouteImport } from './routes/app.oss.index'
 import { Route as AppEstoqueIndexRouteImport } from './routes/app.estoque.index'
 import { Route as AppEmployeesIndexRouteImport } from './routes/app.employees.index'
@@ -303,6 +304,11 @@ const ApiPgrChatRoute = ApiPgrChatRouteImport.update({
   id: '/api/pgr-chat',
   path: '/api/pgr-chat',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppPortariaIndexRoute = AppPortariaIndexRouteImport.update({
+  id: '/portaria/',
+  path: '/portaria/',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppOssIndexRoute = AppOssIndexRouteImport.update({
   id: '/',
@@ -736,6 +742,7 @@ export interface FileRoutesByFullPath {
   '/app/employees/': typeof AppEmployeesIndexRoute
   '/app/estoque/': typeof AppEstoqueIndexRoute
   '/app/oss/': typeof AppOssIndexRoute
+  '/app/portaria/': typeof AppPortariaIndexRoute
   '/app/administrativo/gestao-ponto/$cicloId': typeof AppAdministrativoGestaoPontoCicloIdRoute
   '/app/estoque/epi/fichas-mensais': typeof AppEstoqueEpiFichasMensaisRoute
   '/app/modulo/$modulo/hora-extra': typeof AppModuloModuloHoraExtraRoute
@@ -835,6 +842,7 @@ export interface FileRoutesByTo {
   '/app/employees': typeof AppEmployeesIndexRoute
   '/app/estoque': typeof AppEstoqueIndexRoute
   '/app/oss': typeof AppOssIndexRoute
+  '/app/portaria': typeof AppPortariaIndexRoute
   '/app/administrativo/gestao-ponto/$cicloId': typeof AppAdministrativoGestaoPontoCicloIdRoute
   '/app/estoque/epi/fichas-mensais': typeof AppEstoqueEpiFichasMensaisRoute
   '/app/modulo/$modulo/hora-extra': typeof AppModuloModuloHoraExtraRoute
@@ -939,6 +947,7 @@ export interface FileRoutesById {
   '/app/employees/': typeof AppEmployeesIndexRoute
   '/app/estoque/': typeof AppEstoqueIndexRoute
   '/app/oss/': typeof AppOssIndexRoute
+  '/app/portaria/': typeof AppPortariaIndexRoute
   '/app/administrativo/gestao-ponto/$cicloId': typeof AppAdministrativoGestaoPontoCicloIdRoute
   '/app/estoque/epi/fichas-mensais': typeof AppEstoqueEpiFichasMensaisRoute
   '/app/modulo/$modulo/hora-extra': typeof AppModuloModuloHoraExtraRoute
@@ -1044,6 +1053,7 @@ export interface FileRouteTypes {
     | '/app/employees/'
     | '/app/estoque/'
     | '/app/oss/'
+    | '/app/portaria/'
     | '/app/administrativo/gestao-ponto/$cicloId'
     | '/app/estoque/epi/fichas-mensais'
     | '/app/modulo/$modulo/hora-extra'
@@ -1143,6 +1153,7 @@ export interface FileRouteTypes {
     | '/app/employees'
     | '/app/estoque'
     | '/app/oss'
+    | '/app/portaria'
     | '/app/administrativo/gestao-ponto/$cicloId'
     | '/app/estoque/epi/fichas-mensais'
     | '/app/modulo/$modulo/hora-extra'
@@ -1246,6 +1257,7 @@ export interface FileRouteTypes {
     | '/app/employees/'
     | '/app/estoque/'
     | '/app/oss/'
+    | '/app/portaria/'
     | '/app/administrativo/gestao-ponto/$cicloId'
     | '/app/estoque/epi/fichas-mensais'
     | '/app/modulo/$modulo/hora-extra'
@@ -1538,6 +1550,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/pgr-chat'
       preLoaderRoute: typeof ApiPgrChatRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/app/portaria/': {
+      id: '/app/portaria/'
+      path: '/portaria'
+      fullPath: '/app/portaria/'
+      preLoaderRoute: typeof AppPortariaIndexRouteImport
+      parentRoute: typeof AppRoute
     }
     '/app/oss/': {
       id: '/app/oss/'
@@ -2140,6 +2159,7 @@ interface AppRouteChildren {
   AppCalIndexRoute: typeof AppCalIndexRoute
   AppDdsIndexRoute: typeof AppDdsIndexRoute
   AppEstoqueIndexRoute: typeof AppEstoqueIndexRoute
+  AppPortariaIndexRoute: typeof AppPortariaIndexRoute
   AppModuloModuloHoraExtraRoute: typeof AppModuloModuloHoraExtraRoute
   AppModuloEletricaRequisicaoComprasRoute: typeof AppModuloEletricaRequisicaoComprasRoute
   AppModuloMecanicaRequisicaoComprasRoute: typeof AppModuloMecanicaRequisicaoComprasRoute
@@ -2218,6 +2238,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppCalIndexRoute: AppCalIndexRoute,
   AppDdsIndexRoute: AppDdsIndexRoute,
   AppEstoqueIndexRoute: AppEstoqueIndexRoute,
+  AppPortariaIndexRoute: AppPortariaIndexRoute,
   AppModuloModuloHoraExtraRoute: AppModuloModuloHoraExtraRoute,
   AppModuloEletricaRequisicaoComprasRoute:
     AppModuloEletricaRequisicaoComprasRoute,
