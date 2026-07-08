@@ -83,20 +83,26 @@ export function HoraExtraHojeCard() {
   const isEmpty = !data || data.length === 0;
 
   return (
-    <div className="rounded-2xl bg-card border border-border overflow-hidden">
-      <div className="px-4 py-3 border-b border-border flex items-center justify-between bg-primary/5">
+    <div
+      className="rounded-2xl bg-card border border-primary/40 overflow-hidden"
+      style={{
+        boxShadow:
+          "0 0 0 1px hsl(var(--primary) / 0.25), 0 0 24px -4px hsl(var(--primary) / 0.55), inset 0 0 18px -8px hsl(var(--primary) / 0.35)",
+      }}
+    >
+      <div className="px-4 py-3 border-b border-primary/25 flex items-center justify-between bg-gradient-to-r from-primary/10 via-transparent to-primary/10">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="h-8 w-8 rounded-lg bg-primary/15 text-primary grid place-items-center shrink-0">
+          <div className="h-9 w-9 rounded-xl bg-primary/20 text-primary grid place-items-center shrink-0 ring-1 ring-primary/40">
             <CalendarClock className="h-4 w-4" />
           </div>
           <div className="min-w-0">
-            <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Portaria valida</p>
+            <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-muted-foreground">Portaria valida</p>
             <h2 className="font-bold text-base leading-tight truncate">Hora Extra Hoje</h2>
           </div>
         </div>
-        <div className="text-right">
-          <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Validados</p>
-          <p className="font-bold text-lg text-foreground">{totais.validados}<span className="text-muted-foreground text-sm">/{totais.total}</span></p>
+        <div className="text-right shrink-0">
+          <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-muted-foreground">Validados</p>
+          <p className="font-bold text-lg text-foreground tabular-nums">{totais.validados}<span className="text-muted-foreground text-sm">/{totais.total}</span></p>
         </div>
       </div>
 
@@ -137,8 +143,7 @@ function ConvocacaoBloco({
 }) {
   const [expanded, setExpanded] = useState(true);
   const label = conv.is_sabado ? "Sábado" : "Dia útil";
-  const modulo = conv.modulo_origem ? ` · ${conv.modulo_origem.toUpperCase()}` : "";
-  const setor = conv.setor ? ` · ${conv.setor}` : "";
+  const modulo = conv.modulo_origem ? conv.modulo_origem.toUpperCase() : null;
   const previsto = conv.horario_inicio && conv.horario_fim
     ? `${conv.horario_inicio.slice(0, 5)}–${conv.horario_fim.slice(0, 5)}`
     : conv.horario_fim ? `até ${conv.horario_fim.slice(0, 5)}` : "";
@@ -147,15 +152,26 @@ function ConvocacaoBloco({
     <div>
       <button
         onClick={() => setExpanded((v) => !v)}
-        className="w-full px-4 py-2.5 flex items-center justify-between gap-3 hover:bg-muted/40 transition text-left"
+        className="w-full px-4 py-3 flex items-center justify-between gap-3 hover:bg-muted/40 transition text-left"
       >
-        <div className="min-w-0">
-          <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">{label}{modulo}{setor}</p>
-          <p className="text-sm font-semibold truncate">
-            {conv.company_name ?? "—"} <span className="text-muted-foreground font-normal">· {conv.funcionarios.length} pessoa(s){previsto ? ` · ${previsto}` : ""}</span>
-          </p>
+        <div className="min-w-0 flex items-center gap-2 flex-wrap">
+          <span className="text-[10px] font-bold uppercase tracking-[0.12em] px-2 py-0.5 rounded-md bg-primary/15 text-primary border border-primary/30">
+            {label}
+          </span>
+          {modulo && (
+            <span className="text-[10px] font-semibold uppercase tracking-[0.12em] px-2 py-0.5 rounded-md bg-muted text-muted-foreground border border-border">
+              {modulo}
+            </span>
+          )}
+          {previsto && (
+            <span className="text-[11px] font-semibold text-foreground tabular-nums inline-flex items-center gap-1">
+              <Clock3 className="h-3 w-3 text-muted-foreground" />{previsto}
+            </span>
+          )}
+          <span className="text-[11px] text-muted-foreground inline-flex items-center gap-1">
+            <Users className="h-3 w-3" />{conv.funcionarios.length} pessoa{conv.funcionarios.length === 1 ? "" : "s"}
+          </span>
         </div>
-        <Users className="h-4 w-4 text-muted-foreground shrink-0" />
       </button>
 
       {expanded && (
@@ -193,18 +209,38 @@ function FuncionarioRow({
   const segundo = { key: "saida" as const, label: "Saída", icon: LogOut, at: f.saida_confirmada_at, por: f.saida_confirmada_por_nome };
   const iniciais = f.nome.split(/\s+/).map((p) => p[0]).slice(0, 2).join("").toUpperCase();
 
+  const completo = !!primeiro.at && !!segundo.at;
+
   return (
-    <li className="px-3 lg:px-4 py-2.5 flex items-center gap-3">
-      <div className="shrink-0">
+    <li className={`px-3 lg:px-4 py-3 flex items-center gap-3 transition ${completo ? "bg-primary/[0.04]" : ""}`}>
+      <div className="shrink-0 relative">
         {f.foto_url ? (
-          <img src={f.foto_url} className="h-9 w-9 rounded-full object-cover object-center border border-border bg-muted" alt="" loading="lazy" />
+          <img
+            src={f.foto_url}
+            className="h-12 w-12 rounded-full object-cover border border-border bg-muted"
+            style={{ objectPosition: "center 20%" }}
+            alt=""
+            loading="lazy"
+          />
         ) : (
-          <div className="h-9 w-9 rounded-full bg-muted text-muted-foreground font-bold text-[11px] flex items-center justify-center border border-border">{iniciais}</div>
+          <div className="h-12 w-12 rounded-full bg-muted text-muted-foreground font-bold text-xs flex items-center justify-center border border-border">
+            {iniciais}
+          </div>
+        )}
+        {completo && (
+          <span className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full bg-primary text-primary-foreground grid place-items-center border-2 border-card">
+            <CheckCircle2 className="h-2.5 w-2.5" />
+          </span>
         )}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold truncate">{f.nome}{f.externo && <span className="ml-1.5 text-[9px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">externo</span>}</p>
-        {f.funcao && <p className="text-[11px] text-muted-foreground truncate">{f.funcao}</p>}
+        <p className="text-sm font-semibold truncate leading-tight">
+          {f.nome}
+          {f.externo && (
+            <span className="ml-1.5 text-[9px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">externo</span>
+          )}
+        </p>
+        {f.funcao && <p className="text-[11px] text-muted-foreground truncate mt-0.5">{f.funcao}</p>}
       </div>
 
       <div className="flex items-center gap-1.5 shrink-0">
