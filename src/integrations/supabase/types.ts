@@ -4021,6 +4021,9 @@ export type Database = {
           created_at: string
           created_by: string | null
           data: string
+          decisao_motivo: string | null
+          decisao_portaria_at: string | null
+          decisao_portaria_por: string | null
           employee_id: string
           horario_retorno: string | null
           horario_saida: string
@@ -4030,6 +4033,7 @@ export type Database = {
           sig_func: boolean | null
           sig_sesmt: boolean | null
           sig_supervisor: boolean | null
+          status: string
           tipo: string
           updated_at: string
         }
@@ -4046,6 +4050,9 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           data: string
+          decisao_motivo?: string | null
+          decisao_portaria_at?: string | null
+          decisao_portaria_por?: string | null
           employee_id: string
           horario_retorno?: string | null
           horario_saida: string
@@ -4055,6 +4062,7 @@ export type Database = {
           sig_func?: boolean | null
           sig_sesmt?: boolean | null
           sig_supervisor?: boolean | null
+          status?: string
           tipo: string
           updated_at?: string
         }
@@ -4071,6 +4079,9 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           data?: string
+          decisao_motivo?: string | null
+          decisao_portaria_at?: string | null
+          decisao_portaria_por?: string | null
           employee_id?: string
           horario_retorno?: string | null
           horario_saida?: string
@@ -4080,6 +4091,7 @@ export type Database = {
           sig_func?: boolean | null
           sig_sesmt?: boolean | null
           sig_supervisor?: boolean | null
+          status?: string
           tipo?: string
           updated_at?: string
         }

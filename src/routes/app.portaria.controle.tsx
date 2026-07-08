@@ -14,6 +14,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { deletePortariaVisita } from "@/lib/portaria/foto-ocr.functions";
 import { toast } from "sonner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { SaidaAcoesDialog, type SaidaRow } from "@/components/portaria/saida-acoes-dialog";
 
 export const Route = createFileRoute("/app/portaria/controle")({
   component: ControleSesmtPage,
@@ -255,11 +256,12 @@ function StatusBadge({ status }: { status: string }) {
 function SaidasFuncTab() {
   const [inicio, setInicio] = useState<string>(() => { const d = new Date(); d.setDate(d.getDate() - 30); return d.toISOString().slice(0,10); });
   const [fim, setFim] = useState<string>(() => new Date().toISOString().slice(0,10));
+  const [selecionada, setSelecionada] = useState<SaidaRow | null>(null);
   const { data, isLoading } = useQuery({
     queryKey: ["portaria-sesmt-saidas", inicio, fim],
     queryFn: async () => {
       const { data: saidas } = await supabase.from("employee_saidas_expediente")
-        .select("id, data, horario_saida, com_retorno, tipo, motivo, employee_id, employees:employee_id(nome,cpf,matricula)")
+        .select("id, data, horario_saida, horario_retorno, com_retorno, tipo, motivo, observacao, status, employee_id, employees:employee_id(nome,cpf,matricula)")
         .gte("data", inicio).lte("data", fim)
         .order("data", { ascending: false }).order("horario_saida", { ascending: false });
       const ids = (saidas ?? []).map((s: any) => s.id);
@@ -293,7 +295,11 @@ function SaidasFuncTab() {
             {isLoading && <tr><td colSpan={5} className="p-6 text-center text-slate-400">Carregando…</td></tr>}
             {!isLoading && (data ?? []).length === 0 && <tr><td colSpan={5} className="p-6 text-center text-slate-400">Nada por aqui</td></tr>}
             {(data ?? []).map((s: any) => (
-              <tr key={s.id} className={!s.validacao ? "bg-red-50/40" : ""}>
+              <tr
+                key={s.id}
+                onClick={() => setSelecionada(s as SaidaRow)}
+                className={`cursor-pointer hover:bg-slate-100 transition ${!s.validacao ? "bg-red-50/40" : ""}`}
+              >
                 <td className="px-3 py-2">
                   <p className="font-bold">{s.employees?.nome}</p>
                   <p className="text-[10px] text-slate-500">{s.employees?.cpf ? formatCPFFromDigits(s.employees.cpf) : ""} · Mat. {s.employees?.matricula ?? "—"}</p>
@@ -302,15 +308,22 @@ function SaidasFuncTab() {
                 <td className="px-3 py-2 text-xs">{s.tipo} · {s.com_retorno ? "c/ retorno" : "s/ retorno"}</td>
                 <td className="px-3 py-2 text-xs">{s.validacao ? new Date(s.validacao.validada_at).toLocaleString("pt-BR") : <span className="text-red-600 font-black">— Não validou</span>}</td>
                 <td className="px-3 py-2">
-                  {s.validacao
-                    ? <span className="text-[10px] font-black uppercase tracking-widest bg-emerald-100 text-emerald-800 rounded-full px-2 py-0.5">Validada</span>
-                    : <span className="text-[10px] font-black uppercase tracking-widest bg-red-100 text-red-800 rounded-full px-2 py-0.5">Pendente</span>}
+                  {s.validacao ? (
+                    <span className="text-[10px] font-black uppercase tracking-widest bg-emerald-100 text-emerald-800 rounded-full px-2 py-0.5">Validada</span>
+                  ) : s.status === "INDEFERIDA" ? (
+                    <span className="text-[10px] font-black uppercase tracking-widest bg-amber-100 text-amber-800 rounded-full px-2 py-0.5">Indeferida</span>
+                  ) : s.status === "CANCELADA" ? (
+                    <span className="text-[10px] font-black uppercase tracking-widest bg-slate-200 text-slate-700 rounded-full px-2 py-0.5">Cancelada</span>
+                  ) : (
+                    <span className="text-[10px] font-black uppercase tracking-widest bg-red-100 text-red-800 rounded-full px-2 py-0.5">Pendente</span>
+                  )}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      <SaidaAcoesDialog open={!!selecionada} onClose={() => setSelecionada(null)} saida={selecionada} />
     </div>
   );
 }
