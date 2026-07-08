@@ -266,11 +266,22 @@ function EmpresaBloco({
       <div className="divide-y divide-border">
         {empresas.map(([empresa, funcs]) => (
           <div key={empresa}>
-            <div className="px-3 py-1.5 bg-muted/30 border-b border-border flex items-center justify-between gap-2">
-              <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-foreground inline-flex items-center gap-1.5">
-                <Building2 className="h-3 w-3 text-muted-foreground" /> {empresa}
+            <div
+              className="px-3 py-2 border-y border-primary/40 flex items-center justify-between gap-2 bg-gradient-to-r from-primary/25 via-primary/10 to-primary/25"
+              style={{
+                boxShadow:
+                  "inset 0 0 0 1px color-mix(in oklab, var(--primary) 20%, transparent), inset 0 -1px 0 0 color-mix(in oklab, var(--primary) 45%, transparent)",
+              }}
+            >
+              <span className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-foreground inline-flex items-center gap-2">
+                <span className="h-5 w-5 rounded-md bg-primary/25 text-primary grid place-items-center ring-1 ring-primary/40">
+                  <Building2 className="h-3 w-3" />
+                </span>
+                {empresa}
               </span>
-              <span className="text-[10px] text-muted-foreground tabular-nums">{funcs.length} func.</span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.12em] tabular-nums text-primary bg-primary/15 border border-primary/30 rounded-md px-2 py-0.5">
+                {funcs.length} func.
+              </span>
             </div>
             <ul className="divide-y divide-border">
               {funcs.map((f) => (
