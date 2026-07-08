@@ -74,8 +74,12 @@ function CalDashboardPage() {
   const areas = useMemo(() => {
     const s = new Set<string>();
     for (const r of requisitos) {
-      const a = (r.area_incidencia ?? r.area ?? "").trim();
-      if (a) s.add(a);
+      const raw = (r.area_incidencia ?? r.area ?? "").trim();
+      if (!raw) continue;
+      for (const part of raw.split(/[;,/|]/)) {
+        const p = part.trim();
+        if (p) s.add(p);
+      }
     }
     return Array.from(s).sort((a, b) => a.localeCompare(b));
   }, [requisitos]);
@@ -85,8 +89,9 @@ function CalDashboardPage() {
     return requisitos.filter((r) => {
       if (statusSel.size > 0 && !statusSel.has(r.status as CalStatus)) return false;
       if (areaSel !== "todas") {
-        const a = (r.area_incidencia ?? r.area ?? "").trim();
-        if (a !== areaSel) return false;
+        const raw = (r.area_incidencia ?? r.area ?? "").trim();
+        const partes = raw.split(/[;,/|]/).map((x) => x.trim()).filter(Boolean);
+        if (!partes.includes(areaSel)) return false;
       }
       if (criticSel !== "todas" && r.criticidade !== criticSel) return false;
       if (chip !== "nenhum") {
