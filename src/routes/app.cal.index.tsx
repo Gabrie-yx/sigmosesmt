@@ -27,7 +27,10 @@ function CalDashboardPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [busca, setBusca] = useState("");
-  const [filtroStatus, setFiltroStatus] = useState<string>("todos");
+  const [statusSel, setStatusSel] = useState<Set<CalStatus>>(new Set());
+  const [areaSel, setAreaSel] = useState<string>("todas");
+  const [criticSel, setCriticSel] = useState<string>("todas");
+  const [chip, setChip] = useState<"nenhum" | "em_atraso" | "vencendo7" | "sem_analise" | "revogado" | "nao_aplicavel" | "nao_atendido">("nenhum");
   const [importOpen, setImportOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
   const [deltaResult, setDeltaResult] = useState<null | {
@@ -68,14 +71,56 @@ function CalDashboardPage() {
     return { total, semAnalise, aplicaveis, atendidos, emAtraso, vencendo7 };
   }, [requisitos]);
 
+  const areas = useMemo(() => {
+    const s = new Set<string>();
+    for (const r of requisitos) {
+      const a = (r.area_incidencia ?? r.area ?? "").trim();
+      if (a) s.add(a);
+    }
+    return Array.from(s).sort((a, b) => a.localeCompare(b));
+  }, [requisitos]);
+
   const filtrados = useMemo(() => {
     const b = busca.toLowerCase();
     return requisitos.filter((r) => {
-      if (filtroStatus !== "todos" && r.status !== filtroStatus) return false;
+      if (statusSel.size > 0 && !statusSel.has(r.status as CalStatus)) return false;
+      if (areaSel !== "todas") {
+        const a = (r.area_incidencia ?? r.area ?? "").trim();
+        if (a !== areaSel) return false;
+      }
+      if (criticSel !== "todas" && r.criticidade !== criticSel) return false;
+      if (chip !== "nenhum") {
+        const d = daysUntil(r.prazo_atendimento);
+        if (chip === "em_atraso" && !(d !== null && d < 0 && !["atendido", "nao_aplicavel", "monitoramento", "revogado"].includes(r.status))) return false;
+        if (chip === "vencendo7" && !(d !== null && d >= 0 && d <= 7 && !["atendido", "nao_aplicavel", "revogado"].includes(r.status))) return false;
+        if (chip === "sem_analise" && r.status !== "recebido") return false;
+        if (chip === "revogado" && r.status !== "revogado") return false;
+        if (chip === "nao_aplicavel" && r.status !== "nao_aplicavel") return false;
+        if (chip === "nao_atendido" && ["atendido", "nao_aplicavel", "monitoramento", "revogado"].includes(r.status)) return false;
+      }
       if (!b) return true;
       return [r.numero_cal, r.norma, r.ementa, r.orgao, r.area].some((v) => (v ?? "").toLowerCase().includes(b));
     });
-  }, [requisitos, busca, filtroStatus]);
+  }, [requisitos, busca, statusSel, areaSel, criticSel, chip]);
+
+  function toggleStatus(s: CalStatus) {
+    setStatusSel((prev) => {
+      const n = new Set(prev);
+      if (n.has(s)) n.delete(s); else n.add(s);
+      return n;
+    });
+  }
+  function limparFiltros() {
+    setStatusSel(new Set()); setAreaSel("todas"); setCriticSel("todas"); setChip("nenhum"); setBusca("");
+  }
+  function aplicarKpi(k: "total" | "sem_analise" | "aplicaveis" | "atendidos" | "vencendo7" | "em_atraso") {
+    limparFiltros();
+    if (k === "sem_analise") setChip("sem_analise");
+    else if (k === "aplicaveis") setStatusSel(new Set(["aplicavel", "em_tratativa", "atendido", "monitoramento"] as CalStatus[]));
+    else if (k === "atendidos") setStatusSel(new Set(["atendido"] as CalStatus[]));
+    else if (k === "vencendo7") setChip("vencendo7");
+    else if (k === "em_atraso") setChip("em_atraso");
+  }
 
   const importar = useMutation({
     mutationFn: async (file: File) => {
