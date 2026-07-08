@@ -103,12 +103,19 @@ export async function parseCalPlanilha(file: File): Promise<CalRequisitoImportad
     const ementa =
       pick(rec, "ementa", "descricao", "assunto", "objeto", "texto") || "(sem ementa)";
     if (!numero) continue;
+    // O texto completo do requisito pode ter dezenas de KB (estoura índice B-tree).
+    // Guardamos o resumo em `norma` (≤ 500 chars) e o texto integral em `texto_legal`.
+    const normaFull = norma;
+    const normaCurta = normaFull.length > 500 ? normaFull.slice(0, 497) + "…" : normaFull;
+    const textoLegal =
+      pick(rec, "texto legal", "texto do requisito") ||
+      (normaFull.length > 500 ? normaFull : undefined);
     out.push({
       numero_cal: numero,
-      norma,
+      norma: normaCurta,
       titulo: pick(rec, "titulo"),
       ementa,
-      texto_legal: pick(rec, "texto legal", "texto do requisito"),
+      texto_legal: textoLegal,
       orgao: pick(rec, "orgao", "órgao", "orgao emissor", "emissor"),
       esfera: pick(rec, "esfera", "abrangencia"),
       data_publicacao: parseDate(
