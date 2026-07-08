@@ -80,7 +80,7 @@ export function HoraExtraHojeCard() {
     );
   }
 
-  if (!data || data.length === 0) return null;
+  const isEmpty = !data || data.length === 0;
 
   return (
     <div className="rounded-2xl bg-card border border-border overflow-hidden">
@@ -100,6 +100,15 @@ export function HoraExtraHojeCard() {
         </div>
       </div>
 
+      {isEmpty ? (
+        <div className="px-4 py-8 text-center">
+          <CalendarClock className="h-7 w-7 mx-auto opacity-40 mb-2 text-muted-foreground" />
+          <p className="text-sm font-semibold text-foreground">Sem hora extra aprovada pra hoje</p>
+          <p className="text-xs mt-1 text-muted-foreground max-w-sm mx-auto">
+            Assim que o encarregado abrir uma convocação e o supervisor aprovar, os funcionários aparecem aqui pra validar permanência/entrada e saída.
+          </p>
+        </div>
+      ) : (
       <div className="divide-y divide-border">
         {data.map((conv) => (
           <ConvocacaoBloco
@@ -112,6 +121,7 @@ export function HoraExtraHojeCard() {
           />
         ))}
       </div>
+      )}
     </div>
   );
 }
