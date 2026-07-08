@@ -523,15 +523,21 @@ function PlanosCalPage() {
 
       {/* Modal de Tratativa */}
       <Dialog open={!!tratando} onOpenChange={(o) => !o && setTratando(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Tratativa do Plano {tratando?.codigo_pa}</DialogTitle>
           </DialogHeader>
           {tratando && (
             <div className="space-y-4">
               <div className="rounded-md border border-border bg-muted/30 p-3 text-sm">
-                <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Descrição</div>
-                <p className="leading-snug">{tratando.texto ?? "—"}</p>
+                <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Requisito Legal</div>
+                <p className="leading-snug">{tratando.requisito_legal_texto ?? tratando.texto ?? "—"}</p>
+                {tratando.requisito_legal_texto && tratando.texto && tratando.texto !== tratando.requisito_legal_texto && (
+                  <>
+                    <div className="text-xs text-muted-foreground uppercase tracking-wide mt-3 mb-1">Descrição do PA</div>
+                    <p className="leading-snug text-muted-foreground">{tratando.texto}</p>
+                  </>
+                )}
                 <div className="grid grid-cols-2 gap-3 mt-3 text-xs">
                   <div><span className="text-muted-foreground">CAL:</span> <span className="font-mono">{tratando.cal_requisitos?.numero_cal ?? "—"}</span></div>
                   <div><span className="text-muted-foreground">Norma:</span> {tratando.cal_requisitos?.norma ?? "—"}</div>
@@ -539,6 +545,7 @@ function PlanosCalPage() {
                   <div><span className="text-muted-foreground">Tipo:</span> {tratando.tipo ?? "—"}</div>
                   <div><span className="text-muted-foreground">Responsável:</span> {tratando.usuario_execucao ?? "—"}</div>
                   <div><span className="text-muted-foreground">Gestão:</span> {tratando.usuario_gestao ?? "—"}</div>
+                  <div className="col-span-2"><span className="text-muted-foreground">Área:</span> {tratando.area_pa ?? tratando.cal_requisitos?.area_incidencia ?? tratando.cal_requisitos?.area ?? "—"}</div>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -560,9 +567,10 @@ function PlanosCalPage() {
                 </div>
               </div>
               <div>
-                <Label className="text-xs">Observações / Evidência (opcional)</Label>
-                <Textarea value={tObs} onChange={(e) => setTObs(e.target.value)} rows={3} placeholder="Registre a tratativa, ação executada, evidência..." />
+                <Label className="text-xs">Observações da tratativa</Label>
+                <Textarea value={tObs} onChange={(e) => setTObs(e.target.value)} rows={3} placeholder="Registre a tratativa, ação executada, o que foi feito..." />
               </div>
+              <EvidenciasPA planoId={tratando.id} />
             </div>
           )}
           <DialogFooter>
