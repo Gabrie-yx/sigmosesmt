@@ -1,19 +1,55 @@
 import * as XLSX from "xlsx";
 
+export type CalNormaVinculada = {
+  codigo_norma: string;
+  descricao_norma?: string;
+  data_inclusao?: string;
+};
+
+export type CalPlanoAcaoImportado = {
+  codigo_pa?: string;
+  texto: string;
+  tipo?: string;
+  status?: string;
+  data_prevista?: string;
+  data_conclusao?: string;
+  recorrente: boolean;
+  intervalo_recorrencia_dias?: number;
+  custo?: number;
+  natureza_custo?: string;
+  usuario_execucao?: string;
+  usuario_gestao?: string;
+};
+
 export type CalRequisitoImportado = {
-  numero_cal: string;
-  norma: string;
-  titulo?: string;
+  numero_cal: string; // RQTCL...  (chave única no Ius Natura)
+  codigo_requisito_generico?: string; // RL...
+  cliente?: string; // CAL + nome (ex.: "DMN Estaleiro da Amazonia")
+  codigo_cal?: string; // CAL5076
   ementa: string;
+  norma: string; // resumo das normas para busca rápida
   texto_legal?: string;
-  orgao?: string;
-  esfera?: string;
-  data_publicacao?: string; // yyyy-mm-dd
-  area?: string;
+  temas: string[];
+  tipo_evidencia?: string;
+  evidencia_texto?: string;
+  justificativa?: string;
+  area?: string; // Área responsável
+  area_incidencia?: string;
+  status_vcl?: string;
+  data_vcl?: string;
+  data_ultima_alteracao_ius?: string;
+  data_inclusao_cal?: string;
   criticidade: "baixa" | "media" | "alta" | "critica";
-  prazo_atendimento?: string;
-  cliente?: string;
+  status_ius: string; // "Atendido" / "Pendente" / etc (bruto do Ius Natura)
+  normas: CalNormaVinculada[];
+  planos_acao: CalPlanoAcaoImportado[];
+  content_hash: string;
   raw: Record<string, unknown>;
+};
+
+export type CalParseResult = {
+  requisitos: CalRequisitoImportado[];
+  total_linhas: number;
 };
 
 const norm = (s: unknown) =>
@@ -23,9 +59,8 @@ const norm = (s: unknown) =>
     .trim()
     .toLowerCase();
 
-/** Procura o header row varrendo as primeiras 20 linhas. */
 function findHeaderRow(rows: unknown[][]): number {
-  const targets = ["cal", "requisito", "norma", "lei", "portaria", "ementa", "descricao"];
+  const targets = ["codigo do requisito de cal", "descricao do requisito", "codigo do cal"];
   const scan = Math.min(rows.length, 20);
   for (let i = 0; i < scan; i++) {
     const row = (rows[i] ?? []).map(norm);
@@ -36,11 +71,13 @@ function findHeaderRow(rows: unknown[][]): number {
 }
 
 function pick(row: Record<string, unknown>, ...candidates: string[]): string | undefined {
-  for (const [k, v] of Object.entries(row)) {
-    const kn = norm(k);
-    if (candidates.some((c) => kn.includes(norm(c)))) {
-      const val = String(v ?? "").trim();
-      if (val) return val;
+  for (const c of candidates) {
+    const target = norm(c);
+    for (const [k, v] of Object.entries(row)) {
+      if (norm(k) === target) {
+        const val = String(v ?? "").trim();
+        if (val) return val;
+      }
     }
   }
   return undefined;
@@ -48,17 +85,15 @@ function pick(row: Record<string, unknown>, ...candidates: string[]): string | u
 
 function parseCriticidade(v?: string): CalRequisitoImportado["criticidade"] {
   const n = norm(v);
-  if (n.includes("critic")) return "critica";
+  if (n.includes("sim") || n.includes("critic")) return "critica";
   if (n.includes("alta") || n.includes("alto")) return "alta";
   if (n.includes("baix")) return "baixa";
   return "media";
 }
 
-/** Converte data (Excel serial ou string dd/mm/yyyy) para yyyy-mm-dd. */
 function parseDate(v: unknown): string | undefined {
   if (v == null || v === "") return undefined;
   if (typeof v === "number") {
-    // Excel serial
     const d = XLSX.SSF.parse_date_code(v);
     if (!d) return undefined;
     const mm = String(d.m).padStart(2, "0");
@@ -77,7 +112,27 @@ function parseDate(v: unknown): string | undefined {
   return undefined;
 }
 
-export async function parseCalPlanilha(file: File): Promise<CalRequisitoImportado[]> {
+function splitList(s?: string): string[] {
+  if (!s) return [];
+  return s
+    .split(/[;\n]/)
+    .map((x) => x.trim())
+    .filter(Boolean);
+}
+
+function mapStatusIus(s?: string): string {
+  return String(s ?? "").trim();
+}
+
+/** Hash simples e determinístico (djb2) do conteúdo relevante do requisito. */
+function contentHash(payload: unknown): string {
+  const s = JSON.stringify(payload);
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
+  return (h >>> 0).toString(36);
+}
+
+export async function parseCalPlanilha(file: File): Promise<CalParseResult> {
   const buf = await file.arrayBuffer();
   const wb = XLSX.read(buf, { type: "array" });
   const sheet = wb.Sheets[wb.SheetNames[0]];
@@ -86,47 +141,139 @@ export async function parseCalPlanilha(file: File): Promise<CalRequisitoImportad
     defval: null,
     raw: true,
   });
-  if (!matrix.length) return [];
+  if (!matrix.length) return { requisitos: [], total_linhas: 0 };
   const headerIdx = findHeaderRow(matrix);
   const headers = (matrix[headerIdx] as unknown[]).map((h, i) => String(h ?? `col_${i}`));
-  const out: CalRequisitoImportado[] = [];
+
+  // Agrupamos por "Código do Requisito de CAL" (RQTCL...) — cada RQTCL pode
+  // aparecer em várias linhas (1 por Norma Legal vinculada).
+  const map = new Map<string, CalRequisitoImportado>();
+  let totalLinhas = 0;
+
   for (let i = headerIdx + 1; i < matrix.length; i++) {
     const rawRow = matrix[i] as unknown[];
     if (!rawRow || rawRow.every((v) => v == null || String(v).trim() === "")) continue;
     const rec: Record<string, unknown> = {};
     headers.forEach((h, idx) => (rec[h] = rawRow[idx]));
-    const numero =
-      pick(rec, "n cal", "no cal", "num cal", "cal n", "codigo cal", "codigo", "cal") ||
-      pick(rec, "id");
-    const norma =
-      pick(rec, "norma", "requisito", "lei", "portaria", "nr ", "instrucao") || "N/D";
-    const ementa =
-      pick(rec, "ementa", "descricao", "assunto", "objeto", "texto") || "(sem ementa)";
-    if (!numero) continue;
-    // O texto completo do requisito pode ter dezenas de KB (estoura índice B-tree).
-    // Guardamos o resumo em `norma` (≤ 500 chars) e o texto integral em `texto_legal`.
-    const normaFull = norma;
-    const normaCurta = normaFull.length > 500 ? normaFull.slice(0, 497) + "…" : normaFull;
-    const textoLegal =
-      pick(rec, "texto legal", "texto do requisito") ||
-      (normaFull.length > 500 ? normaFull : undefined);
-    out.push({
-      numero_cal: numero,
-      norma: normaCurta,
-      titulo: pick(rec, "titulo"),
+    totalLinhas++;
+
+    const rqtcl = pick(rec, "Código do Requisito de CAL");
+    if (!rqtcl) continue;
+
+    const codigosNorma = splitList(pick(rec, "Código da Norma Legal"));
+    const descsNorma = splitList(pick(rec, "Normas Legais associadas"));
+    const dataInclusaoLine = pick(rec, "Data de inclusão da Norma Legal CAL");
+    // "NL11763 - 12/06/2024; NL16539 - 12/06/2024"
+    const inclusaoMap = new Map<string, string>();
+    if (dataInclusaoLine) {
+      for (const chunk of splitList(dataInclusaoLine)) {
+        const m = chunk.match(/^(\S+)\s*-\s*(.+)$/);
+        if (m) {
+          const d = parseDate(m[2]);
+          if (d) inclusaoMap.set(m[1], d);
+        }
+      }
+    }
+    const normasLinha: CalNormaVinculada[] = codigosNorma.map((cod, idx) => ({
+      codigo_norma: cod,
+      descricao_norma: descsNorma[idx],
+      data_inclusao: inclusaoMap.get(cod),
+    }));
+
+    const paTexto = pick(rec, "Texto do Plano de Ação");
+    const planosLinha: CalPlanoAcaoImportado[] = paTexto
+      ? [
+          {
+            codigo_pa: pick(rec, "Código de Requisito de Plano de Açao"),
+            texto: paTexto,
+            tipo: pick(rec, "Tipo do Plano de Ação"),
+            status: pick(rec, "Status do Plano de Ação"),
+            data_prevista: parseDate(pick(rec, "Data prevista avaliação")),
+            data_conclusao: parseDate(pick(rec, "Data de conclusão")),
+            recorrente: norm(pick(rec, "Plano de Ação recorrente")).startsWith("s"),
+            intervalo_recorrencia_dias: Number(
+              pick(rec, "Intervalo de recorrência (dias)") ?? 0,
+            ) || undefined,
+            custo: Number(pick(rec, "Custo") ?? 0) || undefined,
+            natureza_custo: pick(rec, "Natureza do custo"),
+            usuario_execucao: pick(rec, "Usuário responsável pela execução"),
+            usuario_gestao: pick(rec, "Usuário responsável pela gestão"),
+          },
+        ]
+      : [];
+
+    const existing = map.get(rqtcl);
+    if (existing) {
+      // append novas normas / planos únicos
+      for (const n of normasLinha) {
+        if (!existing.normas.some((x) => x.codigo_norma === n.codigo_norma)) {
+          existing.normas.push(n);
+        }
+      }
+      for (const p of planosLinha) {
+        if (!existing.planos_acao.some((x) => x.codigo_pa === p.codigo_pa && x.texto === p.texto)) {
+          existing.planos_acao.push(p);
+        }
+      }
+      continue;
+    }
+
+    const ementa = pick(rec, "Descrição do Requisito") ?? "(sem descrição)";
+    const normaResumo =
+      descsNorma.slice(0, 3).join("; ") + (descsNorma.length > 3 ? "…" : "");
+    const temas = splitList(pick(rec, "Temas do Requisito"));
+
+    const req: CalRequisitoImportado = {
+      numero_cal: rqtcl,
+      codigo_requisito_generico: pick(rec, "Código do Requisito"),
+      cliente: pick(rec, "CAL"),
+      codigo_cal: pick(rec, "Código do CAL"),
       ementa,
-      texto_legal: textoLegal,
-      orgao: pick(rec, "orgao", "órgao", "orgao emissor", "emissor"),
-      esfera: pick(rec, "esfera", "abrangencia"),
-      data_publicacao: parseDate(
-        pick(rec, "data publicacao", "publicacao", "data de publicacao", "dt public"),
-      ),
-      area: pick(rec, "area", "área", "setor"),
-      criticidade: parseCriticidade(pick(rec, "criticidade", "risco", "prioridade")),
-      prazo_atendimento: parseDate(pick(rec, "prazo", "vencimento", "data limite")),
-      cliente: pick(rec, "cliente", "empresa"),
+      norma: normaResumo || "N/D",
+      texto_legal: ementa.length > 500 ? ementa : undefined,
+      temas,
+      tipo_evidencia: pick(rec, "Tipo de evidência"),
+      evidencia_texto: pick(rec, "Evidência"),
+      justificativa: pick(rec, "Justificativa"),
+      area: pick(rec, "Área responsável"),
+      area_incidencia: pick(rec, "Área onde incide"),
+      status_vcl: pick(rec, "Status da VCL"),
+      data_vcl: parseDate(pick(rec, "Data da VCL")),
+      data_ultima_alteracao_ius: parseDate(pick(rec, "Data última alteração do Requisito de CAL")),
+      data_inclusao_cal: parseDate(pick(rec, "Data de inclusão do requisito no CAL")),
+      criticidade: parseCriticidade(pick(rec, "Requisito é crítico")),
+      status_ius: mapStatusIus(pick(rec, "Status consolidado do requisito")),
+      normas: normasLinha,
+      planos_acao: planosLinha,
+      content_hash: "",
       raw: rec,
-    });
+    };
+    map.set(rqtcl, req);
   }
-  return out;
+
+  const requisitos = Array.from(map.values()).map((r) => ({
+    ...r,
+    content_hash: contentHash({
+      e: r.ementa,
+      s: r.status_ius,
+      v: r.status_vcl,
+      d: r.data_ultima_alteracao_ius,
+      n: r.normas.map((x) => x.codigo_norma).sort(),
+      p: r.planos_acao.map((x) => `${x.codigo_pa}|${x.status}|${x.data_conclusao}`).sort(),
+    }),
+  }));
+
+  return { requisitos, total_linhas: totalLinhas };
+}
+
+/** Mapeia o "Status consolidado do requisito" do Ius Natura para o enum do SIGMO. */
+export function mapStatusIusToCal(status: string): string {
+  const n = norm(status);
+  if (n.includes("atendido")) return "atendido";
+  if (n.includes("nao aplic") || n.includes("não aplic")) return "nao_aplicavel";
+  if (n.includes("monitor")) return "monitoramento";
+  if (n.includes("tratativa") || n.includes("acao")) return "em_tratativa";
+  if (n.includes("analise") || n.includes("análise")) return "em_analise";
+  if (n.includes("aplic")) return "aplicavel";
+  return "recebido";
 }
