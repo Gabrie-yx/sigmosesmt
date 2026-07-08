@@ -127,6 +127,19 @@ function PlanosCalPage() {
       const { planos, total_linhas } = await parseCalPlanoAcaoPlanilha(file);
       if (!planos.length) throw new Error("Nenhum Plano de Ação encontrado na planilha.");
 
+      // Sanitização: Aline Farias de Oliveira saiu da empresa — o TST é Francisco Bandeira Almeida.
+      // Toda importação normaliza execução/gestão para evitar reintrodução do nome antigo.
+      const sanitizeUser = (v?: string | null) => {
+        if (!v) return v ?? null;
+        const norm = v.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+        if (norm.includes("aline") && norm.includes("farias")) return "Francisco Bandeira Almeida";
+        return v;
+      };
+      for (const p of planos) {
+        p.usuario_execucao = sanitizeUser(p.usuario_execucao) ?? undefined;
+        p.usuario_gestao = sanitizeUser(p.usuario_gestao) ?? undefined;
+      }
+
       // Pré-carrega requisitos: por numero_cal (RQTCL...) E por codigo_requisito_generico (RL...)
       const numerosCal = [...new Set(planos.map((p) => p.numero_cal).filter(Boolean))] as string[];
       const reqIdByNumero = new Map<string, string>();
