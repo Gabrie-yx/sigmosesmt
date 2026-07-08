@@ -1,0 +1,2 @@
+UPDATE cal_planos_acao SET usuario_execucao = 'Francisco Bandeira Almeida' WHERE usuario_execucao ILIKE '%aline farias%';
+UPDATE cal_planos_acao SET usuario_gestao = 'Francisco Bandeira Almeida' WHERE usuario_gestao ILIKE '%aline farias%';
