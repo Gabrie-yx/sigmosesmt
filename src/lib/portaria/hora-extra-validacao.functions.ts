@@ -56,7 +56,7 @@ export const listHoraExtraHoje = createServerFn({ method: "GET" })
     const y = nowLocal.getFullYear();
     const m = String(nowLocal.getMonth() + 1).padStart(2, "0");
     const day = String(nowLocal.getDate()).padStart(2, "0");
-    const hoje = ymdLocal();
+    const hoje = `${y}-${m}-${day}`;
     const { data, error } = await context.supabase
       .from("hora_extra_sabado")
       .select(`
@@ -171,10 +171,10 @@ export const confirmarValidacaoPortaria = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: perfil } = await context.supabase
       .from("profiles")
-      .select("full_name,email")
+      .select("full_name")
       .eq("id", context.userId)
       .maybeSingle();
-    const nome = (perfil?.full_name || perfil?.email || "Portaria") as string;
+    const nome = (perfil?.full_name || "Portaria") as string;
     const now = new Date().toISOString();
     const patch: Record<string, any> = {};
     if (data.tipo === "permanencia") {
