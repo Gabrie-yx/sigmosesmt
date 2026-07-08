@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { parseCalPlanoAcaoPlanilha } from "@/lib/cal-parser";
 import { ListChecks, Search, AlertTriangle, Clock, CheckCircle2, CircleDashed, Repeat, ArrowRight, ChevronLeft, ChevronRight, Upload } from "lucide-react";
@@ -79,6 +81,33 @@ function PlanosCalPage() {
   const [gestSel, setGestSel] = useState<string>("todos");
   const [tipoSel, setTipoSel] = useState<string>("todos");
   const [pagina, setPagina] = useState(1);
+  const [tratando, setTratando] = useState<PlanoRow | null>(null);
+  const [tStatus, setTStatus] = useState<string>("");
+  const [tConclusao, setTConclusao] = useState<string>("");
+  const [tObs, setTObs] = useState<string>("");
+
+  function abrirTratativa(p: PlanoRow) {
+    setTratando(p);
+    setTStatus(p.status ?? "Pendente");
+    setTConclusao(p.data_conclusao ?? "");
+    setTObs("");
+  }
+
+  const salvarTratativa = useMutation({
+    mutationFn: async () => {
+      if (!tratando) return;
+      const payload: any = { status: tStatus || null, data_conclusao: tConclusao || null };
+      if (tStatus === "Concluído" && !tConclusao) payload.data_conclusao = new Date().toISOString().slice(0, 10);
+      const { error } = await supabase.from("cal_planos_acao").update(payload).eq("id", tratando.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["cal_planos_acao_all"] });
+      toast.success("Tratativa registrada");
+      setTratando(null);
+    },
+    onError: (e: any) => toast.error(e.message ?? "Falha ao salvar tratativa"),
+  });
 
   const importarPAs = useMutation({
     mutationFn: async (file: File) => {
@@ -422,7 +451,7 @@ function PlanosCalPage() {
                 const area = p.cal_requisitos?.area_incidencia ?? p.cal_requisitos?.area ?? "—";
                 const temas = (p.cal_requisitos?.temas ?? []).slice(0, 3);
                 return (
-                  <TableRow key={p.id} className="align-top hover:bg-muted/30">
+                  <TableRow key={p.id} className="align-top hover:bg-muted/30 cursor-pointer" onClick={() => abrirTratativa(p)}>
                     <TableCell className="font-mono text-xs py-3">{p.codigo_pa ?? "—"}</TableCell>
                     <TableCell className="py-3">
                       <Badge variant="outline" className={`${VENC_COLOR[v.key]} whitespace-nowrap`}>{v.label}</Badge>
@@ -441,7 +470,7 @@ function PlanosCalPage() {
                     </TableCell>
                     <TableCell className="py-3 text-xs">
                       {p.cal_requisitos ? (
-                        <Link to="/app/cal/$id" params={{ id: p.cal_requisitos.id }} className="hover:underline block">
+                        <Link to="/app/cal/$id" params={{ id: p.cal_requisitos.id }} className="hover:underline block" onClick={(e) => e.stopPropagation()}>
                           <div className="font-semibold">{p.cal_requisitos.norma ?? "—"}</div>
                           <div className="font-mono text-[10px] text-muted-foreground">{p.cal_requisitos.numero_cal}</div>
                         </Link>
@@ -475,6 +504,59 @@ function PlanosCalPage() {
           </div>
         </div>
       )}
+
+      {/* Modal de Tratativa */}
+      <Dialog open={!!tratando} onOpenChange={(o) => !o && setTratando(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Tratativa do Plano {tratando?.codigo_pa}</DialogTitle>
+          </DialogHeader>
+          {tratando && (
+            <div className="space-y-4">
+              <div className="rounded-md border border-border bg-muted/30 p-3 text-sm">
+                <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Descrição</div>
+                <p className="leading-snug">{tratando.texto ?? "—"}</p>
+                <div className="grid grid-cols-2 gap-3 mt-3 text-xs">
+                  <div><span className="text-muted-foreground">CAL:</span> <span className="font-mono">{tratando.cal_requisitos?.numero_cal ?? "—"}</span></div>
+                  <div><span className="text-muted-foreground">Norma:</span> {tratando.cal_requisitos?.norma ?? "—"}</div>
+                  <div><span className="text-muted-foreground">Prazo:</span> {tratando.data_prevista ? new Date(tratando.data_prevista + "T00:00:00").toLocaleDateString("pt-BR") : "—"}</div>
+                  <div><span className="text-muted-foreground">Tipo:</span> {tratando.tipo ?? "—"}</div>
+                  <div><span className="text-muted-foreground">Responsável:</span> {tratando.usuario_execucao ?? "—"}</div>
+                  <div><span className="text-muted-foreground">Gestão:</span> {tratando.usuario_gestao ?? "—"}</div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">Status</Label>
+                  <Select value={tStatus} onValueChange={setTStatus}>
+                    <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Pendente">Pendente</SelectItem>
+                      <SelectItem value="Em andamento">Em andamento</SelectItem>
+                      <SelectItem value="Concluído">Concluído</SelectItem>
+                      <SelectItem value="Cancelado">Cancelado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs">Data de conclusão</Label>
+                  <Input type="date" value={tConclusao} onChange={(e) => setTConclusao(e.target.value)} className="h-9" />
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs">Observações / Evidência (opcional)</Label>
+                <Textarea value={tObs} onChange={(e) => setTObs(e.target.value)} rows={3} placeholder="Registre a tratativa, ação executada, evidência..." />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTratando(null)}>Cancelar</Button>
+            <Button onClick={() => salvarTratativa.mutate()} disabled={salvarTratativa.isPending} className="bg-red-600 hover:bg-red-700 text-white">
+              {salvarTratativa.isPending ? "Salvando..." : "Salvar tratativa"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
