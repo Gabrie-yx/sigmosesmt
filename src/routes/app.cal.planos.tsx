@@ -224,7 +224,7 @@ function PlanosCalPage() {
           <p className="font-semibold">Nenhum plano de ação encontrado</p>
           <p className="text-sm mt-1">
             {planos.length === 0
-              ? "A base de PAs está vazia. Importe uma planilha do Ius Natura contendo a aba de Planos de Ação, ou crie um plano a partir de um requisito."
+              ? "A base de PAs está vazia. Clique em \"Importar planilha\" no topo e envie o export do Ius Natura com a coluna \"Código de Requisito de Plano de Açao\" — os PAs entram automaticamente."
               : "Nenhum PA corresponde aos filtros atuais."}
           </p>
         </Card>
