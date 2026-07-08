@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Button } from "@/components/ui/button";
-import { Download, ExternalLink, Printer, X } from "lucide-react";
+import { Download, ExternalLink, Printer, RotateCcw, RotateCw, X, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { printImagePages, printPdf, renderPdfToImagePagesProgressive } from "@/lib/pdf-print";
@@ -36,11 +36,30 @@ export function FileViewerHost() {
   const [pdfPages, setPdfPages] = useState<string[]>([]);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const [rotation, setRotation] = useState(0);
 
   useEffect(() => {
     listeners.add(setPayload);
     return () => { listeners.delete(setPayload); };
   }, []);
+
+  useEffect(() => {
+    setZoom(1);
+    setRotation(0);
+  }, [payload?.url]);
+
+  useEffect(() => {
+    if (!payload) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "+" || e.key === "=") setZoom((z) => Math.min(6, z + 0.25));
+      else if (e.key === "-" || e.key === "_") setZoom((z) => Math.max(0.25, z - 0.25));
+      else if (e.key.toLowerCase() === "r") setRotation((r) => (r + 90) % 360);
+      else if (e.key === "0") { setZoom(1); setRotation(0); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [payload]);
 
   useEffect(() => {
     return () => {
@@ -142,6 +161,26 @@ export function FileViewerHost() {
         <div className="flex h-14 shrink-0 flex-row items-center justify-between gap-3 border-b border-slate-800 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 px-4 py-2">
           <DialogPrimitive.Title className="min-w-0 flex-1 truncate pr-2 text-sm font-semibold text-slate-100">{payload?.name}</DialogPrimitive.Title>
           <div className="flex shrink-0 items-center gap-2">
+            {isImage && (
+              <div className="flex items-center gap-1 rounded-md border border-white/20 bg-white/10 px-1 py-0.5 mr-1">
+                <Button size="icon" variant="ghost" onClick={() => setZoom((z) => Math.max(0.25, z - 0.25))} className="h-7 w-7 text-slate-100 hover:bg-white/20" title="Diminuir zoom (-)">
+                  <ZoomOut className="h-4 w-4" />
+                </Button>
+                <span className="min-w-[3rem] text-center text-[11px] font-semibold text-slate-100 tabular-nums">{Math.round(zoom * 100)}%</span>
+                <Button size="icon" variant="ghost" onClick={() => setZoom((z) => Math.min(6, z + 0.25))} className="h-7 w-7 text-slate-100 hover:bg-white/20" title="Aumentar zoom (+)">
+                  <ZoomIn className="h-4 w-4" />
+                </Button>
+                <Button size="icon" variant="ghost" onClick={() => setRotation((r) => (r - 90 + 360) % 360)} className="h-7 w-7 text-slate-100 hover:bg-white/20" title="Girar -90°">
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
+                <Button size="icon" variant="ghost" onClick={() => setRotation((r) => (r + 90) % 360)} className="h-7 w-7 text-slate-100 hover:bg-white/20" title="Girar +90° (R)">
+                  <RotateCw className="h-4 w-4" />
+                </Button>
+                <Button size="icon" variant="ghost" onClick={() => { setZoom(1); setRotation(0); }} className="h-7 w-7 text-slate-100 hover:bg-white/20" title="Resetar (0)">
+                  <Maximize2 className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
             <Button size="sm" variant="outline" onClick={handlePrint} className="h-8 border-white/20 bg-white/10 text-slate-100 hover:bg-red-700 hover:border-red-700 hover:text-white">
               <Printer className="h-4 w-4 mr-1" /> Imprimir
             </Button>
@@ -159,8 +198,27 @@ export function FileViewerHost() {
         <div className="min-h-0 flex-1 overflow-hidden bg-slate-100">
           {payload && (
             isImage ? (
-              <div className="w-full h-full flex items-center justify-center p-4">
-                <img src={payload.url} alt={payload.name} className="max-w-full max-h-full object-contain" />
+              <div
+                className="w-full h-full overflow-auto flex items-center justify-center p-4 bg-slate-200"
+                onWheel={(e) => {
+                  if (e.ctrlKey || e.metaKey) {
+                    e.preventDefault();
+                    setZoom((z) => Math.min(6, Math.max(0.25, z + (e.deltaY < 0 ? 0.15 : -0.15))));
+                  }
+                }}
+              >
+                <img
+                  src={payload.url}
+                  alt={payload.name}
+                  draggable={false}
+                  onDoubleClick={() => setZoom((z) => (z === 1 ? 2 : 1))}
+                  style={{
+                    transform: `rotate(${rotation}deg) scale(${zoom})`,
+                    transition: "transform 0.15s ease",
+                    cursor: zoom > 1 ? "grab" : "zoom-in",
+                  }}
+                  className="max-w-full max-h-full object-contain select-none"
+                />
               </div>
             ) : isPdf ? (
               <div className="h-full overflow-y-auto bg-zinc-200 px-3 py-4 sm:px-6">
