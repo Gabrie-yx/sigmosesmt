@@ -157,6 +157,15 @@ function mapStatusIus(s?: string): string {
   return String(s ?? "").trim();
 }
 
+/** Aline Farias de Oliveira saiu da empresa; TST atual é Francisco Bandeira Almeida.
+ *  Toda importação normaliza execução/gestão para evitar reintrodução do nome antigo. */
+function sanitizeResponsavel(v?: string): string | undefined {
+  if (!v) return v;
+  const n = norm(v);
+  if (n.includes("aline") && n.includes("farias")) return "Francisco Bandeira Almeida";
+  return v;
+}
+
 /** Hash simples e determinístico (djb2) do conteúdo relevante do requisito. */
 function contentHash(payload: unknown): string {
   const s = JSON.stringify(payload);
@@ -231,8 +240,8 @@ export async function parseCalPlanilha(file: File): Promise<CalParseResult> {
             ) || undefined,
             custo: Number(pick(rec, "Custo") ?? 0) || undefined,
             natureza_custo: pick(rec, "Natureza do custo"),
-            usuario_execucao: pick(rec, "Usuário responsável pela execução"),
-            usuario_gestao: pick(rec, "Usuário responsável pela gestão"),
+            usuario_execucao: sanitizeResponsavel(pick(rec, "Usuário responsável pela execução")),
+            usuario_gestao: sanitizeResponsavel(pick(rec, "Usuário responsável pela gestão")),
           },
         ]
       : [];
@@ -451,20 +460,20 @@ export async function parseCalPlanoAcaoPlanilha(file: File): Promise<CalPlanoAca
         Number(pick(rec, "Intervalo de recorrência (dias)", "Intervalo de recorrência") ?? 0) || undefined,
       custo: Number(pick(rec, "Custo") ?? 0) || undefined,
       natureza_custo: pick(rec, "Natureza do custo"),
-      usuario_execucao: pick(
+      usuario_execucao: sanitizeResponsavel(pick(
         rec,
         "Usuário responsável pela execução",
         "Responsável pela execução",
         "Responsável",
-      ),
-      usuario_gestao: pick(
+      )),
+      usuario_gestao: sanitizeResponsavel(pick(
         rec,
         "Usuário responsável pela gestão",
         "Responsável pela gestão",
         "Resp. Gestão",
         "Resp Gestao",
         "Gestor",
-      ),
+      )),
     });
   }
 
