@@ -64,6 +64,9 @@ type Funcionario = {
   presenca: string | null;
   employee_id?: string | null;
   employees?: { companies?: { name: string | null } | null } | null;
+  permanencia_confirmada_at?: string | null;
+  entrada_confirmada_at?: string | null;
+  saida_confirmada_at?: string | null;
 };
 
 const STATUS_BADGE: Record<string, string> = {
@@ -198,7 +201,7 @@ function AdministrativoHoraExtraRecebidaPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("hora_extra_sabado_funcionarios")
-        .select("id,hora_extra_id,nome,funcao,externo,presenca,employee_id,employees(companies(name))")
+        .select("id,hora_extra_id,nome,funcao,externo,presenca,employee_id,permanencia_confirmada_at,entrada_confirmada_at,saida_confirmada_at,employees(companies(name))")
         .in("hora_extra_id", ids);
       if (error) throw error;
       return (data ?? []) as Funcionario[];
