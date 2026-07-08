@@ -159,7 +159,7 @@ export const listHoraExtraHoje = createServerFn({ method: "GET" })
         solicitante_funcao: solicitanteFuncao,
         solicitante_setor: solicitanteSetor,
         is_sabado,
-        company_name: c.company?.name ?? null,
+        company_name: one(c.company)?.name ?? null,
         funcionarios: funcs,
       };
     });
