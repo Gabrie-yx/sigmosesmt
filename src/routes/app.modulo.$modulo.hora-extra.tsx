@@ -175,12 +175,14 @@ function HoraExtraModuloPage() {
           <div className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">
             Hora Extra
           </div>
-          <Button variant="outline" size="sm" asChild className="shrink-0 h-8 px-2 sm:px-3">
-            <Link to="/app/hoje" aria-label="Voltar">
-              <ArrowLeft className="h-4 w-4 sm:mr-1" />
-              <span className="hidden sm:inline">Voltar</span>
-            </Link>
-          </Button>
+          {!usaEscopoMarcador && (
+            <Button variant="outline" size="sm" asChild className="shrink-0 h-8 px-2 sm:px-3">
+              <Link to="/app/hoje" aria-label="Voltar">
+                <ArrowLeft className="h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">Voltar</span>
+              </Link>
+            </Button>
+          )}
         </div>
         <div className="flex items-start gap-3">
           <div className="shrink-0 rounded-lg bg-primary/20 border border-primary/40 p-2 text-primary">

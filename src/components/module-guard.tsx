@@ -28,7 +28,7 @@ const MODULE_ROLE_BYPASS: Partial<Record<AppModule, AppRole[]>> = {
 };
 
 export function ModuleRouteGuard({ children }: { children: React.ReactNode }) {
-  const { hasModule, hasMenu, isAdmin, roles, loading } = useAuth();
+  const { hasModule, hasMenu, isAdmin, roles, loading, isExtraSabadoMarcador } = useAuth();
   const location = useLocation();
 
   // Always allow account/security and dashboard root
@@ -36,7 +36,11 @@ export function ModuleRouteGuard({ children }: { children: React.ReactNode }) {
     (p) => location.pathname === p || location.pathname === "/app/"
   );
 
-  if (loading || allowAlways || isAdmin) return <>{children}</>;
+  const isHoraExtraMarcadorRoute =
+    location.pathname === "/app/modulo/terceirizadas/hora-extra" ||
+    location.pathname.startsWith("/app/modulo/terceirizadas/hora-extra/");
+
+  if (loading || allowAlways || isAdmin || (isExtraSabadoMarcador && isHoraExtraMarcadorRoute)) return <>{children}</>;
 
   const match = PATH_TO_MODULE.find((m) => location.pathname.startsWith(m.prefix));
   if (!match) return <>{children}</>;
