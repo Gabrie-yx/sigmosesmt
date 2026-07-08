@@ -4991,6 +4991,9 @@ export type Database = {
           deleted_at: string | null
           deleted_by: string | null
           employee_id: string | null
+          entrada_confirmada_at: string | null
+          entrada_confirmada_por: string | null
+          entrada_confirmada_por_nome: string | null
           externo: boolean
           externo_empresa: string | null
           funcao: string | null
@@ -5001,7 +5004,13 @@ export type Database = {
           marcado_por_nome: string | null
           nome: string
           ordem: number
+          permanencia_confirmada_at: string | null
+          permanencia_confirmada_por: string | null
+          permanencia_confirmada_por_nome: string | null
           presenca: string | null
+          saida_confirmada_at: string | null
+          saida_confirmada_por: string | null
+          saida_confirmada_por_nome: string | null
           transporte: boolean
         }
         Insert: {
@@ -5011,6 +5020,9 @@ export type Database = {
           deleted_at?: string | null
           deleted_by?: string | null
           employee_id?: string | null
+          entrada_confirmada_at?: string | null
+          entrada_confirmada_por?: string | null
+          entrada_confirmada_por_nome?: string | null
           externo?: boolean
           externo_empresa?: string | null
           funcao?: string | null
@@ -5021,7 +5033,13 @@ export type Database = {
           marcado_por_nome?: string | null
           nome: string
           ordem?: number
+          permanencia_confirmada_at?: string | null
+          permanencia_confirmada_por?: string | null
+          permanencia_confirmada_por_nome?: string | null
           presenca?: string | null
+          saida_confirmada_at?: string | null
+          saida_confirmada_por?: string | null
+          saida_confirmada_por_nome?: string | null
           transporte?: boolean
         }
         Update: {
@@ -5031,6 +5049,9 @@ export type Database = {
           deleted_at?: string | null
           deleted_by?: string | null
           employee_id?: string | null
+          entrada_confirmada_at?: string | null
+          entrada_confirmada_por?: string | null
+          entrada_confirmada_por_nome?: string | null
           externo?: boolean
           externo_empresa?: string | null
           funcao?: string | null
@@ -5041,7 +5062,13 @@ export type Database = {
           marcado_por_nome?: string | null
           nome?: string
           ordem?: number
+          permanencia_confirmada_at?: string | null
+          permanencia_confirmada_por?: string | null
+          permanencia_confirmada_por_nome?: string | null
           presenca?: string | null
+          saida_confirmada_at?: string | null
+          saida_confirmada_por?: string | null
+          saida_confirmada_por_nome?: string | null
           transporte?: boolean
         }
         Relationships: [
