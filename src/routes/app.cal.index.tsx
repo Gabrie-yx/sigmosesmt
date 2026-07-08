@@ -33,6 +33,7 @@ type PlanoAcaoResumo = {
   data_prevista: string | null;
   data_conclusao: string | null;
   updated_at: string | null;
+  created_at: string | null;
 };
 
 const hojeIso = () => new Date().toISOString().slice(0, 10);
@@ -90,7 +91,7 @@ function CalDashboardPage() {
       while (true) {
         const { data, error } = await supabase
           .from("cal_planos_acao")
-          .select("id, requisito_id, codigo_pa, status, data_prevista, data_conclusao, updated_at")
+          .select("id, requisito_id, codigo_pa, status, data_prevista, data_conclusao, updated_at, created_at")
           .order("updated_at", { ascending: false, nullsFirst: false })
           .range(from, from + PAGE - 1);
         if (error) throw error;
