@@ -45,13 +45,23 @@ function CalDashboardPage() {
   const { data: requisitos = [], isLoading } = useQuery({
     queryKey: ["cal_requisitos"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("cal_requisitos")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(500);
-      if (error) throw error;
-      return data ?? [];
+      // Supabase limita 1000 linhas por request — paginamos para trazer TUDO.
+      const PAGE = 1000;
+      let from = 0;
+      const all: any[] = [];
+      while (true) {
+        const { data, error } = await supabase
+          .from("cal_requisitos")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .range(from, from + PAGE - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        all.push(...data);
+        if (data.length < PAGE) break;
+        from += PAGE;
+      }
+      return all;
     },
   });
 
@@ -89,8 +99,8 @@ function CalDashboardPage() {
     return requisitos.filter((r) => {
       if (statusSel.size > 0 && !statusSel.has(r.status as CalStatus)) return false;
       if (areaSel !== "todas") {
-        const raw = (r.area_incidencia ?? r.area ?? "").trim();
-        const partes = raw.split(/[;,/|]/).map((x) => x.trim()).filter(Boolean);
+        const raw = String(r.area_incidencia ?? r.area ?? "").trim();
+        const partes = raw.split(/[;,/|]/).map((x: string) => x.trim()).filter(Boolean);
         if (!partes.includes(areaSel)) return false;
       }
       if (criticSel !== "todas" && r.criticidade !== criticSel) return false;
@@ -512,8 +522,8 @@ function CalDashboardPage() {
                             <TableCell><Link to="/app/cal/$id" params={{ id: r.id }} className="block">{r.norma}</Link></TableCell>
                             <TableCell className="max-w-[380px] truncate"><Link to="/app/cal/$id" params={{ id: r.id }} className="block">{r.ementa}</Link></TableCell>
                             <TableCell className="text-xs">{r.area ?? "—"}</TableCell>
-                            <TableCell><Badge variant="outline" className={CAL_CRITICIDADE_COLOR[r.criticidade]}>{CAL_CRITICIDADE_LABEL[r.criticidade]}</Badge></TableCell>
-                            <TableCell><Badge variant="outline" className={CAL_STATUS_COLOR[r.status]}>{CAL_STATUS_LABEL[r.status]}</Badge></TableCell>
+                            <TableCell><Badge variant="outline" className={CAL_CRITICIDADE_COLOR[r.criticidade as keyof typeof CAL_CRITICIDADE_COLOR]}>{CAL_CRITICIDADE_LABEL[r.criticidade as keyof typeof CAL_CRITICIDADE_LABEL]}</Badge></TableCell>
+                            <TableCell><Badge variant="outline" className={CAL_STATUS_COLOR[r.status as CalStatus]}>{CAL_STATUS_LABEL[r.status as CalStatus]}</Badge></TableCell>
                             <TableCell className={d !== null && d < 0 ? "text-red-400 text-xs" : "text-xs"}>
                               {r.prazo_atendimento ? (
                                 <>{new Date(r.prazo_atendimento + "T00:00:00").toLocaleDateString("pt-BR")} {d !== null && <span className="ml-1 opacity-70">({d < 0 ? `${-d}d atraso` : `${d}d`})</span>}</>
