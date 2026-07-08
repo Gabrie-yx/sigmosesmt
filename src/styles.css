@@ -884,6 +884,34 @@
   .app-glass-scope .text-fuchsia-700 { color: #c9a8ff !important; }
   .app-glass-scope .text-sky-700, .app-glass-scope .text-blue-700, .app-glass-scope .text-blue-600 { color: #8fc8ff !important; }
 
+  /* Cobertura anti texto-escuro-em-fundo-escuro: classes Tailwind 800/900/950
+     usadas em alertas, cards e modais legados dentro do app glass. */
+  .app-glass-scope :is(.text-red-800, .text-red-900, .text-red-950, .text-rose-800, .text-rose-900, .text-rose-950),
+  .modal-glass-scope:not(.pdf-dialog) :is(.text-red-800, .text-red-900, .text-red-950, .text-rose-800, .text-rose-900, .text-rose-950) {
+    color: #ffc2cb !important;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+  }
+  .app-glass-scope :is(.text-amber-800, .text-amber-900, .text-amber-950, .text-yellow-800, .text-yellow-900, .text-yellow-950, .text-orange-800, .text-orange-900, .text-orange-950),
+  .modal-glass-scope:not(.pdf-dialog) :is(.text-amber-800, .text-amber-900, .text-amber-950, .text-yellow-800, .text-yellow-900, .text-yellow-950, .text-orange-800, .text-orange-900, .text-orange-950) {
+    color: #ffe1a3 !important;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+  }
+  .app-glass-scope :is(.text-blue-800, .text-blue-900, .text-blue-950, .text-sky-800, .text-sky-900, .text-sky-950, .text-cyan-800, .text-cyan-900, .text-cyan-950),
+  .modal-glass-scope:not(.pdf-dialog) :is(.text-blue-800, .text-blue-900, .text-blue-950, .text-sky-800, .text-sky-900, .text-sky-950, .text-cyan-800, .text-cyan-900, .text-cyan-950) {
+    color: #bfe0ff !important;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+  }
+  .app-glass-scope :is(.text-emerald-800, .text-emerald-900, .text-emerald-950, .text-green-800, .text-green-900, .text-green-950, .text-teal-800, .text-teal-900, .text-teal-950),
+  .modal-glass-scope:not(.pdf-dialog) :is(.text-emerald-800, .text-emerald-900, .text-emerald-950, .text-green-800, .text-green-900, .text-green-950, .text-teal-800, .text-teal-900, .text-teal-950) {
+    color: #b8f2d3 !important;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+  }
+  .app-glass-scope :is(.text-violet-800, .text-violet-900, .text-violet-950, .text-purple-800, .text-purple-900, .text-purple-950, .text-indigo-800, .text-indigo-900, .text-indigo-950, .text-fuchsia-800, .text-fuchsia-900, .text-fuchsia-950),
+  .modal-glass-scope:not(.pdf-dialog) :is(.text-violet-800, .text-violet-900, .text-violet-950, .text-purple-800, .text-purple-900, .text-purple-950, .text-indigo-800, .text-indigo-900, .text-indigo-950, .text-fuchsia-800, .text-fuchsia-900, .text-fuchsia-950) {
+    color: #dcc8ff !important;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+  }
+
   /* Ícones com fundos saturados nos KPIs → toque dessaturado e elegante */
   .app-glass-scope .bg-emerald-600, .app-glass-scope .bg-emerald-500, .app-glass-scope .bg-green-600, .app-glass-scope .bg-green-500 {
     background-color: rgba(40, 110, 80, 0.55) !important;

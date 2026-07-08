@@ -407,8 +407,8 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
                   <p className="text-[10px] text-violet-900 mt-2">A entrega do PPP ao trabalhador é responsabilidade do RH / Representante Legal — o TST prepara o rascunho.</p>
                 </div>
 
-                <div className="rounded-lg bg-white border border-slate-300 p-3 text-xs text-slate-900 space-y-1.5">
-                  <div className="font-black text-slate-900 uppercase tracking-widest text-[10px]">Resumo</div>
+                <div className="rounded-lg bg-white border border-slate-300 p-3 text-xs text-foreground space-y-1.5">
+                  <div className="font-black text-foreground uppercase tracking-widest text-[10px]">Resumo</div>
                   <div>Data: <b>{new Date(data + "T00:00:00").toLocaleDateString("pt-BR")}</b> · Motivo: <b>{motivoFinal}</b></div>
                   <div>ASO: {asoDispensado ? <b className="text-amber-800">DISPENSADO</b> : <b className="text-emerald-800">{asos?.find((a: any) => a.id === asoExamId)?.tipo_exame ?? "—"}</b>}</div>
                   <div>EPIs devolvidos: <b>{Object.values(episDevolvidos).filter(Boolean).length}</b> / {(epis ?? []).length}</div>
@@ -437,7 +437,7 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
 
                 <label className="flex items-start gap-2 cursor-pointer">
                   <Checkbox checked={confirmacao} onCheckedChange={(v) => setConfirmacao(!!v)} />
-                  <span className="text-xs text-slate-900">Confirmo, sob minha responsabilidade técnica, que as informações são verídicas e que o processo legal do desligamento foi (ou será) conduzido pelo RH.</span>
+                  <span className="text-xs text-muted-foreground">Confirmo, sob minha responsabilidade técnica, que as informações são verídicas e que o processo legal do desligamento foi (ou será) conduzido pelo RH.</span>
                 </label>
               </div>
             )}

@@ -97,12 +97,12 @@ export function DesligamentoDialog({ emp, open, onClose }: Props) {
       <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><RotateCcw className="h-5 w-5 text-emerald-600" />Reativar funcionário</DialogTitle>
+            <DialogTitle className="flex items-center gap-2 text-foreground"><RotateCcw className="h-5 w-5 text-emerald-300" />Reativar funcionário</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 text-sm">
             <p><strong>{emp.nome}</strong> está marcado como DESLIGADO desde {emp.data_desligamento ? new Date(emp.data_desligamento + "T00:00:00").toLocaleDateString("pt-BR") : "—"}.</p>
-            {emp.motivo_desligamento && <p className="text-slate-600">Motivo: {emp.motivo_desligamento}</p>}
-            <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800">
+            {emp.motivo_desligamento && <p className="text-muted-foreground">Motivo: {emp.motivo_desligamento}</p>}
+            <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-900">
               Ao reativar, o bloqueio global de segurança será revogado e o funcionário poderá receber novas OSs, EPIs e treinamentos. O histórico será preservado.
             </div>
             <div className="space-y-1.5">
@@ -113,7 +113,7 @@ export function DesligamentoDialog({ emp, open, onClose }: Props) {
                 onChange={(e) => setMotivoReativacao(e.target.value)}
                 placeholder="Ex.: Recontratação por retorno de obra; reintegração por decisão judicial; erro operacional no desligamento anterior…"
               />
-              <p className="text-[10px] text-slate-500">
+              <p className="text-[10px] text-muted-foreground">
                 Mínimo 5 caracteres. Será registrada em auditoria (audit_logs) com data, hora e responsável.
               </p>
             </div>
@@ -165,7 +165,7 @@ export function DesligamentoDialog({ emp, open, onClose }: Props) {
           )}
 
           <div className="space-y-2">
-            <Label className="text-[11px] font-black uppercase tracking-widest text-slate-600">Checklist de saída</Label>
+              <Label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">Checklist de saída</Label>
             <div className="rounded-lg border border-slate-200 divide-y divide-slate-100">
               {CHECKLIST_ITEMS.map((it) => (
                 <label key={it.key} className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-slate-50">
@@ -194,7 +194,7 @@ export function DesligamentoDialog({ emp, open, onClose }: Props) {
 
           <label className="flex items-start gap-2 cursor-pointer">
             <Checkbox checked={confirmacao} onCheckedChange={(v) => setConfirmacao(!!v)} />
-            <span className="text-xs text-slate-700">Confirmo que as informações acima estão corretas e que o processo legal de desligamento foi (ou será) conduzido pelo RH / empresa contratante.</span>
+            <span className="text-xs text-muted-foreground">Confirmo que as informações acima estão corretas e que o processo legal de desligamento foi (ou será) conduzido pelo RH / empresa contratante.</span>
           </label>
         </div>
         <DialogFooter>
