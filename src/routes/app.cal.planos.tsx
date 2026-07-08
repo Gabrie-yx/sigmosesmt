@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { toast } from "sonner";
+import { parseCalPlanoAcaoPlanilha } from "@/lib/cal-parser";
 import { ListChecks, Search, AlertTriangle, Clock, CheckCircle2, CircleDashed, Repeat, ArrowRight, ChevronLeft, ChevronRight, Upload } from "lucide-react";
 
 export const Route = createFileRoute("/app/cal/planos")({
@@ -66,6 +69,8 @@ const VENC_COLOR: Record<VencStatus, string> = {
 const PAGE_SIZE = 50;
 
 function PlanosCalPage() {
+  const qc = useQueryClient();
+  const [importOpen, setImportOpen] = useState(false);
   const [busca, setBusca] = useState("");
   const [vencSel, setVencSel] = useState<"todos" | VencStatus>("todos");
   const [statusSel, setStatusSel] = useState<string>("todos");
@@ -74,6 +79,94 @@ function PlanosCalPage() {
   const [gestSel, setGestSel] = useState<string>("todos");
   const [tipoSel, setTipoSel] = useState<string>("todos");
   const [pagina, setPagina] = useState(1);
+
+  const importarPAs = useMutation({
+    mutationFn: async (file: File) => {
+      const { planos, total_linhas } = await parseCalPlanoAcaoPlanilha(file);
+      if (!planos.length) throw new Error("Nenhum Plano de Ação encontrado na planilha.");
+
+      // Pré-carrega requisitos p/ resolver numero_cal -> id
+      const numerosCal = [...new Set(planos.map((p) => p.numero_cal).filter(Boolean))] as string[];
+      const reqIdByNumero = new Map<string, string>();
+      if (numerosCal.length) {
+        const chunkR = 500;
+        for (let i = 0; i < numerosCal.length; i += chunkR) {
+          const { data } = await supabase
+            .from("cal_requisitos")
+            .select("id, numero_cal")
+            .in("numero_cal", numerosCal.slice(i, i + chunkR));
+          for (const r of data ?? []) if (r.numero_cal) reqIdByNumero.set(r.numero_cal, r.id);
+        }
+      }
+
+      // Pré-carrega PAs existentes por codigo_pa
+      const codigos = [...new Set(planos.map((p) => p.codigo_pa).filter(Boolean))] as string[];
+      const paIdByCodigo = new Map<string, { id: string; requisito_id: string }>();
+      if (codigos.length) {
+        const chunkP = 500;
+        for (let i = 0; i < codigos.length; i += chunkP) {
+          const { data } = await supabase
+            .from("cal_planos_acao")
+            .select("id, codigo_pa, requisito_id")
+            .in("codigo_pa", codigos.slice(i, i + chunkP));
+          for (const p of data ?? []) if (p.codigo_pa) paIdByCodigo.set(p.codigo_pa, { id: p.id, requisito_id: p.requisito_id });
+        }
+      }
+
+      let atualizados = 0;
+      let inseridos = 0;
+      let semRequisito = 0;
+      const novos: any[] = [];
+
+      for (const p of planos) {
+        const existente = p.codigo_pa ? paIdByCodigo.get(p.codigo_pa) : undefined;
+        const requisito_id = existente?.requisito_id ?? (p.numero_cal ? reqIdByNumero.get(p.numero_cal) : undefined);
+
+        const payload = {
+          codigo_pa: p.codigo_pa ?? null,
+          texto: p.texto,
+          tipo: p.tipo ?? null,
+          status: p.status ?? null,
+          data_prevista: p.data_prevista ?? null,
+          data_conclusao: p.data_conclusao ?? null,
+          recorrente: p.recorrente,
+          intervalo_recorrencia_dias: p.intervalo_recorrencia_dias ?? null,
+          custo: p.custo ?? null,
+          natureza_custo: p.natureza_custo ?? null,
+          usuario_execucao: p.usuario_execucao ?? null,
+          usuario_gestao: p.usuario_gestao ?? null,
+        };
+
+        if (existente) {
+          const { error } = await supabase.from("cal_planos_acao").update(payload).eq("id", existente.id);
+          if (error) throw error;
+          atualizados++;
+        } else if (requisito_id) {
+          novos.push({ requisito_id, ...payload });
+        } else {
+          semRequisito++;
+        }
+      }
+
+      const chunk = 300;
+      for (let i = 0; i < novos.length; i += chunk) {
+        const { error } = await supabase.from("cal_planos_acao").insert(novos.slice(i, i + chunk));
+        if (error) throw error;
+        inseridos += Math.min(chunk, novos.length - i);
+      }
+
+      return { total_linhas, atualizados, inseridos, semRequisito };
+    },
+    onSuccess: (r) => {
+      qc.invalidateQueries({ queryKey: ["cal_planos_acao_all"] });
+      setImportOpen(false);
+      toast.success(
+        `Importação concluída: ${r.inseridos} novo(s), ${r.atualizados} atualizado(s)` +
+          (r.semRequisito ? ` · ${r.semRequisito} sem requisito vinculado (ignorados)` : ""),
+      );
+    },
+    onError: (e: any) => toast.error(e.message ?? "Falha ao importar Planos de Ação"),
+  });
 
   const { data: planos = [], isLoading } = useQuery({
     queryKey: ["cal_planos_acao_all"],
@@ -176,12 +269,49 @@ function PlanosCalPage() {
           </div>
         </div>
         <div className="flex gap-2">
+          <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white" onClick={() => setImportOpen(true)}>
+            <Upload className="h-3.5 w-3.5 mr-1.5" /> Importar Planos de Ação
+          </Button>
           <Link to="/app/cal" search={{ import: "1" }}>
-            <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white"><Upload className="h-3.5 w-3.5 mr-1.5" /> Importar planilha</Button>
+            <Button size="sm" variant="outline"><Upload className="h-3.5 w-3.5 mr-1.5" /> Importar Requisitos</Button>
           </Link>
           <Link to="/app/cal"><Button variant="outline" size="sm">Ver Requisitos <ArrowRight className="h-3.5 w-3.5 ml-1.5" /></Button></Link>
         </div>
       </div>
+
+      {/* Dialog de importação de Planos de Ação */}
+      <Dialog open={importOpen} onOpenChange={setImportOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Importar Planos de Ação (Ius Natura)</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Envie a exportação <strong>"Plano de Ação"</strong> do Ius Natura (.xlsx). O sistema atualiza os PAs
+              existentes por <strong>Código</strong> e insere os novos, vinculando ao requisito pelo <strong>Requisito Legal (RQTCL...)</strong>.
+            </p>
+            <Input
+              type="file"
+              accept=".xlsx,.xls"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) importarPAs.mutate(f);
+              }}
+              disabled={importarPAs.isPending}
+            />
+            {importarPAs.isPending && (
+              <p className="text-xs text-muted-foreground">Processando planilha, aguarde...</p>
+            )}
+            <p className="text-[11px] text-muted-foreground">
+              Planos cujo "Requisito Legal" não estiver cadastrado no CAL serão ignorados — importe primeiro a planilha
+              de Requisitos.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setImportOpen(false)} disabled={importarPAs.isPending}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* KPIs — clicáveis pra filtrar */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2">
