@@ -27,7 +27,10 @@ function CalDashboardPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [busca, setBusca] = useState("");
-  const [filtroStatus, setFiltroStatus] = useState<string>("todos");
+  const [statusSel, setStatusSel] = useState<Set<CalStatus>>(new Set());
+  const [areaSel, setAreaSel] = useState<string>("todas");
+  const [criticSel, setCriticSel] = useState<string>("todas");
+  const [chip, setChip] = useState<"nenhum" | "em_atraso" | "vencendo7" | "sem_analise" | "revogado" | "nao_aplicavel" | "nao_atendido">("nenhum");
   const [importOpen, setImportOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
   const [deltaResult, setDeltaResult] = useState<null | {
@@ -68,14 +71,56 @@ function CalDashboardPage() {
     return { total, semAnalise, aplicaveis, atendidos, emAtraso, vencendo7 };
   }, [requisitos]);
 
+  const areas = useMemo(() => {
+    const s = new Set<string>();
+    for (const r of requisitos) {
+      const a = (r.area_incidencia ?? r.area ?? "").trim();
+      if (a) s.add(a);
+    }
+    return Array.from(s).sort((a, b) => a.localeCompare(b));
+  }, [requisitos]);
+
   const filtrados = useMemo(() => {
     const b = busca.toLowerCase();
     return requisitos.filter((r) => {
-      if (filtroStatus !== "todos" && r.status !== filtroStatus) return false;
+      if (statusSel.size > 0 && !statusSel.has(r.status as CalStatus)) return false;
+      if (areaSel !== "todas") {
+        const a = (r.area_incidencia ?? r.area ?? "").trim();
+        if (a !== areaSel) return false;
+      }
+      if (criticSel !== "todas" && r.criticidade !== criticSel) return false;
+      if (chip !== "nenhum") {
+        const d = daysUntil(r.prazo_atendimento);
+        if (chip === "em_atraso" && !(d !== null && d < 0 && !["atendido", "nao_aplicavel", "monitoramento", "revogado"].includes(r.status))) return false;
+        if (chip === "vencendo7" && !(d !== null && d >= 0 && d <= 7 && !["atendido", "nao_aplicavel", "revogado"].includes(r.status))) return false;
+        if (chip === "sem_analise" && r.status !== "recebido") return false;
+        if (chip === "revogado" && r.status !== "revogado") return false;
+        if (chip === "nao_aplicavel" && r.status !== "nao_aplicavel") return false;
+        if (chip === "nao_atendido" && ["atendido", "nao_aplicavel", "monitoramento", "revogado"].includes(r.status)) return false;
+      }
       if (!b) return true;
       return [r.numero_cal, r.norma, r.ementa, r.orgao, r.area].some((v) => (v ?? "").toLowerCase().includes(b));
     });
-  }, [requisitos, busca, filtroStatus]);
+  }, [requisitos, busca, statusSel, areaSel, criticSel, chip]);
+
+  function toggleStatus(s: CalStatus) {
+    setStatusSel((prev) => {
+      const n = new Set(prev);
+      if (n.has(s)) n.delete(s); else n.add(s);
+      return n;
+    });
+  }
+  function limparFiltros() {
+    setStatusSel(new Set()); setAreaSel("todas"); setCriticSel("todas"); setChip("nenhum"); setBusca("");
+  }
+  function aplicarKpi(k: "total" | "sem_analise" | "aplicaveis" | "atendidos" | "vencendo7" | "em_atraso") {
+    limparFiltros();
+    if (k === "sem_analise") setChip("sem_analise");
+    else if (k === "aplicaveis") setStatusSel(new Set(["aplicavel", "em_tratativa", "atendido", "monitoramento"] as CalStatus[]));
+    else if (k === "atendidos") setStatusSel(new Set(["atendido"] as CalStatus[]));
+    else if (k === "vencendo7") setChip("vencendo7");
+    else if (k === "em_atraso") setChip("em_atraso");
+  }
 
   const importar = useMutation({
     mutationFn: async (file: File) => {
@@ -339,30 +384,70 @@ function CalDashboardPage() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        <KpiCard label="Total" value={kpis.total} icon={<FileText className="h-4 w-4" />} />
-        <KpiCard label="Sem análise" value={kpis.semAnalise} icon={<Clock className="h-4 w-4" />} tone="warning" />
-        <KpiCard label="Aplicáveis" value={kpis.aplicaveis} icon={<CheckCircle2 className="h-4 w-4" />} tone="success" />
-        <KpiCard label="Atendidos" value={kpis.atendidos} icon={<CheckCircle2 className="h-4 w-4" />} tone="success" />
-        <KpiCard label="Vencendo 7d" value={kpis.vencendo7} icon={<AlertTriangle className="h-4 w-4" />} tone="warning" />
-        <KpiCard label="Em atraso" value={kpis.emAtraso} icon={<AlertTriangle className="h-4 w-4" />} tone="danger" />
+        <KpiCard label="Total" value={kpis.total} icon={<FileText className="h-4 w-4" />} onClick={() => aplicarKpi("total")} />
+        <KpiCard label="Sem análise" value={kpis.semAnalise} icon={<Clock className="h-4 w-4" />} tone="warning" onClick={() => aplicarKpi("sem_analise")} active={chip === "sem_analise"} />
+        <KpiCard label="Aplicáveis" value={kpis.aplicaveis} icon={<CheckCircle2 className="h-4 w-4" />} tone="success" onClick={() => aplicarKpi("aplicaveis")} />
+        <KpiCard label="Atendidos" value={kpis.atendidos} icon={<CheckCircle2 className="h-4 w-4" />} tone="success" onClick={() => aplicarKpi("atendidos")} />
+        <KpiCard label="Vencendo 7d" value={kpis.vencendo7} icon={<AlertTriangle className="h-4 w-4" />} tone="warning" onClick={() => aplicarKpi("vencendo7")} active={chip === "vencendo7"} />
+        <KpiCard label="Em atraso" value={kpis.emAtraso} icon={<AlertTriangle className="h-4 w-4" />} tone="danger" onClick={() => aplicarKpi("em_atraso")} active={chip === "em_atraso"} />
       </div>
 
       <Card>
         <CardHeader className="pb-3">
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="relative flex-1 min-w-[240px]">
-              <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Buscar por nº CAL, norma, ementa, órgão, área..." value={busca} onChange={(e) => setBusca(e.target.value)} className="pl-9" />
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="relative flex-1 min-w-[240px]">
+                <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input placeholder="Buscar por nº CAL, norma, ementa, órgão, área..." value={busca} onChange={(e) => setBusca(e.target.value)} className="pl-9" />
+              </div>
+              <Select value={areaSel} onValueChange={setAreaSel}>
+                <SelectTrigger className="w-[220px]"><SelectValue placeholder="Área onde incide" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todas">Todas as áreas</SelectItem>
+                  {areas.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={criticSel} onValueChange={setCriticSel}>
+                <SelectTrigger className="w-[160px]"><SelectValue placeholder="Criticidade" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todas">Toda criticidade</SelectItem>
+                  <SelectItem value="critica">Crítica</SelectItem>
+                  <SelectItem value="alta">Alta</SelectItem>
+                  <SelectItem value="media">Média</SelectItem>
+                  <SelectItem value="baixa">Baixa</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button variant="ghost" size="sm" onClick={limparFiltros}>Limpar filtros</Button>
             </div>
-            <Select value={filtroStatus} onValueChange={setFiltroStatus}>
-              <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos os status</SelectItem>
-                {CAL_STATUS_ORDER.map((s) => (
-                  <SelectItem key={s} value={s}>{CAL_STATUS_LABEL[s]}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-muted-foreground mr-1">Status:</span>
+              {(["recebido","em_analise","aplicavel","nao_aplicavel","em_tratativa","atendido","monitoramento","revogado"] as CalStatus[]).map((s) => {
+                const on = statusSel.has(s);
+                return (
+                  <button key={s} type="button" onClick={() => toggleStatus(s)}
+                    className={`text-xs px-2 py-1 rounded border transition ${on ? CAL_STATUS_COLOR[s] : "border-border text-muted-foreground hover:text-foreground"}`}>
+                    {CAL_STATUS_LABEL[s]}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-muted-foreground mr-1">Atalhos:</span>
+              {([
+                ["em_atraso","Em atraso"],
+                ["vencendo7","Vencendo em 7d"],
+                ["sem_analise","Sem análise"],
+                ["nao_atendido","Não atendidos"],
+                ["nao_aplicavel","Não aplicáveis"],
+                ["revogado","Revogados"],
+              ] as const).map(([k, label]) => (
+                <button key={k} type="button" onClick={() => setChip(chip === k ? "nenhum" : k)}
+                  className={`text-xs px-2 py-1 rounded border transition ${chip === k ? "bg-primary/20 border-primary/40 text-primary-foreground" : "border-border text-muted-foreground hover:text-foreground"}`}>
+                  {label}
+                </button>
+              ))}
+              <span className="text-xs text-muted-foreground ml-auto">{filtrados.length} de {requisitos.length}</span>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -446,14 +531,14 @@ function CalDashboardPage() {
   );
 }
 
-function KpiCard({ label, value, icon, tone }: { label: string; value: number; icon: React.ReactNode; tone?: "success" | "warning" | "danger" }) {
+function KpiCard({ label, value, icon, tone, onClick, active }: { label: string; value: number; icon: React.ReactNode; tone?: "success" | "warning" | "danger"; onClick?: () => void; active?: boolean }) {
   const color =
     tone === "success" ? "text-emerald-300"
     : tone === "warning" ? "text-amber-300"
     : tone === "danger" ? "text-red-300"
     : "text-foreground";
   return (
-    <Card>
+    <Card onClick={onClick} className={`${onClick ? "cursor-pointer hover:border-primary/50 transition" : ""} ${active ? "border-primary ring-1 ring-primary/40" : ""}`}>
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <span className="text-xs text-muted-foreground">{label}</span>
