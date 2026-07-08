@@ -12,6 +12,7 @@ export const CAL_STATUS_LABEL: Record<CalStatus, string> = {
   em_tratativa: "Em Tratativa",
   atendido: "Atendido",
   monitoramento: "Monitoramento",
+  revogado: "Revogado",
 };
 
 export const CAL_STATUS_ORDER: CalStatus[] = [
@@ -31,6 +32,7 @@ export const CAL_STATUS_COLOR: Record<CalStatus, string> = {
   em_tratativa: "bg-amber-500/15 text-amber-200 border-amber-500/30",
   atendido: "bg-green-600/20 text-green-200 border-green-600/40",
   monitoramento: "bg-purple-500/15 text-purple-200 border-purple-500/30",
+  revogado: "bg-red-500/10 text-red-300 border-red-500/30 line-through",
 };
 
 export const CAL_CRITICIDADE_LABEL: Record<CalCriticidade, string> = {
