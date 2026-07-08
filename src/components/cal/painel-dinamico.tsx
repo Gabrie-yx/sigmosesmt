@@ -39,11 +39,11 @@ const TONE_STROKE: Record<Tone, string> = {
 };
 
 const TONE_TEXT: Record<Tone, string> = {
-  success: "text-emerald-500",
-  danger: "text-red-500",
-  warning: "text-amber-500",
-  info: "text-sky-500",
-  muted: "text-slate-400",
+  success: "text-emerald-400",
+  danger: "text-red-400",
+  warning: "text-amber-400",
+  info: "text-sky-400",
+  muted: "text-slate-300",
 };
 
 function Donut({ pct, tone }: { pct: number; tone: Tone }) {
@@ -54,7 +54,7 @@ function Donut({ pct, tone }: { pct: number; tone: Tone }) {
   return (
     <div className="relative h-14 w-14 shrink-0">
       <svg viewBox="0 0 60 60" className="h-full w-full -rotate-90">
-        <circle cx="30" cy="30" r={r} fill="none" stroke="currentColor" className="text-muted/30" strokeWidth="5" />
+        <circle cx="30" cy="30" r={r} fill="none" stroke="currentColor" className="text-foreground/15" strokeWidth="5" />
         <circle
           cx="30"
           cy="30"
