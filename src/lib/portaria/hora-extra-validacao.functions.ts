@@ -16,13 +16,6 @@ const ConfirmarSchema = z.object({
 
 const DesfazerSchema = ConfirmarSchema;
 
-function ymdLocal(d = new Date()) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
 export type HoraExtraHojeFuncionario = {
   id: string;
   hora_extra_id: string;
@@ -59,6 +52,10 @@ export type HoraExtraHojeConvocacao = {
 export const listHoraExtraHoje = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<HoraExtraHojeConvocacao[]> => {
+    const nowLocal = new Date();
+    const y = nowLocal.getFullYear();
+    const m = String(nowLocal.getMonth() + 1).padStart(2, "0");
+    const day = String(nowLocal.getDate()).padStart(2, "0");
     const hoje = ymdLocal();
     const { data, error } = await context.supabase
       .from("hora_extra_sabado")
@@ -168,16 +165,16 @@ export const listHoraExtraHoje = createServerFn({ method: "GET" })
     });
   });
 
-async function nomeDoUsuario(supabase: any, userId: string): Promise<string> {
-  const { data } = await supabase.from("profiles").select("full_name,email").eq("id", userId).maybeSingle();
-  return (data?.full_name || data?.email || "Portaria") as string;
-}
-
 export const confirmarValidacaoPortaria = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => ConfirmarSchema.parse(d))
   .handler(async ({ data, context }) => {
-    const nome = await nomeDoUsuario(context.supabase, context.userId);
+    const { data: perfil } = await context.supabase
+      .from("profiles")
+      .select("full_name,email")
+      .eq("id", context.userId)
+      .maybeSingle();
+    const nome = (perfil?.full_name || perfil?.email || "Portaria") as string;
     const now = new Date().toISOString();
     const patch: Record<string, any> = {};
     if (data.tipo === "permanencia") {
