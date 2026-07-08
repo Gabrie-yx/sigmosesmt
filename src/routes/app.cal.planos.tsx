@@ -463,8 +463,9 @@ function PlanosCalPage() {
             <TableBody>
               {pageRows.map((p) => {
                 const v = calcVenc(p);
-                const area = p.cal_requisitos?.area_incidencia ?? p.cal_requisitos?.area ?? "—";
+                const area = p.area_pa ?? p.cal_requisitos?.area_incidencia ?? p.cal_requisitos?.area ?? "—";
                 const temas = (p.cal_requisitos?.temas ?? []).slice(0, 3);
+                const descricao = p.requisito_legal_texto ?? p.texto ?? "—";
                 return (
                   <TableRow key={p.id} className="align-top hover:bg-muted/30 cursor-pointer" onClick={() => abrirTratativa(p)}>
                     <TableCell className="font-mono text-xs py-3">{p.codigo_pa ?? "—"}</TableCell>
@@ -479,8 +480,8 @@ function PlanosCalPage() {
                     <TableCell className="text-xs py-3">{p.status ?? "—"}</TableCell>
                     <TableCell className="text-xs py-3">{p.tipo ?? "—"}</TableCell>
                     <TableCell className="py-3">
-                      <p className="text-sm leading-snug" style={{ display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }} title={p.texto ?? ""}>
-                        {p.texto ?? "—"}
+                      <p className="text-sm leading-snug" style={{ display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }} title={descricao}>
+                        {descricao}
                       </p>
                     </TableCell>
                     <TableCell className="py-3 text-xs">
