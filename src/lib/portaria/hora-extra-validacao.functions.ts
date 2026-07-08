@@ -88,14 +88,30 @@ export const listHoraExtraHoje = createServerFn({ method: "GET" })
     const one = (v: any) => Array.isArray(v) ? v[0] : v;
     const createdByIds = Array.from(new Set((data ?? []).map((c: any) => c.created_by).filter(Boolean)));
     const liderPorUser = new Map<string, any>();
+    const marcadorPorUser = new Map<string, any>();
+    const employeePorNome = new Map<string, any>();
     if (createdByIds.length > 0) {
-      const { data: lideres } = await context.supabase
-        .from("hora_extra_lideres")
-        .select("user_id, observacao, employee:employee_id(id, nome, setor, roles(name))")
-        .in("user_id", createdByIds);
-      (lideres ?? []).forEach((l: any) => {
-        if (l.user_id) liderPorUser.set(l.user_id, l);
-      });
+      const [{ data: lideres }, { data: marcadores }] = await Promise.all([
+        context.supabase
+          .from("hora_extra_lideres")
+          .select("user_id, observacao, employee:employee_id(id, nome, setor, roles(name))")
+          .in("user_id", createdByIds),
+        context.supabase
+          .from("hora_extra_marcadores")
+          .select("user_id, nome, self:self_employee_id(id, nome, setor, roles(name))")
+          .in("user_id", createdByIds),
+      ]);
+      (lideres ?? []).forEach((l: any) => { if (l.user_id) liderPorUser.set(l.user_id, l); });
+      (marcadores ?? []).forEach((m: any) => { if (m.user_id) marcadorPorUser.set(m.user_id, m); });
+
+      const nomesMarcadores = Array.from(new Set((marcadores ?? []).map((m: any) => m.nome).filter(Boolean)));
+      if (nomesMarcadores.length > 0) {
+        const { data: emps } = await context.supabase
+          .from("employees")
+          .select("id, nome, setor, roles(name)")
+          .in("nome", nomesMarcadores);
+        (emps ?? []).forEach((e: any) => employeePorNome.set(String(e.nome).toLowerCase(), e));
+      }
     }
 
     return (data ?? []).map((c: any) => {
@@ -105,11 +121,23 @@ export const listHoraExtraHoje = createServerFn({ method: "GET" })
       const is_sabado = dt.getDay() === 6;
       const liderRel = one(c.lider);
       const liderByUser = c.created_by ? liderPorUser.get(c.created_by) : null;
-      const liderEmployee = one(liderRel?.employee ?? liderRel?.employees ?? liderByUser?.employee ?? liderByUser?.employees);
+      const marcadorByUser = c.created_by ? marcadorPorUser.get(c.created_by) : null;
+      const marcadorSelf = one(marcadorByUser?.self);
+      const marcadorEmployeeByName = marcadorByUser?.nome
+        ? employeePorNome.get(String(marcadorByUser.nome).toLowerCase())
+        : null;
+      const liderEmployee = one(
+        liderRel?.employee
+        ?? liderRel?.employees
+        ?? liderByUser?.employee
+        ?? liderByUser?.employees
+        ?? marcadorSelf
+        ?? marcadorEmployeeByName,
+      );
       const liderRole = one(liderEmployee?.roles);
       const solicitanteNome =
-        liderEmployee?.nome ?? c.aberto_por_nome ?? c.criado_automatico_por_nome ?? "Solicitante";
-      const solicitanteFuncao = liderRole?.name ?? liderRel?.observacao ?? liderByUser?.observacao ?? null;
+        liderEmployee?.nome ?? marcadorByUser?.nome ?? c.aberto_por_nome ?? c.criado_automatico_por_nome ?? "Solicitante";
+      const solicitanteFuncao = liderRole?.name ?? liderRel?.observacao ?? liderByUser?.observacao ?? "Convocador de hora extra";
       const solicitanteSetor = liderEmployee?.setor ?? c.setor ?? c.modulo_origem ?? null;
       const funcs = (c.funcionarios ?? [])
         .filter((f: any) => !f.deleted_at)
