@@ -45,13 +45,23 @@ function CalDashboardPage() {
   const { data: requisitos = [], isLoading } = useQuery({
     queryKey: ["cal_requisitos"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("cal_requisitos")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(500);
-      if (error) throw error;
-      return data ?? [];
+      // Supabase limita 1000 linhas por request — paginamos para trazer TUDO.
+      const PAGE = 1000;
+      let from = 0;
+      const all: any[] = [];
+      while (true) {
+        const { data, error } = await supabase
+          .from("cal_requisitos")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .range(from, from + PAGE - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        all.push(...data);
+        if (data.length < PAGE) break;
+        from += PAGE;
+      }
+      return all;
     },
   });
 
