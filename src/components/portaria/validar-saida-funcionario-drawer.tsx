@@ -10,11 +10,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { SignedAvatarImg } from "@/components/signed-avatar-img";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Check, Search, User, AlertCircle, Clock, ArrowRightCircle } from "lucide-react";
+import { Loader2, Check, Search, AlertCircle, Clock, ChevronRight, LogOut, ArrowLeft, CalendarDays } from "lucide-react";
 import { formatCPFFromDigits, onlyDigits } from "@/lib/validators/cpf";
 
 type SaidaAutorizada = {
@@ -100,90 +100,151 @@ export function ValidarSaidaFuncionarioDrawer({
     onError: (e: any) => toast.error("Falha: " + e.message),
   });
 
+  const listaOpen = open && !selecionada;
+  const detalheOpen = open && !!selecionada;
+
   return (
-    <Drawer open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DrawerContent className="max-h-[92vh]">
-        <DrawerHeader className="bg-amber-500 text-white">
-          <DrawerTitle className="font-black text-lg">Validar Saída de Funcionário</DrawerTitle>
-          <p className="text-[10px] uppercase tracking-widest text-white/80">Confirme visualmente antes de liberar a saída física</p>
-        </DrawerHeader>
-
-        <div className="p-4 overflow-y-auto flex-1">
-          {!selecionada ? (
-            <>
-              <div className="relative mb-3">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar por CPF ou nome…" className="h-12 pl-10 text-base" autoFocus />
+    <>
+      {/* Modal 1 — Lista de saídas pendentes */}
+      <Dialog open={listaOpen} onOpenChange={(o) => { if (!o) onClose(); }}>
+        <DialogContent className="sm:max-w-lg p-0 overflow-hidden gap-0 border-border">
+          <DialogHeader className="px-5 py-4 border-b border-border bg-muted/30 space-y-1">
+            <div className="flex items-center gap-2.5">
+              <div className="h-9 w-9 rounded-lg bg-primary/15 text-primary grid place-items-center shrink-0">
+                <LogOut className="h-4 w-4" />
               </div>
+              <div className="min-w-0 text-left">
+                <DialogTitle className="text-base font-bold leading-tight">Validar saída de funcionário</DialogTitle>
+                <DialogDescription className="text-[10px] uppercase tracking-wider text-muted-foreground mt-0.5">
+                  Confirme visualmente antes de liberar a saída física
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
 
-              {isLoading ? (
-                <div className="text-center py-8"><Loader2 className="h-6 w-6 animate-spin text-slate-400 mx-auto" /></div>
-              ) : filtered.length === 0 ? (
-                <div className="text-center py-10 text-slate-500">
-                  <AlertCircle className="h-8 w-8 mx-auto mb-2 text-slate-300" />
-                  <p className="text-sm font-bold uppercase tracking-widest">Nenhuma saída autorizada pendente</p>
-                  <p className="text-xs mt-1">Peça ao SESMT para gerar a autorização primeiro.</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {filtered.map((s) => (
-                    <button key={s.id} onClick={() => setSelecionada(s)}
-                      className="w-full text-left rounded-2xl bg-white border-2 border-slate-200 hover:border-amber-400 p-3 flex items-center gap-3 shadow-sm">
+          <div className="px-5 pt-4 pb-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar por CPF ou nome…" className="h-11 pl-10 text-sm" autoFocus />
+            </div>
+            <div className="flex items-center justify-between mt-3 mb-1">
+              <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Autorizadas pelo SESMT</p>
+              <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">{filtered.length} pendente{filtered.length === 1 ? "" : "s"}</span>
+            </div>
+          </div>
+
+          <div className="px-3 pb-4 max-h-[60vh] overflow-y-auto">
+            {isLoading ? (
+              <div className="text-center py-10"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground mx-auto" /></div>
+            ) : filtered.length === 0 ? (
+              <div className="text-center py-10 px-6 text-muted-foreground">
+                <AlertCircle className="h-7 w-7 mx-auto mb-2 opacity-40" />
+                <p className="text-sm font-semibold text-foreground">Nenhuma saída pendente</p>
+                <p className="text-xs mt-1 opacity-80">Peça ao SESMT para gerar a autorização primeiro.</p>
+              </div>
+            ) : (
+              <ul className="space-y-1.5">
+                {filtered.map((s) => (
+                  <li key={s.id}>
+                    <button
+                      onClick={() => setSelecionada(s)}
+                      className="w-full text-left rounded-xl border border-border bg-card hover:bg-muted/50 hover:border-primary/40 transition p-2.5 flex items-center gap-3"
+                    >
                       {s.employees?.foto_url
-                        ? <SignedAvatarImg src={s.employees.foto_url} className="h-14 w-14 rounded-full object-cover ring-2 ring-white shadow" />
-                        : <div className="h-14 w-14 rounded-full bg-slate-300 text-white font-black flex items-center justify-center">
+                        ? <SignedAvatarImg src={s.employees.foto_url} className="h-11 w-11 rounded-full object-cover border border-border shrink-0" />
+                        : <div className="h-11 w-11 rounded-full bg-muted text-muted-foreground font-bold text-xs flex items-center justify-center border border-border shrink-0">
                             {s.employees?.nome?.split(/\s+/).map((p) => p[0]).slice(0,2).join("").toUpperCase()}
                           </div>}
                       <div className="flex-1 min-w-0">
-                        <p className="font-black text-sm truncate">{s.employees?.nome}</p>
-                        <p className="text-[10px] text-slate-500">{s.employees?.cpf ? formatCPFFromDigits(s.employees.cpf) : ""}</p>
+                        <p className="font-semibold text-sm truncate text-foreground">{s.employees?.nome}</p>
+                        <p className="text-[10px] text-muted-foreground">{s.employees?.cpf ? formatCPFFromDigits(s.employees.cpf) : "—"}</p>
                         <div className="flex flex-wrap items-center gap-1 mt-1">
-                          <span className="text-[9px] font-black uppercase tracking-widest bg-amber-100 text-amber-800 rounded-full px-2 py-0.5">{s.tipo}</span>
-                          <span className="text-[9px] font-black uppercase tracking-widest bg-slate-100 text-slate-700 rounded-full px-2 py-0.5">{s.com_retorno ? "COM RETORNO" : "SEM RETORNO"}</span>
-                          <span className="text-[9px] text-slate-500 inline-flex items-center gap-1"><Clock className="h-2.5 w-2.5" /> {s.horario_saida?.slice(0,5)} · {new Date(s.data + "T00:00:00").toLocaleDateString("pt-BR")}</span>
+                          <span className="text-[9px] font-semibold uppercase tracking-wider bg-primary/10 text-primary rounded px-1.5 py-0.5">{s.tipo}</span>
+                          <span className="text-[9px] font-semibold uppercase tracking-wider bg-muted text-muted-foreground rounded px-1.5 py-0.5">{s.com_retorno ? "Com retorno" : "Sem retorno"}</span>
+                          <span className="text-[10px] text-muted-foreground inline-flex items-center gap-1">
+                            <Clock className="h-2.5 w-2.5" /> {s.horario_saida?.slice(0,5)} · {new Date(s.data + "T00:00:00").toLocaleDateString("pt-BR")}
+                          </span>
                         </div>
                       </div>
-                      <ArrowRightCircle className="h-6 w-6 text-amber-500 flex-none" />
+                      <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
                     </button>
-                  ))}
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="space-y-4">
-              <div className="flex flex-col items-center text-center">
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal 2 — Confirmação da saída selecionada */}
+      <Dialog open={detalheOpen} onOpenChange={(o) => { if (!o) setSelecionada(null); }}>
+        <DialogContent className="sm:max-w-md p-0 overflow-hidden gap-0 border-border">
+          <DialogHeader className="px-5 py-4 border-b border-border bg-muted/30 space-y-0">
+            <div className="flex items-center gap-2.5">
+              <button onClick={() => setSelecionada(null)} className="h-8 w-8 rounded-md hover:bg-muted grid place-items-center text-muted-foreground shrink-0" aria-label="Voltar">
+                <ArrowLeft className="h-4 w-4" />
+              </button>
+              <div className="min-w-0 text-left">
+                <DialogTitle className="text-base font-bold leading-tight">Confirmar saída</DialogTitle>
+                <DialogDescription className="text-[10px] uppercase tracking-wider text-muted-foreground mt-0.5">
+                  Revise os dados antes de liberar
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          {selecionada && (
+            <div className="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
+              <div className="flex items-center gap-3">
                 {selecionada.employees?.foto_url
-                  ? <SignedAvatarImg src={selecionada.employees.foto_url} className="h-40 w-40 rounded-3xl object-cover ring-4 ring-white shadow-lg" />
-                  : <div className="h-40 w-40 rounded-3xl bg-slate-300 text-white font-black text-4xl flex items-center justify-center ring-4 ring-white shadow-lg">
+                  ? <SignedAvatarImg src={selecionada.employees.foto_url} className="h-20 w-20 rounded-2xl object-cover border border-border shrink-0" />
+                  : <div className="h-20 w-20 rounded-2xl bg-muted text-muted-foreground font-bold text-xl flex items-center justify-center border border-border shrink-0">
                       {selecionada.employees?.nome?.split(/\s+/).map((p) => p[0]).slice(0,2).join("").toUpperCase()}
                     </div>}
-                <h3 className="font-black text-xl mt-3">{selecionada.employees?.nome}</h3>
-                <p className="text-xs text-slate-500">{selecionada.employees?.cpf ? formatCPFFromDigits(selecionada.employees.cpf) : ""} · Mat. {selecionada.employees?.matricula ?? "—"}</p>
+                <div className="min-w-0">
+                  <h3 className="font-bold text-base leading-tight text-foreground">{selecionada.employees?.nome}</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">{selecionada.employees?.cpf ? formatCPFFromDigits(selecionada.employees.cpf) : "—"}</p>
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mt-0.5">Mat. {selecionada.employees?.matricula ?? "—"}</p>
+                </div>
               </div>
 
-              <div className="rounded-2xl border-2 border-amber-200 bg-amber-50 p-3 space-y-1.5 text-sm">
-                <div className="flex justify-between"><span className="text-slate-500 text-xs uppercase tracking-widest font-bold">Tipo</span><span className="font-black">{selecionada.tipo}</span></div>
-                <div className="flex justify-between"><span className="text-slate-500 text-xs uppercase tracking-widest font-bold">Retorno</span><span className="font-black">{selecionada.com_retorno ? `Sim (${selecionada.horario_retorno?.slice(0,5) ?? "—"})` : "Não"}</span></div>
-                <div className="flex justify-between"><span className="text-slate-500 text-xs uppercase tracking-widest font-bold">Horário</span><span className="font-black">{selecionada.horario_saida?.slice(0,5)}</span></div>
-                <div><span className="text-slate-500 text-xs uppercase tracking-widest font-bold block">Motivo</span><span className="text-sm">{selecionada.motivo ?? "—"}</span></div>
+              <div className="rounded-xl border border-border bg-muted/30 divide-y divide-border overflow-hidden">
+                <Row label="Tipo" value={selecionada.tipo} />
+                <Row label="Horário de saída" value={selecionada.horario_saida?.slice(0,5)} icon={<Clock className="h-3 w-3" />} />
+                <Row label="Retorno" value={selecionada.com_retorno ? `Sim · ${selecionada.horario_retorno?.slice(0,5) ?? "—"}` : "Não"} />
+                <Row label="Data" value={new Date(selecionada.data + "T00:00:00").toLocaleDateString("pt-BR")} icon={<CalendarDays className="h-3 w-3" />} />
+                {selecionada.motivo && (
+                  <div className="px-3 py-2.5">
+                    <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Motivo</p>
+                    <p className="text-sm text-foreground mt-0.5">{selecionada.motivo}</p>
+                  </div>
+                )}
               </div>
 
               <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Observação (opcional)</label>
-                <Textarea value={obs} onChange={(e) => setObs(e.target.value)} rows={2} className="mt-1" placeholder="Ex.: saiu de moto, sem uniforme, etc." />
+                <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Observação da portaria (opcional)</label>
+                <Textarea value={obs} onChange={(e) => setObs(e.target.value)} rows={2} className="mt-1.5 text-sm" placeholder="Ex.: saiu de moto, sem uniforme, etc." />
               </div>
 
-              <div className="grid grid-cols-2 gap-2 pt-2">
-                <Button variant="outline" onClick={() => setSelecionada(null)} className="h-14">Voltar</Button>
-                <Button onClick={() => confirmar.mutate()} disabled={confirmar.isPending}
-                  className="h-14 bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase tracking-widest">
-                  {confirmar.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Check className="h-5 w-5 mr-1" /> Confirmar Saída</>}
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <Button variant="outline" onClick={() => setSelecionada(null)} className="h-11">Voltar</Button>
+                <Button onClick={() => confirmar.mutate()} disabled={confirmar.isPending} className="h-11 font-semibold">
+                  {confirmar.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Check className="h-4 w-4 mr-1.5" /> Confirmar</>}
                 </Button>
               </div>
             </div>
           )}
-        </div>
-      </DrawerContent>
-    </Drawer>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+function Row({ label, value, icon }: { label: string; value: React.ReactNode; icon?: React.ReactNode }) {
+  return (
+    <div className="px-3 py-2.5 flex items-center justify-between gap-3">
+      <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground inline-flex items-center gap-1.5">{icon}{label}</span>
+      <span className="text-sm font-semibold text-foreground text-right">{value}</span>
+    </div>
   );
 }
