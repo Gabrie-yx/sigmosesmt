@@ -595,6 +595,7 @@ function PlanosCalPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <FileViewerHost />
     </div>
   );
 }
