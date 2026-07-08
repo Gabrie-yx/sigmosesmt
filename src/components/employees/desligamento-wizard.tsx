@@ -244,19 +244,19 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
           </DialogHeader>
 
           {/* Stepper */}
-          <div className="flex items-center justify-between px-1 py-2 border-y border-slate-200">
+          <div className="flex items-center justify-between px-1 py-2 border-y border-border">
             {STEPS.map((s, i) => {
               const Ic = s.icon;
               const active = s.n === step;
               const done = s.n < step;
               return (
                 <div key={s.n} className="flex-1 flex items-center gap-2">
-                  <div className={`h-8 w-8 rounded-full flex items-center justify-center text-[11px] font-black ${done ? "bg-emerald-600 text-white" : active ? "bg-rose-700 text-white" : "bg-slate-200 text-slate-500"}`}>
+                  <div className={`h-8 w-8 rounded-full flex items-center justify-center text-[11px] font-black ${done ? "bg-emerald-600 text-white" : active ? "bg-rose-700 text-white" : "bg-slate-200 text-muted-foreground"}`}>
                     {done ? <CheckCircle2 className="h-4 w-4" /> : <Ic className="h-4 w-4" />}
                   </div>
                   <div className="hidden md:block">
-                    <div className={`text-[10px] font-black uppercase tracking-widest ${active ? "text-rose-700" : "text-slate-500"}`}>Passo {s.n}</div>
-                    <div className="text-xs font-bold text-slate-700">{s.label}</div>
+                    <div className={`text-[10px] font-black uppercase tracking-widest ${active ? "text-rose-700" : "text-muted-foreground"}`}>Passo {s.n}</div>
+                    <div className="text-xs font-bold text-foreground">{s.label}</div>
                   </div>
                   {i < STEPS.length - 1 && <div className={`flex-1 h-0.5 ${done ? "bg-emerald-500" : "bg-slate-200"}`} />}
                 </div>
@@ -309,14 +309,14 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
                 </div>
                 <div className="space-y-1.5">
                   <Label>Selecione o ASO demissional *</Label>
-                  <div className="rounded-lg border border-slate-200 divide-y divide-slate-100 max-h-56 overflow-y-auto">
-                    {(asos ?? []).length === 0 && <div className="text-xs text-slate-500 p-3">Nenhum exame no histórico.</div>}
+                  <div className="rounded-lg border border-border divide-y divide-border max-h-56 overflow-y-auto">
+                    {(asos ?? []).length === 0 && <div className="text-xs text-muted-foreground p-3">Nenhum exame no histórico.</div>}
                     {(asos ?? []).map((a: any) => (
-                      <label key={a.id} className={`flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-slate-50 ${asoExamId === a.id ? "bg-emerald-50" : ""}`}>
+                      <label key={a.id} className={`flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-muted/40 ${asoExamId === a.id ? "bg-emerald-50" : ""}`}>
                         <input type="radio" name="aso" checked={asoExamId === a.id} onChange={() => { setAsoExamId(a.id); setAsoDispensado(false); }} disabled={asoDispensado} />
                         <div className="flex-1 text-xs">
                           <div className="font-bold">{a.tipo_exame ?? "Exame"} — {a.data_realizacao ? new Date(a.data_realizacao + "T00:00:00").toLocaleDateString("pt-BR") : "sem data"}</div>
-                          <div className="text-slate-500">Aptidão: {a.aptidao ?? "—"}</div>
+                          <div className="text-muted-foreground">Aptidão: {a.aptidao ?? "—"}</div>
                         </div>
                       </label>
                     ))}
@@ -333,7 +333,7 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
                   <div className="space-y-1.5">
                     <Label>Justificativa da dispensa *</Label>
                     <Textarea rows={3} value={asoJustif} onChange={(e) => setAsoJustif(e.target.value)} placeholder="Ex.: ASO periódico realizado em DD/MM/AAAA (dentro dos 135 dias — grau de risco 2)." />
-                    <div className="text-[10px] text-slate-500">Mínimo 10 caracteres. Ficará registrada no pacote e em auditoria.</div>
+                    <div className="text-[10px] text-muted-foreground">Mínimo 10 caracteres. Ficará registrada no pacote e em auditoria.</div>
                   </div>
                 )}
               </div>
@@ -342,15 +342,15 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
             {step === 3 && (
               <div className="space-y-4">
                 <div>
-                  <Label className="text-[11px] font-black uppercase tracking-widest text-slate-600">EPIs em posse ({(epis ?? []).length})</Label>
-                  <div className="rounded-lg border border-slate-200 divide-y divide-slate-100 mt-1 max-h-48 overflow-y-auto">
-                    {(epis ?? []).length === 0 && <div className="text-xs text-slate-500 p-3">Nenhum EPI em posse — nada a devolver.</div>}
+                  <Label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">EPIs em posse ({(epis ?? []).length})</Label>
+                  <div className="rounded-lg border border-border divide-y divide-border mt-1 max-h-48 overflow-y-auto">
+                    {(epis ?? []).length === 0 && <div className="text-xs text-muted-foreground p-3">Nenhum EPI em posse — nada a devolver.</div>}
                     {(epis ?? []).map((e: any) => (
-                      <label key={e.id} className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-slate-50">
+                      <label key={e.id} className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-muted/40">
                         <Checkbox checked={!!episDevolvidos[e.id]} onCheckedChange={(v) => setEpisDevolvidos((c) => ({ ...c, [e.id]: !!v }))} />
                         <div className="flex-1 text-xs">
-                          <div className="font-bold">{e.item} <span className="text-slate-500">· qtd {e.qtd}</span></div>
-                          <div className="text-slate-500">CA {e.ca ?? "—"} · entregue {e.data_entrega ? new Date(e.data_entrega + "T00:00:00").toLocaleDateString("pt-BR") : "—"}</div>
+                          <div className="font-bold">{e.item} <span className="text-muted-foreground">· qtd {e.qtd}</span></div>
+                          <div className="text-muted-foreground">CA {e.ca ?? "—"} · entregue {e.data_entrega ? new Date(e.data_entrega + "T00:00:00").toLocaleDateString("pt-BR") : "—"}</div>
                         </div>
                         {episDevolvidos[e.id] ? <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">devolvido</Badge> : <Badge className="bg-rose-100 text-rose-700 border-rose-200">pendente</Badge>}
                       </label>
@@ -359,27 +359,27 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
                 </div>
 
                 <div>
-                  <Label className="text-[11px] font-black uppercase tracking-widest text-slate-600">OSs ativas ({(oss ?? []).length})</Label>
-                  <div className="rounded-lg border border-slate-200 divide-y divide-slate-100 mt-1 max-h-40 overflow-y-auto">
-                    {(oss ?? []).length === 0 && <div className="text-xs text-slate-500 p-3">Nenhuma OS ativa.</div>}
+                  <Label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">OSs ativas ({(oss ?? []).length})</Label>
+                  <div className="rounded-lg border border-border divide-y divide-border mt-1 max-h-40 overflow-y-auto">
+                    {(oss ?? []).length === 0 && <div className="text-xs text-muted-foreground p-3">Nenhuma OS ativa.</div>}
                     {(oss ?? []).map((o: any) => (
                       <div key={o.id} className="flex items-center gap-3 px-3 py-2">
                         <div className="flex-1 text-xs">
                           <div className="font-bold">{o.oss_templates?.codigo ?? "OS"} — {o.oss_templates?.procedimento ?? o.cargo_snapshot}</div>
-                          <div className="text-slate-500">Status atual: {o.status}</div>
+                          <div className="text-muted-foreground">Status atual: {o.status}</div>
                         </div>
                         <Badge className="bg-amber-100 text-amber-700 border-amber-200">→ SUBSTITUIDO</Badge>
                       </div>
                     ))}
                   </div>
-                  <div className="text-[10px] text-slate-500 mt-1">OSs ficam <b>preservadas</b> (NR-01 · 5 anos após o contrato) e mudam para SUBSTITUIDO — não são excluídas.</div>
+                  <div className="text-[10px] text-muted-foreground mt-1">OSs ficam <b>preservadas</b> (NR-01 · 5 anos após o contrato) e mudam para SUBSTITUIDO — não são excluídas.</div>
                 </div>
 
                 <div>
-                  <Label className="text-[11px] font-black uppercase tracking-widest text-slate-600">Checklist adicional</Label>
-                  <div className="rounded-lg border border-slate-200 divide-y divide-slate-100 mt-1">
+                  <Label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">Checklist adicional</Label>
+                  <div className="rounded-lg border border-border divide-y divide-border mt-1">
                     {CHECKLIST_ITEMS.map((it) => (
-                      <label key={it.key} className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-slate-50">
+                      <label key={it.key} className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-muted/40">
                         <Checkbox checked={!!checklist[it.key]} onCheckedChange={(v) => setChecklist((c) => ({ ...c, [it.key]: !!v }))} />
                         <span className="text-xs">{it.label}</span>
                       </label>
