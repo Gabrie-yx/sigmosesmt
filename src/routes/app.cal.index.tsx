@@ -531,14 +531,14 @@ function CalDashboardPage() {
   );
 }
 
-function KpiCard({ label, value, icon, tone }: { label: string; value: number; icon: React.ReactNode; tone?: "success" | "warning" | "danger" }) {
+function KpiCard({ label, value, icon, tone, onClick, active }: { label: string; value: number; icon: React.ReactNode; tone?: "success" | "warning" | "danger"; onClick?: () => void; active?: boolean }) {
   const color =
     tone === "success" ? "text-emerald-300"
     : tone === "warning" ? "text-amber-300"
     : tone === "danger" ? "text-red-300"
     : "text-foreground";
   return (
-    <Card>
+    <Card onClick={onClick} className={`${onClick ? "cursor-pointer hover:border-primary/50 transition" : ""} ${active ? "border-primary ring-1 ring-primary/40" : ""}`}>
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <span className="text-xs text-muted-foreground">{label}</span>
