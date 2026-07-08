@@ -24,6 +24,7 @@ export type HoraExtraHojeFuncionario = {
   externo: boolean;
   employee_id: string | null;
   foto_url: string | null;
+  company_name: string | null;
   permanencia_confirmada_at: string | null;
   permanencia_confirmada_por_nome: string | null;
   entrada_confirmada_at: string | null;
@@ -72,7 +73,7 @@ export const listHoraExtraHoje = createServerFn({ method: "GET" })
           permanencia_confirmada_at, permanencia_confirmada_por_nome,
           entrada_confirmada_at, entrada_confirmada_por_nome,
           saida_confirmada_at, saida_confirmada_por_nome,
-          employees:employee_id(foto_url)
+          employees:employee_id(foto_url, company:company_id(name))
         )
       `)
       .eq("data", hoje)
@@ -167,6 +168,7 @@ export const listHoraExtraHoje = createServerFn({ method: "GET" })
           externo: !!f.externo,
           employee_id: f.employee_id,
           foto_url: f.employees?.foto_url ?? null,
+          company_name: one(f.employees?.company)?.name ?? null,
           permanencia_confirmada_at: f.permanencia_confirmada_at,
           permanencia_confirmada_por_nome: f.permanencia_confirmada_por_nome,
           entrada_confirmada_at: f.entrada_confirmada_at,
