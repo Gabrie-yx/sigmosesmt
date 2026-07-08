@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ListChecks, Search, AlertTriangle, Clock, CheckCircle2, CircleDashed, Repeat, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { ListChecks, Search, AlertTriangle, Clock, CheckCircle2, CircleDashed, Repeat, ArrowRight, ChevronLeft, ChevronRight, Upload } from "lucide-react";
 
 export const Route = createFileRoute("/app/cal/planos")({
   component: PlanosCalPage,
@@ -176,6 +176,9 @@ function PlanosCalPage() {
           </div>
         </div>
         <div className="flex gap-2">
+          <Link to="/app/cal" search={{ import: "1" }}>
+            <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white"><Upload className="h-3.5 w-3.5 mr-1.5" /> Importar planilha</Button>
+          </Link>
           <Link to="/app/cal"><Button variant="outline" size="sm">Ver Requisitos <ArrowRight className="h-3.5 w-3.5 ml-1.5" /></Button></Link>
         </div>
       </div>
