@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { parseCalPlanoAcaoPlanilha } from "@/lib/cal-parser";
 import { ListChecks, Search, AlertTriangle, Clock, CheckCircle2, CircleDashed, Repeat, ArrowRight, ChevronLeft, ChevronRight, Upload, Paperclip, FileText, Trash2, ExternalLink } from "lucide-react";
+import { FileViewerHost, openStorageFile } from "@/components/file-viewer";
 
 export const Route = createFileRoute("/app/cal/planos")({
   component: PlanosCalPage,
@@ -686,9 +687,7 @@ function EvidenciasPA({ planoId }: { planoId: string }) {
   }
 
   async function abrir(ev: EvidenciaPA) {
-    const { data, error } = await supabase.storage.from("cal-evidencias").createSignedUrl(ev.arquivo_url, 3600);
-    if (error || !data) return toast.error("Não foi possível abrir o arquivo");
-    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+    await openStorageFile("cal-evidencias", ev.arquivo_url, ev.arquivo_nome ?? undefined);
   }
 
   async function remover(ev: EvidenciaPA) {
