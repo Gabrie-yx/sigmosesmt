@@ -281,7 +281,7 @@ function PlanosCalPage() {
     const tipos = new Set<string>();
     const statuses = new Set<string>();
     for (const p of planos) {
-      const a = p.cal_requisitos?.area_incidencia ?? p.cal_requisitos?.area;
+      const a = p.area_pa ?? p.cal_requisitos?.area_incidencia ?? p.cal_requisitos?.area;
       if (a) String(a).split(/[;,]/).map((s) => s.trim()).filter(Boolean).forEach((x) => areas.add(x));
       if (p.usuario_execucao) resps.add(p.usuario_execucao);
       if (p.usuario_gestao) gests.add(p.usuario_gestao);
@@ -307,12 +307,12 @@ function PlanosCalPage() {
       if (respSel !== "todos" && p.usuario_execucao !== respSel) return false;
       if (gestSel !== "todos" && p.usuario_gestao !== gestSel) return false;
       if (areaSel !== "todas") {
-        const a = String(p.cal_requisitos?.area_incidencia ?? p.cal_requisitos?.area ?? "").toLowerCase();
+        const a = String(p.area_pa ?? p.cal_requisitos?.area_incidencia ?? p.cal_requisitos?.area ?? "").toLowerCase();
         if (!a.includes(areaSel.toLowerCase())) return false;
       }
       if (needle) {
         const hay = [
-          p.codigo_pa, p.texto, p.tipo, p.status, p.usuario_execucao, p.usuario_gestao,
+          p.codigo_pa, p.texto, p.requisito_legal_texto, p.area_pa, p.tipo, p.status, p.usuario_execucao, p.usuario_gestao,
           p.cal_requisitos?.numero_cal, p.cal_requisitos?.norma, p.cal_requisitos?.ementa,
           p.cal_requisitos?.area, p.cal_requisitos?.area_incidencia,
           (p.cal_requisitos?.temas ?? []).join(" "),
