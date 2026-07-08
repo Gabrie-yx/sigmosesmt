@@ -788,11 +788,9 @@ function MinhasRcsBadge() {
 
 function useHoverOpen() {
   const [open, setOpen] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const clear = () => { if (timer.current) { clearTimeout(timer.current); timer.current = null; } };
-  const bind = {
-    onMouseEnter: () => { clear(); setOpen(true); },
-    onMouseLeave: () => { clear(); timer.current = setTimeout(() => setOpen(false), 180); },
-  };
+  // Comportamento: grupo abre/fecha SOMENTE via clique no cabeçalho.
+  // O hover atua apenas no drawer (abre/recolhe a sidebar inteira),
+  // preservando o estado expandido/recolhido de cada módulo.
+  const bind = {};
   return { open, setOpen, bind };
 }
