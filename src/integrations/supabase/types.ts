@@ -894,6 +894,407 @@ export type Database = {
         }
         Relationships: []
       }
+      cal_aplicabilidade: {
+        Row: {
+          created_at: string
+          gestor_aprovado_em: string | null
+          gestor_aprovado_por: string | null
+          gestor_assinatura_url: string | null
+          gestor_comentario: string | null
+          gestor_status: Database["public"]["Enums"]["cal_aprovacao_gestor"]
+          id: string
+          requisito_id: string
+          sesmt_analisado_em: string | null
+          sesmt_analisado_por: string | null
+          sesmt_assinatura_url: string | null
+          sesmt_justificativa: string | null
+          sesmt_valor:
+            | Database["public"]["Enums"]["cal_aplicabilidade_valor"]
+            | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          gestor_aprovado_em?: string | null
+          gestor_aprovado_por?: string | null
+          gestor_assinatura_url?: string | null
+          gestor_comentario?: string | null
+          gestor_status?: Database["public"]["Enums"]["cal_aprovacao_gestor"]
+          id?: string
+          requisito_id: string
+          sesmt_analisado_em?: string | null
+          sesmt_analisado_por?: string | null
+          sesmt_assinatura_url?: string | null
+          sesmt_justificativa?: string | null
+          sesmt_valor?:
+            | Database["public"]["Enums"]["cal_aplicabilidade_valor"]
+            | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          gestor_aprovado_em?: string | null
+          gestor_aprovado_por?: string | null
+          gestor_assinatura_url?: string | null
+          gestor_comentario?: string | null
+          gestor_status?: Database["public"]["Enums"]["cal_aprovacao_gestor"]
+          id?: string
+          requisito_id?: string
+          sesmt_analisado_em?: string | null
+          sesmt_analisado_por?: string | null
+          sesmt_assinatura_url?: string | null
+          sesmt_justificativa?: string | null
+          sesmt_valor?:
+            | Database["public"]["Enums"]["cal_aplicabilidade_valor"]
+            | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cal_aplicabilidade_requisito_id_fkey"
+            columns: ["requisito_id"]
+            isOneToOne: true
+            referencedRelation: "cal_requisitos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cal_evidencias: {
+        Row: {
+          arquivo_nome: string | null
+          arquivo_url: string
+          created_at: string
+          created_by: string | null
+          descricao: string | null
+          id: string
+          mime: string | null
+          requisito_id: string
+          tamanho_bytes: number | null
+          tipo: string
+        }
+        Insert: {
+          arquivo_nome?: string | null
+          arquivo_url: string
+          created_at?: string
+          created_by?: string | null
+          descricao?: string | null
+          id?: string
+          mime?: string | null
+          requisito_id: string
+          tamanho_bytes?: number | null
+          tipo: string
+        }
+        Update: {
+          arquivo_nome?: string | null
+          arquivo_url?: string
+          created_at?: string
+          created_by?: string | null
+          descricao?: string | null
+          id?: string
+          mime?: string | null
+          requisito_id?: string
+          tamanho_bytes?: number | null
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cal_evidencias_requisito_id_fkey"
+            columns: ["requisito_id"]
+            isOneToOne: false
+            referencedRelation: "cal_requisitos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cal_historico: {
+        Row: {
+          acao: string
+          autor_id: string | null
+          autor_nome: string | null
+          created_at: string
+          detalhes: Json | null
+          id: string
+          requisito_id: string
+          status_anterior: Database["public"]["Enums"]["cal_status"] | null
+          status_novo: Database["public"]["Enums"]["cal_status"] | null
+        }
+        Insert: {
+          acao: string
+          autor_id?: string | null
+          autor_nome?: string | null
+          created_at?: string
+          detalhes?: Json | null
+          id?: string
+          requisito_id: string
+          status_anterior?: Database["public"]["Enums"]["cal_status"] | null
+          status_novo?: Database["public"]["Enums"]["cal_status"] | null
+        }
+        Update: {
+          acao?: string
+          autor_id?: string | null
+          autor_nome?: string | null
+          created_at?: string
+          detalhes?: Json | null
+          id?: string
+          requisito_id?: string
+          status_anterior?: Database["public"]["Enums"]["cal_status"] | null
+          status_novo?: Database["public"]["Enums"]["cal_status"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cal_historico_requisito_id_fkey"
+            columns: ["requisito_id"]
+            isOneToOne: false
+            referencedRelation: "cal_requisitos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cal_impactos_modulos: {
+        Row: {
+          criado_em: string
+          criado_por: string | null
+          id: string
+          modulo: Database["public"]["Enums"]["cal_modulo_impactado"]
+          ref_descricao: string | null
+          ref_id: string | null
+          requisito_id: string
+        }
+        Insert: {
+          criado_em?: string
+          criado_por?: string | null
+          id?: string
+          modulo: Database["public"]["Enums"]["cal_modulo_impactado"]
+          ref_descricao?: string | null
+          ref_id?: string | null
+          requisito_id: string
+        }
+        Update: {
+          criado_em?: string
+          criado_por?: string | null
+          id?: string
+          modulo?: Database["public"]["Enums"]["cal_modulo_impactado"]
+          ref_descricao?: string | null
+          ref_id?: string | null
+          requisito_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cal_impactos_modulos_requisito_id_fkey"
+            columns: ["requisito_id"]
+            isOneToOne: false
+            referencedRelation: "cal_requisitos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cal_lote_importacao: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          mapeamento: Json
+          nome_arquivo: string
+          observacao: string | null
+          total_duplicados: number
+          total_erros: number
+          total_importados: number
+          total_linhas: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          mapeamento?: Json
+          nome_arquivo: string
+          observacao?: string | null
+          total_duplicados?: number
+          total_erros?: number
+          total_importados?: number
+          total_linhas?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          mapeamento?: Json
+          nome_arquivo?: string
+          observacao?: string | null
+          total_duplicados?: number
+          total_erros?: number
+          total_importados?: number
+          total_linhas?: number
+        }
+        Relationships: []
+      }
+      cal_requisitos: {
+        Row: {
+          area: string | null
+          cliente: string | null
+          created_at: string
+          created_by: string | null
+          criticidade: Database["public"]["Enums"]["cal_criticidade"]
+          data_publicacao: string | null
+          data_recebimento: string
+          ementa: string
+          esfera: string | null
+          fechado_em: string | null
+          fechado_por: string | null
+          gestor_area_id: string | null
+          id: string
+          lote_importacao_id: string | null
+          norma: string
+          numero_cal: string
+          observacao_fechamento: string | null
+          orgao: string | null
+          origem: string
+          prazo_atendimento: string | null
+          raw_data: Json | null
+          responsavel_id: string | null
+          status: Database["public"]["Enums"]["cal_status"]
+          tags: string[]
+          texto_legal: string | null
+          titulo: string | null
+          updated_at: string
+        }
+        Insert: {
+          area?: string | null
+          cliente?: string | null
+          created_at?: string
+          created_by?: string | null
+          criticidade?: Database["public"]["Enums"]["cal_criticidade"]
+          data_publicacao?: string | null
+          data_recebimento?: string
+          ementa: string
+          esfera?: string | null
+          fechado_em?: string | null
+          fechado_por?: string | null
+          gestor_area_id?: string | null
+          id?: string
+          lote_importacao_id?: string | null
+          norma: string
+          numero_cal: string
+          observacao_fechamento?: string | null
+          orgao?: string | null
+          origem?: string
+          prazo_atendimento?: string | null
+          raw_data?: Json | null
+          responsavel_id?: string | null
+          status?: Database["public"]["Enums"]["cal_status"]
+          tags?: string[]
+          texto_legal?: string | null
+          titulo?: string | null
+          updated_at?: string
+        }
+        Update: {
+          area?: string | null
+          cliente?: string | null
+          created_at?: string
+          created_by?: string | null
+          criticidade?: Database["public"]["Enums"]["cal_criticidade"]
+          data_publicacao?: string | null
+          data_recebimento?: string
+          ementa?: string
+          esfera?: string | null
+          fechado_em?: string | null
+          fechado_por?: string | null
+          gestor_area_id?: string | null
+          id?: string
+          lote_importacao_id?: string | null
+          norma?: string
+          numero_cal?: string
+          observacao_fechamento?: string | null
+          orgao?: string | null
+          origem?: string
+          prazo_atendimento?: string | null
+          raw_data?: Json | null
+          responsavel_id?: string | null
+          status?: Database["public"]["Enums"]["cal_status"]
+          tags?: string[]
+          texto_legal?: string | null
+          titulo?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cal_requisitos_gestor_area_id_fkey"
+            columns: ["gestor_area_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cal_requisitos_gestor_area_id_fkey"
+            columns: ["gestor_area_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligados_sem_pacote"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "cal_requisitos_gestor_area_id_fkey"
+            columns: ["gestor_area_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "cal_requisitos_gestor_area_id_fkey"
+            columns: ["gestor_area_id"]
+            isOneToOne: false
+            referencedRelation: "v_termos_consentimento_status"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "cal_requisitos_gestor_area_id_fkey"
+            columns: ["gestor_area_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "cal_requisitos_lote_importacao_id_fkey"
+            columns: ["lote_importacao_id"]
+            isOneToOne: false
+            referencedRelation: "cal_lote_importacao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cal_requisitos_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cal_requisitos_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligados_sem_pacote"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "cal_requisitos_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "cal_requisitos_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "v_termos_consentimento_status"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "cal_requisitos_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
+          },
+        ]
+      }
       cargo_riscos: {
         Row: {
           aposentadoria_especial_anos: number | null
@@ -10460,6 +10861,27 @@ export type Database = {
         | "supervisor_extra_geral"
         | "hora_extra_marcador"
         | "porteiro"
+      cal_aplicabilidade_valor: "sim" | "parcial" | "nao"
+      cal_aprovacao_gestor: "pendente" | "aprovado" | "rejeitado"
+      cal_criticidade: "baixa" | "media" | "alta" | "critica"
+      cal_modulo_impactado:
+        | "plano_acoes"
+        | "controle_documentos"
+        | "procedimentos"
+        | "dds"
+        | "pgr"
+        | "matriz_treinamento"
+        | "pcmso"
+        | "contratadas"
+        | "epi"
+      cal_status:
+        | "recebido"
+        | "em_analise"
+        | "aplicavel"
+        | "nao_aplicavel"
+        | "em_tratativa"
+        | "atendido"
+        | "monitoramento"
       extintor_status: "ATIVO" | "EM_MANUTENCAO" | "BAIXADO" | "VENCIDO"
       extintor_tipo_agente:
         | "ABC"
@@ -10649,6 +11071,29 @@ export const Constants = {
         "supervisor_extra_geral",
         "hora_extra_marcador",
         "porteiro",
+      ],
+      cal_aplicabilidade_valor: ["sim", "parcial", "nao"],
+      cal_aprovacao_gestor: ["pendente", "aprovado", "rejeitado"],
+      cal_criticidade: ["baixa", "media", "alta", "critica"],
+      cal_modulo_impactado: [
+        "plano_acoes",
+        "controle_documentos",
+        "procedimentos",
+        "dds",
+        "pgr",
+        "matriz_treinamento",
+        "pcmso",
+        "contratadas",
+        "epi",
+      ],
+      cal_status: [
+        "recebido",
+        "em_analise",
+        "aplicavel",
+        "nao_aplicavel",
+        "em_tratativa",
+        "atendido",
+        "monitoramento",
       ],
       extintor_status: ["ATIVO", "EM_MANUTENCAO", "BAIXADO", "VENCIDO"],
       extintor_tipo_agente: [
