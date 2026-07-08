@@ -140,7 +140,7 @@ export const confirmarValidacaoPortaria = createServerFn({ method: "POST" })
     }
     const { error } = await context.supabase
       .from("hora_extra_sabado_funcionarios")
-      .update(patch)
+      .update(patch as any)
       .eq("id", data.funcionarioId);
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -170,7 +170,7 @@ export const desfazerValidacaoPortaria = createServerFn({ method: "POST" })
     }
     const { error } = await context.supabase
       .from("hora_extra_sabado_funcionarios")
-      .update(patch)
+      .update(patch as any)
       .eq("id", data.funcionarioId);
     if (error) throw new Error(error.message);
     return { ok: true };
