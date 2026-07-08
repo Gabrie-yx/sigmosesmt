@@ -123,7 +123,7 @@ export function HoraExtraHojeCard() {
       className="rounded-2xl bg-card border border-primary/40 overflow-hidden"
       style={{
         boxShadow:
-          "0 0 0 1px hsl(var(--primary) / 0.25), 0 0 24px -4px hsl(var(--primary) / 0.55), inset 0 0 18px -8px hsl(var(--primary) / 0.35)",
+          "0 0 0 1px color-mix(in oklab, var(--primary) 25%, transparent), 0 0 24px -4px color-mix(in oklab, var(--primary) 55%, transparent), inset 0 0 18px -8px color-mix(in oklab, var(--primary) 35%, transparent)",
       }}
     >
       <div className="px-4 py-3 border-b border-primary/25 flex items-center justify-between bg-gradient-to-r from-primary/10 via-transparent to-primary/10">
@@ -183,7 +183,7 @@ function SolicitanteBloco({
   return (
     <section
       className="rounded-xl border border-primary/25 bg-card overflow-hidden"
-      style={{ boxShadow: "0 0 0 1px hsl(var(--primary) / 0.12), inset 0 0 18px -10px hsl(var(--primary) / 0.5)" }}
+      style={{ boxShadow: "0 0 0 1px color-mix(in oklab, var(--primary) 12%, transparent), inset 0 0 18px -10px color-mix(in oklab, var(--primary) 50%, transparent)" }}
     >
       <button
         onClick={() => setExpanded((v) => !v)}
