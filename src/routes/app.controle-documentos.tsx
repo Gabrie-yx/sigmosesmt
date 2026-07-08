@@ -644,6 +644,7 @@ function DetalheSheet({ id, onClose, categorias, employees }: { id: string | nul
   const catMap = new Map(categorias.map((c) => [c.id, c.nome]));
 
   return (
+    <>
     <Sheet open={!!id} onOpenChange={(o) => { if (!o) onClose(); }}>
       <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
         {!d ? <div className="p-6 text-sm text-muted-foreground">Carregando…</div> : (
@@ -796,7 +797,8 @@ function DetalheSheet({ id, onClose, categorias, employees }: { id: string | nul
           </>
         )}
       </SheetContent>
-      <AlertDialog open={confirmDel} onOpenChange={setConfirmDel}>
+    </Sheet>
+    <AlertDialog open={confirmDel} onOpenChange={setConfirmDel}>
         <AlertDialogContent className="z-[110]">
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir documento {d?.numero}?</AlertDialogTitle>
@@ -810,7 +812,7 @@ function DetalheSheet({ id, onClose, categorias, employees }: { id: string | nul
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Sheet>
+    </>
   );
 }
 
