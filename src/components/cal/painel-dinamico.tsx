@@ -172,18 +172,22 @@ function HistoricoChart<T extends { created_at?: string | null }>({
     <div className="h-[260px] w-full">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 20, right: 16, left: -8, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} />
-          <XAxis dataKey="mes" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
-          <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#ffffff" opacity={0.12} />
+          <XAxis dataKey="mes" tick={{ fontSize: 11, fill: "#e2e8f0" }} stroke="#94a3b8" />
+          <YAxis tick={{ fontSize: 11, fill: "#e2e8f0" }} stroke="#94a3b8" />
           <Tooltip
             contentStyle={{
-              background: "hsl(var(--popover))",
-              border: "1px solid hsl(var(--border))",
+              background: "#0f172a",
+              border: "1px solid #334155",
               borderRadius: 8,
               fontSize: 12,
+              color: "#f1f5f9",
             }}
+            labelStyle={{ color: "#f1f5f9", fontWeight: 600 }}
+            itemStyle={{ color: "#f1f5f9" }}
+            cursor={{ fill: "#ffffff", fillOpacity: 0.05 }}
           />
-          <Legend wrapperStyle={{ fontSize: 11 }} />
+          <Legend wrapperStyle={{ fontSize: 11, color: "#e2e8f0" }} />
           {series.map((s) => (
             <Bar key={s.key} dataKey={s.key} name={s.label} stackId="a" fill={s.color} radius={[0, 0, 0, 0]} />
           ))}
