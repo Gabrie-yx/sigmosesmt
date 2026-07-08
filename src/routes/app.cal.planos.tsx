@@ -40,6 +40,7 @@ type PlanoRow = {
   recorrente: boolean | null;
   usuario_execucao: string | null;
   usuario_gestao: string | null;
+  created_at?: string | null;
   cal_requisitos: {
     id: string;
     numero_cal: string | null;
@@ -276,7 +277,7 @@ function PlanosCalPage() {
       while (true) {
         const { data, error } = await supabase
           .from("cal_planos_acao")
-          .select("id, requisito_id, codigo_pa, texto, requisito_legal_texto, area_pa, observacoes, tipo, status, data_prevista, data_conclusao, recorrente, usuario_execucao, usuario_gestao, cal_requisitos(id, numero_cal, norma, ementa, area, area_incidencia, temas, criticidade)")
+          .select("id, requisito_id, codigo_pa, texto, requisito_legal_texto, area_pa, observacoes, tipo, status, data_prevista, data_conclusao, recorrente, usuario_execucao, usuario_gestao, created_at, cal_requisitos(id, numero_cal, norma, ementa, area, area_incidencia, temas, criticidade)")
           .order("data_prevista", { ascending: true, nullsFirst: false })
           .range(from, from + PAGE - 1);
         if (error) throw error;
