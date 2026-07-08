@@ -235,6 +235,9 @@ export function AppSidebar() {
 
   const isAdmin = roles.includes("admin");
   const isModerator = isAdmin || roles.includes("moderador");
+  const esconderHoraExtraDuplicada = isExtraSabadoMarcador && !isAdmin;
+  const semHoraExtraDuplicada = (item: LeafItem) =>
+    !esconderHoraExtraDuplicada || !item.to.includes("/hora-extra");
   const canSesmt = isAdmin || hasModule("sesmt");
   const canEstoque = isAdmin || hasModule("estoque");
   const canProducao = isAdmin || hasModule("producao");
@@ -250,11 +253,11 @@ export function AppSidebar() {
     .filter((g) => g.items.length > 0);
   const visibleDDSSubmenu = DDS_SUBMENU.filter((i) => hasMenu(i.to) || i.to.startsWith("/app/dds"));
   const visibleEstoque = ESTOQUE_ITEMS.filter((i) => hasMenu(i.to));
-  const visibleProducao = PRODUCAO_SUBMENU.filter((i) => hasMenu(i.to));
-  const visibleCompras = COMPRAS_ITEMS.filter((i) => hasMenu(i.to));
+  const visibleProducao = PRODUCAO_SUBMENU.filter((i) => hasMenu(i.to) && semHoraExtraDuplicada(i));
+  const visibleCompras = COMPRAS_ITEMS.filter((i) => hasMenu(i.to) && semHoraExtraDuplicada(i));
   const visibleAdministrativo = ADMINISTRATIVO_ITEMS.filter((i) => hasMenu(i.to));
-  const visibleAlmoxarifado = ALMOXARIFADO_ITEMS.filter((i) => hasMenu(i.to));
-  const visibleManutencao = MANUTENCAO_ITEMS.filter((i) => hasMenu(i.to));
+  const visibleAlmoxarifado = ALMOXARIFADO_ITEMS.filter((i) => hasMenu(i.to) && semHoraExtraDuplicada(i));
+  const visibleManutencao = MANUTENCAO_ITEMS.filter((i) => hasMenu(i.to) && semHoraExtraDuplicada(i));
   const visiblePortaria = PORTARIA_ITEMS.filter((i) => hasMenu(i.to));
 
   // Todos os grupos iniciam RECOLHIDOS e abrem apenas ao passar o mouse

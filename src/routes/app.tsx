@@ -29,12 +29,16 @@ function AppLayout() {
     }
   }, [loading, session, navigate]);
 
-  // Marcador puro (Extra de Sábado) só pode ver o painel mobile — nunca /app/*
+  const isHoraExtraMarcadorRoute =
+    location.pathname === "/app/modulo/terceirizadas/hora-extra" ||
+    location.pathname.startsWith("/app/modulo/terceirizadas/hora-extra/");
+
+  // Marcador puro não vê os painéis gerais, mas pode entrar no fluxo único de Hora Extra.
   useEffect(() => {
-    if (!loading && session && isMarcadorPuro) {
+    if (!loading && session && isMarcadorPuro && !isHoraExtraMarcadorRoute) {
       navigate({ to: "/extra-sabado", replace: true });
     }
-  }, [loading, session, isMarcadorPuro, navigate]);
+  }, [loading, session, isMarcadorPuro, isHoraExtraMarcadorRoute, navigate]);
 
   if (loading || !session) {
     return (
