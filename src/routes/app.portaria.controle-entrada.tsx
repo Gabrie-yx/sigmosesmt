@@ -69,7 +69,7 @@ function ControleEntradaPage() {
         .from("portaria_visitas")
         .select(`
           id, tipo, status, entrada_at, saida_at, motivo_visita, foto_rosto_url,
-          pessoa:pessoa_id(id,nome,cpf),
+          pessoa:pessoa_id(id,nome,cpf,bloqueado,motivo_bloqueio),
           veiculo:veiculo_id(id,placa,modelo),
           empresa:empresa_visitada_id(id,name)
         `)
