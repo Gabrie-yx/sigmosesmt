@@ -797,7 +797,7 @@ function DetalheSheet({ id, onClose, categorias, employees }: { id: string | nul
         )}
       </SheetContent>
       <AlertDialog open={confirmDel} onOpenChange={setConfirmDel}>
-        <AlertDialogContent>
+        <AlertDialogContent className="z-[110]">
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir documento {d?.numero}?</AlertDialogTitle>
             <AlertDialogDescription>
