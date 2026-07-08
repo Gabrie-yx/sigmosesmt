@@ -118,14 +118,14 @@ export function SaidaAcoesDialog({
   const editar = useMutation({
     mutationFn: async () => {
       if (!saida) throw new Error("Sem saída");
-      const payload: Record<string, any> = {
+      const payload = {
         data: editData.data,
         horario_saida: editData.horario_saida,
         horario_retorno: editData.horario_retorno || null,
         motivo: editData.motivo || null,
         observacao: editData.observacao || null,
       };
-      const { error } = await supabase.from("employee_saidas_expediente").update(payload).eq("id", saida.id);
+      const { error } = await (supabase as any).from("employee_saidas_expediente").update(payload).eq("id", saida.id);
       if (error) throw error;
     },
     onSuccess: () => { toast.success("Saída atualizada"); invalidate(); onClose(); },
