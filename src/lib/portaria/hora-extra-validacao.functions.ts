@@ -118,11 +118,13 @@ export const listHoraExtraHoje = createServerFn({ method: "GET" })
           employeePorId.set(String(e.id), e);
           employeePorNome.set(String(e.nome).toLowerCase(), e);
         });
-        const { data: emps } = await context.supabase
-          .from("employees")
-          .select("id, nome, setor, roles(name)")
-          .in("nome", nomesSolicitantes);
-        (emps ?? []).forEach((e: any) => employeePorNome.set(String(e.nome).toLowerCase(), e));
+        if (nomesSolicitantes.length > 0) {
+          const { data: emps } = await context.supabase
+            .from("employees")
+            .select("id, nome, setor, roles(name)")
+            .in("nome", nomesSolicitantes);
+          (emps ?? []).forEach((e: any) => employeePorNome.set(String(e.nome).toLowerCase(), e));
+        }
       }
     }
 
