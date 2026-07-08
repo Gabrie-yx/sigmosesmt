@@ -74,7 +74,7 @@ function DesligadosPage() {
     <div className="p-6 md:p-8 animate-fadeIn">
       <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
         <div className="flex items-center gap-3">
-          <Link to="/app/employees" className="inline-flex items-center gap-1 text-[11px] font-black uppercase tracking-widest text-muted-foreground hover:text-brand">
+          <Link to="/app/employees" className="inline-flex items-center gap-1 text-[11px] font-black uppercase tracking-widest text-muted-foreground hover:text-[var(--brand-text)]">
             <ArrowLeft className="h-3.5 w-3.5" /> Funcionários
           </Link>
         </div>
@@ -132,7 +132,7 @@ function DesligadosPage() {
                 )}
                 <div className="flex-1 min-w-0">
                   <Link to="/app/employees/$id" params={{ id: e.id }} className="block">
-                    <h3 className="font-black text-sm text-foreground uppercase leading-tight truncate hover:text-brand">{e.nome}</h3>
+                    <h3 className="font-black text-sm text-foreground uppercase leading-tight truncate hover:text-[var(--brand-text)]">{e.nome}</h3>
                   </Link>
                   <div className="mt-1 flex flex-wrap items-center gap-1">
                     <span className="inline-flex items-center gap-1 rounded-full bg-slate-200 text-slate-700 ring-1 ring-slate-300 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest">
