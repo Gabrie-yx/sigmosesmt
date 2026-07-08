@@ -68,6 +68,7 @@ import {
   DoorOpen,
   Clock,
   Scale,
+  CalendarClock,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -306,6 +307,34 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        )}
+
+        {/* HORA EXTRA — atalho pinado pra qualquer marcador/líder,
+            independente de módulo. Garante um ponto de entrada visível
+            no mobile (drawer) e no desktop. */}
+        {isExtraSabadoMarcador && (
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive("/app/modulo/terceirizadas/hora-extra")}
+                    tooltip="Convocar Hora Extra"
+                    className="data-[active=true]:bg-amber-100 data-[active=true]:text-red-900 font-bold"
+                  >
+                    <Link
+                      to="/app/modulo/$modulo/hora-extra"
+                      params={{ modulo: "terceirizadas" }}
+                    >
+                      <CalendarClock />
+                      <span>Hora Extra</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
         )}
 
         {/* SESMT */}
