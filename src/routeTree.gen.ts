@@ -51,6 +51,7 @@ import { Route as AppOssIndexRouteImport } from './routes/app.oss.index'
 import { Route as AppEstoqueIndexRouteImport } from './routes/app.estoque.index'
 import { Route as AppEmployeesIndexRouteImport } from './routes/app.employees.index'
 import { Route as AppDdsIndexRouteImport } from './routes/app.dds.index'
+import { Route as AppCalIndexRouteImport } from './routes/app.cal.index'
 import { Route as AppSesmtTerceirosRouteImport } from './routes/app.sesmt.terceiros'
 import { Route as AppSesmtRequisicoesRouteImport } from './routes/app.sesmt.requisicoes'
 import { Route as AppSesmtProcedimentosRouteImport } from './routes/app.sesmt.procedimentos'
@@ -92,6 +93,7 @@ import { Route as AppContaSegurancaRouteImport } from './routes/app.conta.segura
 import { Route as AppComprasRequisicoesRecebidasRouteImport } from './routes/app.compras.requisicoes-recebidas'
 import { Route as AppComprasFornecedoresRouteImport } from './routes/app.compras.fornecedores'
 import { Route as AppComprasDashboardRouteImport } from './routes/app.compras.dashboard'
+import { Route as AppCalIdRouteImport } from './routes/app.cal.$id'
 import { Route as AppAlmoxarifadoRequisicaoComprasRouteImport } from './routes/app.almoxarifado.requisicao-compras'
 import { Route as AppAdministrativoRequisicoesRecebidasRouteImport } from './routes/app.administrativo.requisicoes-recebidas'
 import { Route as AppAdministrativoMarcadoresHoraExtraRouteImport } from './routes/app.administrativo.marcadores-hora-extra'
@@ -321,6 +323,11 @@ const AppDdsIndexRoute = AppDdsIndexRouteImport.update({
   path: '/dds/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCalIndexRoute = AppCalIndexRouteImport.update({
+  id: '/cal/',
+  path: '/cal/',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSesmtTerceirosRoute = AppSesmtTerceirosRouteImport.update({
   id: '/sesmt/terceiros',
   path: '/sesmt/terceiros',
@@ -536,6 +543,11 @@ const AppComprasDashboardRoute = AppComprasDashboardRouteImport.update({
   path: '/compras/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCalIdRoute = AppCalIdRouteImport.update({
+  id: '/cal/$id',
+  path: '/cal/$id',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAlmoxarifadoRequisicaoComprasRoute =
   AppAlmoxarifadoRequisicaoComprasRouteImport.update({
     id: '/almoxarifado/requisicao-compras',
@@ -670,6 +682,7 @@ export interface FileRoutesByFullPath {
   '/app/administrativo/marcadores-hora-extra': typeof AppAdministrativoMarcadoresHoraExtraRoute
   '/app/administrativo/requisicoes-recebidas': typeof AppAdministrativoRequisicoesRecebidasRoute
   '/app/almoxarifado/requisicao-compras': typeof AppAlmoxarifadoRequisicaoComprasRoute
+  '/app/cal/$id': typeof AppCalIdRoute
   '/app/compras/dashboard': typeof AppComprasDashboardRoute
   '/app/compras/fornecedores': typeof AppComprasFornecedoresRoute
   '/app/compras/requisicoes-recebidas': typeof AppComprasRequisicoesRecebidasRoute
@@ -711,6 +724,7 @@ export interface FileRoutesByFullPath {
   '/app/sesmt/procedimentos': typeof AppSesmtProcedimentosRoute
   '/app/sesmt/requisicoes': typeof AppSesmtRequisicoesRoute
   '/app/sesmt/terceiros': typeof AppSesmtTerceirosRoute
+  '/app/cal/': typeof AppCalIndexRoute
   '/app/dds/': typeof AppDdsIndexRoute
   '/app/employees/': typeof AppEmployeesIndexRoute
   '/app/estoque/': typeof AppEstoqueIndexRoute
@@ -766,6 +780,7 @@ export interface FileRoutesByTo {
   '/app/administrativo/marcadores-hora-extra': typeof AppAdministrativoMarcadoresHoraExtraRoute
   '/app/administrativo/requisicoes-recebidas': typeof AppAdministrativoRequisicoesRecebidasRoute
   '/app/almoxarifado/requisicao-compras': typeof AppAlmoxarifadoRequisicaoComprasRoute
+  '/app/cal/$id': typeof AppCalIdRoute
   '/app/compras/dashboard': typeof AppComprasDashboardRoute
   '/app/compras/fornecedores': typeof AppComprasFornecedoresRoute
   '/app/compras/requisicoes-recebidas': typeof AppComprasRequisicoesRecebidasRoute
@@ -807,6 +822,7 @@ export interface FileRoutesByTo {
   '/app/sesmt/procedimentos': typeof AppSesmtProcedimentosRoute
   '/app/sesmt/requisicoes': typeof AppSesmtRequisicoesRoute
   '/app/sesmt/terceiros': typeof AppSesmtTerceirosRoute
+  '/app/cal': typeof AppCalIndexRoute
   '/app/dds': typeof AppDdsIndexRoute
   '/app/employees': typeof AppEmployeesIndexRoute
   '/app/estoque': typeof AppEstoqueIndexRoute
@@ -867,6 +883,7 @@ export interface FileRoutesById {
   '/app/administrativo/marcadores-hora-extra': typeof AppAdministrativoMarcadoresHoraExtraRoute
   '/app/administrativo/requisicoes-recebidas': typeof AppAdministrativoRequisicoesRecebidasRoute
   '/app/almoxarifado/requisicao-compras': typeof AppAlmoxarifadoRequisicaoComprasRoute
+  '/app/cal/$id': typeof AppCalIdRoute
   '/app/compras/dashboard': typeof AppComprasDashboardRoute
   '/app/compras/fornecedores': typeof AppComprasFornecedoresRoute
   '/app/compras/requisicoes-recebidas': typeof AppComprasRequisicoesRecebidasRoute
@@ -908,6 +925,7 @@ export interface FileRoutesById {
   '/app/sesmt/procedimentos': typeof AppSesmtProcedimentosRoute
   '/app/sesmt/requisicoes': typeof AppSesmtRequisicoesRoute
   '/app/sesmt/terceiros': typeof AppSesmtTerceirosRoute
+  '/app/cal/': typeof AppCalIndexRoute
   '/app/dds/': typeof AppDdsIndexRoute
   '/app/employees/': typeof AppEmployeesIndexRoute
   '/app/estoque/': typeof AppEstoqueIndexRoute
@@ -969,6 +987,7 @@ export interface FileRouteTypes {
     | '/app/administrativo/marcadores-hora-extra'
     | '/app/administrativo/requisicoes-recebidas'
     | '/app/almoxarifado/requisicao-compras'
+    | '/app/cal/$id'
     | '/app/compras/dashboard'
     | '/app/compras/fornecedores'
     | '/app/compras/requisicoes-recebidas'
@@ -1010,6 +1029,7 @@ export interface FileRouteTypes {
     | '/app/sesmt/procedimentos'
     | '/app/sesmt/requisicoes'
     | '/app/sesmt/terceiros'
+    | '/app/cal/'
     | '/app/dds/'
     | '/app/employees/'
     | '/app/estoque/'
@@ -1065,6 +1085,7 @@ export interface FileRouteTypes {
     | '/app/administrativo/marcadores-hora-extra'
     | '/app/administrativo/requisicoes-recebidas'
     | '/app/almoxarifado/requisicao-compras'
+    | '/app/cal/$id'
     | '/app/compras/dashboard'
     | '/app/compras/fornecedores'
     | '/app/compras/requisicoes-recebidas'
@@ -1106,6 +1127,7 @@ export interface FileRouteTypes {
     | '/app/sesmt/procedimentos'
     | '/app/sesmt/requisicoes'
     | '/app/sesmt/terceiros'
+    | '/app/cal'
     | '/app/dds'
     | '/app/employees'
     | '/app/estoque'
@@ -1165,6 +1187,7 @@ export interface FileRouteTypes {
     | '/app/administrativo/marcadores-hora-extra'
     | '/app/administrativo/requisicoes-recebidas'
     | '/app/almoxarifado/requisicao-compras'
+    | '/app/cal/$id'
     | '/app/compras/dashboard'
     | '/app/compras/fornecedores'
     | '/app/compras/requisicoes-recebidas'
@@ -1206,6 +1229,7 @@ export interface FileRouteTypes {
     | '/app/sesmt/procedimentos'
     | '/app/sesmt/requisicoes'
     | '/app/sesmt/terceiros'
+    | '/app/cal/'
     | '/app/dds/'
     | '/app/employees/'
     | '/app/estoque/'
@@ -1531,6 +1555,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDdsIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/cal/': {
+      id: '/app/cal/'
+      path: '/cal'
+      fullPath: '/app/cal/'
+      preLoaderRoute: typeof AppCalIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/sesmt/terceiros': {
       id: '/app/sesmt/terceiros'
       path: '/sesmt/terceiros'
@@ -1818,6 +1849,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppComprasDashboardRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/cal/$id': {
+      id: '/app/cal/$id'
+      path: '/cal/$id'
+      fullPath: '/app/cal/$id'
+      preLoaderRoute: typeof AppCalIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/almoxarifado/requisicao-compras': {
       id: '/app/almoxarifado/requisicao-compras'
       path: '/almoxarifado/requisicao-compras'
@@ -2044,6 +2082,7 @@ interface AppRouteChildren {
   AppUsersRoute: typeof AppUsersRoute
   AppIndexRoute: typeof AppIndexRoute
   AppAlmoxarifadoRequisicaoComprasRoute: typeof AppAlmoxarifadoRequisicaoComprasRoute
+  AppCalIdRoute: typeof AppCalIdRoute
   AppComprasDashboardRoute: typeof AppComprasDashboardRoute
   AppComprasFornecedoresRoute: typeof AppComprasFornecedoresRoute
   AppComprasRequisicoesRecebidasRoute: typeof AppComprasRequisicoesRecebidasRoute
@@ -2078,6 +2117,7 @@ interface AppRouteChildren {
   AppSesmtProcedimentosRoute: typeof AppSesmtProcedimentosRoute
   AppSesmtRequisicoesRoute: typeof AppSesmtRequisicoesRoute
   AppSesmtTerceirosRoute: typeof AppSesmtTerceirosRoute
+  AppCalIndexRoute: typeof AppCalIndexRoute
   AppDdsIndexRoute: typeof AppDdsIndexRoute
   AppEstoqueIndexRoute: typeof AppEstoqueIndexRoute
   AppModuloModuloHoraExtraRoute: typeof AppModuloModuloHoraExtraRoute
@@ -2119,6 +2159,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppUsersRoute: AppUsersRoute,
   AppIndexRoute: AppIndexRoute,
   AppAlmoxarifadoRequisicaoComprasRoute: AppAlmoxarifadoRequisicaoComprasRoute,
+  AppCalIdRoute: AppCalIdRoute,
   AppComprasDashboardRoute: AppComprasDashboardRoute,
   AppComprasFornecedoresRoute: AppComprasFornecedoresRoute,
   AppComprasRequisicoesRecebidasRoute: AppComprasRequisicoesRecebidasRoute,
@@ -2153,6 +2194,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSesmtProcedimentosRoute: AppSesmtProcedimentosRoute,
   AppSesmtRequisicoesRoute: AppSesmtRequisicoesRoute,
   AppSesmtTerceirosRoute: AppSesmtTerceirosRoute,
+  AppCalIndexRoute: AppCalIndexRoute,
   AppDdsIndexRoute: AppDdsIndexRoute,
   AppEstoqueIndexRoute: AppEstoqueIndexRoute,
   AppModuloModuloHoraExtraRoute: AppModuloModuloHoraExtraRoute,
@@ -2186,13 +2228,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

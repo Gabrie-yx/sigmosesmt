@@ -67,6 +67,7 @@ import {
   Warehouse,
   DoorOpen,
   Clock,
+  Scale,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -91,6 +92,7 @@ const SESMT_GROUPS: { title: string; items: LeafItem[] }[] = [
       { to: "/app/sesmt/docs", label: "Documentos SESMT", icon: FileText },
       { to: "/app/sesmt/guia-documentos", label: "Guia: Onde encontrar laudos?", icon: BookOpenCheck },
       { to: "/app/controle-documentos", label: "Controle de Documentos", icon: FolderOpen },
+      { to: "/app/cal", label: "Requisitos Legais (CAL)", icon: Scale },
       { to: "/app/extintores", label: "Controle de Extintores", icon: Flame },
       { to: "/app/sesmt/requisicoes", label: "Requisições de Compra", icon: ShoppingCart },
       { to: "/app/assinador", label: "Assinador de PDFs", icon: FileSignature },
