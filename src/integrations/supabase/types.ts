@@ -1092,56 +1092,179 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          delta_resumo: Json | null
           id: string
           mapeamento: Json
           nome_arquivo: string
           observacao: string | null
+          total_atualizados: number
           total_duplicados: number
           total_erros: number
           total_importados: number
+          total_inalterados: number
           total_linhas: number
+          total_novos: number
+          total_revogados: number
         }
         Insert: {
           created_at?: string
           created_by?: string | null
+          delta_resumo?: Json | null
           id?: string
           mapeamento?: Json
           nome_arquivo: string
           observacao?: string | null
+          total_atualizados?: number
           total_duplicados?: number
           total_erros?: number
           total_importados?: number
+          total_inalterados?: number
           total_linhas?: number
+          total_novos?: number
+          total_revogados?: number
         }
         Update: {
           created_at?: string
           created_by?: string | null
+          delta_resumo?: Json | null
           id?: string
           mapeamento?: Json
           nome_arquivo?: string
           observacao?: string | null
+          total_atualizados?: number
           total_duplicados?: number
           total_erros?: number
           total_importados?: number
+          total_inalterados?: number
           total_linhas?: number
+          total_novos?: number
+          total_revogados?: number
         }
         Relationships: []
+      }
+      cal_normas_vinculadas: {
+        Row: {
+          codigo_norma: string
+          created_at: string
+          data_inclusao: string | null
+          descricao_norma: string | null
+          id: string
+          requisito_id: string
+        }
+        Insert: {
+          codigo_norma: string
+          created_at?: string
+          data_inclusao?: string | null
+          descricao_norma?: string | null
+          id?: string
+          requisito_id: string
+        }
+        Update: {
+          codigo_norma?: string
+          created_at?: string
+          data_inclusao?: string | null
+          descricao_norma?: string | null
+          id?: string
+          requisito_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cal_normas_vinculadas_requisito_id_fkey"
+            columns: ["requisito_id"]
+            isOneToOne: false
+            referencedRelation: "cal_requisitos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cal_planos_acao: {
+        Row: {
+          codigo_pa: string | null
+          created_at: string
+          custo: number | null
+          data_conclusao: string | null
+          data_prevista: string | null
+          id: string
+          intervalo_recorrencia_dias: number | null
+          natureza_custo: string | null
+          recorrente: boolean
+          requisito_id: string
+          status: string | null
+          texto: string
+          tipo: string | null
+          updated_at: string
+          usuario_execucao: string | null
+          usuario_gestao: string | null
+        }
+        Insert: {
+          codigo_pa?: string | null
+          created_at?: string
+          custo?: number | null
+          data_conclusao?: string | null
+          data_prevista?: string | null
+          id?: string
+          intervalo_recorrencia_dias?: number | null
+          natureza_custo?: string | null
+          recorrente?: boolean
+          requisito_id: string
+          status?: string | null
+          texto: string
+          tipo?: string | null
+          updated_at?: string
+          usuario_execucao?: string | null
+          usuario_gestao?: string | null
+        }
+        Update: {
+          codigo_pa?: string | null
+          created_at?: string
+          custo?: number | null
+          data_conclusao?: string | null
+          data_prevista?: string | null
+          id?: string
+          intervalo_recorrencia_dias?: number | null
+          natureza_custo?: string | null
+          recorrente?: boolean
+          requisito_id?: string
+          status?: string | null
+          texto?: string
+          tipo?: string | null
+          updated_at?: string
+          usuario_execucao?: string | null
+          usuario_gestao?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cal_planos_acao_requisito_id_fkey"
+            columns: ["requisito_id"]
+            isOneToOne: false
+            referencedRelation: "cal_requisitos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       cal_requisitos: {
         Row: {
           area: string | null
+          area_incidencia: string | null
           cliente: string | null
+          codigo_requisito_generico: string | null
+          content_hash: string | null
           created_at: string
           created_by: string | null
           criticidade: Database["public"]["Enums"]["cal_criticidade"]
+          data_inclusao_cal: string | null
           data_publicacao: string | null
           data_recebimento: string
+          data_ultima_alteracao_ius: string | null
+          data_vcl: string | null
           ementa: string
           esfera: string | null
+          evidencia_texto: string | null
           fechado_em: string | null
           fechado_por: string | null
           gestor_area_id: string | null
           id: string
+          justificativa: string | null
           lote_importacao_id: string | null
           norma: string
           numero_cal: string
@@ -1149,28 +1272,42 @@ export type Database = {
           orgao: string | null
           origem: string
           prazo_atendimento: string | null
+          precisa_revalidacao: boolean
           raw_data: Json | null
           responsavel_id: string | null
+          revogado_em: string | null
           status: Database["public"]["Enums"]["cal_status"]
+          status_vcl: string | null
           tags: string[]
+          temas: string[]
           texto_legal: string | null
+          tipo_evidencia: string | null
           titulo: string | null
+          ultima_importacao_id: string | null
           updated_at: string
         }
         Insert: {
           area?: string | null
+          area_incidencia?: string | null
           cliente?: string | null
+          codigo_requisito_generico?: string | null
+          content_hash?: string | null
           created_at?: string
           created_by?: string | null
           criticidade?: Database["public"]["Enums"]["cal_criticidade"]
+          data_inclusao_cal?: string | null
           data_publicacao?: string | null
           data_recebimento?: string
+          data_ultima_alteracao_ius?: string | null
+          data_vcl?: string | null
           ementa: string
           esfera?: string | null
+          evidencia_texto?: string | null
           fechado_em?: string | null
           fechado_por?: string | null
           gestor_area_id?: string | null
           id?: string
+          justificativa?: string | null
           lote_importacao_id?: string | null
           norma: string
           numero_cal: string
@@ -1178,28 +1315,42 @@ export type Database = {
           orgao?: string | null
           origem?: string
           prazo_atendimento?: string | null
+          precisa_revalidacao?: boolean
           raw_data?: Json | null
           responsavel_id?: string | null
+          revogado_em?: string | null
           status?: Database["public"]["Enums"]["cal_status"]
+          status_vcl?: string | null
           tags?: string[]
+          temas?: string[]
           texto_legal?: string | null
+          tipo_evidencia?: string | null
           titulo?: string | null
+          ultima_importacao_id?: string | null
           updated_at?: string
         }
         Update: {
           area?: string | null
+          area_incidencia?: string | null
           cliente?: string | null
+          codigo_requisito_generico?: string | null
+          content_hash?: string | null
           created_at?: string
           created_by?: string | null
           criticidade?: Database["public"]["Enums"]["cal_criticidade"]
+          data_inclusao_cal?: string | null
           data_publicacao?: string | null
           data_recebimento?: string
+          data_ultima_alteracao_ius?: string | null
+          data_vcl?: string | null
           ementa?: string
           esfera?: string | null
+          evidencia_texto?: string | null
           fechado_em?: string | null
           fechado_por?: string | null
           gestor_area_id?: string | null
           id?: string
+          justificativa?: string | null
           lote_importacao_id?: string | null
           norma?: string
           numero_cal?: string
@@ -1207,12 +1358,18 @@ export type Database = {
           orgao?: string | null
           origem?: string
           prazo_atendimento?: string | null
+          precisa_revalidacao?: boolean
           raw_data?: Json | null
           responsavel_id?: string | null
+          revogado_em?: string | null
           status?: Database["public"]["Enums"]["cal_status"]
+          status_vcl?: string | null
           tags?: string[]
+          temas?: string[]
           texto_legal?: string | null
+          tipo_evidencia?: string | null
           titulo?: string | null
+          ultima_importacao_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1292,6 +1449,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "vw_colaborador_pgr"
             referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "cal_requisitos_ultima_importacao_id_fkey"
+            columns: ["ultima_importacao_id"]
+            isOneToOne: false
+            referencedRelation: "cal_lote_importacao"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -10882,6 +11046,7 @@ export type Database = {
         | "em_tratativa"
         | "atendido"
         | "monitoramento"
+        | "revogado"
       extintor_status: "ATIVO" | "EM_MANUTENCAO" | "BAIXADO" | "VENCIDO"
       extintor_tipo_agente:
         | "ABC"
@@ -11094,6 +11259,7 @@ export const Constants = {
         "em_tratativa",
         "atendido",
         "monitoramento",
+        "revogado",
       ],
       extintor_status: ["ATIVO", "EM_MANUTENCAO", "BAIXADO", "VENCIDO"],
       extintor_tipo_agente: [
