@@ -10,6 +10,7 @@ RBAC: módulo/papel/menu precisa bater em UI, validação server-side, enum/fun�
 Overlays (popover/drawer/dropdown/lookup) no tema escuro SEMPRE em tokens semânticos (bg-popover, text-foreground, border-border, hover:bg-accent). PROIBIDO bg-white, text-slate-*, bg-red-50 sobre o tema escuro. Ver mem://constraints/nada-de-cores-hardcoded.
 Scrollbar SEMPRE glassmorph fina com flares (global em src/styles.css). PROIBIDO scrollbar padrão do SO/cinza, grossa ou hardcoded. Ver mem://constraints/scrollbar-glassmorph.
 Horas extras pertencem ao módulo de origem; não usar SESMT como caixa geral nem mexer no painel SESMT para esse fluxo.
+Aline Farias saiu; TST atual é Francisco Bandeira Almeida. Todo import (CAL/PGR/matriz) deve substituir "aline farias" por ele antes de gravar. Ver mem://constraints/aline-farias-fora.
 
 ## Memories
 - [Pendências](mem://pendencias) — Tarefas pendentes acordadas com o usuário (geradores PDF Eficácia/Reação, etc.)
@@ -37,3 +38,4 @@ Horas extras pertencem ao módulo de origem; não usar SESMT como caixa geral ne
 - [Deploy SIGMO servidor DMN (pausado)](mem://deploy-sigmo-servidor-dmn) — PAUSADO. Plano 5 fases em .lovable/plan.md p/ subir SIGMO + Supabase self-hosted no Ubuntu 24.04 via VPN DMN. Retomar quando usuário chamar.
 - [Transferência funcionário entre empresas](mem://features/transferencia-funcionario-empresa) — Wizard admin/moderador; APRs/PTEs abertas → reatribuir ou arquivar; motivo obrigatório; grava employee_company_history.
 - [NAO_MEI → CLT](mem://features/rename-clt-tipo-cadastro) — tipo_cadastro aceita só MEI/CLT/AVULSO. Default AVULSO. Trigger seta MEI quando empresa é DMN (companies.type='CLT').
+- [Aline Farias fora](mem://constraints/aline-farias-fora.md) — Sanitizar em TODO parser/import: "Aline Farias" → "Francisco Bandeira Almeida". Já aplicado em cal-parser + import de PAs.
