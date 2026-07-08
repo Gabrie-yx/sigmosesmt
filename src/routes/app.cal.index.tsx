@@ -384,30 +384,70 @@ function CalDashboardPage() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        <KpiCard label="Total" value={kpis.total} icon={<FileText className="h-4 w-4" />} />
-        <KpiCard label="Sem análise" value={kpis.semAnalise} icon={<Clock className="h-4 w-4" />} tone="warning" />
-        <KpiCard label="Aplicáveis" value={kpis.aplicaveis} icon={<CheckCircle2 className="h-4 w-4" />} tone="success" />
-        <KpiCard label="Atendidos" value={kpis.atendidos} icon={<CheckCircle2 className="h-4 w-4" />} tone="success" />
-        <KpiCard label="Vencendo 7d" value={kpis.vencendo7} icon={<AlertTriangle className="h-4 w-4" />} tone="warning" />
-        <KpiCard label="Em atraso" value={kpis.emAtraso} icon={<AlertTriangle className="h-4 w-4" />} tone="danger" />
+        <KpiCard label="Total" value={kpis.total} icon={<FileText className="h-4 w-4" />} onClick={() => aplicarKpi("total")} />
+        <KpiCard label="Sem análise" value={kpis.semAnalise} icon={<Clock className="h-4 w-4" />} tone="warning" onClick={() => aplicarKpi("sem_analise")} active={chip === "sem_analise"} />
+        <KpiCard label="Aplicáveis" value={kpis.aplicaveis} icon={<CheckCircle2 className="h-4 w-4" />} tone="success" onClick={() => aplicarKpi("aplicaveis")} />
+        <KpiCard label="Atendidos" value={kpis.atendidos} icon={<CheckCircle2 className="h-4 w-4" />} tone="success" onClick={() => aplicarKpi("atendidos")} />
+        <KpiCard label="Vencendo 7d" value={kpis.vencendo7} icon={<AlertTriangle className="h-4 w-4" />} tone="warning" onClick={() => aplicarKpi("vencendo7")} active={chip === "vencendo7"} />
+        <KpiCard label="Em atraso" value={kpis.emAtraso} icon={<AlertTriangle className="h-4 w-4" />} tone="danger" onClick={() => aplicarKpi("em_atraso")} active={chip === "em_atraso"} />
       </div>
 
       <Card>
         <CardHeader className="pb-3">
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="relative flex-1 min-w-[240px]">
-              <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Buscar por nº CAL, norma, ementa, órgão, área..." value={busca} onChange={(e) => setBusca(e.target.value)} className="pl-9" />
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="relative flex-1 min-w-[240px]">
+                <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input placeholder="Buscar por nº CAL, norma, ementa, órgão, área..." value={busca} onChange={(e) => setBusca(e.target.value)} className="pl-9" />
+              </div>
+              <Select value={areaSel} onValueChange={setAreaSel}>
+                <SelectTrigger className="w-[220px]"><SelectValue placeholder="Área onde incide" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todas">Todas as áreas</SelectItem>
+                  {areas.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={criticSel} onValueChange={setCriticSel}>
+                <SelectTrigger className="w-[160px]"><SelectValue placeholder="Criticidade" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todas">Toda criticidade</SelectItem>
+                  <SelectItem value="critica">Crítica</SelectItem>
+                  <SelectItem value="alta">Alta</SelectItem>
+                  <SelectItem value="media">Média</SelectItem>
+                  <SelectItem value="baixa">Baixa</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button variant="ghost" size="sm" onClick={limparFiltros}>Limpar filtros</Button>
             </div>
-            <Select value={filtroStatus} onValueChange={setFiltroStatus}>
-              <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos os status</SelectItem>
-                {CAL_STATUS_ORDER.map((s) => (
-                  <SelectItem key={s} value={s}>{CAL_STATUS_LABEL[s]}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-muted-foreground mr-1">Status:</span>
+              {(["recebido","em_analise","aplicavel","nao_aplicavel","em_tratativa","atendido","monitoramento","revogado"] as CalStatus[]).map((s) => {
+                const on = statusSel.has(s);
+                return (
+                  <button key={s} type="button" onClick={() => toggleStatus(s)}
+                    className={`text-xs px-2 py-1 rounded border transition ${on ? CAL_STATUS_COLOR[s] : "border-border text-muted-foreground hover:text-foreground"}`}>
+                    {CAL_STATUS_LABEL[s]}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-muted-foreground mr-1">Atalhos:</span>
+              {([
+                ["em_atraso","Em atraso"],
+                ["vencendo7","Vencendo em 7d"],
+                ["sem_analise","Sem análise"],
+                ["nao_atendido","Não atendidos"],
+                ["nao_aplicavel","Não aplicáveis"],
+                ["revogado","Revogados"],
+              ] as const).map(([k, label]) => (
+                <button key={k} type="button" onClick={() => setChip(chip === k ? "nenhum" : k)}
+                  className={`text-xs px-2 py-1 rounded border transition ${chip === k ? "bg-primary/20 border-primary/40 text-primary-foreground" : "border-border text-muted-foreground hover:text-foreground"}`}>
+                  {label}
+                </button>
+              ))}
+              <span className="text-xs text-muted-foreground ml-auto">{filtrados.length} de {requisitos.length}</span>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
