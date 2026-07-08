@@ -2,12 +2,14 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Anchor, Compass, Gem, ShieldCheck, Leaf, Building2, Award, ArrowRight, Waves, Factory, CalendarCheck2 } from "lucide-react";
 import shipyardImg from "@/assets/dmn-shipyard.jpg";
 import isoSeal from "@/assets/iso-9001.png";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/app/")({
   component: HomePage,
 });
 
 function HomePage() {
+  const { isModerator } = useAuth();
   return (
     <div className="h-full overflow-y-auto custom-scrollbar bg-[#f1f5f9]">
       {/* HERO */}
@@ -37,14 +39,16 @@ function HomePage() {
                 navega pelos rios do norte do Brasil.
               </p>
               <div className="flex flex-wrap gap-3">
-                <Link
-                  to="/app/hoje"
-                  className="group inline-flex items-center gap-2 px-7 py-4 rounded-xl bg-white text-[#7f1d1d] text-sm font-black uppercase tracking-widest shadow-2xl hover:-translate-y-0.5 transition-all"
-                >
-                  <CalendarCheck2 className="h-5 w-5" />
-                  O que fazer hoje?
-                  <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                </Link>
+                {isModerator && (
+                  <Link
+                    to="/app/hoje"
+                    className="group inline-flex items-center gap-2 px-7 py-4 rounded-xl bg-white text-[#7f1d1d] text-sm font-black uppercase tracking-widest shadow-2xl hover:-translate-y-0.5 transition-all"
+                  >
+                    <CalendarCheck2 className="h-5 w-5" />
+                    O que fazer hoje?
+                    <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                )}
               </div>
             </div>
 
