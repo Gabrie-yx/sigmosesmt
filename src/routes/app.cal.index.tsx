@@ -24,6 +24,18 @@ export const Route = createFileRoute("/app/cal/")({
   validateSearch: (s: Record<string, unknown>) => ({ import: s.import === "1" || s.import === 1 ? "1" : undefined }),
 });
 
+type PlanoAcaoResumo = {
+  id: string;
+  requisito_id: string | null;
+  codigo_pa: string | null;
+  status: string | null;
+  data_prevista: string | null;
+  data_conclusao: string | null;
+  updated_at: string | null;
+};
+
+const hojeIso = () => new Date().toISOString().slice(0, 10);
+
 function CalDashboardPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -68,6 +80,51 @@ function CalDashboardPage() {
     },
   });
 
+  const { data: planosAcao = [] } = useQuery({
+    queryKey: ["cal_planos_acao_resumo"],
+    queryFn: async () => {
+      const PAGE = 1000;
+      let from = 0;
+      const all: PlanoAcaoResumo[] = [];
+      while (true) {
+        const { data, error } = await supabase
+          .from("cal_planos_acao")
+          .select("id, requisito_id, codigo_pa, status, data_prevista, data_conclusao, updated_at")
+          .order("updated_at", { ascending: false, nullsFirst: false })
+          .range(from, from + PAGE - 1);
+        if (error) throw error;
+        const rows = (data ?? []) as PlanoAcaoResumo[];
+        all.push(...rows);
+        if (rows.length < PAGE) break;
+        from += PAGE;
+      }
+      return all;
+    },
+  });
+
+  const planosPorRequisito = useMemo(() => {
+    const map = new Map<string, PlanoAcaoResumo[]>();
+    for (const p of planosAcao) {
+      if (!p.requisito_id) continue;
+      const arr = map.get(p.requisito_id) ?? [];
+      arr.push(p);
+      map.set(p.requisito_id, arr);
+    }
+    return map;
+  }, [planosAcao]);
+
+  const requisitoIdsPorBuscaPa = useMemo(() => {
+    const b = busca.trim().toLowerCase();
+    const ids = new Set<string>();
+    if (!b) return ids;
+    for (const p of planosAcao) {
+      if (!p.requisito_id) continue;
+      const hay = [p.codigo_pa, p.status, p.data_prevista, p.data_conclusao].join(" ").toLowerCase();
+      if (hay.includes(b)) ids.add(p.requisito_id);
+    }
+    return ids;
+  }, [planosAcao, busca]);
+
   const kpis = useMemo(() => {
     const total = requisitos.length;
     const semAnalise = requisitos.filter((r) => r.status === "recebido").length;
@@ -98,7 +155,7 @@ function CalDashboardPage() {
   }, [requisitos]);
 
   const filtrados = useMemo(() => {
-    const b = busca.toLowerCase();
+    const b = busca.trim().toLowerCase();
     return requisitos.filter((r) => {
       if (statusSel.size > 0 && !statusSel.has(r.status as CalStatus)) return false;
       if (areaSel !== "todas") {
@@ -117,9 +174,10 @@ function CalDashboardPage() {
         if (chip === "nao_atendido" && ["atendido", "nao_aplicavel", "monitoramento", "revogado"].includes(r.status)) return false;
       }
       if (!b) return true;
-      return [r.numero_cal, r.norma, r.ementa, r.orgao, r.area].some((v) => (v ?? "").toLowerCase().includes(b));
+      const matchRequisito = [r.numero_cal, r.norma, r.ementa, r.orgao, r.area, r.area_incidencia].some((v) => (v ?? "").toLowerCase().includes(b));
+      return matchRequisito || requisitoIdsPorBuscaPa.has(r.id);
     });
-  }, [requisitos, busca, statusSel, areaSel, criticSel, chip]);
+  }, [requisitos, busca, statusSel, areaSel, criticSel, chip, requisitoIdsPorBuscaPa]);
 
   function toggleStatus(s: CalStatus) {
     setStatusSel((prev) => {
@@ -418,7 +476,7 @@ function CalDashboardPage() {
             <div className="flex items-center gap-2 flex-wrap">
               <div className="relative flex-1 min-w-[260px]">
                 <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <Input placeholder="Buscar por nº CAL, norma, ementa, órgão, área..." value={busca} onChange={(e) => setBusca(e.target.value)} className="pl-9" />
+                <Input placeholder="Buscar por nº CAL, código PA, norma, ementa, órgão, área..." value={busca} onChange={(e) => setBusca(e.target.value)} className="pl-9" />
               </div>
               <Select value={areaSel} onValueChange={setAreaSel}>
                 <SelectTrigger className="w-[220px]"><SelectValue placeholder="Área onde incide" /></SelectTrigger>
@@ -518,6 +576,8 @@ function CalDashboardPage() {
                       )}
                       {filtrados.map((r) => {
                         const d = daysUntil(r.prazo_atendimento);
+                        const planosReq = planosPorRequisito.get(r.id) ?? [];
+                        const concluidosHoje = planosReq.filter((p) => p.data_conclusao === hojeIso());
                         return (
                           <TableRow key={r.id} className="cursor-pointer hover:bg-muted/40 align-top">
                             <TableCell className="py-3">
@@ -534,6 +594,23 @@ function CalDashboardPage() {
                                   <span className="opacity-40">·</span>
                                   <span className="font-mono">{r.numero_cal}</span>
                                 </div>
+                                {planosReq.length > 0 && (
+                                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                                    <Badge variant="outline" className="border-border bg-background/60 text-[10px] text-muted-foreground">
+                                      {planosReq.length} PA{planosReq.length > 1 ? "s" : ""}
+                                    </Badge>
+                                    {concluidosHoje.slice(0, 3).map((p) => (
+                                      <Badge key={p.id} variant="outline" className="border-emerald-500/40 bg-emerald-500/10 text-[10px] text-emerald-300">
+                                        {p.codigo_pa ?? "PA"} concluído hoje
+                                      </Badge>
+                                    ))}
+                                    {concluidosHoje.length > 3 && (
+                                      <Badge variant="outline" className="border-emerald-500/40 bg-emerald-500/10 text-[10px] text-emerald-300">
+                                        +{concluidosHoje.length - 3} hoje
+                                      </Badge>
+                                    )}
+                                  </div>
+                                )}
                               </Link>
                             </TableCell>
                             <TableCell className="text-xs py-3 break-words">{r.area ?? "—"}</TableCell>
