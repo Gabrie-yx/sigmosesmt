@@ -1,7 +1,7 @@
 // Card da portaria: "Hora Extra Hoje" — lista convocações APROVADAS do dia
 // e permite validar permanência/entrada/saída de cada funcionário.
 //
-// Dia útil: [Confirmar permanência 17h] → [Registrar saída]
+// Dia útil: [Confirmar permanência 17:30] → [Registrar saída]
 // Sábado : [Registrar entrada]         → [Registrar saída]
 
 import { useMemo, useState } from "react";
@@ -189,7 +189,7 @@ function FuncionarioRow({
 }) {
   const primeiro = isSabado
     ? { key: "entrada" as const, label: "Entrada", icon: LogIn, at: f.entrada_confirmada_at, por: f.entrada_confirmada_por_nome }
-    : { key: "permanencia" as const, label: "Permanência 17h", icon: Clock3, at: f.permanencia_confirmada_at, por: f.permanencia_confirmada_por_nome };
+    : { key: "permanencia" as const, label: "Permanência 17:30", icon: Clock3, at: f.permanencia_confirmada_at, por: f.permanencia_confirmada_por_nome };
   const segundo = { key: "saida" as const, label: "Saída", icon: LogOut, at: f.saida_confirmada_at, por: f.saida_confirmada_por_nome };
   const iniciais = f.nome.split(/\s+/).map((p) => p[0]).slice(0, 2).join("").toUpperCase();
 
