@@ -19,7 +19,7 @@ export const Route = createFileRoute("/app")({
 });
 
 function AppLayout() {
-  const { session, loading, requiresMfa, mfaSatisfied, graceActive, graceDaysLeft, aal, isMarcadorPuro, roles, user } = useAuth();
+  const { session, loading, requiresMfa, mfaSatisfied, graceActive, graceDaysLeft, aal, isMarcadorPuro, isPorteiroPuro, roles, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -39,6 +39,17 @@ function AppLayout() {
       navigate({ to: "/extra-sabado", replace: true });
     }
   }, [loading, session, isMarcadorPuro, isHoraExtraMarcadorRoute, navigate]);
+
+  // Porteiro puro: ao logar (ou cair em /app raiz), joga direto no Cockpit da Portaria.
+  // Isso deixa o ícone na tela do celular abrir SIGMO já no painel operacional.
+  useEffect(() => {
+    if (!loading && session && isPorteiroPuro) {
+      const p = location.pathname;
+      if (p === "/app" || p === "/app/") {
+        navigate({ to: "/app/portaria", replace: true });
+      }
+    }
+  }, [loading, session, isPorteiroPuro, location.pathname, navigate]);
 
   if (loading || !session) {
     return (
