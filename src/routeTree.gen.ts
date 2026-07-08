@@ -93,6 +93,7 @@ import { Route as AppContaSegurancaRouteImport } from './routes/app.conta.segura
 import { Route as AppComprasRequisicoesRecebidasRouteImport } from './routes/app.compras.requisicoes-recebidas'
 import { Route as AppComprasFornecedoresRouteImport } from './routes/app.compras.fornecedores'
 import { Route as AppComprasDashboardRouteImport } from './routes/app.compras.dashboard'
+import { Route as AppCalIdRouteImport } from './routes/app.cal.$id'
 import { Route as AppAlmoxarifadoRequisicaoComprasRouteImport } from './routes/app.almoxarifado.requisicao-compras'
 import { Route as AppAdministrativoRequisicoesRecebidasRouteImport } from './routes/app.administrativo.requisicoes-recebidas'
 import { Route as AppAdministrativoMarcadoresHoraExtraRouteImport } from './routes/app.administrativo.marcadores-hora-extra'
@@ -542,6 +543,11 @@ const AppComprasDashboardRoute = AppComprasDashboardRouteImport.update({
   path: '/compras/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCalIdRoute = AppCalIdRouteImport.update({
+  id: '/cal/$id',
+  path: '/cal/$id',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAlmoxarifadoRequisicaoComprasRoute =
   AppAlmoxarifadoRequisicaoComprasRouteImport.update({
     id: '/almoxarifado/requisicao-compras',
@@ -676,6 +682,7 @@ export interface FileRoutesByFullPath {
   '/app/administrativo/marcadores-hora-extra': typeof AppAdministrativoMarcadoresHoraExtraRoute
   '/app/administrativo/requisicoes-recebidas': typeof AppAdministrativoRequisicoesRecebidasRoute
   '/app/almoxarifado/requisicao-compras': typeof AppAlmoxarifadoRequisicaoComprasRoute
+  '/app/cal/$id': typeof AppCalIdRoute
   '/app/compras/dashboard': typeof AppComprasDashboardRoute
   '/app/compras/fornecedores': typeof AppComprasFornecedoresRoute
   '/app/compras/requisicoes-recebidas': typeof AppComprasRequisicoesRecebidasRoute
@@ -773,6 +780,7 @@ export interface FileRoutesByTo {
   '/app/administrativo/marcadores-hora-extra': typeof AppAdministrativoMarcadoresHoraExtraRoute
   '/app/administrativo/requisicoes-recebidas': typeof AppAdministrativoRequisicoesRecebidasRoute
   '/app/almoxarifado/requisicao-compras': typeof AppAlmoxarifadoRequisicaoComprasRoute
+  '/app/cal/$id': typeof AppCalIdRoute
   '/app/compras/dashboard': typeof AppComprasDashboardRoute
   '/app/compras/fornecedores': typeof AppComprasFornecedoresRoute
   '/app/compras/requisicoes-recebidas': typeof AppComprasRequisicoesRecebidasRoute
@@ -875,6 +883,7 @@ export interface FileRoutesById {
   '/app/administrativo/marcadores-hora-extra': typeof AppAdministrativoMarcadoresHoraExtraRoute
   '/app/administrativo/requisicoes-recebidas': typeof AppAdministrativoRequisicoesRecebidasRoute
   '/app/almoxarifado/requisicao-compras': typeof AppAlmoxarifadoRequisicaoComprasRoute
+  '/app/cal/$id': typeof AppCalIdRoute
   '/app/compras/dashboard': typeof AppComprasDashboardRoute
   '/app/compras/fornecedores': typeof AppComprasFornecedoresRoute
   '/app/compras/requisicoes-recebidas': typeof AppComprasRequisicoesRecebidasRoute
@@ -978,6 +987,7 @@ export interface FileRouteTypes {
     | '/app/administrativo/marcadores-hora-extra'
     | '/app/administrativo/requisicoes-recebidas'
     | '/app/almoxarifado/requisicao-compras'
+    | '/app/cal/$id'
     | '/app/compras/dashboard'
     | '/app/compras/fornecedores'
     | '/app/compras/requisicoes-recebidas'
@@ -1075,6 +1085,7 @@ export interface FileRouteTypes {
     | '/app/administrativo/marcadores-hora-extra'
     | '/app/administrativo/requisicoes-recebidas'
     | '/app/almoxarifado/requisicao-compras'
+    | '/app/cal/$id'
     | '/app/compras/dashboard'
     | '/app/compras/fornecedores'
     | '/app/compras/requisicoes-recebidas'
@@ -1176,6 +1187,7 @@ export interface FileRouteTypes {
     | '/app/administrativo/marcadores-hora-extra'
     | '/app/administrativo/requisicoes-recebidas'
     | '/app/almoxarifado/requisicao-compras'
+    | '/app/cal/$id'
     | '/app/compras/dashboard'
     | '/app/compras/fornecedores'
     | '/app/compras/requisicoes-recebidas'
@@ -1837,6 +1849,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppComprasDashboardRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/cal/$id': {
+      id: '/app/cal/$id'
+      path: '/cal/$id'
+      fullPath: '/app/cal/$id'
+      preLoaderRoute: typeof AppCalIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/almoxarifado/requisicao-compras': {
       id: '/app/almoxarifado/requisicao-compras'
       path: '/almoxarifado/requisicao-compras'
@@ -2063,6 +2082,7 @@ interface AppRouteChildren {
   AppUsersRoute: typeof AppUsersRoute
   AppIndexRoute: typeof AppIndexRoute
   AppAlmoxarifadoRequisicaoComprasRoute: typeof AppAlmoxarifadoRequisicaoComprasRoute
+  AppCalIdRoute: typeof AppCalIdRoute
   AppComprasDashboardRoute: typeof AppComprasDashboardRoute
   AppComprasFornecedoresRoute: typeof AppComprasFornecedoresRoute
   AppComprasRequisicoesRecebidasRoute: typeof AppComprasRequisicoesRecebidasRoute
@@ -2139,6 +2159,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppUsersRoute: AppUsersRoute,
   AppIndexRoute: AppIndexRoute,
   AppAlmoxarifadoRequisicaoComprasRoute: AppAlmoxarifadoRequisicaoComprasRoute,
+  AppCalIdRoute: AppCalIdRoute,
   AppComprasDashboardRoute: AppComprasDashboardRoute,
   AppComprasFornecedoresRoute: AppComprasFornecedoresRoute,
   AppComprasRequisicoesRecebidasRoute: AppComprasRequisicoesRecebidasRoute,

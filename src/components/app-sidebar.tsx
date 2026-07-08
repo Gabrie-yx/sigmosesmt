@@ -67,6 +67,7 @@ import {
   Warehouse,
   DoorOpen,
   Clock,
+  Scale,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
