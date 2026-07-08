@@ -15,13 +15,30 @@ import {
   type HoraExtraHojeFuncionario,
 } from "@/lib/portaria/hora-extra-validacao.functions";
 import { Button } from "@/components/ui/button";
-import { Clock3, CheckCircle2, LogIn, LogOut, Users, Undo2, Loader2, CalendarClock } from "lucide-react";
+import { Clock3, CheckCircle2, LogIn, LogOut, Users, Undo2, Loader2, CalendarClock, Building2, ChevronDown, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
+import { useSignedAvatarUrl } from "@/lib/signed-avatar-url";
 
 function fmtHora(iso?: string | null) {
   if (!iso) return "--:--";
   return new Date(iso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+}
+
+type GrupoSolicitante = {
+  key: string;
+  nome: string;
+  funcao: string | null;
+  setor: string | null;
+  total: number;
+  validados: number;
+  convocacoes: HoraExtraHojeConvocacao[];
+};
+
+function isFuncionarioValidado(conv: HoraExtraHojeConvocacao, f: HoraExtraHojeFuncionario) {
+  return conv.is_sabado
+    ? !!f.entrada_confirmada_at && !!f.saida_confirmada_at
+    : !!f.permanencia_confirmada_at && !!f.saida_confirmada_at;
 }
 
 export function HoraExtraHojeCard() {
@@ -65,11 +82,30 @@ export function HoraExtraHojeCard() {
     const total = funcs.length;
     const validados = funcs.filter((f) => {
       const c = conv.find((cc) => cc.id === f.hora_extra_id)!;
-      return c.is_sabado
-        ? !!f.entrada_confirmada_at && !!f.saida_confirmada_at
-        : !!f.permanencia_confirmada_at && !!f.saida_confirmada_at;
+      return isFuncionarioValidado(c, f);
     }).length;
     return { total, validados };
+  }, [data]);
+
+  const gruposSolicitante = useMemo<GrupoSolicitante[]>(() => {
+    const map = new Map<string, GrupoSolicitante>();
+    for (const conv of data ?? []) {
+      const key = conv.solicitante_key || conv.id;
+      const atual = map.get(key) ?? {
+        key,
+        nome: conv.solicitante_nome || "Solicitante",
+        funcao: conv.solicitante_funcao,
+        setor: conv.solicitante_setor,
+        total: 0,
+        validados: 0,
+        convocacoes: [],
+      };
+      atual.total += conv.funcionarios.length;
+      atual.validados += conv.funcionarios.filter((f) => isFuncionarioValidado(conv, f)).length;
+      atual.convocacoes.push(conv);
+      map.set(key, atual);
+    }
+    return Array.from(map.values()).sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
   }, [data]);
 
   if (isLoading) {
@@ -87,7 +123,7 @@ export function HoraExtraHojeCard() {
       className="rounded-2xl bg-card border border-primary/40 overflow-hidden"
       style={{
         boxShadow:
-          "0 0 0 1px hsl(var(--primary) / 0.25), 0 0 24px -4px hsl(var(--primary) / 0.55), inset 0 0 18px -8px hsl(var(--primary) / 0.35)",
+          "0 0 0 1px color-mix(in oklab, var(--primary) 25%, transparent), 0 0 24px -4px color-mix(in oklab, var(--primary) 55%, transparent), inset 0 0 18px -8px color-mix(in oklab, var(--primary) 35%, transparent)",
       }}
     >
       <div className="px-4 py-3 border-b border-primary/25 flex items-center justify-between bg-gradient-to-r from-primary/10 via-transparent to-primary/10">
@@ -115,11 +151,11 @@ export function HoraExtraHojeCard() {
           </p>
         </div>
       ) : (
-      <div className="divide-y divide-border">
-        {data.map((conv) => (
-          <ConvocacaoBloco
-            key={conv.id}
-            conv={conv}
+      <div className="space-y-3 p-3">
+        {gruposSolicitante.map((grupo) => (
+          <SolicitanteBloco
+            key={grupo.key}
+            grupo={grupo}
             isAdmin={isAdmin}
             onConfirm={(f, tipo) => confirmar.mutate({ funcionarioId: f.id, tipo })}
             onUndo={(f, tipo) => desfazer.mutate({ funcionarioId: f.id, tipo })}
@@ -132,7 +168,61 @@ export function HoraExtraHojeCard() {
   );
 }
 
-function ConvocacaoBloco({
+function SolicitanteBloco({
+  grupo, isAdmin, onConfirm, onUndo, pendingId,
+}: {
+  grupo: GrupoSolicitante;
+  isAdmin: boolean;
+  onConfirm: (f: HoraExtraHojeFuncionario, tipo: "permanencia" | "entrada" | "saida") => void;
+  onUndo: (f: HoraExtraHojeFuncionario, tipo: "permanencia" | "entrada" | "saida") => void;
+  pendingId: string | null;
+}) {
+  const [expanded, setExpanded] = useState(true);
+  const detalhe = [grupo.funcao, grupo.setor].filter(Boolean).join(" · ");
+
+  return (
+    <section
+      className="rounded-xl border border-primary/25 bg-card overflow-hidden"
+      style={{ boxShadow: "0 0 0 1px color-mix(in oklab, var(--primary) 12%, transparent), inset 0 0 18px -10px color-mix(in oklab, var(--primary) 50%, transparent)" }}
+    >
+      <button
+        onClick={() => setExpanded((v) => !v)}
+        className="w-full px-3.5 py-3 flex items-center justify-between gap-3 hover:bg-muted/40 transition text-left"
+      >
+        <div className="min-w-0">
+          <h3 className="font-bold text-sm sm:text-base leading-tight truncate">{grupo.nome}</h3>
+          {detalhe && <p className="text-[11px] text-muted-foreground truncate mt-0.5">{detalhe}</p>}
+        </div>
+        <div className="shrink-0 flex items-center gap-2">
+          <span className="text-[11px] font-bold rounded-md border border-primary/25 bg-primary/10 px-2 py-1 tabular-nums">
+            {grupo.total} Func.
+          </span>
+          <span className="text-[11px] text-muted-foreground tabular-nums hidden sm:inline">
+            {grupo.validados}/{grupo.total} validados
+          </span>
+          {expanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+        </div>
+      </button>
+
+      {expanded && (
+        <div className="border-t border-border p-2.5 space-y-2.5">
+          {grupo.convocacoes.map((conv) => (
+            <EmpresaBloco
+              key={conv.id}
+              conv={conv}
+              isAdmin={isAdmin}
+              onConfirm={(f, tipo) => onConfirm(f, tipo)}
+              onUndo={(f, tipo) => onUndo(f, tipo)}
+              pendingId={pendingId}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function EmpresaBloco({
   conv, isAdmin, onConfirm, onUndo, pendingId,
 }: {
   conv: HoraExtraHojeConvocacao;
@@ -141,54 +231,46 @@ function ConvocacaoBloco({
   onUndo: (f: HoraExtraHojeFuncionario, tipo: "permanencia" | "entrada" | "saida") => void;
   pendingId: string | null;
 }) {
-  const [expanded, setExpanded] = useState(true);
   const label = conv.is_sabado ? "Sábado" : "Dia útil";
-  const modulo = conv.modulo_origem ? conv.modulo_origem.toUpperCase() : null;
+  const empresa = conv.company_name ?? conv.modulo_origem ?? "Sem empresa";
   const previsto = conv.horario_inicio && conv.horario_fim
     ? `${conv.horario_inicio.slice(0, 5)}–${conv.horario_fim.slice(0, 5)}`
     : conv.horario_fim ? `até ${conv.horario_fim.slice(0, 5)}` : "";
+  const validados = conv.funcionarios.filter((f) => isFuncionarioValidado(conv, f)).length;
 
   return (
-    <div>
-      <button
-        onClick={() => setExpanded((v) => !v)}
-        className="w-full px-4 py-3 flex items-center justify-between gap-3 hover:bg-muted/40 transition text-left"
-      >
+    <div className="rounded-lg border border-border bg-background/30 overflow-hidden">
+      <div className="px-3 py-2.5 border-b border-border flex flex-wrap items-center justify-between gap-2 bg-muted/20">
         <div className="min-w-0 flex items-center gap-2 flex-wrap">
           <span className="text-[10px] font-bold uppercase tracking-[0.12em] px-2 py-0.5 rounded-md bg-primary/15 text-primary border border-primary/30">
             {label}
           </span>
-          {modulo && (
-            <span className="text-[10px] font-semibold uppercase tracking-[0.12em] px-2 py-0.5 rounded-md bg-muted text-muted-foreground border border-border">
-              {modulo}
-            </span>
-          )}
+          <span className="text-[10px] font-bold uppercase tracking-[0.12em] px-2 py-0.5 rounded-md bg-muted text-foreground border border-border inline-flex items-center gap-1">
+            <Building2 className="h-3 w-3 text-muted-foreground" /> {empresa}
+          </span>
           {previsto && (
             <span className="text-[11px] font-semibold text-foreground tabular-nums inline-flex items-center gap-1">
               <Clock3 className="h-3 w-3 text-muted-foreground" />{previsto}
             </span>
           )}
-          <span className="text-[11px] text-muted-foreground inline-flex items-center gap-1">
-            <Users className="h-3 w-3" />{conv.funcionarios.length} pessoa{conv.funcionarios.length === 1 ? "" : "s"}
-          </span>
         </div>
-      </button>
-
-      {expanded && (
-        <ul className="divide-y divide-border border-t border-border">
-          {conv.funcionarios.map((f) => (
-            <FuncionarioRow
-              key={f.id}
-              f={f}
-              isSabado={conv.is_sabado}
-              isAdmin={isAdmin}
-              onConfirm={onConfirm}
-              onUndo={onUndo}
-              pending={pendingId === f.id}
-            />
-          ))}
-        </ul>
-      )}
+        <div className="text-[11px] text-muted-foreground inline-flex items-center gap-1 tabular-nums">
+          <Users className="h-3 w-3" /> {validados}/{conv.funcionarios.length}
+        </div>
+      </div>
+      <ul className="divide-y divide-border">
+        {conv.funcionarios.map((f) => (
+          <FuncionarioRow
+            key={f.id}
+            f={f}
+            isSabado={conv.is_sabado}
+            isAdmin={isAdmin}
+            onConfirm={onConfirm}
+            onUndo={onUndo}
+            pending={pendingId === f.id}
+          />
+        ))}
+      </ul>
     </div>
   );
 }
@@ -214,19 +296,7 @@ function FuncionarioRow({
   return (
     <li className={`px-3 lg:px-4 py-3 flex items-center gap-3 transition ${completo ? "bg-primary/[0.04]" : ""}`}>
       <div className="shrink-0 relative">
-        {f.foto_url ? (
-          <img
-            src={f.foto_url}
-            className="h-12 w-12 rounded-full object-cover border border-border bg-muted"
-            style={{ objectPosition: "center 20%" }}
-            alt=""
-            loading="lazy"
-          />
-        ) : (
-          <div className="h-12 w-12 rounded-full bg-muted text-muted-foreground font-bold text-xs flex items-center justify-center border border-border">
-            {iniciais}
-          </div>
-        )}
+        <FuncionarioAvatar fotoUrl={f.foto_url} iniciais={iniciais} nome={f.nome} />
         {completo && (
           <span className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full bg-primary text-primary-foreground grid place-items-center border-2 border-card">
             <CheckCircle2 className="h-2.5 w-2.5" />
@@ -237,7 +307,7 @@ function FuncionarioRow({
         <p className="text-sm font-semibold truncate leading-tight">
           {f.nome}
           {f.externo && (
-            <span className="ml-1.5 text-[9px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">externo</span>
+            <span className="ml-1.5 text-[9px] font-bold uppercase tracking-wider text-muted-foreground">externo</span>
           )}
         </p>
         {f.funcao && <p className="text-[11px] text-muted-foreground truncate mt-0.5">{f.funcao}</p>}
@@ -257,6 +327,31 @@ function FuncionarioRow({
         />
       </div>
     </li>
+  );
+}
+
+function FuncionarioAvatar({ fotoUrl, iniciais, nome }: { fotoUrl: string | null; iniciais: string; nome: string }) {
+  const signed = useSignedAvatarUrl(fotoUrl);
+  const [broken, setBroken] = useState(false);
+
+  if (!signed || broken) {
+    return (
+      <div className="h-12 w-12 rounded-lg bg-muted text-muted-foreground font-bold text-xs flex items-center justify-center border border-border ring-1 ring-primary/10">
+        {iniciais}
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-12 w-12 rounded-lg overflow-hidden border border-border bg-muted ring-1 ring-primary/10">
+      <img
+        src={signed}
+        className="h-full w-full object-contain"
+        alt={`Foto de ${nome}`}
+        loading="lazy"
+        onError={() => setBroken(true)}
+      />
+    </div>
   );
 }
 
