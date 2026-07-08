@@ -51,6 +51,7 @@ import { Route as AppOssIndexRouteImport } from './routes/app.oss.index'
 import { Route as AppEstoqueIndexRouteImport } from './routes/app.estoque.index'
 import { Route as AppEmployeesIndexRouteImport } from './routes/app.employees.index'
 import { Route as AppDdsIndexRouteImport } from './routes/app.dds.index'
+import { Route as AppCalIndexRouteImport } from './routes/app.cal.index'
 import { Route as AppSesmtTerceirosRouteImport } from './routes/app.sesmt.terceiros'
 import { Route as AppSesmtRequisicoesRouteImport } from './routes/app.sesmt.requisicoes'
 import { Route as AppSesmtProcedimentosRouteImport } from './routes/app.sesmt.procedimentos'
@@ -319,6 +320,11 @@ const AppEmployeesIndexRoute = AppEmployeesIndexRouteImport.update({
 const AppDdsIndexRoute = AppDdsIndexRouteImport.update({
   id: '/dds/',
   path: '/dds/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCalIndexRoute = AppCalIndexRouteImport.update({
+  id: '/cal/',
+  path: '/cal/',
   getParentRoute: () => AppRoute,
 } as any)
 const AppSesmtTerceirosRoute = AppSesmtTerceirosRouteImport.update({
@@ -711,6 +717,7 @@ export interface FileRoutesByFullPath {
   '/app/sesmt/procedimentos': typeof AppSesmtProcedimentosRoute
   '/app/sesmt/requisicoes': typeof AppSesmtRequisicoesRoute
   '/app/sesmt/terceiros': typeof AppSesmtTerceirosRoute
+  '/app/cal/': typeof AppCalIndexRoute
   '/app/dds/': typeof AppDdsIndexRoute
   '/app/employees/': typeof AppEmployeesIndexRoute
   '/app/estoque/': typeof AppEstoqueIndexRoute
@@ -807,6 +814,7 @@ export interface FileRoutesByTo {
   '/app/sesmt/procedimentos': typeof AppSesmtProcedimentosRoute
   '/app/sesmt/requisicoes': typeof AppSesmtRequisicoesRoute
   '/app/sesmt/terceiros': typeof AppSesmtTerceirosRoute
+  '/app/cal': typeof AppCalIndexRoute
   '/app/dds': typeof AppDdsIndexRoute
   '/app/employees': typeof AppEmployeesIndexRoute
   '/app/estoque': typeof AppEstoqueIndexRoute
@@ -908,6 +916,7 @@ export interface FileRoutesById {
   '/app/sesmt/procedimentos': typeof AppSesmtProcedimentosRoute
   '/app/sesmt/requisicoes': typeof AppSesmtRequisicoesRoute
   '/app/sesmt/terceiros': typeof AppSesmtTerceirosRoute
+  '/app/cal/': typeof AppCalIndexRoute
   '/app/dds/': typeof AppDdsIndexRoute
   '/app/employees/': typeof AppEmployeesIndexRoute
   '/app/estoque/': typeof AppEstoqueIndexRoute
@@ -1010,6 +1019,7 @@ export interface FileRouteTypes {
     | '/app/sesmt/procedimentos'
     | '/app/sesmt/requisicoes'
     | '/app/sesmt/terceiros'
+    | '/app/cal/'
     | '/app/dds/'
     | '/app/employees/'
     | '/app/estoque/'
@@ -1106,6 +1116,7 @@ export interface FileRouteTypes {
     | '/app/sesmt/procedimentos'
     | '/app/sesmt/requisicoes'
     | '/app/sesmt/terceiros'
+    | '/app/cal'
     | '/app/dds'
     | '/app/employees'
     | '/app/estoque'
@@ -1206,6 +1217,7 @@ export interface FileRouteTypes {
     | '/app/sesmt/procedimentos'
     | '/app/sesmt/requisicoes'
     | '/app/sesmt/terceiros'
+    | '/app/cal/'
     | '/app/dds/'
     | '/app/employees/'
     | '/app/estoque/'
@@ -1529,6 +1541,13 @@ declare module '@tanstack/react-router' {
       path: '/dds'
       fullPath: '/app/dds/'
       preLoaderRoute: typeof AppDdsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/cal/': {
+      id: '/app/cal/'
+      path: '/cal'
+      fullPath: '/app/cal/'
+      preLoaderRoute: typeof AppCalIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/sesmt/terceiros': {
@@ -2078,6 +2097,7 @@ interface AppRouteChildren {
   AppSesmtProcedimentosRoute: typeof AppSesmtProcedimentosRoute
   AppSesmtRequisicoesRoute: typeof AppSesmtRequisicoesRoute
   AppSesmtTerceirosRoute: typeof AppSesmtTerceirosRoute
+  AppCalIndexRoute: typeof AppCalIndexRoute
   AppDdsIndexRoute: typeof AppDdsIndexRoute
   AppEstoqueIndexRoute: typeof AppEstoqueIndexRoute
   AppModuloModuloHoraExtraRoute: typeof AppModuloModuloHoraExtraRoute
@@ -2153,6 +2173,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSesmtProcedimentosRoute: AppSesmtProcedimentosRoute,
   AppSesmtRequisicoesRoute: AppSesmtRequisicoesRoute,
   AppSesmtTerceirosRoute: AppSesmtTerceirosRoute,
+  AppCalIndexRoute: AppCalIndexRoute,
   AppDdsIndexRoute: AppDdsIndexRoute,
   AppEstoqueIndexRoute: AppEstoqueIndexRoute,
   AppModuloModuloHoraExtraRoute: AppModuloModuloHoraExtraRoute,

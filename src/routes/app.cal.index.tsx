@@ -18,7 +18,7 @@ import { toast } from "sonner";
 import { parseCalPlanilha } from "@/lib/cal-parser";
 import { CAL_STATUS_LABEL, CAL_STATUS_COLOR, CAL_STATUS_ORDER, CAL_CRITICIDADE_LABEL, CAL_CRITICIDADE_COLOR, daysUntil, type CalStatus } from "@/lib/cal-utils";
 
-export const Route = createFileRoute("/app/cal")({
+export const Route = createFileRoute("/app/cal/")({
   component: CalDashboardPage,
   head: () => ({ meta: [{ title: "Requisitos Legais (CAL) · SIGMO" }, { name: "description", content: "Gestão de Requisitos Legais — CALs, aplicabilidade, planos de ação e evidências." }] }),
 });
