@@ -11007,6 +11007,7 @@ export type Database = {
       rotulo_modulo_hora_extra: { Args: { _modulo: string }; Returns: string }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      sigmo_sha256: { Args: { _payload: string }; Returns: string }
       snapshot_estoque_epi_monthly: { Args: never; Returns: undefined }
       substituir_funcionarios_hora_extra: {
         Args: { _funcionarios: Json; _hora_extra_id: string }
