@@ -131,20 +131,22 @@ function ControleEntradaPage() {
       </div>
 
       <div className="mx-auto max-w-6xl px-3 lg:px-6 pt-4 lg:pt-5 space-y-4">
-        {/* KPIs + ações — linha compacta */}
+        {/* KPIs + ações — linha compacta com flares */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
-          <div className="rounded-xl bg-card border border-border p-3">
-            <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Dentro agora</p>
-            <p className="font-bold text-2xl text-primary mt-0.5">{kpis?.dentro ?? 0}</p>
+          <div className="relative overflow-hidden rounded-xl bg-card border border-border p-3 shadow-[0_1px_0_0_hsl(var(--border))]">
+            <div className="absolute -top-8 -right-8 h-24 w-24 rounded-full bg-primary/15 blur-2xl pointer-events-none" />
+            <p className="relative text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Dentro agora</p>
+            <p className="relative font-bold text-2xl text-primary mt-0.5 drop-shadow-[0_0_12px_hsl(var(--primary)/0.35)]">{kpis?.dentro ?? 0}</p>
           </div>
-          <div className="rounded-xl bg-card border border-border p-3">
-            <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Entradas hoje</p>
-            <p className="font-bold text-2xl text-foreground mt-0.5">{kpis?.entradasHoje ?? 0}</p>
+          <div className="relative overflow-hidden rounded-xl bg-card border border-border p-3">
+            <div className="absolute -bottom-10 -left-6 h-24 w-24 rounded-full bg-emerald-500/10 blur-2xl pointer-events-none" />
+            <p className="relative text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Entradas hoje</p>
+            <p className="relative font-bold text-2xl text-foreground mt-0.5">{kpis?.entradasHoje ?? 0}</p>
           </div>
-          <Button onClick={() => setWizOpen(true)} size="lg" className="h-auto py-3 rounded-xl font-semibold text-sm shadow-sm">
+          <Button onClick={() => setWizOpen(true)} size="lg" className="relative h-auto py-3 rounded-xl font-semibold text-sm shadow-lg shadow-primary/25 ring-1 ring-primary/40">
             <Plus className="h-4 w-4 mr-1.5" /> Nova entrada
           </Button>
-          <Button onClick={() => setSaidaFuncOpen(true)} size="lg" variant="secondary" className="h-auto py-3 rounded-xl font-semibold text-sm">
+          <Button onClick={() => setSaidaFuncOpen(true)} size="lg" variant="secondary" className="h-auto py-3 rounded-xl font-semibold text-sm ring-1 ring-border">
             <LogOut className="h-4 w-4 mr-1.5" /> Saída funcionário
           </Button>
         </div>
@@ -202,22 +204,23 @@ function ControleEntradaPage() {
 
 function VisitaRow({ visita, onRegistrarSaida, onDelete, deleting }: { visita: any; onRegistrarSaida: () => void; onDelete?: (id: string) => void; deleting?: boolean }) {
   const pendente = visita.status === "DENTRO";
+  const bloqueada = !!visita.pessoa?.bloqueado;
   return (
-    <div className={`w-full flex items-center gap-3 px-3 lg:px-4 py-2.5 hover:bg-muted/40 transition ${pendente ? "border-l-2 border-destructive bg-destructive/5" : ""}`}>
+    <div className={`group relative w-full flex items-center gap-3 px-3 lg:px-4 py-2.5 hover:bg-muted/40 transition ${pendente ? "border-l-2 border-destructive bg-destructive/5" : ""} ${bloqueada ? "border-l-2 border-amber-500" : ""}`}>
       <button
-        onClick={() => pendente && onRegistrarSaida()}
-        disabled={!pendente}
-        className="flex-1 min-w-0 flex items-center gap-3 text-left"
+        onClick={onRegistrarSaida}
+        className="flex-1 min-w-0 flex items-center gap-3 text-left cursor-pointer"
       >
       <div className="relative shrink-0">
         {visita.foto_rosto_url ? (
-          <img src={visita.foto_rosto_url} className="h-10 w-10 rounded-full object-cover object-center border border-border bg-muted" alt="" loading="lazy" />
+          <img src={visita.foto_rosto_url} className="h-11 w-11 rounded-full object-cover object-top border border-border bg-muted ring-1 ring-primary/20" alt="" loading="lazy" />
         ) : (
-          <div className="h-10 w-10 rounded-full bg-muted text-muted-foreground font-bold text-xs flex items-center justify-center border border-border">
+          <div className="h-11 w-11 rounded-full bg-muted text-muted-foreground font-bold text-xs flex items-center justify-center border border-border">
             {visita.pessoa?.nome?.split(/\s+/).map((p: string) => p[0]).slice(0,2).join("").toUpperCase()}
           </div>
         )}
         {pendente && <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-destructive animate-pulse ring-2 ring-card" />}
+        {bloqueada && <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-amber-500 ring-2 ring-card" />}
       </div>
       <div className="flex-1 min-w-0">
         <p className="font-semibold text-sm truncate text-foreground">{visita.pessoa?.nome}</p>
@@ -239,9 +242,11 @@ function VisitaRow({ visita, onRegistrarSaida, onDelete, deleting }: { visita: a
           <span>Entrada {fmtHora(visita.entrada_at)}</span>
           {visita.saida_at && <span>· Saída {fmtHora(visita.saida_at)}</span>}
           {pendente && <span className="text-destructive font-semibold uppercase tracking-wider">· Pendente</span>}
+          {!pendente && visita.status === "SAIDA_VALIDADA" && <span className="text-emerald-500 font-semibold uppercase tracking-wider">· Finalizada</span>}
+          {visita.status === "CANCELADA" && <span className="text-amber-500 font-semibold uppercase tracking-wider">· Cancelada</span>}
         </div>
       </div>
-      {pendente && <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />}
+      <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 opacity-0 group-hover:opacity-100 transition" />
       </button>
       {onDelete && (
         <AlertDialog>
