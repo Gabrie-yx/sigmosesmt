@@ -21,17 +21,20 @@ import { Upload, Plus, Scale, AlertTriangle, CheckCircle2, Clock, Search, FileTe
 export const Route = createFileRoute("/app/cal/")({
   component: CalDashboardPage,
   head: () => ({ meta: [{ title: "Requisitos Legais (CAL) · SIGMO" }, { name: "description", content: "Gestão de Requisitos Legais — CALs, aplicabilidade, planos de ação e evidências." }] }),
+  validateSearch: (s: Record<string, unknown>) => ({ import: s.import === "1" || s.import === 1 ? "1" : undefined }),
 });
 
 function CalDashboardPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const { import: importFlag } = Route.useSearch();
   const [busca, setBusca] = useState("");
   const [statusSel, setStatusSel] = useState<Set<CalStatus>>(new Set());
   const [areaSel, setAreaSel] = useState<string>("todas");
   const [criticSel, setCriticSel] = useState<string>("todas");
   const [chip, setChip] = useState<"nenhum" | "em_atraso" | "vencendo7" | "sem_analise" | "revogado" | "nao_aplicavel" | "nao_atendido">("nenhum");
   const [importOpen, setImportOpen] = useState(false);
+  useEffect(() => { if (importFlag === "1") setImportOpen(true); }, [importFlag]);
   const [manualOpen, setManualOpen] = useState(false);
   const [deltaResult, setDeltaResult] = useState<null | {
     novos: number;
