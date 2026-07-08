@@ -186,6 +186,8 @@ function PlanosCalPage() {
         const payload = {
           codigo_pa: p.codigo_pa ?? null,
           texto: p.texto,
+          requisito_legal_texto: p.requisito_legal_texto ?? null,
+          area_pa: p.area_pa ?? null,
           tipo: p.tipo ?? null,
           status: p.status ?? null,
           data_prevista: p.data_prevista ?? null,
