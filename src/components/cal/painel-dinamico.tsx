@@ -103,9 +103,9 @@ function StatsCard({ items, total }: { items: CardItem[]; total: number }) {
             <div className="flex-1 min-w-0">
               <div className="flex items-baseline gap-2">
                 <span className={`text-3xl font-bold leading-none ${TONE_TEXT[it.tone]}`}>{it.value}</span>
-                <span className="text-[10px] uppercase tracking-widest text-muted-foreground">{it.label}</span>
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-foreground/90">{it.label}</span>
               </div>
-              <div className="mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <div className="mt-1 flex items-center gap-1.5 text-[11px] text-foreground/70">
                 <span className={`inline-flex ${TONE_TEXT[it.tone]}`}>{it.icon}</span>
                 <span>de {total.toLocaleString("pt-BR")} no total</span>
               </div>
@@ -125,7 +125,7 @@ function SectionHeader({ icon, title, subtitle }: { icon: React.ReactNode; title
       </span>
       <div>
         <h3 className="text-xs font-bold uppercase tracking-widest text-foreground">{title}</h3>
-        {subtitle && <p className="text-[11px] text-muted-foreground">{subtitle}</p>}
+        {subtitle && <p className="text-[11px] text-foreground/70">{subtitle}</p>}
       </div>
     </div>
   );
