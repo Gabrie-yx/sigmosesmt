@@ -485,7 +485,7 @@ export function HoraExtraSabadoDialog({
                   d.setDate(d.getDate() + diff);
                   setData(d.toISOString().slice(0, 10));
                 } else {
-                  setHoraIni("17:00"); setHoraFim("20:00");
+                  setHoraIni("17:30"); setHoraFim("20:00");
                   // próximo dia útil (seg–sex)
                   const d = new Date();
                   do { d.setDate(d.getDate() + 1); } while (d.getDay() === 0 || d.getDay() === 6);
@@ -496,7 +496,7 @@ export function HoraExtraSabadoDialog({
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="SABADO">Sábado (07:30–15:00)</SelectItem>
-                <SelectItem value="DIA_UTIL">Dia útil (a partir das 17:00)</SelectItem>
+                <SelectItem value="DIA_UTIL">Dia útil (a partir das 17:30)</SelectItem>
               </SelectContent>
             </Select>
           </div>

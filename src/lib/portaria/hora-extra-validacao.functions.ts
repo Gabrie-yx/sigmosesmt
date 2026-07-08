@@ -1,5 +1,5 @@
 // Portaria valida hora extra do dia:
-// - Dia útil (extra pós-17h): confirma permanência às 17h + registra saída real.
+// - Dia útil (extra pós-17:30): confirma permanência às 17:30 + registra saída real.
 // - Sábado: registra entrada + saída.
 // Só aparece na portaria quem está em convocação APROVADA e do dia de hoje.
 

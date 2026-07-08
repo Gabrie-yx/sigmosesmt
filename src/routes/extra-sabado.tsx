@@ -522,7 +522,7 @@ function NovaConvocacaoDialog({ open, onOpenChange, onCreated, liderId }: {
   // Ao trocar tipo, ajusta defaults de horário
   useEffect(() => {
     if (tipo === "SABADO") { setHi("07:30"); setHf("15:00"); }
-    else { setHi("17:00"); setHf("19:00"); }
+    else { setHi("17:30"); setHf("19:30"); }
   }, [tipo]);
 
   const filtrados = useMemo(() => {
