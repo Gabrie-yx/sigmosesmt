@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { parseCalPlanoAcaoPlanilha } from "@/lib/cal-parser";
 import { ListChecks, Search, AlertTriangle, Clock, CheckCircle2, CircleDashed, Repeat, ArrowRight, ChevronLeft, ChevronRight, Upload, Paperclip, FileText, Trash2, ExternalLink } from "lucide-react";
 import { FileViewerHost, openStorageFile } from "@/components/file-viewer";
+import { PainelDinamicoPlanos } from "@/components/cal/painel-dinamico";
 
 export const Route = createFileRoute("/app/cal/planos")({
   component: PlanosCalPage,
@@ -410,6 +411,20 @@ function PlanosCalPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Painel dinâmico */}
+      <PainelDinamicoPlanos
+        planos={planos as any}
+        filtroAtivo={vencSel === "todos" ? null : vencSel === "vencido" ? "vencidos" : vencSel === "vencendo" ? "vencendo" : vencSel === "em_dia" ? "em_dia" : vencSel === "concluido" ? "concluidos" : vencSel === "sem_prazo" ? "sem_prazo" : null}
+        onFiltro={(k) => {
+          setPagina(1);
+          if (k === "vencidos") setVencSel("vencido");
+          else if (k === "vencendo") setVencSel("vencendo");
+          else if (k === "em_dia") setVencSel("em_dia");
+          else if (k === "concluidos") setVencSel("concluido");
+          else if (k === "sem_prazo") setVencSel("sem_prazo");
+        }}
+      />
 
       {/* KPIs — clicáveis pra filtrar */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2">
