@@ -85,7 +85,7 @@ function PlanosCalPage() {
       const { planos, total_linhas } = await parseCalPlanoAcaoPlanilha(file);
       if (!planos.length) throw new Error("Nenhum Plano de Ação encontrado na planilha.");
 
-      // Pré-carrega requisitos p/ resolver numero_cal -> id
+      // Pré-carrega requisitos: por numero_cal (RQTCL...) E por codigo_requisito_generico (RL...)
       const numerosCal = [...new Set(planos.map((p) => p.numero_cal).filter(Boolean))] as string[];
       const reqIdByNumero = new Map<string, string>();
       if (numerosCal.length) {
@@ -99,9 +99,26 @@ function PlanosCalPage() {
         }
       }
 
-      // Pré-carrega PAs existentes por codigo_pa
+      const codigosRl = [
+        ...new Set(planos.flatMap((p) => p.codigos_rl ?? []).filter(Boolean)),
+      ] as string[];
+      const reqIdByRl = new Map<string, string>();
+      if (codigosRl.length) {
+        const chunkR = 500;
+        for (let i = 0; i < codigosRl.length; i += chunkR) {
+          const { data } = await supabase
+            .from("cal_requisitos")
+            .select("id, codigo_requisito_generico")
+            .in("codigo_requisito_generico", codigosRl.slice(i, i + chunkR));
+          for (const r of data ?? []) {
+            if (r.codigo_requisito_generico) reqIdByRl.set(r.codigo_requisito_generico.toUpperCase(), r.id);
+          }
+        }
+      }
+
+      // Pré-carrega PAs existentes por codigo_pa (uma PA pode ter várias linhas, uma por requisito)
       const codigos = [...new Set(planos.map((p) => p.codigo_pa).filter(Boolean))] as string[];
-      const paIdByCodigo = new Map<string, { id: string; requisito_id: string }>();
+      const paRowsByCodigo = new Map<string, Array<{ id: string; requisito_id: string }>>();
       if (codigos.length) {
         const chunkP = 500;
         for (let i = 0; i < codigos.length; i += chunkP) {
@@ -109,7 +126,12 @@ function PlanosCalPage() {
             .from("cal_planos_acao")
             .select("id, codigo_pa, requisito_id")
             .in("codigo_pa", codigos.slice(i, i + chunkP));
-          for (const p of data ?? []) if (p.codigo_pa) paIdByCodigo.set(p.codigo_pa, { id: p.id, requisito_id: p.requisito_id });
+          for (const p of data ?? []) {
+            if (!p.codigo_pa) continue;
+            const arr = paRowsByCodigo.get(p.codigo_pa) ?? [];
+            arr.push({ id: p.id, requisito_id: p.requisito_id });
+            paRowsByCodigo.set(p.codigo_pa, arr);
+          }
         }
       }
 
@@ -119,9 +141,6 @@ function PlanosCalPage() {
       const novos: any[] = [];
 
       for (const p of planos) {
-        const existente = p.codigo_pa ? paIdByCodigo.get(p.codigo_pa) : undefined;
-        const requisito_id = existente?.requisito_id ?? (p.numero_cal ? reqIdByNumero.get(p.numero_cal) : undefined);
-
         const payload = {
           codigo_pa: p.codigo_pa ?? null,
           texto: p.texto,
@@ -137,12 +156,33 @@ function PlanosCalPage() {
           usuario_gestao: p.usuario_gestao ?? null,
         };
 
-        if (existente) {
-          const { error } = await supabase.from("cal_planos_acao").update(payload).eq("id", existente.id);
-          if (error) throw error;
-          atualizados++;
-        } else if (requisito_id) {
-          novos.push({ requisito_id, ...payload });
+        // resolve TODOS os requisitos vinculados (por RL + fallback por RQTCL)
+        const requisitoIds = new Set<string>();
+        for (const rl of p.codigos_rl ?? []) {
+          const id = reqIdByRl.get(rl.toUpperCase());
+          if (id) requisitoIds.add(id);
+        }
+        if (!requisitoIds.size && p.numero_cal) {
+          const id = reqIdByNumero.get(p.numero_cal);
+          if (id) requisitoIds.add(id);
+        }
+
+        const existentes = p.codigo_pa ? paRowsByCodigo.get(p.codigo_pa) ?? [] : [];
+
+        // Se já existir(em) linha(s) desse codigo_pa, atualiza todas (mantém vínculo original)
+        if (existentes.length) {
+          for (const ex of existentes) {
+            const { error } = await supabase.from("cal_planos_acao").update(payload).eq("id", ex.id);
+            if (error) throw error;
+            atualizados++;
+          }
+          // além de atualizar, insere novos vínculos que ainda não existem
+          const jaVinculados = new Set(existentes.map((e) => e.requisito_id));
+          for (const rid of requisitoIds) {
+            if (!jaVinculados.has(rid)) novos.push({ requisito_id: rid, ...payload });
+          }
+        } else if (requisitoIds.size) {
+          for (const rid of requisitoIds) novos.push({ requisito_id: rid, ...payload });
         } else {
           semRequisito++;
         }

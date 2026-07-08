@@ -320,6 +320,8 @@ export function mapStatusIusToCal(status: string): string {
 export type CalPlanoAcaoLinhaImportada = CalPlanoAcaoImportado & {
   /** Código do Requisito de CAL (RQTCL...) — usado para vincular ao requisito */
   numero_cal?: string;
+  /** Códigos RL (Requisito Legal) extraídos da célula — cada PA pode referenciar vários RLs */
+  codigos_rl?: string[];
 };
 
 export type CalPlanoAcaoParseResult = {
@@ -329,7 +331,7 @@ export type CalPlanoAcaoParseResult = {
 
 function findPlanoHeaderRow(rows: unknown[][]): number {
   const scan = Math.min(rows.length, 20);
-  const targets = ["plano de acao", "requisito legal", "codigo"];
+  const targets = ["plano de acao", "requisito legal", "codigo", "descricao"];
   for (let i = 0; i < scan; i++) {
     const row = (rows[i] ?? []).map(norm);
     const hits = targets.filter((t) => row.some((c) => c.includes(t))).length;
@@ -342,10 +344,12 @@ function assertPlanoAcaoSheet(headers: string[], sheetName: string) {
   const set = new Set(headers.map(norm));
   const hasPA =
     [...set].some((h) => h.includes("plano de acao")) ||
-    [...set].some((h) => h.includes("texto do plano"));
+    [...set].some((h) => h.includes("texto do plano")) ||
+    [...set].some((h) => h.includes("descricao"));
   const hasReq =
     [...set].some((h) => h.includes("requisito legal")) ||
-    [...set].some((h) => h.includes("codigo do requisito"));
+    [...set].some((h) => h.includes("codigo do requisito")) ||
+    [...set].some((h) => h.includes("codigo") && !h.includes("cliente"));
   if (!hasPA || !hasReq) {
     // Se parece a planilha de Requisitos, avisa
     const pareceReq =
@@ -390,7 +394,15 @@ export async function parseCalPlanoAcaoPlanilha(file: File): Promise<CalPlanoAca
     totalLinhas++;
 
     const texto =
-      pick(rec, "Texto do Plano de Ação", "Plano de Ação", "Plano de Acao", "Descrição do Plano de Ação") ?? "";
+      pick(
+        rec,
+        "Texto do Plano de Ação",
+        "Plano de Ação",
+        "Plano de Acao",
+        "Descrição do Plano de Ação",
+        "Descrição",
+        "Descricao",
+      ) ?? "";
     if (!texto) continue;
 
     const codigo_pa = pick(
@@ -405,14 +417,22 @@ export async function parseCalPlanoAcaoPlanilha(file: File): Promise<CalPlanoAca
     const numero_cal = pick(
       rec,
       "Código do Requisito de CAL",
-      "Requisito Legal",
       "Requisito de CAL",
       "Código do Requisito Legal",
+    );
+
+    // Extrai TODOS os códigos RL da célula "Requisito Legal" (que costuma trazer
+    // várias entradas "RL#### - texto..." separadas por quebras de linha).
+    const rlCell =
+      pick(rec, "Requisito Legal", "Requisitos Legais", "Requisitos") ?? "";
+    const codigos_rl = Array.from(
+      new Set(String(rlCell).match(/RL\d+/gi)?.map((s) => s.toUpperCase()) ?? []),
     );
 
     planos.push({
       codigo_pa,
       numero_cal,
+      codigos_rl,
       texto,
       tipo: pick(rec, "Tipo do Plano de Ação", "Tipo"),
       status: pick(rec, "Status do Plano de Ação", "Status"),
@@ -433,6 +453,8 @@ export async function parseCalPlanoAcaoPlanilha(file: File): Promise<CalPlanoAca
         rec,
         "Usuário responsável pela gestão",
         "Responsável pela gestão",
+        "Resp. Gestão",
+        "Resp Gestao",
         "Gestor",
       ),
     });
