@@ -232,11 +232,19 @@ function EmpresaBloco({
   pendingId: string | null;
 }) {
   const label = conv.is_sabado ? "Sábado" : "Dia útil";
-  const empresa = conv.company_name ?? conv.modulo_origem ?? "Sem empresa";
   const previsto = conv.horario_inicio && conv.horario_fim
     ? `${conv.horario_inicio.slice(0, 5)}–${conv.horario_fim.slice(0, 5)}`
     : conv.horario_fim ? `até ${conv.horario_fim.slice(0, 5)}` : "";
   const validados = conv.funcionarios.filter((f) => isFuncionarioValidado(conv, f)).length;
+
+  const empresasMap = new Map<string, HoraExtraHojeFuncionario[]>();
+  for (const f of conv.funcionarios) {
+    const key = f.company_name ?? conv.company_name ?? conv.modulo_origem ?? "Sem empresa";
+    const arr = empresasMap.get(key) ?? [];
+    arr.push(f);
+    empresasMap.set(key, arr);
+  }
+  const empresas = Array.from(empresasMap.entries()).sort((a, b) => a[0].localeCompare(b[0], "pt-BR"));
 
   return (
     <div className="rounded-lg border border-border bg-background/30 overflow-hidden">
@@ -244,9 +252,6 @@ function EmpresaBloco({
         <div className="min-w-0 flex items-center gap-2 flex-wrap">
           <span className="text-[10px] font-bold uppercase tracking-[0.12em] px-2 py-0.5 rounded-md bg-primary/15 text-primary border border-primary/30">
             {label}
-          </span>
-          <span className="text-[10px] font-bold uppercase tracking-[0.12em] px-2 py-0.5 rounded-md bg-muted text-foreground border border-border inline-flex items-center gap-1">
-            <Building2 className="h-3 w-3 text-muted-foreground" /> {empresa}
           </span>
           {previsto && (
             <span className="text-[11px] font-semibold text-foreground tabular-nums inline-flex items-center gap-1">
@@ -258,19 +263,31 @@ function EmpresaBloco({
           <Users className="h-3 w-3" /> {validados}/{conv.funcionarios.length}
         </div>
       </div>
-      <ul className="divide-y divide-border">
-        {conv.funcionarios.map((f) => (
-          <FuncionarioRow
-            key={f.id}
-            f={f}
-            isSabado={conv.is_sabado}
-            isAdmin={isAdmin}
-            onConfirm={onConfirm}
-            onUndo={onUndo}
-            pending={pendingId === f.id}
-          />
+      <div className="divide-y divide-border">
+        {empresas.map(([empresa, funcs]) => (
+          <div key={empresa}>
+            <div className="px-3 py-1.5 bg-muted/30 border-b border-border flex items-center justify-between gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-foreground inline-flex items-center gap-1.5">
+                <Building2 className="h-3 w-3 text-muted-foreground" /> {empresa}
+              </span>
+              <span className="text-[10px] text-muted-foreground tabular-nums">{funcs.length} func.</span>
+            </div>
+            <ul className="divide-y divide-border">
+              {funcs.map((f) => (
+                <FuncionarioRow
+                  key={f.id}
+                  f={f}
+                  isSabado={conv.is_sabado}
+                  isAdmin={isAdmin}
+                  onConfirm={onConfirm}
+                  onUndo={onUndo}
+                  pending={pendingId === f.id}
+                />
+              ))}
+            </ul>
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   );
 }
