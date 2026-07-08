@@ -1,12 +1,12 @@
 ---
-name: Nunca hardcode cores claras em cima do tema escuro
-description: Overlays (popover/drawer/dropdown/lookup) SEMPRE em tokens semânticos. Proibido bg-white, text-slate-*, bg-red-50 em overlays. Usuário reclamou 3+ vezes.
+name: Nunca hardcode cores claras/escuras contra o tema escuro
+description: Todo app escuro SEMPRE em tokens semânticos. Proibido bg-white, text-slate-*, text-black, bg-red-50 em overlays/telas/modais. Usuário proibiu repetir.
 type: constraint
 ---
 
-## Proibido em overlays sobre tema escuro
+## Proibido em telas, cards, overlays e modais sobre tema escuro
 - `bg-white`, `bg-slate-*`, `bg-red-50`, `bg-rose-50`, `bg-amber-50`, `bg-emerald-50`
-- `text-slate-800/700/600/500/400`, `text-rose-*`, `text-black`
+- `text-slate-*`, `text-gray-*`, `text-zinc-*`, `text-neutral-*`, `text-rose-*`, `text-black`
 - `border-slate-*`, `border-red-200/300`, `border-rose-*`
 - Botões/modal de exclusão com rosa/rose hardcoded ou contraste baixo
 
@@ -19,4 +19,4 @@ type: constraint
 - Botão vermelho sólido: `bg-red-700 hover:bg-red-800 text-white`
 
 ## Por que
-SIGMO tem tema escuro (vermelho/vinho). Combinações claras ficam ilegíveis. **Revisar autocomplete/lookup/drawer novos antes de finalizar.**
+SIGMO tem tema escuro (vermelho/vinho). Texto escuro em fundo escuro e cards claros remendados ficam ilegíveis. **Revisar contraste de autocomplete/lookup/drawer/modal/tela antes de finalizar.**

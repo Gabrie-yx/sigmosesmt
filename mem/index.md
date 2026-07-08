@@ -7,7 +7,7 @@ Arquivar TUDO que o usuário disser na memória (pendência/decisão/contexto) p
 Padrão **Modal-First**: ações novas abrem como modal/sheet/drawer sobre a tela contextual. Rota nova só com justificativa (ver mem://preferences/modal-first).
 MB51: Base MP vence, mas OUTROS é residual saneado por descrição; classificacao_mb51 nunca reforça material cadastrado — ver mem://features/mb51-classificacao-base-mp.
 RBAC: módulo/papel/menu precisa bater em UI, validação server-side, enum/funções do Supabase e guards; nunca divergir.
-Overlays (popover/drawer/dropdown/lookup) no tema escuro SEMPRE em tokens semânticos (bg-popover, text-foreground, border-border, hover:bg-accent). PROIBIDO bg-white, text-slate-*, bg-red-50 sobre o tema escuro. Ver mem://constraints/nada-de-cores-hardcoded.
+Tema escuro: telas/overlays/modais SEMPRE em tokens semânticos. PROIBIDO texto escuro/bg-white/bg-red-50 sobre fundo escuro. Ver mem://constraints/nada-de-cores-hardcoded.
 Scrollbar SEMPRE glassmorph fina com flares (global em src/styles.css). PROIBIDO scrollbar padrão do SO/cinza, grossa ou hardcoded. Ver mem://constraints/scrollbar-glassmorph.
 Horas extras pertencem ao módulo de origem; não usar SESMT como caixa geral nem mexer no painel SESMT para esse fluxo.
 Aline Farias saiu; TST atual é Francisco Bandeira Almeida. Todo import (CAL/PGR/matriz) deve substituir "aline farias" por ele antes de gravar. Ver mem://constraints/aline-farias-fora.
@@ -30,7 +30,7 @@ Aline Farias saiu; TST atual é Francisco Bandeira Almeida. Todo import (CAL/PGR
 - [RC Auto-scoring + 5 estrelas](mem://features/rc-auto-scoring-estrelas.md) — Fila pra depois: varredura de 2-3 cotações, "MELHOR OFERTA" automática e rating 1-5 do fornecedor; iniciar quando chegar a planilha SAP de fornecedores.
 - [Auditoria RBAC / usuários](mem://features/rbac-auditoria-usuarios.md) — Levantamento 03/07: 4 de 5 usuários são admin; sem segregação por empresa; proposta de roles finas + MFA obrigatório em debate. Não codar sem OK.
 - [RBAC com fonte única](mem://preferences/rbac-fonte-unica.md) — Nunca exibir módulo/papel na tela se backend/banco/guards não aceitarem; revisar tudo junto ao criar módulo.
-- [Nada de cores hardcoded em overlays](mem://constraints/nada-de-cores-hardcoded.md) — Regra dura contra bg-white/text-slate/bg-red-50 em popover/drawer/dropdown. Lista de proibidos + obrigatórios.
+- [Nada de cores hardcoded no tema escuro](mem://constraints/nada-de-cores-hardcoded.md) — Regra dura contra bg-white/text-slate/text-black/bg-red-50 em telas, modais, popovers, drawers e dropdowns.
 - [Scrollbar glassmorph global](mem://constraints/scrollbar-glassmorph.md) — Regra global de scrollbar fina estilo vidro com flares aplicada em `*::-webkit-scrollbar*`. Proibido scrollbar padrão.
 - [Onda 1 - Blindagem](mem://features/onda1-blindagem-seguranca.md) — Bloco 1 do parecer CONCLUÍDO ✅: endpoints IA fechados, bucket avatars privado + URLs assinadas, RPCs públicos auditados (REVOKE anon + is_supervisor_geral).
 - [Parecer Auditoria SIGMO 2026-07-14](mem://features/parecer-auditoria-2026-07-14.md) — Fonte oficial: 117 achados em 6 ondas. Consultar sempre que falar em "onda X do parecer", C-XX ou G-XX.
