@@ -1,5 +1,5 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { CalendarCheck2, LayoutDashboard, Zap, Menu, User } from "lucide-react";
+import { CalendarCheck2, LayoutDashboard, Zap, Menu, User, CalendarClock } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
@@ -16,7 +16,7 @@ import { useAuth } from "@/hooks/use-auth";
 export function MobileBottomNav() {
   const { pathname } = useLocation();
   const { toggleSidebar } = useSidebar();
-  const { isModerator } = useAuth();
+  const { isModerator, isExtraSabadoMarcador } = useAuth();
 
   const isActive = (to: string) =>
     pathname === to || pathname.startsWith(to + "/");
@@ -53,6 +53,16 @@ export function MobileBottomNav() {
           >
             <CalendarCheck2 className={cn("h-5 w-5", isActive("/app/hoje") && "scale-110")} />
             <span className="truncate">Hoje</span>
+          </Link>
+        )}
+        {!isModerator && isExtraSabadoMarcador && (
+          <Link
+            to="/app/modulo/$modulo/hora-extra"
+            params={{ modulo: "terceirizadas" }}
+            className={cn(itemBase, isActive("/app/modulo/terceirizadas/hora-extra") ? active : idle)}
+          >
+            <CalendarClock className={cn("h-5 w-5", isActive("/app/modulo/terceirizadas/hora-extra") && "scale-110")} />
+            <span className="truncate">H. Extra</span>
           </Link>
         )}
         <Link
