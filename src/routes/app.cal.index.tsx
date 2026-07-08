@@ -498,35 +498,49 @@ function CalDashboardPage() {
             <TabsContent value="tabela" className="mt-4">
               {isLoading ? <p className="text-sm text-muted-foreground">Carregando...</p> : (
                 <div className="rounded-md border overflow-x-auto">
-                  <Table>
+                  <Table className="table-fixed w-full">
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Nº CAL</TableHead>
-                        <TableHead>Norma</TableHead>
-                        <TableHead>Ementa</TableHead>
-                        <TableHead>Área</TableHead>
-                        <TableHead>Criticidade</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Prazo</TableHead>
+                        <TableHead className="w-[52%]">Requisito</TableHead>
+                        <TableHead className="w-[16%]">Área</TableHead>
+                        <TableHead className="w-[10%]">Criticidade</TableHead>
+                        <TableHead className="w-[10%]">Status</TableHead>
+                        <TableHead className="w-[12%]">Prazo</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {filtrados.length === 0 && (
-                        <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Nenhum CAL encontrado</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhum CAL encontrado</TableCell></TableRow>
                       )}
                       {filtrados.map((r) => {
                         const d = daysUntil(r.prazo_atendimento);
                         return (
-                          <TableRow key={r.id} className="cursor-pointer hover:bg-muted/40">
-                            <TableCell className="font-mono text-xs"><Link to="/app/cal/$id" params={{ id: r.id }} className="hover:underline">{r.numero_cal}</Link></TableCell>
-                            <TableCell><Link to="/app/cal/$id" params={{ id: r.id }} className="block">{r.norma}</Link></TableCell>
-                            <TableCell className="max-w-[380px] truncate"><Link to="/app/cal/$id" params={{ id: r.id }} className="block">{r.ementa}</Link></TableCell>
-                            <TableCell className="text-xs">{r.area ?? "—"}</TableCell>
-                            <TableCell><Badge variant="outline" className={CAL_CRITICIDADE_COLOR[r.criticidade as keyof typeof CAL_CRITICIDADE_COLOR]}>{CAL_CRITICIDADE_LABEL[r.criticidade as keyof typeof CAL_CRITICIDADE_LABEL]}</Badge></TableCell>
-                            <TableCell><Badge variant="outline" className={CAL_STATUS_COLOR[r.status as CalStatus]}>{CAL_STATUS_LABEL[r.status as CalStatus]}</Badge></TableCell>
-                            <TableCell className={d !== null && d < 0 ? "text-red-400 text-xs" : "text-xs"}>
+                          <TableRow key={r.id} className="cursor-pointer hover:bg-muted/40 align-top">
+                            <TableCell className="py-3">
+                              <Link to="/app/cal/$id" params={{ id: r.id }} className="block group">
+                                <p
+                                  className="text-sm leading-snug text-foreground group-hover:underline"
+                                  style={{ display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}
+                                  title={r.ementa ?? ""}
+                                >
+                                  {r.ementa}
+                                </p>
+                                <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground">
+                                  <span className="font-semibold text-foreground/70">{r.norma}</span>
+                                  <span className="opacity-40">·</span>
+                                  <span className="font-mono">{r.numero_cal}</span>
+                                </div>
+                              </Link>
+                            </TableCell>
+                            <TableCell className="text-xs py-3 break-words">{r.area ?? "—"}</TableCell>
+                            <TableCell className="py-3"><Badge variant="outline" className={CAL_CRITICIDADE_COLOR[r.criticidade as keyof typeof CAL_CRITICIDADE_COLOR]}>{CAL_CRITICIDADE_LABEL[r.criticidade as keyof typeof CAL_CRITICIDADE_LABEL]}</Badge></TableCell>
+                            <TableCell className="py-3"><Badge variant="outline" className={CAL_STATUS_COLOR[r.status as CalStatus]}>{CAL_STATUS_LABEL[r.status as CalStatus]}</Badge></TableCell>
+                            <TableCell className={`py-3 text-xs ${d !== null && d < 0 ? "text-red-400" : ""}`}>
                               {r.prazo_atendimento ? (
-                                <>{new Date(r.prazo_atendimento + "T00:00:00").toLocaleDateString("pt-BR")} {d !== null && <span className="ml-1 opacity-70">({d < 0 ? `${-d}d atraso` : `${d}d`})</span>}</>
+                                <div className="flex flex-col">
+                                  <span>{new Date(r.prazo_atendimento + "T00:00:00").toLocaleDateString("pt-BR")}</span>
+                                  {d !== null && <span className="opacity-70">{d < 0 ? `${-d}d atraso` : `em ${d}d`}</span>}
+                                </div>
                               ) : "—"}
                             </TableCell>
                           </TableRow>
