@@ -16,7 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "sonner";
 import { parseCalPlanilha, mapStatusIusToCal, type CalRequisitoImportado } from "@/lib/cal-parser";
 import { CAL_STATUS_LABEL, CAL_STATUS_COLOR, CAL_STATUS_ORDER, CAL_CRITICIDADE_LABEL, CAL_CRITICIDADE_COLOR, daysUntil, type CalStatus } from "@/lib/cal-utils";
-import { Upload, Plus, Scale, AlertTriangle, CheckCircle2, Clock, Search, FileText, Trash2, Sparkles } from "lucide-react";
+import { Upload, Plus, Scale, AlertTriangle, CheckCircle2, Clock, Search, FileText, Trash2, Sparkles, ListChecks } from "lucide-react";
 
 export const Route = createFileRoute("/app/cal/")({
   component: CalDashboardPage,
@@ -338,6 +338,7 @@ function CalDashboardPage() {
           </div>
         </div>
         <div className="flex gap-2">
+          <Link to="/app/cal/planos"><Button variant="default" className="bg-red-600 hover:bg-red-700"><ListChecks className="h-4 w-4 mr-2" />Planos de Ação</Button></Link>
           <Dialog open={purgeOpen} onOpenChange={setPurgeOpen}>
             <DialogTrigger asChild>
               <Button variant="ghost" className="text-red-400 hover:text-red-300"><Trash2 className="h-4 w-4 mr-2" />Limpar base</Button>
