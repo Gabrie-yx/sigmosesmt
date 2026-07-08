@@ -70,6 +70,39 @@ function findHeaderRow(rows: unknown[][]): number {
   return 0;
 }
 
+/** Erro amigável quando a planilha não é a exportação de "Requisito de CAL". */
+export class CalPlanilhaInvalidaError extends Error {
+  constructor(msg: string) {
+    super(msg);
+    this.name = "CalPlanilhaInvalidaError";
+  }
+}
+
+function assertRequisitosSheet(headers: string[], sheetName: string) {
+  const set = new Set(headers.map(norm));
+  const need = ["codigo do requisito de cal", "descricao do requisito"];
+  const missing = need.filter((n) => ![...set].some((h) => h.includes(n)));
+  if (missing.length) {
+    // Detecta se é a planilha de Plano de Ação (que tem 'Código' + 'Requisito Legal')
+    const parece_plano =
+      [...set].some((h) => h === "codigo") &&
+      [...set].some((h) => h.includes("requisito legal")) &&
+      [...set].some((h) => h.includes("plano de acao"));
+    if (parece_plano) {
+      throw new CalPlanilhaInvalidaError(
+        `Este arquivo é a exportação de "Plano de Ação" do Ius Natura (aba "${sheetName}"). ` +
+          `Esta tela importa a exportação de "Requisito de CAL". ` +
+          `Baixe do Ius Natura o relatório "Requisito de CAL" (colunas 'Código do Requisito de CAL', 'Descrição do Requisito' etc.) e envie novamente.`,
+      );
+    }
+    throw new CalPlanilhaInvalidaError(
+      `Planilha não reconhecida como "Requisito de CAL" do Ius Natura. ` +
+        `Colunas obrigatórias ausentes: ${missing.join(", ")}. ` +
+        `Envie a exportação correta (aba "Requisito de CAL").`,
+    );
+  }
+}
+
 function pick(row: Record<string, unknown>, ...candidates: string[]): string | undefined {
   for (const c of candidates) {
     const target = norm(c);
@@ -135,7 +168,8 @@ function contentHash(payload: unknown): string {
 export async function parseCalPlanilha(file: File): Promise<CalParseResult> {
   const buf = await file.arrayBuffer();
   const wb = XLSX.read(buf, { type: "array" });
-  const sheet = wb.Sheets[wb.SheetNames[0]];
+  const sheetName = wb.SheetNames[0];
+  const sheet = wb.Sheets[sheetName];
   const matrix = XLSX.utils.sheet_to_json<unknown[]>(sheet, {
     header: 1,
     defval: null,
@@ -144,6 +178,7 @@ export async function parseCalPlanilha(file: File): Promise<CalParseResult> {
   if (!matrix.length) return { requisitos: [], total_linhas: 0 };
   const headerIdx = findHeaderRow(matrix);
   const headers = (matrix[headerIdx] as unknown[]).map((h, i) => String(h ?? `col_${i}`));
+  assertRequisitosSheet(headers, sheetName);
 
   // Agrupamos por "Código do Requisito de CAL" (RQTCL...) — cada RQTCL pode
   // aparecer em várias linhas (1 por Norma Legal vinculada).
