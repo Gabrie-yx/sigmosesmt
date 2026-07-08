@@ -37,3 +37,4 @@ Horas extras pertencem ao módulo de origem; não usar SESMT como caixa geral ne
 - [Deploy SIGMO servidor DMN (pausado)](mem://deploy-sigmo-servidor-dmn) — PAUSADO. Plano 5 fases em .lovable/plan.md p/ subir SIGMO + Supabase self-hosted no Ubuntu 24.04 via VPN DMN. Retomar quando usuário chamar.
 - [Transferência funcionário entre empresas](mem://features/transferencia-funcionario-empresa) — Wizard admin/moderador; APRs/PTEs abertas → reatribuir ou arquivar; motivo obrigatório; grava employee_company_history.
 - [NAO_MEI → CLT](mem://features/rename-clt-tipo-cadastro) — tipo_cadastro aceita só MEI/CLT/AVULSO. Default AVULSO. Trigger seta MEI quando empresa é DMN (companies.type='CLT').
+- [Matriz Requisitos Legais LIRA](mem://features/matriz-requisitos-legais-lira.md) — Módulo NOVO pendente (VCL/RL + evidências) pra ISO 9001/45001/14001/CAL. NÃO é Controle de Documentos. Aguardando priorização + planilha .xlsx do usuário.
