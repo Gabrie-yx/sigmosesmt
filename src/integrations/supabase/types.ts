@@ -10940,12 +10940,10 @@ export type Database = {
         Args: { _motivo: string; _rc_id: string }
         Returns: undefined
       }
-      reativar_funcionario:
-        | { Args: { _employee_id: string }; Returns: undefined }
-        | {
-            Args: { _employee_id: string; _motivo?: string }
-            Returns: undefined
-          }
+      reativar_funcionario: {
+        Args: { _employee_id: string; _motivo?: string }
+        Returns: undefined
+      }
       recalcular_cobertura_cotacao: {
         Args: { _cotacao_id: string }
         Returns: undefined
