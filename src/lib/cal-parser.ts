@@ -322,6 +322,10 @@ export type CalPlanoAcaoLinhaImportada = CalPlanoAcaoImportado & {
   numero_cal?: string;
   /** Códigos RL (Requisito Legal) extraídos da célula — cada PA pode referenciar vários RLs */
   codigos_rl?: string[];
+  /** Texto completo da célula "Requisito Legal" (ex.: "RL94129 - São afixados..."). */
+  requisito_legal_texto?: string;
+  /** Área(s) declarada(s) na própria planilha de Plano de Ação. */
+  area_pa?: string;
 };
 
 export type CalPlanoAcaoParseResult = {
@@ -428,11 +432,15 @@ export async function parseCalPlanoAcaoPlanilha(file: File): Promise<CalPlanoAca
     const codigos_rl = Array.from(
       new Set(String(rlCell).match(/RL\d+/gi)?.map((s) => s.toUpperCase()) ?? []),
     );
+    const requisito_legal_texto = rlCell ? String(rlCell).trim() : undefined;
+    const area_pa = pick(rec, "Área(s)", "Areas", "Área", "Area");
 
     planos.push({
       codigo_pa,
       numero_cal,
       codigos_rl,
+      requisito_legal_texto,
+      area_pa,
       texto,
       tipo: pick(rec, "Tipo do Plano de Ação", "Tipo"),
       status: pick(rec, "Status do Plano de Ação", "Status"),

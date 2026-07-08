@@ -968,7 +968,8 @@ export type Database = {
           descricao: string | null
           id: string
           mime: string | null
-          requisito_id: string
+          plano_id: string | null
+          requisito_id: string | null
           tamanho_bytes: number | null
           tipo: string
         }
@@ -980,7 +981,8 @@ export type Database = {
           descricao?: string | null
           id?: string
           mime?: string | null
-          requisito_id: string
+          plano_id?: string | null
+          requisito_id?: string | null
           tamanho_bytes?: number | null
           tipo: string
         }
@@ -992,11 +994,19 @@ export type Database = {
           descricao?: string | null
           id?: string
           mime?: string | null
-          requisito_id?: string
+          plano_id?: string | null
+          requisito_id?: string | null
           tamanho_bytes?: number | null
           tipo?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "cal_evidencias_plano_id_fkey"
+            columns: ["plano_id"]
+            isOneToOne: false
+            referencedRelation: "cal_planos_acao"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "cal_evidencias_requisito_id_fkey"
             columns: ["requisito_id"]
@@ -1179,6 +1189,7 @@ export type Database = {
       }
       cal_planos_acao: {
         Row: {
+          area_pa: string | null
           codigo_pa: string | null
           created_at: string
           custo: number | null
@@ -1187,8 +1198,10 @@ export type Database = {
           id: string
           intervalo_recorrencia_dias: number | null
           natureza_custo: string | null
+          observacoes: string | null
           recorrente: boolean
           requisito_id: string
+          requisito_legal_texto: string | null
           status: string | null
           texto: string
           tipo: string | null
@@ -1197,6 +1210,7 @@ export type Database = {
           usuario_gestao: string | null
         }
         Insert: {
+          area_pa?: string | null
           codigo_pa?: string | null
           created_at?: string
           custo?: number | null
@@ -1205,8 +1219,10 @@ export type Database = {
           id?: string
           intervalo_recorrencia_dias?: number | null
           natureza_custo?: string | null
+          observacoes?: string | null
           recorrente?: boolean
           requisito_id: string
+          requisito_legal_texto?: string | null
           status?: string | null
           texto: string
           tipo?: string | null
@@ -1215,6 +1231,7 @@ export type Database = {
           usuario_gestao?: string | null
         }
         Update: {
+          area_pa?: string | null
           codigo_pa?: string | null
           created_at?: string
           custo?: number | null
@@ -1223,8 +1240,10 @@ export type Database = {
           id?: string
           intervalo_recorrencia_dias?: number | null
           natureza_custo?: string | null
+          observacoes?: string | null
           recorrente?: boolean
           requisito_id?: string
+          requisito_legal_texto?: string | null
           status?: string | null
           texto?: string
           tipo?: string | null

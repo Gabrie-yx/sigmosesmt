@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { parseCalPlanoAcaoPlanilha } from "@/lib/cal-parser";
-import { ListChecks, Search, AlertTriangle, Clock, CheckCircle2, CircleDashed, Repeat, ArrowRight, ChevronLeft, ChevronRight, Upload } from "lucide-react";
+import { ListChecks, Search, AlertTriangle, Clock, CheckCircle2, CircleDashed, Repeat, ArrowRight, ChevronLeft, ChevronRight, Upload, Paperclip, FileText, Trash2, ExternalLink } from "lucide-react";
 
 export const Route = createFileRoute("/app/cal/planos")({
   component: PlanosCalPage,
@@ -28,6 +28,9 @@ type PlanoRow = {
   requisito_id: string;
   codigo_pa: string | null;
   texto: string | null;
+  requisito_legal_texto: string | null;
+  area_pa: string | null;
+  observacoes: string | null;
   tipo: string | null;
   status: string | null;
   data_prevista: string | null;
@@ -45,6 +48,16 @@ type PlanoRow = {
     temas: string[] | null;
     criticidade: string | null;
   } | null;
+};
+
+type EvidenciaPA = {
+  id: string;
+  arquivo_nome: string | null;
+  arquivo_url: string;
+  mime: string | null;
+  tamanho_bytes: number | null;
+  descricao: string | null;
+  created_at: string;
 };
 
 type VencStatus = "concluido" | "vencido" | "vencendo" | "em_dia" | "sem_prazo";
@@ -90,13 +103,13 @@ function PlanosCalPage() {
     setTratando(p);
     setTStatus(p.status ?? "Pendente");
     setTConclusao(p.data_conclusao ?? "");
-    setTObs("");
+    setTObs(p.observacoes ?? "");
   }
 
   const salvarTratativa = useMutation({
     mutationFn: async () => {
       if (!tratando) return;
-      const payload: any = { status: tStatus || null, data_conclusao: tConclusao || null };
+      const payload: any = { status: tStatus || null, data_conclusao: tConclusao || null, observacoes: tObs || null };
       if (tStatus === "Concluído" && !tConclusao) payload.data_conclusao = new Date().toISOString().slice(0, 10);
       const { error } = await supabase.from("cal_planos_acao").update(payload).eq("id", tratando.id);
       if (error) throw error;
@@ -173,6 +186,8 @@ function PlanosCalPage() {
         const payload = {
           codigo_pa: p.codigo_pa ?? null,
           texto: p.texto,
+          requisito_legal_texto: p.requisito_legal_texto ?? null,
+          area_pa: p.area_pa ?? null,
           tipo: p.tipo ?? null,
           status: p.status ?? null,
           data_prevista: p.data_prevista ?? null,
@@ -246,7 +261,7 @@ function PlanosCalPage() {
       while (true) {
         const { data, error } = await supabase
           .from("cal_planos_acao")
-          .select("id, requisito_id, codigo_pa, texto, tipo, status, data_prevista, data_conclusao, recorrente, usuario_execucao, usuario_gestao, cal_requisitos(id, numero_cal, norma, ementa, area, area_incidencia, temas, criticidade)")
+          .select("id, requisito_id, codigo_pa, texto, requisito_legal_texto, area_pa, observacoes, tipo, status, data_prevista, data_conclusao, recorrente, usuario_execucao, usuario_gestao, cal_requisitos(id, numero_cal, norma, ementa, area, area_incidencia, temas, criticidade)")
           .order("data_prevista", { ascending: true, nullsFirst: false })
           .range(from, from + PAGE - 1);
         if (error) throw error;
@@ -266,7 +281,7 @@ function PlanosCalPage() {
     const tipos = new Set<string>();
     const statuses = new Set<string>();
     for (const p of planos) {
-      const a = p.cal_requisitos?.area_incidencia ?? p.cal_requisitos?.area;
+      const a = p.area_pa ?? p.cal_requisitos?.area_incidencia ?? p.cal_requisitos?.area;
       if (a) String(a).split(/[;,]/).map((s) => s.trim()).filter(Boolean).forEach((x) => areas.add(x));
       if (p.usuario_execucao) resps.add(p.usuario_execucao);
       if (p.usuario_gestao) gests.add(p.usuario_gestao);
@@ -292,12 +307,12 @@ function PlanosCalPage() {
       if (respSel !== "todos" && p.usuario_execucao !== respSel) return false;
       if (gestSel !== "todos" && p.usuario_gestao !== gestSel) return false;
       if (areaSel !== "todas") {
-        const a = String(p.cal_requisitos?.area_incidencia ?? p.cal_requisitos?.area ?? "").toLowerCase();
+        const a = String(p.area_pa ?? p.cal_requisitos?.area_incidencia ?? p.cal_requisitos?.area ?? "").toLowerCase();
         if (!a.includes(areaSel.toLowerCase())) return false;
       }
       if (needle) {
         const hay = [
-          p.codigo_pa, p.texto, p.tipo, p.status, p.usuario_execucao, p.usuario_gestao,
+          p.codigo_pa, p.texto, p.requisito_legal_texto, p.area_pa, p.tipo, p.status, p.usuario_execucao, p.usuario_gestao,
           p.cal_requisitos?.numero_cal, p.cal_requisitos?.norma, p.cal_requisitos?.ementa,
           p.cal_requisitos?.area, p.cal_requisitos?.area_incidencia,
           (p.cal_requisitos?.temas ?? []).join(" "),
@@ -448,8 +463,9 @@ function PlanosCalPage() {
             <TableBody>
               {pageRows.map((p) => {
                 const v = calcVenc(p);
-                const area = p.cal_requisitos?.area_incidencia ?? p.cal_requisitos?.area ?? "—";
+                const area = p.area_pa ?? p.cal_requisitos?.area_incidencia ?? p.cal_requisitos?.area ?? "—";
                 const temas = (p.cal_requisitos?.temas ?? []).slice(0, 3);
+                const descricao = p.requisito_legal_texto ?? p.texto ?? "—";
                 return (
                   <TableRow key={p.id} className="align-top hover:bg-muted/30 cursor-pointer" onClick={() => abrirTratativa(p)}>
                     <TableCell className="font-mono text-xs py-3">{p.codigo_pa ?? "—"}</TableCell>
@@ -464,8 +480,8 @@ function PlanosCalPage() {
                     <TableCell className="text-xs py-3">{p.status ?? "—"}</TableCell>
                     <TableCell className="text-xs py-3">{p.tipo ?? "—"}</TableCell>
                     <TableCell className="py-3">
-                      <p className="text-sm leading-snug" style={{ display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }} title={p.texto ?? ""}>
-                        {p.texto ?? "—"}
+                      <p className="text-sm leading-snug" style={{ display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }} title={descricao}>
+                        {descricao}
                       </p>
                     </TableCell>
                     <TableCell className="py-3 text-xs">
@@ -507,15 +523,21 @@ function PlanosCalPage() {
 
       {/* Modal de Tratativa */}
       <Dialog open={!!tratando} onOpenChange={(o) => !o && setTratando(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Tratativa do Plano {tratando?.codigo_pa}</DialogTitle>
           </DialogHeader>
           {tratando && (
             <div className="space-y-4">
               <div className="rounded-md border border-border bg-muted/30 p-3 text-sm">
-                <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Descrição</div>
-                <p className="leading-snug">{tratando.texto ?? "—"}</p>
+                <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Requisito Legal</div>
+                <p className="leading-snug">{tratando.requisito_legal_texto ?? tratando.texto ?? "—"}</p>
+                {tratando.requisito_legal_texto && tratando.texto && tratando.texto !== tratando.requisito_legal_texto && (
+                  <>
+                    <div className="text-xs text-muted-foreground uppercase tracking-wide mt-3 mb-1">Descrição do PA</div>
+                    <p className="leading-snug text-muted-foreground">{tratando.texto}</p>
+                  </>
+                )}
                 <div className="grid grid-cols-2 gap-3 mt-3 text-xs">
                   <div><span className="text-muted-foreground">CAL:</span> <span className="font-mono">{tratando.cal_requisitos?.numero_cal ?? "—"}</span></div>
                   <div><span className="text-muted-foreground">Norma:</span> {tratando.cal_requisitos?.norma ?? "—"}</div>
@@ -523,6 +545,7 @@ function PlanosCalPage() {
                   <div><span className="text-muted-foreground">Tipo:</span> {tratando.tipo ?? "—"}</div>
                   <div><span className="text-muted-foreground">Responsável:</span> {tratando.usuario_execucao ?? "—"}</div>
                   <div><span className="text-muted-foreground">Gestão:</span> {tratando.usuario_gestao ?? "—"}</div>
+                  <div className="col-span-2"><span className="text-muted-foreground">Área:</span> {tratando.area_pa ?? tratando.cal_requisitos?.area_incidencia ?? tratando.cal_requisitos?.area ?? "—"}</div>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -544,9 +567,10 @@ function PlanosCalPage() {
                 </div>
               </div>
               <div>
-                <Label className="text-xs">Observações / Evidência (opcional)</Label>
-                <Textarea value={tObs} onChange={(e) => setTObs(e.target.value)} rows={3} placeholder="Registre a tratativa, ação executada, evidência..." />
+                <Label className="text-xs">Observações da tratativa</Label>
+                <Textarea value={tObs} onChange={(e) => setTObs(e.target.value)} rows={3} placeholder="Registre a tratativa, ação executada, o que foi feito..." />
               </div>
+              <EvidenciasPA planoId={tratando.id} />
             </div>
           )}
           <DialogFooter>
@@ -595,5 +619,134 @@ function Sel({ value, onChange, placeholder, allLabel, options, allValue }: {
         {options.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
       </SelectContent>
     </Select>
+  );
+}
+
+function EvidenciasPA({ planoId }: { planoId: string }) {
+  const qc = useQueryClient();
+  const [descricao, setDescricao] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const { data: evs = [], isLoading } = useQuery({
+    queryKey: ["cal_evidencias_pa", planoId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("cal_evidencias")
+        .select("id, arquivo_nome, arquivo_url, mime, tamanho_bytes, descricao, created_at")
+        .eq("plano_id", planoId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as EvidenciaPA[];
+    },
+  });
+
+  async function upload(file: File) {
+    setBusy(true);
+    try {
+      const path = `pa/${planoId}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+      const { error: upErr } = await supabase.storage.from("cal-evidencias").upload(path, file, {
+        contentType: file.type || undefined,
+        upsert: false,
+      });
+      if (upErr) throw upErr;
+      const { data: userData } = await supabase.auth.getUser();
+      const { error: insErr } = await supabase.from("cal_evidencias").insert({
+        plano_id: planoId,
+        requisito_id: null as any,
+        tipo: "documento",
+        descricao: descricao || null,
+        arquivo_url: path,
+        arquivo_nome: file.name,
+        mime: file.type || null,
+        tamanho_bytes: file.size,
+        created_by: userData.user?.id ?? null,
+      });
+      if (insErr) throw insErr;
+      setDescricao("");
+      qc.invalidateQueries({ queryKey: ["cal_evidencias_pa", planoId] });
+      toast.success("Evidência anexada");
+    } catch (e: any) {
+      toast.error(e.message ?? "Falha ao anexar evidência");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function abrir(ev: EvidenciaPA) {
+    const { data, error } = await supabase.storage.from("cal-evidencias").createSignedUrl(ev.arquivo_url, 3600);
+    if (error || !data) return toast.error("Não foi possível abrir o arquivo");
+    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+  }
+
+  async function remover(ev: EvidenciaPA) {
+    if (!confirm(`Remover "${ev.arquivo_nome}"?`)) return;
+    try {
+      await supabase.storage.from("cal-evidencias").remove([ev.arquivo_url]);
+      const { error } = await supabase.from("cal_evidencias").delete().eq("id", ev.id);
+      if (error) throw error;
+      qc.invalidateQueries({ queryKey: ["cal_evidencias_pa", planoId] });
+      toast.success("Evidência removida");
+    } catch (e: any) {
+      toast.error(e.message ?? "Falha ao remover");
+    }
+  }
+
+  return (
+    <div className="rounded-md border border-border p-3 space-y-3">
+      <div className="flex items-center gap-2">
+        <Paperclip className="h-4 w-4 text-red-500" />
+        <h4 className="text-sm font-semibold">Evidências / Documentos / Relatórios</h4>
+        <Badge variant="outline" className="ml-auto text-[10px]">{evs.length}</Badge>
+      </div>
+
+      <div className="space-y-2">
+        <Input
+          placeholder="Descrição opcional do documento (ex.: Foto do aviso afixado)"
+          value={descricao}
+          onChange={(e) => setDescricao(e.target.value)}
+          className="h-8 text-xs"
+        />
+        <Input
+          type="file"
+          accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,.txt"
+          disabled={busy}
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) upload(f);
+            e.target.value = "";
+          }}
+          className="h-8 text-xs"
+        />
+        {busy && <p className="text-[11px] text-muted-foreground">Enviando...</p>}
+      </div>
+
+      {isLoading ? (
+        <p className="text-xs text-muted-foreground">Carregando anexos...</p>
+      ) : evs.length === 0 ? (
+        <p className="text-xs text-muted-foreground italic">Nenhuma evidência anexada ainda.</p>
+      ) : (
+        <ul className="space-y-1.5">
+          {evs.map((ev) => (
+            <li key={ev.id} className="flex items-center gap-2 text-xs rounded border border-border/60 bg-muted/20 px-2 py-1.5">
+              <FileText className="h-3.5 w-3.5 text-sky-400 shrink-0" />
+              <div className="min-w-0 flex-1">
+                <div className="font-medium truncate">{ev.arquivo_nome ?? "arquivo"}</div>
+                {ev.descricao && <div className="text-[10px] text-muted-foreground truncate">{ev.descricao}</div>}
+                <div className="text-[10px] text-muted-foreground">
+                  {ev.tamanho_bytes ? `${(ev.tamanho_bytes / 1024).toFixed(1)} KB · ` : ""}
+                  {new Date(ev.created_at).toLocaleString("pt-BR")}
+                </div>
+              </div>
+              <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => abrir(ev)} title="Abrir">
+                <ExternalLink className="h-3.5 w-3.5" />
+              </Button>
+              <Button size="sm" variant="ghost" className="h-7 px-2 text-red-400 hover:text-red-300" onClick={() => remover(ev)} title="Remover">
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
