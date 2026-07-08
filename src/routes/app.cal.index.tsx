@@ -394,9 +394,10 @@ function CalDashboardPage() {
 
       <Card>
         <CardHeader className="pb-3">
-          <div className="space-y-3">
+          <div className="space-y-4">
+            {/* Linha 1: busca + selects + limpar */}
             <div className="flex items-center gap-2 flex-wrap">
-              <div className="relative flex-1 min-w-[240px]">
+              <div className="relative flex-1 min-w-[260px]">
                 <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <Input placeholder="Buscar por nº CAL, norma, ementa, órgão, área..." value={busca} onChange={(e) => setBusca(e.target.value)} className="pl-9" />
               </div>
@@ -419,34 +420,57 @@ function CalDashboardPage() {
               </Select>
               <Button variant="ghost" size="sm" onClick={limparFiltros}>Limpar filtros</Button>
             </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-muted-foreground mr-1">Status:</span>
-              {(["recebido","em_analise","aplicavel","nao_aplicavel","em_tratativa","atendido","monitoramento","revogado"] as CalStatus[]).map((s) => {
-                const on = statusSel.has(s);
-                return (
-                  <button key={s} type="button" onClick={() => toggleStatus(s)}
-                    className={`text-xs px-2 py-1 rounded border transition ${on ? CAL_STATUS_COLOR[s] : "border-border text-muted-foreground hover:text-foreground"}`}>
-                    {CAL_STATUS_LABEL[s]}
-                  </button>
-                );
-              })}
-            </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-muted-foreground mr-1">Atalhos:</span>
-              {([
-                ["em_atraso","Em atraso"],
-                ["vencendo7","Vencendo em 7d"],
-                ["sem_analise","Sem análise"],
-                ["nao_atendido","Não atendidos"],
-                ["nao_aplicavel","Não aplicáveis"],
-                ["revogado","Revogados"],
-              ] as const).map(([k, label]) => (
-                <button key={k} type="button" onClick={() => setChip(chip === k ? "nenhum" : k)}
-                  className={`text-xs px-2 py-1 rounded border transition ${chip === k ? "bg-primary/20 border-primary/40 text-primary-foreground" : "border-border text-muted-foreground hover:text-foreground"}`}>
-                  {label}
-                </button>
-              ))}
-              <span className="text-xs text-muted-foreground ml-auto">{filtrados.length} de {requisitos.length}</span>
+
+            {/* Linha 2: chips de status + atalhos, organizados em colunas */}
+            <div className="rounded-lg border bg-muted/20 p-3">
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                {/* Status */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Status</span>
+                    <span className="text-[10px] text-muted-foreground">(clique para filtrar)</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {(["recebido","em_analise","aplicavel","nao_aplicavel","em_tratativa","atendido","monitoramento","revogado"] as CalStatus[]).map((s) => {
+                      const on = statusSel.has(s);
+                      return (
+                        <button key={s} type="button" onClick={() => toggleStatus(s)}
+                          className={`text-xs px-2.5 py-1 rounded-full border transition ${on ? CAL_STATUS_COLOR[s] : "border-border bg-background text-muted-foreground hover:text-foreground"}`}>
+                          {CAL_STATUS_LABEL[s]}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Atalhos */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Atalhos</span>
+                    <span className="text-[10px] text-muted-foreground">(filtros rápidos por prazo / situação)</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {([
+                      ["em_atraso","Em atraso"],
+                      ["vencendo7","Vencendo em 7d"],
+                      ["sem_analise","Sem análise"],
+                      ["nao_atendido","Não atendidos"],
+                      ["nao_aplicavel","Não aplicáveis"],
+                      ["revogado","Revogados"],
+                    ] as const).map(([k, label]) => (
+                      <button key={k} type="button" onClick={() => setChip(chip === k ? "nenhum" : k)}
+                        className={`text-xs px-2.5 py-1 rounded-full border transition ${chip === k ? "bg-primary/20 border-primary/40 text-primary-foreground" : "border-border bg-background text-muted-foreground hover:text-foreground"}`}>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Contador de resultados */}
+              <div className="flex justify-end mt-3 pt-3 border-t border-border/50">
+                <span className="text-xs text-muted-foreground">{filtrados.length} de {requisitos.length} CALs</span>
+              </div>
             </div>
           </div>
         </CardHeader>
