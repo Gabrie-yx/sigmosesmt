@@ -410,21 +410,11 @@ export function AppSidebar() {
                                 </SidebarMenuSub>
                               )}
                               {item.children && item.children.length > 0 && (
-                                <SidebarMenuSub>
-                                  {item.children.map((c) => {
-                                    const CIcon = c.icon ?? ShieldCheck;
-                                    return (
-                                      <SidebarMenuSubItem key={c.to}>
-                                        <SidebarMenuSubButton asChild isActive={isActive(c.to)}>
-                                          <Link to={c.to} className="flex items-center gap-2">
-                                            <CIcon className="h-4 w-4" />
-                                            <span>{c.label}</span>
-                                          </Link>
-                                        </SidebarMenuSubButton>
-                                      </SidebarMenuSubItem>
-                                    );
-                                  })}
-                                </SidebarMenuSub>
+                                <ChildrenCollapsible
+                                  parentTo={item.to}
+                                  items={item.children}
+                                  isActive={isActive}
+                                />
                               )}
                             </SidebarMenuItem>
                           );
