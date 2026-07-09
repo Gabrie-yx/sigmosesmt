@@ -78,6 +78,52 @@ import { toast } from "sonner";
 type LeafItem = { to: string; label: string; icon?: typeof CalendarCheck2; children?: LeafItem[] };
 type LockedItem = { key: string; label: string; icon?: typeof CalendarCheck2 };
 
+function ChildrenCollapsible({
+  parentTo,
+  items,
+  isActive,
+}: {
+  parentTo: string;
+  items: LeafItem[];
+  isActive: (p: string) => boolean;
+}) {
+  const hasActiveChild = items.some((c) => isActive(c.to)) || isActive(parentTo);
+  const [open, setOpen] = useState(hasActiveChild);
+  useEffect(() => {
+    if (hasActiveChild) setOpen(true);
+  }, [hasActiveChild]);
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <CollapsibleTrigger asChild>
+        <button
+          type="button"
+          className="ml-auto mr-1 -mt-7 h-5 w-5 inline-flex items-center justify-center rounded hover:bg-sidebar-accent text-sidebar-foreground/60 relative z-10"
+          aria-label={open ? "Recolher" : "Expandir"}
+        >
+          <ChevronRight className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-90" : ""}`} />
+        </button>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <SidebarMenuSub>
+          {items.map((c) => {
+            const CIcon = c.icon ?? ShieldCheck;
+            return (
+              <SidebarMenuSubItem key={c.to}>
+                <SidebarMenuSubButton asChild isActive={isActive(c.to)}>
+                  <Link to={c.to} className="flex items-center gap-2">
+                    <CIcon className="h-4 w-4" />
+                    <span>{c.label}</span>
+                  </Link>
+                </SidebarMenuSubButton>
+              </SidebarMenuSubItem>
+            );
+          })}
+        </SidebarMenuSub>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
 const SESMT_GROUPS: { title: string; items: LeafItem[] }[] = [
   {
     title: "Visão Geral",
