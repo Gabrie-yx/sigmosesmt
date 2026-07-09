@@ -10,6 +10,7 @@ import {
   DoorOpen, Plus, LogOut, Clock3, Users, ChevronRight, AlertTriangle,
   ShieldAlert, ListChecks, Car,
 } from "lucide-react";
+import { InstallPwaCard } from "@/components/install-pwa-card";
 
 const NovaEntradaWizard = lazy(() =>
   import("@/components/portaria/nova-entrada-wizard").then((m) => ({ default: m.NovaEntradaWizard })),
@@ -132,6 +133,7 @@ function PortariaCockpit() {
 
       {/* CARDS DE AÇÃO — botões gigantes */}
       <div className="mx-auto max-w-3xl px-4 pt-4 space-y-3">
+        <InstallPwaCard />
         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground px-1">Ações rápidas</p>
 
         <button
