@@ -10422,6 +10422,66 @@ export type Database = {
         }
         Relationships: []
       }
+      vacina_catalog: {
+        Row: {
+          ativo: boolean
+          categorias_profissionais: string[] | null
+          codigo_esocial: string | null
+          contraindicacoes: string | null
+          created_at: string
+          doses_recomendadas: number
+          id: string
+          indicacao_ocupacional: string | null
+          intervalo_doses: string | null
+          nome: string
+          nome_comercial: string | null
+          observacoes: string | null
+          origem: string
+          reforco_periodicidade: string | null
+          riscos_relacionados: string[] | null
+          updated_at: string
+          via_aplicacao: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          categorias_profissionais?: string[] | null
+          codigo_esocial?: string | null
+          contraindicacoes?: string | null
+          created_at?: string
+          doses_recomendadas?: number
+          id?: string
+          indicacao_ocupacional?: string | null
+          intervalo_doses?: string | null
+          nome: string
+          nome_comercial?: string | null
+          observacoes?: string | null
+          origem?: string
+          reforco_periodicidade?: string | null
+          riscos_relacionados?: string[] | null
+          updated_at?: string
+          via_aplicacao?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          categorias_profissionais?: string[] | null
+          codigo_esocial?: string | null
+          contraindicacoes?: string | null
+          created_at?: string
+          doses_recomendadas?: number
+          id?: string
+          indicacao_ocupacional?: string | null
+          intervalo_doses?: string | null
+          nome?: string
+          nome_comercial?: string | null
+          observacoes?: string | null
+          origem?: string
+          reforco_periodicidade?: string | null
+          riscos_relacionados?: string[] | null
+          updated_at?: string
+          via_aplicacao?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       pgr_ghe_membros_efetivos: {
