@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Camera, ArrowLeft, ArrowRight, Check, Search, AlertTriangle, X, Loader2, UserPlus, Car, Briefcase, UserX } from "lucide-react";
 import { isValidCPF, maskCPF, onlyDigits, formatCPFFromDigits } from "@/lib/validators/cpf";
 import { isValidPlaca, normalizePlaca, maskPlaca } from "@/lib/validators/placa";
-import { uploadFotoPortaria, type FotoTipo } from "@/lib/portaria/foto-upload";
+import { compressImageFile, uploadFotoPortaria, type FotoTipo } from "@/lib/portaria/foto-upload";
 import { validatePortariaFoto } from "@/lib/portaria/foto-ocr.functions";
 import { useServerFn } from "@tanstack/react-start";
 
@@ -51,6 +51,17 @@ type Companion = {
 };
 
 type Companies = { id: string; name: string }[];
+
+type DocumentoExtraido = {
+  nome?: string | null;
+  cpf?: string | null;
+  rg?: string | null;
+  dataNascimento?: string | null;
+};
+
+function fileNameAsJpeg(name: string) {
+  return `${name.replace(/\.[^.]+$/, "") || "foto-portaria"}.jpg`;
+}
 
 export function NovaEntradaWizard({
   open, onClose,
@@ -329,7 +340,8 @@ export function NovaEntradaWizard({
       if (!pessoaExistente && fotoDocumento) {
         const docPath = await doUp(fotoDocumento, "documento");
         if (docPath && pessoaId) {
-          await supabase.from("portaria_pessoas").update({ foto_documento_url: docPath }).eq("id", pessoaId);
+          const { error: docErr } = await supabase.from("portaria_pessoas").update({ foto_documento_url: docPath }).eq("id", pessoaId);
+          if (docErr) throw docErr;
         }
       }
 
@@ -559,7 +571,28 @@ export function NovaEntradaWizard({
                   <Input value={cnpj} onChange={(e) => setCnpj(e.target.value)} className="h-11 mt-1" inputMode="numeric" />
                 </div>
               </div>
-              <FotoField label="Foto do documento *" value={fotoDocumento} onChange={setFotoDocumento} validar="documento" />
+              <FotoField
+                label="Foto do documento *"
+                value={fotoDocumento}
+                onChange={setFotoDocumento}
+                validar="documento"
+                onDocumentoExtraido={(dados) => {
+                  let preencheu = false;
+                  const nomeDoc = dados.nome?.trim();
+                  const rgDoc = dados.rg?.trim();
+                  const cpfDoc = onlyDigits(dados.cpf ?? "");
+                  const cpfAtual = onlyDigits(cpfInput);
+                  if (nomeDoc && !nome.trim()) { setNome(nomeDoc); preencheu = true; }
+                  if (rgDoc && !rg.trim()) { setRg(rgDoc); preencheu = true; }
+                  if (isValidCPF(cpfDoc) && !isValidCPF(cpfAtual)) {
+                    setCpfInput(cpfDoc);
+                    preencheu = true;
+                  } else if (isValidCPF(cpfDoc) && isValidCPF(cpfAtual) && cpfDoc !== cpfAtual) {
+                    toast.warning("CPF lido no documento é diferente do CPF digitado. Conferir antes de avançar.");
+                  }
+                  if (preencheu) toast.success("Dados do documento preenchidos automaticamente");
+                }}
+              />
             </div>
           )}
 
@@ -708,7 +741,16 @@ export function NovaEntradaWizard({
   );
 }
 
-function FotoField({ label, value, onChange, fallbackHint, validar }: { label: string; value: File | null; onChange: (f: File | null) => void; fallbackHint?: string; validar?: "rosto" | "documento" }) {
+function FotoField({
+  label, value, onChange, fallbackHint, validar, onDocumentoExtraido,
+}: {
+  label: string;
+  value: File | null;
+  onChange: (f: File | null) => void;
+  fallbackHint?: string;
+  validar?: "rosto" | "documento";
+  onDocumentoExtraido?: (dados: DocumentoExtraido) => void;
+}) {
   const [preview, setPreview] = useState<string | null>(null);
   const [validando, setValidando] = useState(false);
   const [erroValidacao, setErroValidacao] = useState<string | null>(null);
@@ -721,33 +763,39 @@ function FotoField({ label, value, onChange, fallbackHint, validar }: { label: s
   }, [value]);
 
   async function fileToB64(f: File): Promise<string> {
-    const buf = await f.arrayBuffer();
-    let bin = ""; const bytes = new Uint8Array(buf); const CHUNK = 0x8000;
-    for (let i = 0; i < bytes.length; i += CHUNK) {
-      bin += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + CHUNK)) as any);
-    }
-    return btoa(bin);
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onerror = () => reject(new Error("Falha ao ler a foto"));
+      fr.onloadend = () => resolve(String(fr.result ?? ""));
+      fr.readAsDataURL(f);
+    });
+    return dataUrl.includes(",") ? dataUrl.split(",")[1] : dataUrl;
   }
 
   async function handlePick(f: File | null) {
     setErroValidacao(null);
-    if (!f || !validar) { onChange(f); return; }
-    // Aceita já pra mostrar preview enquanto valida; se falhar, remove.
-    onChange(f);
-    setValidando(true);
+    if (!f) { onChange(null); return; }
+    setValidando(!!validar);
     try {
-      const b64 = await fileToB64(f);
-      const r = await validar$({ data: { fileBase64: b64, mime: f.type || "image/jpeg", tipo: validar } });
+      const blob = await compressImageFile(f);
+      const prepared = new File([blob], fileNameAsJpeg(f.name), { type: "image/jpeg", lastModified: Date.now() });
+      onChange(prepared);
+      if (!validar) return;
+      const b64 = await fileToB64(prepared);
+      const r = await validar$({ data: { fileBase64: b64, mime: "image/jpeg", tipo: validar } });
       if (!r.ok) {
         setErroValidacao(r.motivo ?? (validar === "rosto"
           ? "A foto não parece um rosto humano. Enquadre o rosto e tente de novo."
           : "A foto não parece um documento oficial (RG/CNH/CPF). Fotografe o documento e tente de novo."));
         onChange(null);
         toast.error(validar === "rosto" ? "Foto de rosto inválida" : "Foto de documento inválida");
+      } else if (validar === "documento" && r.dados && onDocumentoExtraido) {
+        onDocumentoExtraido(r.dados);
       }
     } catch (e: any) {
       // Falha de rede não bloqueia o porteiro.
-      console.warn("[FotoField] validação falhou:", e?.message);
+      console.warn("[FotoField] captura/validação falhou:", e?.message);
+      if (f.type?.startsWith("image/")) onChange(f);
     } finally {
       setValidando(false);
     }

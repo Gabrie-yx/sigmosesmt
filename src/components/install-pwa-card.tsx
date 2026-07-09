@@ -1,9 +1,5 @@
-// Banner de instalação do SIGMO na tela inicial do celular.
-// - Android/Chrome: usa `beforeinstallprompt` (nativo).
-// - iOS Safari: mostra passo-a-passo (Compartilhar → Adicionar à Tela de Início).
-// - Some sozinho se o app já estiver rodando instalado (display-mode: standalone).
 import { useEffect, useState } from "react";
-import { Download, Share, Plus, X, Smartphone } from "lucide-react";
+import { CheckCircle2, Copy, Download, ExternalLink, MoreVertical, Plus, Share, Smartphone } from "lucide-react";
 
 type BIPEvent = Event & {
   prompt: () => Promise<void>;
@@ -15,9 +11,12 @@ const DISMISS_KEY = "sigmo:pwa-install-dismissed";
 export function InstallPwaCard() {
   const [deferred, setDeferred] = useState<BIPEvent | null>(null);
   const [isIOS, setIsIOS] = useState(false);
-  const [showIOSHelp, setShowIOSHelp] = useState(false);
+  const [isAndroid, setIsAndroid] = useState(false);
+  const [isInAppBrowser, setIsInAppBrowser] = useState(false);
+  const [showHelp, setShowHelp] = useState(true);
   const [installed, setInstalled] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [installUrl, setInstallUrl] = useState("https://sigmosesmt.lovable.app/app");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -29,11 +28,16 @@ export function InstallPwaCard() {
       (window.navigator as any).standalone === true;
     if (standalone) { setInstalled(true); return; }
 
-    setDismissed(localStorage.getItem(DISMISS_KEY) === "1");
+    localStorage.removeItem(DISMISS_KEY);
+    setInstallUrl(new URL("/app", window.location.origin).toString());
 
     const ua = window.navigator.userAgent;
     const iOS = /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream;
+    const android = /Android/i.test(ua);
+    const embedded = /WhatsApp|FBAN|FBAV|Instagram|Line|wv\)|; wv|Version\/\d+\.\d+ Chrome\/\d+.*Mobile Safari/i.test(ua);
     setIsIOS(iOS);
+    setIsAndroid(android);
+    setIsInAppBrowser(embedded);
 
     const onBIP = (e: Event) => {
       e.preventDefault();
@@ -49,11 +53,6 @@ export function InstallPwaCard() {
     };
   }, []);
 
-  const dismiss = () => {
-    localStorage.setItem(DISMISS_KEY, "1");
-    setDismissed(true);
-  };
-
   const install = async () => {
     if (deferred) {
       await deferred.prompt();
@@ -62,53 +61,82 @@ export function InstallPwaCard() {
       setDeferred(null);
       return;
     }
-    if (isIOS) setShowIOSHelp(true);
+    setShowHelp(true);
   };
 
-  if (installed || dismissed) return null;
-  // Nada pra oferecer? (desktop sem prompt, browser sem suporte)
-  if (!deferred && !isIOS) return null;
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(installUrl);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
+    } catch {
+      setCopied(false);
+    }
+  };
+
+  if (installed) return null;
 
   return (
-    <div className="rounded-2xl bg-gradient-to-br from-amber-400/95 to-amber-500/95 text-amber-950 p-4 shadow-lg ring-1 ring-amber-600/40 relative overflow-hidden">
-      <button
-        type="button"
-        onClick={dismiss}
-        className="absolute top-2 right-2 h-7 w-7 rounded-full hover:bg-black/10 grid place-items-center"
-        aria-label="Fechar"
-      >
-        <X className="h-4 w-4" />
-      </button>
-      <div className="flex items-start gap-3 pr-6">
-        <div className="h-11 w-11 shrink-0 rounded-2xl bg-white/40 grid place-items-center ring-1 ring-black/10">
+    <div className="rounded-2xl bg-card text-card-foreground p-4 shadow-lg ring-1 ring-border border border-border relative overflow-hidden">
+      <div className="flex items-start gap-3">
+        <div className="h-11 w-11 shrink-0 rounded-2xl bg-primary/15 text-primary grid place-items-center ring-1 ring-border">
           <Smartphone className="h-6 w-6" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="font-black text-sm leading-tight">Instalar SIGMO no celular</p>
-          <p className="text-xs font-semibold mt-0.5 opacity-90">
-            Deixa o ícone na tela inicial pra abrir já logado, sem digitar endereço.
+          <p className="font-black text-sm leading-tight">Colocar ícone do SIGMO na tela inicial</p>
+          <p className="text-xs font-semibold mt-0.5 text-muted-foreground">
+            O link aberto pelo WhatsApp não instala o app. Abra no navegador do celular e adicione o SIGMO à tela inicial.
           </p>
-          {!showIOSHelp && (
+
+          {isInAppBrowser && (
+            <div className="mt-3 rounded-xl bg-destructive/10 border border-destructive/25 p-3 text-xs font-bold text-foreground">
+              <p>Você está dentro do WhatsApp. Toque no menu do WhatsApp e escolha abrir no Chrome/Safari.</p>
+              <button
+                type="button"
+                onClick={() => window.open(installUrl, "_blank", "noopener,noreferrer")}
+                className="mt-2 h-9 px-3 rounded-lg bg-primary text-primary-foreground inline-flex items-center gap-2 font-black active:scale-95 transition"
+              >
+                <ExternalLink className="h-4 w-4" /> Abrir navegador
+              </button>
+            </div>
+          )}
+
+          <div className="mt-3 flex flex-wrap gap-2">
             <button
               type="button"
               onClick={install}
-              className="mt-3 h-10 px-4 rounded-xl bg-amber-950 text-amber-50 font-black text-sm inline-flex items-center gap-2 active:scale-95 transition"
+              className="h-10 px-4 rounded-xl bg-primary text-primary-foreground font-black text-sm inline-flex items-center gap-2 active:scale-95 transition"
             >
-              <Download className="h-4 w-4" /> Instalar agora
+              <Download className="h-4 w-4" /> {deferred ? "Instalar agora" : "Ver passos"}
             </button>
-          )}
-          {showIOSHelp && (
-            <ol className="mt-3 space-y-1.5 text-xs font-semibold">
+            <button
+              type="button"
+              onClick={copyLink}
+              className="h-10 px-3 rounded-xl bg-secondary text-secondary-foreground font-black text-sm inline-flex items-center gap-2 active:scale-95 transition"
+            >
+              {copied ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              {copied ? "Copiado" : "Copiar link"}
+            </button>
+          </div>
+
+          {showHelp && (
+            <ol className="mt-3 space-y-1.5 text-xs font-semibold text-foreground">
               <li className="flex items-center gap-1.5">
-                <span className="h-5 w-5 rounded-full bg-amber-950 text-amber-50 grid place-items-center text-[10px] font-black">1</span>
-                Toque em <Share className="inline h-3.5 w-3.5" /> (Compartilhar) na barra do Safari
+                <span className="h-5 w-5 rounded-full bg-primary text-primary-foreground grid place-items-center text-[10px] font-black">1</span>
+                {isInAppBrowser ? "Abra este link no Chrome/Safari do celular" : "Use o navegador do celular, não o WhatsApp"}
               </li>
               <li className="flex items-center gap-1.5">
-                <span className="h-5 w-5 rounded-full bg-amber-950 text-amber-50 grid place-items-center text-[10px] font-black">2</span>
-                Escolha <Plus className="inline h-3.5 w-3.5" /> "Adicionar à Tela de Início"
+                <span className="h-5 w-5 rounded-full bg-primary text-primary-foreground grid place-items-center text-[10px] font-black">2</span>
+                {isIOS ? (
+                  <>Toque em <Share className="inline h-3.5 w-3.5" /> e depois em <Plus className="inline h-3.5 w-3.5" /> Adicionar à Tela de Início</>
+                ) : isAndroid ? (
+                  <>No Chrome, toque em <MoreVertical className="inline h-3.5 w-3.5" /> e escolha Instalar app ou Adicionar à tela inicial</>
+                ) : (
+                  <>No menu do navegador, escolha Instalar app ou Adicionar à tela inicial</>
+                )}
               </li>
               <li className="flex items-center gap-1.5">
-                <span className="h-5 w-5 rounded-full bg-amber-950 text-amber-50 grid place-items-center text-[10px] font-black">3</span>
+                <span className="h-5 w-5 rounded-full bg-primary text-primary-foreground grid place-items-center text-[10px] font-black">3</span>
                 Confirme em "Adicionar" — pronto, o ícone tá lá.
               </li>
             </ol>
