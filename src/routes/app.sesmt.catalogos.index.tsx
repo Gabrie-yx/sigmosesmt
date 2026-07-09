@@ -67,8 +67,6 @@ const CARDS: Card[] = [
     descricao: "PNI aplicado ao PCMSO — Hepatite B, Tétano, Febre Amarela e outras conforme risco biológico.",
     Icon: Syringe,
     gradient: "from-lime-500 via-green-600 to-emerald-700",
-    badge: "EM BREVE",
-    disabled: true,
   },
   {
     to: "/app/sesmt/catalogos/epis",
