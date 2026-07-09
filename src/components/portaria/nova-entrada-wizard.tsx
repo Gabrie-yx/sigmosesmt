@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Camera, ArrowLeft, ArrowRight, Check, Search, AlertTriangle, X, Loader2, UserPlus, Car, Briefcase, UserX } from "lucide-react";
 import { isValidCPF, maskCPF, onlyDigits, formatCPFFromDigits } from "@/lib/validators/cpf";
 import { isValidPlaca, normalizePlaca, maskPlaca } from "@/lib/validators/placa";
-import { compressImageFile, uploadFotoPortaria, type FotoTipo } from "@/lib/portaria/foto-upload";
+import { compressImageFile, blobToBase64, uploadFotoPortaria, type FotoTipo } from "@/lib/portaria/foto-upload";
 import { validatePortariaFoto } from "@/lib/portaria/foto-ocr.functions";
 import { useServerFn } from "@tanstack/react-start";
 
@@ -757,26 +757,20 @@ function FotoField({
     return () => URL.revokeObjectURL(url);
   }, [value]);
 
-  async function fileToB64(f: File): Promise<string> {
-    const dataUrl = await new Promise<string>((resolve, reject) => {
-      const fr = new FileReader();
-      fr.onerror = () => reject(new Error("Falha ao ler a foto"));
-      fr.onloadend = () => resolve(String(fr.result ?? ""));
-      fr.readAsDataURL(f);
-    });
-    return dataUrl.includes(",") ? dataUrl.split(",")[1] : dataUrl;
-  }
-
   async function handlePick(f: File | null) {
     setErroValidacao(null);
     if (!f) { onChange(null); return; }
     setValidando(!!validar);
     try {
+      // Versão "cheia" (1280px, 0.75) — é o que sobe pro storage e fica no cadastro.
       const blob = await compressImageFile(f);
       const prepared = new File([blob], fileNameAsJpeg(f.name), { type: "image/jpeg", lastModified: Date.now() });
       onChange(prepared);
       if (!validar) return;
-      const b64 = await fileToB64(prepared);
+      // Versão "OCR" — bem menor pra não estourar memória do celular ao serializar
+      // em base64 e mandar pra IA. 900px @ 0.55 já resolve reconhecimento de RG/rosto.
+      const ocrBlob = await compressImageFile(prepared, { maxDim: 900, quality: 0.55 });
+      const b64 = await blobToBase64(ocrBlob);
       const r = await validar$({ data: { fileBase64: b64, mime: "image/jpeg", tipo: validar } });
       if (!r.ok) {
         setErroValidacao(r.motivo ?? (validar === "rosto"
