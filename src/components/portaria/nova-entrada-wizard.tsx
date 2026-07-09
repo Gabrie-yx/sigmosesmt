@@ -292,11 +292,26 @@ export function NovaEntradaWizard({
     mutationFn: async () => {
       setSaving(true);
       const cpfLimpo = onlyDigits(cpfInput);
+      // Gera ID da visita ANTES dos uploads (path das fotos usa esse id)
+      const visitaId = crypto.randomUUID();
+
+      // Upload das fotos — sempre usando arquivos já comprimidos pelo FotoField.
+      const uploads: Record<string, string | null> = {
+        foto_rosto_url: null, foto_placa_url: null, foto_bagageiro_url: null, foto_documento_url: null,
+      };
+      const doUp = async (file: File | null, tipo: FotoTipo) => {
+        if (!file) return null;
+        try { return await uploadFotoPortaria(file, tipo, visitaId); }
+        catch (e: any) { throw new Error(`Falha ao enviar foto ${tipo}: ${e.message}`); }
+      };
+
       // 1) Garantir pessoa principal
       let pessoaId = pessoaExistente?.id;
       if (!pessoaId) {
+        uploads.foto_documento_url = fotoDocumento ? await doUp(fotoDocumento, "documento") : null;
         const { data: novaP, error } = await supabase.from("portaria_pessoas").insert({
           cpf: cpfLimpo, nome: nome.trim(), rg: rg.trim() || null, cnpj: onlyDigits(cnpj) || null,
+          foto_documento_url: uploads.foto_documento_url,
           created_by: user?.id ?? null,
         }).select("id").single();
         if (error) throw error;
@@ -319,30 +334,10 @@ export function NovaEntradaWizard({
         }
       }
 
-      // 3) Gerar ID da visita ANTES do upload (path das fotos usa esse id)
-      const visitaId = crypto.randomUUID();
-
-      // 4) Upload das fotos
-      const uploads: Record<string, string | null> = {
-        foto_rosto_url: null, foto_placa_url: null, foto_bagageiro_url: null, foto_documento_url: null,
-      };
-      const doUp = async (file: File | null, tipo: FotoTipo) => {
-        if (!file) return null;
-        try { return await uploadFotoPortaria(file, tipo, visitaId); }
-        catch (e: any) { throw new Error(`Falha ao enviar foto ${tipo}: ${e.message}`); }
-      };
       uploads.foto_rosto_url = await doUp(fotoRosto, "rosto");
       if (temVeiculo) {
         uploads.foto_placa_url = await doUp(fotoPlaca, "placa");
         uploads.foto_bagageiro_url = await doUp(fotoBagageiro, "bagageiro");
-      }
-      // Foto do documento (só no primeiro cadastro da pessoa)
-      if (!pessoaExistente && fotoDocumento) {
-        const docPath = await doUp(fotoDocumento, "documento");
-        if (docPath && pessoaId) {
-          const { error: docErr } = await supabase.from("portaria_pessoas").update({ foto_documento_url: docPath }).eq("id", pessoaId);
-          if (docErr) throw docErr;
-        }
       }
 
       // 5) Insere a visita
