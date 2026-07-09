@@ -105,6 +105,7 @@ import { Route as AppAdministrativoGestaoPontoRouteImport } from './routes/app.a
 import { Route as AppSesmtCatalogosIndexRouteImport } from './routes/app.sesmt.catalogos.index'
 import { Route as AppAdministrativoGestaoPontoIndexRouteImport } from './routes/app.administrativo.gestao-ponto.index'
 import { Route as AppSesmtEquipamentosMoveisArquivosMensaisRouteImport } from './routes/app.sesmt.equipamentos-moveis_.arquivos-mensais'
+import { Route as AppSesmtCatalogosRiscosRouteImport } from './routes/app.sesmt.catalogos.riscos'
 import { Route as AppSesmtCatalogosNrsRouteImport } from './routes/app.sesmt.catalogos.nrs'
 import { Route as AppSesmtCatalogosGasesRouteImport } from './routes/app.sesmt.catalogos.gases'
 import { Route as AppModuloMecanicaRequisicaoComprasRouteImport } from './routes/app.modulo.mecanica.requisicao-compras'
@@ -615,6 +616,11 @@ const AppSesmtEquipamentosMoveisArquivosMensaisRoute =
     path: '/sesmt/equipamentos-moveis/arquivos-mensais',
     getParentRoute: () => AppRoute,
   } as any)
+const AppSesmtCatalogosRiscosRoute = AppSesmtCatalogosRiscosRouteImport.update({
+  id: '/sesmt/catalogos/riscos',
+  path: '/sesmt/catalogos/riscos',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSesmtCatalogosNrsRoute = AppSesmtCatalogosNrsRouteImport.update({
   id: '/sesmt/catalogos/nrs',
   path: '/sesmt/catalogos/nrs',
@@ -769,6 +775,7 @@ export interface FileRoutesByFullPath {
   '/app/modulo/mecanica/requisicao-compras': typeof AppModuloMecanicaRequisicaoComprasRoute
   '/app/sesmt/catalogos/gases': typeof AppSesmtCatalogosGasesRoute
   '/app/sesmt/catalogos/nrs': typeof AppSesmtCatalogosNrsRoute
+  '/app/sesmt/catalogos/riscos': typeof AppSesmtCatalogosRiscosRoute
   '/app/sesmt/equipamentos-moveis/arquivos-mensais': typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   '/app/administrativo/gestao-ponto/': typeof AppAdministrativoGestaoPontoIndexRoute
   '/app/sesmt/catalogos/': typeof AppSesmtCatalogosIndexRoute
@@ -872,6 +879,7 @@ export interface FileRoutesByTo {
   '/app/modulo/mecanica/requisicao-compras': typeof AppModuloMecanicaRequisicaoComprasRoute
   '/app/sesmt/catalogos/gases': typeof AppSesmtCatalogosGasesRoute
   '/app/sesmt/catalogos/nrs': typeof AppSesmtCatalogosNrsRoute
+  '/app/sesmt/catalogos/riscos': typeof AppSesmtCatalogosRiscosRoute
   '/app/sesmt/equipamentos-moveis/arquivos-mensais': typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   '/app/administrativo/gestao-ponto': typeof AppAdministrativoGestaoPontoIndexRoute
   '/app/sesmt/catalogos': typeof AppSesmtCatalogosIndexRoute
@@ -980,6 +988,7 @@ export interface FileRoutesById {
   '/app/modulo/mecanica/requisicao-compras': typeof AppModuloMecanicaRequisicaoComprasRoute
   '/app/sesmt/catalogos/gases': typeof AppSesmtCatalogosGasesRoute
   '/app/sesmt/catalogos/nrs': typeof AppSesmtCatalogosNrsRoute
+  '/app/sesmt/catalogos/riscos': typeof AppSesmtCatalogosRiscosRoute
   '/app/sesmt/equipamentos-moveis_/arquivos-mensais': typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   '/app/administrativo/gestao-ponto/': typeof AppAdministrativoGestaoPontoIndexRoute
   '/app/sesmt/catalogos/': typeof AppSesmtCatalogosIndexRoute
@@ -1089,6 +1098,7 @@ export interface FileRouteTypes {
     | '/app/modulo/mecanica/requisicao-compras'
     | '/app/sesmt/catalogos/gases'
     | '/app/sesmt/catalogos/nrs'
+    | '/app/sesmt/catalogos/riscos'
     | '/app/sesmt/equipamentos-moveis/arquivos-mensais'
     | '/app/administrativo/gestao-ponto/'
     | '/app/sesmt/catalogos/'
@@ -1192,6 +1202,7 @@ export interface FileRouteTypes {
     | '/app/modulo/mecanica/requisicao-compras'
     | '/app/sesmt/catalogos/gases'
     | '/app/sesmt/catalogos/nrs'
+    | '/app/sesmt/catalogos/riscos'
     | '/app/sesmt/equipamentos-moveis/arquivos-mensais'
     | '/app/administrativo/gestao-ponto'
     | '/app/sesmt/catalogos'
@@ -1299,6 +1310,7 @@ export interface FileRouteTypes {
     | '/app/modulo/mecanica/requisicao-compras'
     | '/app/sesmt/catalogos/gases'
     | '/app/sesmt/catalogos/nrs'
+    | '/app/sesmt/catalogos/riscos'
     | '/app/sesmt/equipamentos-moveis_/arquivos-mensais'
     | '/app/administrativo/gestao-ponto/'
     | '/app/sesmt/catalogos/'
@@ -1993,6 +2005,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSesmtEquipamentosMoveisArquivosMensaisRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/sesmt/catalogos/riscos': {
+      id: '/app/sesmt/catalogos/riscos'
+      path: '/sesmt/catalogos/riscos'
+      fullPath: '/app/sesmt/catalogos/riscos'
+      preLoaderRoute: typeof AppSesmtCatalogosRiscosRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/sesmt/catalogos/nrs': {
       id: '/app/sesmt/catalogos/nrs'
       path: '/sesmt/catalogos/nrs'
@@ -2223,6 +2242,7 @@ interface AppRouteChildren {
   AppModuloMecanicaRequisicaoComprasRoute: typeof AppModuloMecanicaRequisicaoComprasRoute
   AppSesmtCatalogosGasesRoute: typeof AppSesmtCatalogosGasesRoute
   AppSesmtCatalogosNrsRoute: typeof AppSesmtCatalogosNrsRoute
+  AppSesmtCatalogosRiscosRoute: typeof AppSesmtCatalogosRiscosRoute
   AppSesmtEquipamentosMoveisArquivosMensaisRoute: typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   AppSesmtCatalogosIndexRoute: typeof AppSesmtCatalogosIndexRoute
   AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute: typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
@@ -2307,6 +2327,7 @@ const AppRouteChildren: AppRouteChildren = {
     AppModuloMecanicaRequisicaoComprasRoute,
   AppSesmtCatalogosGasesRoute: AppSesmtCatalogosGasesRoute,
   AppSesmtCatalogosNrsRoute: AppSesmtCatalogosNrsRoute,
+  AppSesmtCatalogosRiscosRoute: AppSesmtCatalogosRiscosRoute,
   AppSesmtEquipamentosMoveisArquivosMensaisRoute:
     AppSesmtEquipamentosMoveisArquivosMensaisRoute,
   AppSesmtCatalogosIndexRoute: AppSesmtCatalogosIndexRoute,
