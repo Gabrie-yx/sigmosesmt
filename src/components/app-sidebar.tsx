@@ -69,6 +69,8 @@ import {
   Clock,
   Scale,
   CalendarClock,
+  Library,
+  Sparkles,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
