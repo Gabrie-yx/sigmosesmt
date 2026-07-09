@@ -21,25 +21,50 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
-export async function compressImageFile(file: File): Promise<Blob> {
-  const dataUrl = await new Promise<string>((res) => {
-    const fr = new FileReader();
-    fr.onloadend = () => res(fr.result as string);
-    fr.readAsDataURL(file);
-  });
-  const img = await loadImage(dataUrl);
-  const ratio = Math.min(MAX_DIMENSION / Math.max(img.naturalWidth, img.naturalHeight), 1);
-  const w = Math.round(img.naturalWidth * ratio);
-  const h = Math.round(img.naturalHeight * ratio);
-  const canvas = document.createElement("canvas");
-  canvas.width = w;
-  canvas.height = h;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("Canvas 2D não disponível");
-  ctx.drawImage(img, 0, 0, w, h);
-  return await new Promise<Blob>((res, rej) => {
-    canvas.toBlob((b) => (b ? res(b) : rej(new Error("Falha ao comprimir imagem"))), "image/jpeg", JPEG_QUALITY);
-  });
+export async function compressImageFile(
+  file: File | Blob,
+  opts?: { maxDim?: number; quality?: number },
+): Promise<Blob> {
+  const maxDim = opts?.maxDim ?? MAX_DIMENSION;
+  const quality = opts?.quality ?? JPEG_QUALITY;
+  // createObjectURL evita ler o arquivo inteiro pra string base64 (data URL),
+  // que é o que estourava a memória do webview do celular em RG de alta resolução.
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const img = await loadImage(objectUrl);
+    const ratio = Math.min(maxDim / Math.max(img.naturalWidth, img.naturalHeight), 1);
+    const w = Math.round(img.naturalWidth * ratio);
+    const h = Math.round(img.naturalHeight * ratio);
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Canvas 2D não disponível");
+    ctx.drawImage(img, 0, 0, w, h);
+    // Libera bitmap do decodificador antes do toBlob (Android WebView agradece).
+    (img as any).src = "";
+    const blob = await new Promise<Blob>((res, rej) => {
+      canvas.toBlob((b) => (b ? res(b) : rej(new Error("Falha ao comprimir imagem"))), "image/jpeg", quality);
+    });
+    // Zera o canvas pra soltar o backing store no Chrome mobile.
+    canvas.width = 0;
+    canvas.height = 0;
+    return blob;
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
+// Converte Blob → base64 puro (sem prefixo data:), em chunks pra evitar pico
+// de memória de string gigante (celular do porteiro tem pouca RAM sobrando).
+export async function blobToBase64(blob: Blob): Promise<string> {
+  const buf = new Uint8Array(await blob.arrayBuffer());
+  let binary = "";
+  const CHUNK = 0x8000;
+  for (let i = 0; i < buf.length; i += CHUNK) {
+    binary += String.fromCharCode.apply(null, Array.from(buf.subarray(i, i + CHUNK)));
+  }
+  return btoa(binary);
 }
 
 export async function uploadFotoPortaria(
