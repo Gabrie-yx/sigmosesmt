@@ -69,6 +69,8 @@ import {
   Clock,
   Scale,
   CalendarClock,
+  Library,
+  Sparkles,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -103,6 +105,11 @@ const SESMT_GROUPS: { title: string; items: LeafItem[] }[] = [
   {
     title: "Catálogos",
     items: [
+      { to: "/app/sesmt/catalogos", label: "Hub de Catálogos SST", icon: Library },
+      { to: "/app/sesmt/catalogos/cruzamentos", label: "Cruzamentos Inteligentes", icon: Sparkles },
+      { to: "/app/sesmt/catalogos/riscos", label: "Riscos Ocupacionais", icon: ShieldAlert },
+      { to: "/app/sesmt/catalogos/nrs", label: "Normas Regulamentadoras", icon: BookOpenCheck },
+      { to: "/app/sesmt/catalogos/exames", label: "Exames (eSocial)", icon: Stethoscope },
       { to: "/app/sesmt/catalogos/gases", label: "Gases Atmosféricos (NR-33)", icon: Wind },
       { to: "/app/sesmt/prestadores", label: "Prestadores de Saúde", icon: Stethoscope },
       { to: "/app/sesmt/agenda", label: "Agenda Inteligente", icon: CalendarCheck2 },
