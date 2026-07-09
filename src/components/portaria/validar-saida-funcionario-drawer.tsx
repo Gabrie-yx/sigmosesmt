@@ -178,7 +178,7 @@ export function ValidarSaidaFuncionarioDrawer({
 
       {/* Modal 2 — Confirmação da saída selecionada */}
       <Dialog open={detalheOpen} onOpenChange={(o) => { if (!o) setSelecionada(null); }}>
-        <DialogContent className="sm:max-w-md p-0 overflow-hidden gap-0 border-border">
+        <DialogContent className="sm:max-w-md p-0 overflow-hidden gap-0 border-border max-h-[100dvh] sm:max-h-[90vh] flex flex-col">
           <DialogHeader className="px-5 py-4 border-b border-border bg-muted/30 space-y-0">
             <div className="flex items-center gap-2.5">
               <button onClick={() => setSelecionada(null)} className="h-8 w-8 rounded-md hover:bg-muted grid place-items-center text-muted-foreground shrink-0" aria-label="Voltar">
@@ -194,7 +194,7 @@ export function ValidarSaidaFuncionarioDrawer({
           </DialogHeader>
 
           {selecionada && (
-            <div className="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
+            <div className="p-5 space-y-4 flex-1 overflow-y-auto min-h-0">
               <div className="flex items-center gap-3">
                 {selecionada.employees?.foto_url
                   ? <SignedAvatarImg src={selecionada.employees.foto_url} className="h-20 w-20 rounded-2xl object-cover border border-border shrink-0" />
@@ -225,13 +225,17 @@ export function ValidarSaidaFuncionarioDrawer({
                 <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Observação da portaria (opcional)</label>
                 <Textarea value={obs} onChange={(e) => setObs(e.target.value)} rows={2} className="mt-1.5 text-sm" placeholder="Ex.: saiu de moto, sem uniforme, etc." />
               </div>
-
-              <div className="grid grid-cols-2 gap-2 pt-1">
-                <Button variant="outline" onClick={() => setSelecionada(null)} className="h-11">Voltar</Button>
-                <Button onClick={() => confirmar.mutate()} disabled={confirmar.isPending} className="h-11 font-semibold">
-                  {confirmar.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Check className="h-4 w-4 mr-1.5" /> Confirmar</>}
-                </Button>
-              </div>
+            </div>
+          )}
+          {selecionada && (
+            <div
+              className="shrink-0 border-t border-border bg-background px-5 pt-3 grid grid-cols-2 gap-2"
+              style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 12px)" }}
+            >
+              <Button variant="outline" onClick={() => setSelecionada(null)} className="h-12">Voltar</Button>
+              <Button onClick={() => confirmar.mutate()} disabled={confirmar.isPending} className="h-12 font-semibold">
+                {confirmar.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Check className="h-4 w-4 mr-1.5" /> Confirmar</>}
+              </Button>
             </div>
           )}
         </DialogContent>
