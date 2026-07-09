@@ -21,6 +21,12 @@ export type ValidateFotoResult = {
   ok: boolean;
   motivo?: string;
   confianca?: number; // 0..1
+  dados?: {
+    nome?: string | null;
+    cpf?: string | null;
+    rg?: string | null;
+    dataNascimento?: string | null;
+  };
 };
 
 export const validatePortariaFoto = createServerFn({ method: "POST" })
@@ -38,10 +44,15 @@ export const validatePortariaFoto = createServerFn({ method: "POST" })
 RECUSE se: nenhum rosto detectável, rosto muito distante/pequeno, várias pessoas amontoadas, foto de tela de celular, foto de foto, chão, veículo, documento, meme, animal, screenshot, prédio, EPI sem pessoa.
 ACEITE se: um rosto humano real ocupa área central significativa, mesmo com capacete/uniforme/máscara — desde que o rosto ainda esteja identificável.
 Devolva JSON: {"ok":true|false,"motivo":"...","confianca":0..1}. Sem markdown.`
-      : `Você valida uma foto de PORTARIA de uma indústria. A foto DEVE ser um DOCUMENTO OFICIAL brasileiro com foto: RG (Carteira de Identidade), CNH, CPF impresso, CTPS, Passaporte, RNE/CRNM. Aceita frente ou verso desde que dê pra reconhecer a estrutura (campos impressos, número, foto ou brasão).
+      : `Você valida e lê uma foto de PORTARIA de uma indústria. A foto DEVE ser um DOCUMENTO OFICIAL brasileiro com foto: RG antigo (Registro Geral), CIN/nova Carteira de Identidade, CNH, CPF impresso, CTPS, Passaporte, RNE/CRNM. Aceita frente ou verso desde que dê pra reconhecer a estrutura (campos impressos, número, foto ou brasão).
 RECUSE se: foto de rosto/selfie, cartão de crédito, boleto, celular na mão, tela de app, comprovante, print, folha em branco, contrato genérico, veículo, meme, qualquer coisa que não seja documento de identificação com foto.
 ACEITE se: dá pra ver a estrutura de um documento oficial de identificação, mesmo com brilho/tremor moderado, desde que os campos e a foto estejam reconhecíveis.
-Devolva JSON: {"ok":true|false,"motivo":"...","confianca":0..1}. Sem markdown.`;
+Além de validar, extraia os dados visíveis sem inventar:
+- nome: campo Nome/Name do titular. No RG antigo, campo NOME.
+- cpf: CPF se estiver impresso. No RG antigo muitos NÃO trazem CPF; se não aparecer, devolva null. Na CIN/nova identidade, o campo "Registro Geral-CPF / Personal Number" costuma ser o CPF.
+- rg: número do Registro Geral antigo quando existir (ex: "0928122-3"). Na CIN, só preencha rg se houver número de RG separado do CPF; se o único número for CPF, coloque rg=null.
+- dataNascimento: formato DD/MM/AAAA se estiver visível.
+Devolva JSON: {"ok":true|false,"motivo":"...","confianca":0..1,"dados":{"nome":string|null,"cpf":string|null,"rg":string|null,"dataNascimento":string|null}}. Sem markdown.`;
 
     try {
       const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -71,10 +82,22 @@ Devolva JSON: {"ok":true|false,"motivo":"...","confianca":0..1}. Sem markdown.`;
       const json = await resp.json();
       const raw = json?.choices?.[0]?.message?.content ?? "{}";
       const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+      const cleanText = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
+      const onlyDigits = (v: unknown) => (typeof v === "string" ? v.replace(/\D/g, "") : "");
+      const cpfDigits = onlyDigits(parsed?.dados?.cpf);
+      const rgText = cleanText(parsed?.dados?.rg);
+      const rgDigits = rgText?.replace(/\D/g, "") ?? "";
+      const dados = data.tipo === "documento" ? {
+        nome: cleanText(parsed?.dados?.nome),
+        cpf: cpfDigits.length === 11 ? cpfDigits : null,
+        rg: rgDigits.length === 11 && rgDigits === cpfDigits ? null : rgText,
+        dataNascimento: cleanText(parsed?.dados?.dataNascimento),
+      } : undefined;
       return {
         ok: !!parsed.ok,
         motivo: typeof parsed.motivo === "string" ? parsed.motivo : undefined,
         confianca: typeof parsed.confianca === "number" ? parsed.confianca : undefined,
+        dados,
       };
     } catch (e: any) {
       return { ok: true, motivo: `Validação IA indisponível (${e?.message ?? "erro"}) — foto aceita.` };

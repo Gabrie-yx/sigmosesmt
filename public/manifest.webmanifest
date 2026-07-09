@@ -1,6 +1,7 @@
 {
   "name": "SIGMO — Estaleiro DMN",
   "short_name": "SIGMO",
+  "id": "/app",
   "description": "Sistema Integrado de Gestão Modular do Estaleiro DMN.",
   "start_url": "/app",
   "scope": "/",
