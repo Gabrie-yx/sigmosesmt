@@ -108,6 +108,7 @@ import { Route as AppSesmtEquipamentosMoveisArquivosMensaisRouteImport } from '.
 import { Route as AppSesmtCatalogosRiscosRouteImport } from './routes/app.sesmt.catalogos.riscos'
 import { Route as AppSesmtCatalogosNrsRouteImport } from './routes/app.sesmt.catalogos.nrs'
 import { Route as AppSesmtCatalogosGasesRouteImport } from './routes/app.sesmt.catalogos.gases'
+import { Route as AppSesmtCatalogosExamesRouteImport } from './routes/app.sesmt.catalogos.exames'
 import { Route as AppModuloMecanicaRequisicaoComprasRouteImport } from './routes/app.modulo.mecanica.requisicao-compras'
 import { Route as AppModuloEletricaRequisicaoComprasRouteImport } from './routes/app.modulo.eletrica.requisicao-compras'
 import { Route as AppModuloModuloHoraExtraRouteImport } from './routes/app.modulo.$modulo.hora-extra'
@@ -631,6 +632,11 @@ const AppSesmtCatalogosGasesRoute = AppSesmtCatalogosGasesRouteImport.update({
   path: '/sesmt/catalogos/gases',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSesmtCatalogosExamesRoute = AppSesmtCatalogosExamesRouteImport.update({
+  id: '/sesmt/catalogos/exames',
+  path: '/sesmt/catalogos/exames',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppModuloMecanicaRequisicaoComprasRoute =
   AppModuloMecanicaRequisicaoComprasRouteImport.update({
     id: '/modulo/mecanica/requisicao-compras',
@@ -773,6 +779,7 @@ export interface FileRoutesByFullPath {
   '/app/modulo/$modulo/hora-extra': typeof AppModuloModuloHoraExtraRoute
   '/app/modulo/eletrica/requisicao-compras': typeof AppModuloEletricaRequisicaoComprasRoute
   '/app/modulo/mecanica/requisicao-compras': typeof AppModuloMecanicaRequisicaoComprasRoute
+  '/app/sesmt/catalogos/exames': typeof AppSesmtCatalogosExamesRoute
   '/app/sesmt/catalogos/gases': typeof AppSesmtCatalogosGasesRoute
   '/app/sesmt/catalogos/nrs': typeof AppSesmtCatalogosNrsRoute
   '/app/sesmt/catalogos/riscos': typeof AppSesmtCatalogosRiscosRoute
@@ -877,6 +884,7 @@ export interface FileRoutesByTo {
   '/app/modulo/$modulo/hora-extra': typeof AppModuloModuloHoraExtraRoute
   '/app/modulo/eletrica/requisicao-compras': typeof AppModuloEletricaRequisicaoComprasRoute
   '/app/modulo/mecanica/requisicao-compras': typeof AppModuloMecanicaRequisicaoComprasRoute
+  '/app/sesmt/catalogos/exames': typeof AppSesmtCatalogosExamesRoute
   '/app/sesmt/catalogos/gases': typeof AppSesmtCatalogosGasesRoute
   '/app/sesmt/catalogos/nrs': typeof AppSesmtCatalogosNrsRoute
   '/app/sesmt/catalogos/riscos': typeof AppSesmtCatalogosRiscosRoute
@@ -986,6 +994,7 @@ export interface FileRoutesById {
   '/app/modulo/$modulo/hora-extra': typeof AppModuloModuloHoraExtraRoute
   '/app/modulo/eletrica/requisicao-compras': typeof AppModuloEletricaRequisicaoComprasRoute
   '/app/modulo/mecanica/requisicao-compras': typeof AppModuloMecanicaRequisicaoComprasRoute
+  '/app/sesmt/catalogos/exames': typeof AppSesmtCatalogosExamesRoute
   '/app/sesmt/catalogos/gases': typeof AppSesmtCatalogosGasesRoute
   '/app/sesmt/catalogos/nrs': typeof AppSesmtCatalogosNrsRoute
   '/app/sesmt/catalogos/riscos': typeof AppSesmtCatalogosRiscosRoute
@@ -1096,6 +1105,7 @@ export interface FileRouteTypes {
     | '/app/modulo/$modulo/hora-extra'
     | '/app/modulo/eletrica/requisicao-compras'
     | '/app/modulo/mecanica/requisicao-compras'
+    | '/app/sesmt/catalogos/exames'
     | '/app/sesmt/catalogos/gases'
     | '/app/sesmt/catalogos/nrs'
     | '/app/sesmt/catalogos/riscos'
@@ -1200,6 +1210,7 @@ export interface FileRouteTypes {
     | '/app/modulo/$modulo/hora-extra'
     | '/app/modulo/eletrica/requisicao-compras'
     | '/app/modulo/mecanica/requisicao-compras'
+    | '/app/sesmt/catalogos/exames'
     | '/app/sesmt/catalogos/gases'
     | '/app/sesmt/catalogos/nrs'
     | '/app/sesmt/catalogos/riscos'
@@ -1308,6 +1319,7 @@ export interface FileRouteTypes {
     | '/app/modulo/$modulo/hora-extra'
     | '/app/modulo/eletrica/requisicao-compras'
     | '/app/modulo/mecanica/requisicao-compras'
+    | '/app/sesmt/catalogos/exames'
     | '/app/sesmt/catalogos/gases'
     | '/app/sesmt/catalogos/nrs'
     | '/app/sesmt/catalogos/riscos'
@@ -2026,6 +2038,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSesmtCatalogosGasesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/sesmt/catalogos/exames': {
+      id: '/app/sesmt/catalogos/exames'
+      path: '/sesmt/catalogos/exames'
+      fullPath: '/app/sesmt/catalogos/exames'
+      preLoaderRoute: typeof AppSesmtCatalogosExamesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/modulo/mecanica/requisicao-compras': {
       id: '/app/modulo/mecanica/requisicao-compras'
       path: '/modulo/mecanica/requisicao-compras'
@@ -2240,6 +2259,7 @@ interface AppRouteChildren {
   AppModuloModuloHoraExtraRoute: typeof AppModuloModuloHoraExtraRoute
   AppModuloEletricaRequisicaoComprasRoute: typeof AppModuloEletricaRequisicaoComprasRoute
   AppModuloMecanicaRequisicaoComprasRoute: typeof AppModuloMecanicaRequisicaoComprasRoute
+  AppSesmtCatalogosExamesRoute: typeof AppSesmtCatalogosExamesRoute
   AppSesmtCatalogosGasesRoute: typeof AppSesmtCatalogosGasesRoute
   AppSesmtCatalogosNrsRoute: typeof AppSesmtCatalogosNrsRoute
   AppSesmtCatalogosRiscosRoute: typeof AppSesmtCatalogosRiscosRoute
@@ -2325,6 +2345,7 @@ const AppRouteChildren: AppRouteChildren = {
     AppModuloEletricaRequisicaoComprasRoute,
   AppModuloMecanicaRequisicaoComprasRoute:
     AppModuloMecanicaRequisicaoComprasRoute,
+  AppSesmtCatalogosExamesRoute: AppSesmtCatalogosExamesRoute,
   AppSesmtCatalogosGasesRoute: AppSesmtCatalogosGasesRoute,
   AppSesmtCatalogosNrsRoute: AppSesmtCatalogosNrsRoute,
   AppSesmtCatalogosRiscosRoute: AppSesmtCatalogosRiscosRoute,
