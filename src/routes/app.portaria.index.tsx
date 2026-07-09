@@ -11,6 +11,9 @@ import {
   ShieldAlert, ListChecks, Car,
 } from "lucide-react";
 import { InstallPwaCard } from "@/components/install-pwa-card";
+const SaidasFuncHojeCard = lazy(() =>
+  import("@/components/portaria/saidas-func-hoje-card").then((m) => ({ default: m.SaidasFuncHojeCard })),
+);
 
 const NovaEntradaWizard = lazy(() =>
   import("@/components/portaria/nova-entrada-wizard").then((m) => ({ default: m.NovaEntradaWizard })),
@@ -189,6 +192,13 @@ function PortariaCockpit() {
         </div>
 
         {/* FEED — últimas movimentações */}
+        <div className="pt-2">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground px-1 mb-2">Saídas de funcionário hoje</p>
+          <Suspense fallback={<div className="rounded-2xl bg-muted/40 h-32 animate-pulse" />}>
+            <SaidasFuncHojeCard limit={5} />
+          </Suspense>
+        </div>
+
         <div className="pt-2">
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground px-1 mb-2">Últimas movimentações</p>
           <div className="rounded-2xl bg-card border border-border overflow-hidden divide-y divide-border">

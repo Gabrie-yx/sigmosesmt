@@ -75,6 +75,7 @@ import { Route as AppProducaoFatoresConsumoRouteImport } from './routes/app.prod
 import { Route as AppProducaoExpedicaoRouteImport } from './routes/app.producao.expedicao'
 import { Route as AppProducaoCriarOrdemRouteImport } from './routes/app.producao.criar-ordem'
 import { Route as AppProducaoBaseMateriaPrimaRouteImport } from './routes/app.producao.base-materia-prima'
+import { Route as AppPortariaSaidasHojeRouteImport } from './routes/app.portaria.saidas-hoje'
 import { Route as AppPortariaControleEntradaRouteImport } from './routes/app.portaria.controle-entrada'
 import { Route as AppPortariaControleRouteImport } from './routes/app.portaria.controle'
 import { Route as AppOssTemplatesRouteImport } from './routes/app.oss.templates'
@@ -451,6 +452,11 @@ const AppProducaoBaseMateriaPrimaRoute =
     path: '/producao/base-materia-prima',
     getParentRoute: () => AppRoute,
   } as any)
+const AppPortariaSaidasHojeRoute = AppPortariaSaidasHojeRouteImport.update({
+  id: '/portaria/saidas-hoje',
+  path: '/portaria/saidas-hoje',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppPortariaControleEntradaRoute =
   AppPortariaControleEntradaRouteImport.update({
     id: '/portaria/controle-entrada',
@@ -715,6 +721,7 @@ export interface FileRoutesByFullPath {
   '/app/oss/templates': typeof AppOssTemplatesRoute
   '/app/portaria/controle': typeof AppPortariaControleRoute
   '/app/portaria/controle-entrada': typeof AppPortariaControleEntradaRoute
+  '/app/portaria/saidas-hoje': typeof AppPortariaSaidasHojeRoute
   '/app/producao/base-materia-prima': typeof AppProducaoBaseMateriaPrimaRoute
   '/app/producao/criar-ordem': typeof AppProducaoCriarOrdemRoute
   '/app/producao/expedicao': typeof AppProducaoExpedicaoRoute
@@ -815,6 +822,7 @@ export interface FileRoutesByTo {
   '/app/oss/templates': typeof AppOssTemplatesRoute
   '/app/portaria/controle': typeof AppPortariaControleRoute
   '/app/portaria/controle-entrada': typeof AppPortariaControleEntradaRoute
+  '/app/portaria/saidas-hoje': typeof AppPortariaSaidasHojeRoute
   '/app/producao/base-materia-prima': typeof AppProducaoBaseMateriaPrimaRoute
   '/app/producao/criar-ordem': typeof AppProducaoCriarOrdemRoute
   '/app/producao/expedicao': typeof AppProducaoExpedicaoRoute
@@ -920,6 +928,7 @@ export interface FileRoutesById {
   '/app/oss/templates': typeof AppOssTemplatesRoute
   '/app/portaria/controle': typeof AppPortariaControleRoute
   '/app/portaria/controle-entrada': typeof AppPortariaControleEntradaRoute
+  '/app/portaria/saidas-hoje': typeof AppPortariaSaidasHojeRoute
   '/app/producao/base-materia-prima': typeof AppProducaoBaseMateriaPrimaRoute
   '/app/producao/criar-ordem': typeof AppProducaoCriarOrdemRoute
   '/app/producao/expedicao': typeof AppProducaoExpedicaoRoute
@@ -1026,6 +1035,7 @@ export interface FileRouteTypes {
     | '/app/oss/templates'
     | '/app/portaria/controle'
     | '/app/portaria/controle-entrada'
+    | '/app/portaria/saidas-hoje'
     | '/app/producao/base-materia-prima'
     | '/app/producao/criar-ordem'
     | '/app/producao/expedicao'
@@ -1126,6 +1136,7 @@ export interface FileRouteTypes {
     | '/app/oss/templates'
     | '/app/portaria/controle'
     | '/app/portaria/controle-entrada'
+    | '/app/portaria/saidas-hoje'
     | '/app/producao/base-materia-prima'
     | '/app/producao/criar-ordem'
     | '/app/producao/expedicao'
@@ -1230,6 +1241,7 @@ export interface FileRouteTypes {
     | '/app/oss/templates'
     | '/app/portaria/controle'
     | '/app/portaria/controle-entrada'
+    | '/app/portaria/saidas-hoje'
     | '/app/producao/base-materia-prima'
     | '/app/producao/criar-ordem'
     | '/app/producao/expedicao'
@@ -1747,6 +1759,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProducaoBaseMateriaPrimaRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/portaria/saidas-hoje': {
+      id: '/app/portaria/saidas-hoje'
+      path: '/portaria/saidas-hoje'
+      fullPath: '/app/portaria/saidas-hoje'
+      preLoaderRoute: typeof AppPortariaSaidasHojeRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/portaria/controle-entrada': {
       id: '/app/portaria/controle-entrada'
       path: '/portaria/controle-entrada'
@@ -2134,6 +2153,7 @@ interface AppRouteChildren {
   AppEstoqueSesmtRoute: typeof AppEstoqueSesmtRoute
   AppPortariaControleRoute: typeof AppPortariaControleRoute
   AppPortariaControleEntradaRoute: typeof AppPortariaControleEntradaRoute
+  AppPortariaSaidasHojeRoute: typeof AppPortariaSaidasHojeRoute
   AppProducaoBaseMateriaPrimaRoute: typeof AppProducaoBaseMateriaPrimaRoute
   AppProducaoCriarOrdemRoute: typeof AppProducaoCriarOrdemRoute
   AppProducaoExpedicaoRoute: typeof AppProducaoExpedicaoRoute
@@ -2213,6 +2233,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppEstoqueSesmtRoute: AppEstoqueSesmtRoute,
   AppPortariaControleRoute: AppPortariaControleRoute,
   AppPortariaControleEntradaRoute: AppPortariaControleEntradaRoute,
+  AppPortariaSaidasHojeRoute: AppPortariaSaidasHojeRoute,
   AppProducaoBaseMateriaPrimaRoute: AppProducaoBaseMateriaPrimaRoute,
   AppProducaoCriarOrdemRoute: AppProducaoCriarOrdemRoute,
   AppProducaoExpedicaoRoute: AppProducaoExpedicaoRoute,
