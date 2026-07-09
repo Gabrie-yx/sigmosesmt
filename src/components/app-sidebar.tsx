@@ -262,7 +262,15 @@ export function AppSidebar() {
 
   // Filtra grupos/itens pelo controle granular de menus
   const visibleSesmtGroups = SESMT_GROUPS
-    .map((g) => ({ ...g, items: g.items.filter((i) => hasMenu(i.to)) }))
+    .map((g) => ({
+      ...g,
+      items: g.items
+        .filter((i) => hasMenu(i.to))
+        .map((i) => ({
+          ...i,
+          children: i.children?.filter((c) => hasMenu(c.to)),
+        })),
+    }))
     .filter((g) => g.items.length > 0);
   const visibleDDSSubmenu = DDS_SUBMENU.filter((i) => hasMenu(i.to) || i.to.startsWith("/app/dds"));
   const visibleEstoque = ESTOQUE_ITEMS.filter((i) => hasMenu(i.to));
