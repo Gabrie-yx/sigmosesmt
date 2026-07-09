@@ -75,7 +75,7 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 
-type LeafItem = { to: string; label: string; icon?: typeof CalendarCheck2 };
+type LeafItem = { to: string; label: string; icon?: typeof CalendarCheck2; children?: LeafItem[] };
 type LockedItem = { key: string; label: string; icon?: typeof CalendarCheck2 };
 
 const SESMT_GROUPS: { title: string; items: LeafItem[] }[] = [
@@ -105,12 +105,18 @@ const SESMT_GROUPS: { title: string; items: LeafItem[] }[] = [
   {
     title: "Catálogos",
     items: [
-      { to: "/app/sesmt/catalogos", label: "Hub de Catálogos SST", icon: Library },
-      { to: "/app/sesmt/catalogos/cruzamentos", label: "Cruzamentos Inteligentes", icon: Sparkles },
-      { to: "/app/sesmt/catalogos/riscos", label: "Riscos Ocupacionais", icon: ShieldAlert },
-      { to: "/app/sesmt/catalogos/nrs", label: "Normas Regulamentadoras", icon: BookOpenCheck },
-      { to: "/app/sesmt/catalogos/exames", label: "Exames (eSocial)", icon: Stethoscope },
-      { to: "/app/sesmt/catalogos/gases", label: "Gases Atmosféricos (NR-33)", icon: Wind },
+      {
+        to: "/app/sesmt/catalogos",
+        label: "Hub de Catálogos SST",
+        icon: Library,
+        children: [
+          { to: "/app/sesmt/catalogos/cruzamentos", label: "Cruzamentos Inteligentes", icon: Sparkles },
+          { to: "/app/sesmt/catalogos/riscos", label: "Riscos Ocupacionais", icon: ShieldAlert },
+          { to: "/app/sesmt/catalogos/nrs", label: "Normas Regulamentadoras", icon: BookOpenCheck },
+          { to: "/app/sesmt/catalogos/exames", label: "Exames (eSocial)", icon: Stethoscope },
+          { to: "/app/sesmt/catalogos/gases", label: "Gases Atmosféricos (NR-33)", icon: Wind },
+        ],
+      },
       { to: "/app/sesmt/prestadores", label: "Prestadores de Saúde", icon: Stethoscope },
       { to: "/app/sesmt/agenda", label: "Agenda Inteligente", icon: CalendarCheck2 },
     ],
@@ -256,7 +262,15 @@ export function AppSidebar() {
 
   // Filtra grupos/itens pelo controle granular de menus
   const visibleSesmtGroups = SESMT_GROUPS
-    .map((g) => ({ ...g, items: g.items.filter((i) => hasMenu(i.to)) }))
+    .map((g) => ({
+      ...g,
+      items: g.items
+        .filter((i) => hasMenu(i.to))
+        .map((i) => ({
+          ...i,
+          children: i.children?.filter((c) => hasMenu(c.to)),
+        })),
+    }))
     .filter((g) => g.items.length > 0);
   const visibleDDSSubmenu = DDS_SUBMENU.filter((i) => hasMenu(i.to) || i.to.startsWith("/app/dds"));
   const visibleEstoque = ESTOQUE_ITEMS.filter((i) => hasMenu(i.to));
@@ -393,6 +407,23 @@ export function AppSidebar() {
                                       </SidebarMenuSubButton>
                                     </SidebarMenuSubItem>
                                   ))}
+                                </SidebarMenuSub>
+                              )}
+                              {item.children && item.children.length > 0 && (
+                                <SidebarMenuSub>
+                                  {item.children.map((c) => {
+                                    const CIcon = c.icon ?? ShieldCheck;
+                                    return (
+                                      <SidebarMenuSubItem key={c.to}>
+                                        <SidebarMenuSubButton asChild isActive={isActive(c.to)}>
+                                          <Link to={c.to} className="flex items-center gap-2">
+                                            <CIcon className="h-4 w-4" />
+                                            <span>{c.label}</span>
+                                          </Link>
+                                        </SidebarMenuSubButton>
+                                      </SidebarMenuSubItem>
+                                    );
+                                  })}
                                 </SidebarMenuSub>
                               )}
                             </SidebarMenuItem>
