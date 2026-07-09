@@ -102,6 +102,7 @@ import { Route as AppAdministrativoRequisicoesRecebidasRouteImport } from './rou
 import { Route as AppAdministrativoMarcadoresHoraExtraRouteImport } from './routes/app.administrativo.marcadores-hora-extra'
 import { Route as AppAdministrativoHoraExtraRecebidaRouteImport } from './routes/app.administrativo.hora-extra-recebida'
 import { Route as AppAdministrativoGestaoPontoRouteImport } from './routes/app.administrativo.gestao-ponto'
+import { Route as AppSesmtCatalogosIndexRouteImport } from './routes/app.sesmt.catalogos.index'
 import { Route as AppAdministrativoGestaoPontoIndexRouteImport } from './routes/app.administrativo.gestao-ponto.index'
 import { Route as AppSesmtEquipamentosMoveisArquivosMensaisRouteImport } from './routes/app.sesmt.equipamentos-moveis_.arquivos-mensais'
 import { Route as AppSesmtCatalogosGasesRouteImport } from './routes/app.sesmt.catalogos.gases'
@@ -596,6 +597,11 @@ const AppAdministrativoGestaoPontoRoute =
     path: '/gestao-ponto',
     getParentRoute: () => AppAdministrativoRoute,
   } as any)
+const AppSesmtCatalogosIndexRoute = AppSesmtCatalogosIndexRouteImport.update({
+  id: '/sesmt/catalogos/',
+  path: '/sesmt/catalogos/',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAdministrativoGestaoPontoIndexRoute =
   AppAdministrativoGestaoPontoIndexRouteImport.update({
     id: '/',
@@ -758,6 +764,7 @@ export interface FileRoutesByFullPath {
   '/app/sesmt/catalogos/gases': typeof AppSesmtCatalogosGasesRoute
   '/app/sesmt/equipamentos-moveis/arquivos-mensais': typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   '/app/administrativo/gestao-ponto/': typeof AppAdministrativoGestaoPontoIndexRoute
+  '/app/sesmt/catalogos/': typeof AppSesmtCatalogosIndexRoute
   '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId': typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
   '/app/sesmt/equipamentos-moveis/historico/$equipamentoId': typeof AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute
 }
@@ -859,6 +866,7 @@ export interface FileRoutesByTo {
   '/app/sesmt/catalogos/gases': typeof AppSesmtCatalogosGasesRoute
   '/app/sesmt/equipamentos-moveis/arquivos-mensais': typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   '/app/administrativo/gestao-ponto': typeof AppAdministrativoGestaoPontoIndexRoute
+  '/app/sesmt/catalogos': typeof AppSesmtCatalogosIndexRoute
   '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId': typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
   '/app/sesmt/equipamentos-moveis/historico/$equipamentoId': typeof AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute
 }
@@ -965,6 +973,7 @@ export interface FileRoutesById {
   '/app/sesmt/catalogos/gases': typeof AppSesmtCatalogosGasesRoute
   '/app/sesmt/equipamentos-moveis_/arquivos-mensais': typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   '/app/administrativo/gestao-ponto/': typeof AppAdministrativoGestaoPontoIndexRoute
+  '/app/sesmt/catalogos/': typeof AppSesmtCatalogosIndexRoute
   '/app/sesmt/equipamentos-moveis_/checklist/$equipamentoId': typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
   '/app/sesmt/equipamentos-moveis_/historico/$equipamentoId': typeof AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute
 }
@@ -1072,6 +1081,7 @@ export interface FileRouteTypes {
     | '/app/sesmt/catalogos/gases'
     | '/app/sesmt/equipamentos-moveis/arquivos-mensais'
     | '/app/administrativo/gestao-ponto/'
+    | '/app/sesmt/catalogos/'
     | '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId'
     | '/app/sesmt/equipamentos-moveis/historico/$equipamentoId'
   fileRoutesByTo: FileRoutesByTo
@@ -1173,6 +1183,7 @@ export interface FileRouteTypes {
     | '/app/sesmt/catalogos/gases'
     | '/app/sesmt/equipamentos-moveis/arquivos-mensais'
     | '/app/administrativo/gestao-ponto'
+    | '/app/sesmt/catalogos'
     | '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId'
     | '/app/sesmt/equipamentos-moveis/historico/$equipamentoId'
   id:
@@ -1278,6 +1289,7 @@ export interface FileRouteTypes {
     | '/app/sesmt/catalogos/gases'
     | '/app/sesmt/equipamentos-moveis_/arquivos-mensais'
     | '/app/administrativo/gestao-ponto/'
+    | '/app/sesmt/catalogos/'
     | '/app/sesmt/equipamentos-moveis_/checklist/$equipamentoId'
     | '/app/sesmt/equipamentos-moveis_/historico/$equipamentoId'
   fileRoutesById: FileRoutesById
@@ -1948,6 +1960,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdministrativoGestaoPontoRouteImport
       parentRoute: typeof AppAdministrativoRoute
     }
+    '/app/sesmt/catalogos/': {
+      id: '/app/sesmt/catalogos/'
+      path: '/sesmt/catalogos'
+      fullPath: '/app/sesmt/catalogos/'
+      preLoaderRoute: typeof AppSesmtCatalogosIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/administrativo/gestao-ponto/': {
       id: '/app/administrativo/gestao-ponto/'
       path: '/'
@@ -2185,6 +2204,7 @@ interface AppRouteChildren {
   AppModuloMecanicaRequisicaoComprasRoute: typeof AppModuloMecanicaRequisicaoComprasRoute
   AppSesmtCatalogosGasesRoute: typeof AppSesmtCatalogosGasesRoute
   AppSesmtEquipamentosMoveisArquivosMensaisRoute: typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
+  AppSesmtCatalogosIndexRoute: typeof AppSesmtCatalogosIndexRoute
   AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute: typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
   AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute: typeof AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute
 }
@@ -2268,6 +2288,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSesmtCatalogosGasesRoute: AppSesmtCatalogosGasesRoute,
   AppSesmtEquipamentosMoveisArquivosMensaisRoute:
     AppSesmtEquipamentosMoveisArquivosMensaisRoute,
+  AppSesmtCatalogosIndexRoute: AppSesmtCatalogosIndexRoute,
   AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute:
     AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute,
   AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute:
@@ -2291,13 +2312,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
