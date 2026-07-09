@@ -156,11 +156,13 @@ const SESMT_GROUPS: { title: string; items: LeafItem[] }[] = [
         label: "Hub de Catálogos SST",
         icon: Library,
         children: [
+          { to: "/app/sesmt/catalogos", label: "Visão Geral (Hub)", icon: Library },
           { to: "/app/sesmt/catalogos/cruzamentos", label: "Cruzamentos Inteligentes", icon: Sparkles },
           { to: "/app/sesmt/catalogos/riscos", label: "Riscos Ocupacionais", icon: ShieldAlert },
           { to: "/app/sesmt/catalogos/nrs", label: "Normas Regulamentadoras", icon: BookOpenCheck },
           { to: "/app/sesmt/catalogos/exames", label: "Exames (eSocial)", icon: Stethoscope },
           { to: "/app/sesmt/catalogos/gases", label: "Gases Atmosféricos (NR-33)", icon: Wind },
+          { to: "/app/sesmt/catalogos/epis", label: "EPIs (CA)", icon: HardHat },
         ],
       },
       { to: "/app/sesmt/prestadores", label: "Prestadores de Saúde", icon: Stethoscope },
