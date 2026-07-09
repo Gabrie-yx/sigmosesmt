@@ -71,6 +71,7 @@ import {
   CalendarClock,
   Library,
   Sparkles,
+  Syringe,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -162,6 +163,7 @@ const SESMT_GROUPS: { title: string; items: LeafItem[] }[] = [
           { to: "/app/sesmt/catalogos/nrs", label: "Normas Regulamentadoras", icon: BookOpenCheck },
           { to: "/app/sesmt/catalogos/exames", label: "Exames (eSocial)", icon: Stethoscope },
           { to: "/app/sesmt/catalogos/gases", label: "Gases Atmosféricos (NR-33)", icon: Wind },
+          { to: "/app/sesmt/catalogos/vacinas", label: "Vacinas Ocupacionais", icon: Syringe },
           { to: "/app/sesmt/catalogos/epis", label: "EPIs (CA)", icon: HardHat },
         ],
       },

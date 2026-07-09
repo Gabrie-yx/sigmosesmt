@@ -105,6 +105,7 @@ import { Route as AppAdministrativoGestaoPontoRouteImport } from './routes/app.a
 import { Route as AppSesmtCatalogosIndexRouteImport } from './routes/app.sesmt.catalogos.index'
 import { Route as AppAdministrativoGestaoPontoIndexRouteImport } from './routes/app.administrativo.gestao-ponto.index'
 import { Route as AppSesmtEquipamentosMoveisArquivosMensaisRouteImport } from './routes/app.sesmt.equipamentos-moveis_.arquivos-mensais'
+import { Route as AppSesmtCatalogosVacinasRouteImport } from './routes/app.sesmt.catalogos.vacinas'
 import { Route as AppSesmtCatalogosRiscosRouteImport } from './routes/app.sesmt.catalogos.riscos'
 import { Route as AppSesmtCatalogosNrsRouteImport } from './routes/app.sesmt.catalogos.nrs'
 import { Route as AppSesmtCatalogosGasesRouteImport } from './routes/app.sesmt.catalogos.gases'
@@ -619,6 +620,12 @@ const AppSesmtEquipamentosMoveisArquivosMensaisRoute =
     path: '/sesmt/equipamentos-moveis/arquivos-mensais',
     getParentRoute: () => AppRoute,
   } as any)
+const AppSesmtCatalogosVacinasRoute =
+  AppSesmtCatalogosVacinasRouteImport.update({
+    id: '/sesmt/catalogos/vacinas',
+    path: '/sesmt/catalogos/vacinas',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppSesmtCatalogosRiscosRoute = AppSesmtCatalogosRiscosRouteImport.update({
   id: '/sesmt/catalogos/riscos',
   path: '/sesmt/catalogos/riscos',
@@ -798,6 +805,7 @@ export interface FileRoutesByFullPath {
   '/app/sesmt/catalogos/gases': typeof AppSesmtCatalogosGasesRoute
   '/app/sesmt/catalogos/nrs': typeof AppSesmtCatalogosNrsRoute
   '/app/sesmt/catalogos/riscos': typeof AppSesmtCatalogosRiscosRoute
+  '/app/sesmt/catalogos/vacinas': typeof AppSesmtCatalogosVacinasRoute
   '/app/sesmt/equipamentos-moveis/arquivos-mensais': typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   '/app/administrativo/gestao-ponto/': typeof AppAdministrativoGestaoPontoIndexRoute
   '/app/sesmt/catalogos/': typeof AppSesmtCatalogosIndexRoute
@@ -905,6 +913,7 @@ export interface FileRoutesByTo {
   '/app/sesmt/catalogos/gases': typeof AppSesmtCatalogosGasesRoute
   '/app/sesmt/catalogos/nrs': typeof AppSesmtCatalogosNrsRoute
   '/app/sesmt/catalogos/riscos': typeof AppSesmtCatalogosRiscosRoute
+  '/app/sesmt/catalogos/vacinas': typeof AppSesmtCatalogosVacinasRoute
   '/app/sesmt/equipamentos-moveis/arquivos-mensais': typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   '/app/administrativo/gestao-ponto': typeof AppAdministrativoGestaoPontoIndexRoute
   '/app/sesmt/catalogos': typeof AppSesmtCatalogosIndexRoute
@@ -1017,6 +1026,7 @@ export interface FileRoutesById {
   '/app/sesmt/catalogos/gases': typeof AppSesmtCatalogosGasesRoute
   '/app/sesmt/catalogos/nrs': typeof AppSesmtCatalogosNrsRoute
   '/app/sesmt/catalogos/riscos': typeof AppSesmtCatalogosRiscosRoute
+  '/app/sesmt/catalogos/vacinas': typeof AppSesmtCatalogosVacinasRoute
   '/app/sesmt/equipamentos-moveis_/arquivos-mensais': typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   '/app/administrativo/gestao-ponto/': typeof AppAdministrativoGestaoPontoIndexRoute
   '/app/sesmt/catalogos/': typeof AppSesmtCatalogosIndexRoute
@@ -1130,6 +1140,7 @@ export interface FileRouteTypes {
     | '/app/sesmt/catalogos/gases'
     | '/app/sesmt/catalogos/nrs'
     | '/app/sesmt/catalogos/riscos'
+    | '/app/sesmt/catalogos/vacinas'
     | '/app/sesmt/equipamentos-moveis/arquivos-mensais'
     | '/app/administrativo/gestao-ponto/'
     | '/app/sesmt/catalogos/'
@@ -1237,6 +1248,7 @@ export interface FileRouteTypes {
     | '/app/sesmt/catalogos/gases'
     | '/app/sesmt/catalogos/nrs'
     | '/app/sesmt/catalogos/riscos'
+    | '/app/sesmt/catalogos/vacinas'
     | '/app/sesmt/equipamentos-moveis/arquivos-mensais'
     | '/app/administrativo/gestao-ponto'
     | '/app/sesmt/catalogos'
@@ -1348,6 +1360,7 @@ export interface FileRouteTypes {
     | '/app/sesmt/catalogos/gases'
     | '/app/sesmt/catalogos/nrs'
     | '/app/sesmt/catalogos/riscos'
+    | '/app/sesmt/catalogos/vacinas'
     | '/app/sesmt/equipamentos-moveis_/arquivos-mensais'
     | '/app/administrativo/gestao-ponto/'
     | '/app/sesmt/catalogos/'
@@ -2042,6 +2055,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSesmtEquipamentosMoveisArquivosMensaisRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/sesmt/catalogos/vacinas': {
+      id: '/app/sesmt/catalogos/vacinas'
+      path: '/sesmt/catalogos/vacinas'
+      fullPath: '/app/sesmt/catalogos/vacinas'
+      preLoaderRoute: typeof AppSesmtCatalogosVacinasRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/sesmt/catalogos/riscos': {
       id: '/app/sesmt/catalogos/riscos'
       path: '/sesmt/catalogos/riscos'
@@ -2304,6 +2324,7 @@ interface AppRouteChildren {
   AppSesmtCatalogosGasesRoute: typeof AppSesmtCatalogosGasesRoute
   AppSesmtCatalogosNrsRoute: typeof AppSesmtCatalogosNrsRoute
   AppSesmtCatalogosRiscosRoute: typeof AppSesmtCatalogosRiscosRoute
+  AppSesmtCatalogosVacinasRoute: typeof AppSesmtCatalogosVacinasRoute
   AppSesmtEquipamentosMoveisArquivosMensaisRoute: typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
   AppSesmtCatalogosIndexRoute: typeof AppSesmtCatalogosIndexRoute
   AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute: typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
@@ -2392,6 +2413,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSesmtCatalogosGasesRoute: AppSesmtCatalogosGasesRoute,
   AppSesmtCatalogosNrsRoute: AppSesmtCatalogosNrsRoute,
   AppSesmtCatalogosRiscosRoute: AppSesmtCatalogosRiscosRoute,
+  AppSesmtCatalogosVacinasRoute: AppSesmtCatalogosVacinasRoute,
   AppSesmtEquipamentosMoveisArquivosMensaisRoute:
     AppSesmtEquipamentosMoveisArquivosMensaisRoute,
   AppSesmtCatalogosIndexRoute: AppSesmtCatalogosIndexRoute,
