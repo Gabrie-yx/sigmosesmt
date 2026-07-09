@@ -73,11 +73,9 @@ const CARDS: Card[] = [
   {
     to: "/app/sesmt/catalogos/epis",
     titulo: "Catálogo de EPIs (CA)",
-    descricao: "Equipamentos de Proteção Individual com Certificado de Aprovação — base da Ficha de EPI e do estoque.",
+    descricao: "Equipamentos de Proteção Individual com Certificado de Aprovação — base da Ficha de EPI, do PGR e do estoque.",
     Icon: HardHat,
     gradient: "from-amber-500 via-orange-600 to-red-600",
-    badge: "EM BREVE",
-    disabled: true,
   },
 ];
 
