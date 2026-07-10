@@ -55,8 +55,13 @@ export function gerarListaPresenca(p: ListaPresencaParams): jsPDF {
   let participantIdx = 0;
 
   function getFooterLines() {
-    doc.setFont("helvetica", "italic").setFontSize(5.8);
-    return doc.splitTextToSize(FOOTER_TEXT, contentW - 6) as string[];
+    doc.setFont("helvetica", "bold").setFontSize(6.2);
+    // Quebra fixa exatamente como no modelo FORCP-GP-05:
+    // linha 1 termina em "cumprimento de" e linha 2 inicia em "obrigação..."
+    return [
+      '"O Grupo Atem se compromete a tratar os dados pessoais nos termos da sua Política de Gestão e Proteção de Dados Pessoais e da Lei Geral de Proteção de Dados (LGPD), sendo que os dados aqui tratados são para cumprimento de',
+      'obrigação legal trabalhista e previdenciária pelo Grupo Atem."',
+    ];
   }
 
   function getFooterTopY() {
@@ -134,8 +139,8 @@ export function gerarListaPresenca(p: ListaPresencaParams): jsPDF {
 
     let y = headerY + headerH;
 
-    // Row: TÍTULO | INSTRUTOR | ASSINATURA
-    const rowH = 22;
+    // Row: TÍTULO | INSTRUTOR | ASSINATURA (mais estreita — fiel ao FORCP-GP-05)
+    const rowH = 12;
     doc.rect(margin, y, contentW, rowH);
     const colATitW = contentW * 0.40;
     const colBInsW = contentW * 0.28;
@@ -143,15 +148,15 @@ export function gerarListaPresenca(p: ListaPresencaParams): jsPDF {
     doc.line(margin + colATitW, y, margin + colATitW, y + rowH);
     doc.line(margin + colATitW + colBInsW, y, margin + colATitW + colBInsW, y + rowH);
     doc.setFont("helvetica", "bold").setFontSize(8);
-    doc.text("TÍTULO:", margin + 1.5, y + 3.5);
-    doc.text("INSTRUTOR:", margin + colATitW + 1.5, y + 3.5);
-    doc.text("ASSINATURA:", margin + colATitW + colBInsW + 1.5, y + 3.5);
-    doc.setFont("helvetica", "normal").setFontSize(10);
-    doc.text(p.titulo || "", margin + 2, y + 9, { maxWidth: colATitW - 4 });
-    doc.text(p.instrutor || "", margin + colATitW + 2, y + 9, { maxWidth: colBInsW - 4 });
+    doc.text("TÍTULO:", margin + 1.5, y + 3);
+    doc.text("INSTRUTOR:", margin + colATitW + 1.5, y + 3);
+    doc.text("ASSINATURA:", margin + colATitW + colBInsW + 1.5, y + 3);
+    doc.setFont("helvetica", "normal").setFontSize(9);
+    doc.text(p.titulo || "", margin + 2, y + 8, { maxWidth: colATitW - 4 });
+    doc.text(p.instrutor || "", margin + colATitW + 2, y + 8, { maxWidth: colBInsW - 4 });
     if (p.assinaturaDataUrl) {
       try {
-        drawImageContain(p.assinaturaDataUrl, margin + colATitW + colBInsW + 2, y + 5, colCAssW - 4, rowH - 6);
+        drawImageContain(p.assinaturaDataUrl, margin + colATitW + colBInsW + 2, y + 4, colCAssW - 4, rowH - 5);
       } catch {}
     }
     y += rowH;
@@ -215,21 +220,18 @@ export function gerarListaPresenca(p: ListaPresencaParams): jsPDF {
   }
 
   function drawTable(yStart: number, rowsCount: number) {
-    // Header row 1: PARTICIPANTES | DATA E RUBRICA
+    // Header row 1: PARTICIPANTES | DATA E RUBRICA (fundo BRANCO — sem cinza)
     const partW = contentW * 0.55;
     const datW = contentW - partW;
     const headH = 5;
     doc.setLineWidth(0.3);
-    // Preenchimento cinza claro no cabeçalho da tabela (fidelidade FORCP-GP-05)
-    doc.setFillColor(220, 220, 220);
-    doc.rect(margin, yStart, partW, headH, "FD");
-    doc.rect(margin + partW, yStart, datW, headH, "FD");
-    doc.setFillColor(255, 255, 255);
+    doc.rect(margin, yStart, partW, headH);
+    doc.rect(margin + partW, yStart, datW, headH);
     doc.setFont("helvetica", "bold").setFontSize(8);
     doc.text("PARTICIPANTES", margin + partW / 2, yStart + 3.5, { align: "center" });
     doc.text("DATA E RUBRICA", margin + partW + datW / 2, yStart + 3.5, { align: "center" });
 
-    // Header row 2: N° | NOME | EMPRESA | CARGO | + 5 empty rubrica cols
+    // Header row 2: Nº | NOME | EMPRESA | CARGO | + 5 empty rubrica cols (fundo BRANCO)
     const subY = yStart + headH;
     const subH = 5;
     const colN = 8;
@@ -240,20 +242,16 @@ export function gerarListaPresenca(p: ListaPresencaParams): jsPDF {
     const subCols = [colN, colNome, colEmpresa, colCargo];
     let cx = margin;
     doc.setFont("helvetica", "bold").setFontSize(7);
-    // Sub-header também com fundo cinza claro
-    doc.setFillColor(220, 220, 220);
     subCols.forEach((w, i) => {
-      doc.rect(cx, subY, w, subH, "FD");
+      doc.rect(cx, subY, w, subH);
       const label = ["Nº", "NOME", "EMPRESA", "CARGO"][i];
       doc.text(label, cx + w / 2, subY + 3.5, { align: "center" });
       cx += w;
     });
-    // 5 sub cols rubrica
     const rubCol = datW / 5;
     for (let i = 0; i < 5; i++) {
-      doc.rect(margin + partW + i * rubCol, subY, rubCol, subH, "FD");
+      doc.rect(margin + partW + i * rubCol, subY, rubCol, subH);
     }
-    doc.setFillColor(255, 255, 255);
 
     // Body rows — a tabela para antes da área real do rodapé LGPD.
     let ry = subY + subH;
