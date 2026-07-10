@@ -17,7 +17,12 @@ import {
 import {
   CalendarCheck2, Search, Filter, Building2, Wrench, Cog, Factory, Boxes,
   ShieldPlus, Package, ChevronDown, ChevronRight, Users, Zap, CheckCircle2, XCircle,
+  Pencil, Trash2, FileDown,
 } from "lucide-react";
+import { HoraExtraSabadoDialog } from "@/components/hora-extra-sabado-dialog";
+import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
+import { buildHoraExtraPdf } from "@/lib/hora-extra-pdf-build";
+import type jsPDF from "jspdf";
 
 export const Route = createFileRoute("/app/administrativo/hora-extra-recebida")({
   component: AdministrativoHoraExtraRecebidaPage,
@@ -396,6 +401,11 @@ function SetorCard({
 function FichaCard({ he, funcs }: { he: HoraExtra; funcs: Funcionario[] }) {
   const [detailOpen, setDetailOpen] = useState(false);
   const [indeferirOpen, setIndeferirOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [confirmDel, setConfirmDel] = useState(false);
+  const [pdfDoc, setPdfDoc] = useState<jsPDF | null>(null);
+  const [pdfFile, setPdfFile] = useState("hora-extra.pdf");
+  const [gerandoPdf, setGerandoPdf] = useState(false);
   const qc = useQueryClient();
   const aprovar = useMutation({
     mutationFn: async () => {
@@ -411,6 +421,38 @@ function FichaCard({ he, funcs }: { he: HoraExtra; funcs: Funcionario[] }) {
     },
     onError: (e: any) => toast.error(e.message ?? "Erro ao aprovar"),
   });
+
+  const excluir = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.rpc("excluir_convocacao_extra_lider", {
+        _hora_extra_id: he.id,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Ficha arquivada");
+      qc.invalidateQueries({ queryKey: ["admin-hora-extra-recebida"] });
+      setConfirmDel(false);
+      setDetailOpen(false);
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro ao excluir"),
+  });
+
+  async function gerarPdf() {
+    setGerandoPdf(true);
+    try {
+      const out = await buildHoraExtraPdf(he.id, he.aberto_por_nome ?? he.criado_automatico_por_nome);
+      if (!out) { toast.error("Ficha não encontrada"); return; }
+      setPdfDoc(out.doc);
+      setPdfFile(out.fileName);
+      setDetailOpen(false);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erro ao gerar PDF");
+    } finally {
+      setGerandoPdf(false);
+    }
+  }
+
   const tipo = he.tipo_convocacao === "DIAS_UTEIS" ? "Dia útil" : he.tipo_convocacao === "SABADO" ? "Sábado" : "—";
   const solicitante = he.aberto_por_nome ?? he.criado_automatico_por_nome ?? "—";
   const statusKey = he.status in STATUS_BADGE ? he.status : "PENDENTE";
@@ -561,27 +603,46 @@ function FichaCard({ he, funcs }: { he: HoraExtra; funcs: Funcionario[] }) {
         </div>
 
         <DialogFooter>
-          {he.status === "PENDENTE" ? (
-            <div className="flex gap-2 w-full">
-              <Button
-                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-                onClick={() => aprovar.mutate()}
-                disabled={aprovar.isPending}
-              >
-                <CheckCircle2 className="h-4 w-4 mr-1" /> Deferir
+          <div className="flex flex-col gap-2 w-full">
+            {he.status === "PENDENTE" && (
+              <div className="flex gap-2 w-full">
+                <Button
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                  onClick={() => aprovar.mutate()}
+                  disabled={aprovar.isPending}
+                >
+                  <CheckCircle2 className="h-4 w-4 mr-1" /> Deferir
+                </Button>
+                <Button
+                  variant="destructive"
+                  className="flex-1"
+                  onClick={() => setIndeferirOpen(true)}
+                  disabled={aprovar.isPending}
+                >
+                  <XCircle className="h-4 w-4 mr-1" /> Indeferir
+                </Button>
+              </div>
+            )}
+            <div className="flex flex-wrap gap-2 w-full">
+              <Button variant="outline" size="sm" className="flex-1 min-w-[120px]" onClick={() => setEditOpen(true)}>
+                <Pencil className="h-4 w-4 mr-1" /> Editar
+              </Button>
+              <Button variant="outline" size="sm" className="flex-1 min-w-[120px]" onClick={gerarPdf} disabled={gerandoPdf}>
+                <FileDown className="h-4 w-4 mr-1" /> {gerandoPdf ? "Gerando…" : "Gerar PDF"}
               </Button>
               <Button
-                variant="destructive"
-                className="flex-1"
-                onClick={() => setIndeferirOpen(true)}
-                disabled={aprovar.isPending}
+                variant="outline"
+                size="sm"
+                className="flex-1 min-w-[120px] border-rose-500/40 text-rose-300 hover:bg-rose-500/10"
+                onClick={() => setConfirmDel(true)}
               >
-                <XCircle className="h-4 w-4 mr-1" /> Indeferir
+                <Trash2 className="h-4 w-4 mr-1" /> Excluir
               </Button>
+              {he.status !== "PENDENTE" && (
+                <Button variant="ghost" size="sm" onClick={() => setDetailOpen(false)}>Fechar</Button>
+              )}
             </div>
-          ) : (
-            <Button variant="ghost" onClick={() => setDetailOpen(false)}>Fechar</Button>
-          )}
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -592,6 +653,42 @@ function FichaCard({ he, funcs }: { he: HoraExtra; funcs: Funcionario[] }) {
       horaExtraId={he.id}
       onDone={() => { qc.invalidateQueries({ queryKey: ["admin-hora-extra-recebida"] }); setDetailOpen(false); }}
     />
+
+    <HoraExtraSabadoDialog
+      open={editOpen}
+      onOpenChange={(v) => {
+        setEditOpen(v);
+        if (!v) qc.invalidateQueries({ queryKey: ["admin-hora-extra-recebida"] });
+      }}
+      editId={he.id}
+      moduloOrigem={he.modulo_origem ?? undefined}
+    />
+
+    <PDFPreviewDialog
+      open={!!pdfDoc}
+      onClose={() => setPdfDoc(null)}
+      doc={pdfDoc}
+      fileName={pdfFile}
+      title="Ficha de hora extra"
+    />
+
+    <Dialog open={confirmDel} onOpenChange={setConfirmDel}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Excluir ficha de hora extra?</DialogTitle>
+          <DialogDescription>
+            A ficha de <strong>{fmtBR(he.data)}</strong> será arquivada (histórico preservado).
+            Essa ação pode ser desfeita apenas pelo administrador do sistema.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => setConfirmDel(false)}>Cancelar</Button>
+          <Button variant="destructive" onClick={() => excluir.mutate()} disabled={excluir.isPending}>
+            {excluir.isPending ? "Excluindo…" : "Excluir"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
     </>
   );
 }

@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, Printer, X, PenLine, ImagePlus } from "lucide-react";
+import { Download, Printer, X, PenLine, ImagePlus, Share2 } from "lucide-react";
+import { toast } from "sonner";
 import type jsPDF from "jspdf";
 import { printPdf, renderPdfToImagePagesProgressive } from "@/lib/pdf-print";
 import { SignaturePadDialog } from "@/components/signature-pad-dialog";
@@ -83,6 +84,31 @@ export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable
     // Fallback automático para raster está dentro de printPdf().
     const blob = doc.output("blob") as Blob;
     await printPdf(blob, fileName);
+  }
+
+  async function share() {
+    if (!doc) return;
+    try {
+      const blob = doc.output("blob") as Blob;
+      const file = new File([blob], fileName, { type: "application/pdf" });
+      const nav: any = navigator;
+      if (nav.canShare && nav.canShare({ files: [file] })) {
+        await nav.share({
+          files: [file],
+          title: fileName,
+          text: "Ficha de hora extra",
+        });
+        return;
+      }
+      // Fallback: abre em nova aba para o usuário salvar / compartilhar manualmente
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener");
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      toast.info("Compartilhamento nativo indisponível — o PDF foi aberto em nova aba.");
+    } catch (e: any) {
+      if (e?.name === "AbortError") return;
+      toast.error("Não foi possível compartilhar: " + (e?.message ?? "erro desconhecido"));
+    }
   }
 
   async function pickSignature(set: (v: string | null) => void) {
@@ -173,6 +199,7 @@ export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable
             </Button>
           )}
           <Button variant="outline" onClick={print}><Printer className="h-4 w-4 mr-1" />Imprimir</Button>
+          <Button variant="outline" onClick={share}><Share2 className="h-4 w-4 mr-1" />Compartilhar</Button>
           <Button onClick={download}><Download className="h-4 w-4 mr-1" />Baixar PDF</Button>
         </DialogFooter>
         <SignaturePadDialog
