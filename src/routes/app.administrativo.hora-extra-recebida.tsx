@@ -159,6 +159,32 @@ function AdministrativoHoraExtraRecebidaPage() {
   const [pdfConsDoc, setPdfConsDoc] = useState<jsPDF | null>(null);
   const [pdfConsFile, setPdfConsFile] = useState("hora-extra.pdf");
   const [gerandoConsolidado, setGerandoConsolidado] = useState<string | null>(null);
+  const GERADOS_KEY = "admin-hora-extra-consolidado-gerados";
+  const [gerados, setGerados] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set();
+    try {
+      const raw = window.localStorage.getItem(GERADOS_KEY);
+      return new Set(raw ? (JSON.parse(raw) as string[]) : []);
+    } catch { return new Set(); }
+  });
+
+  // Assinatura padrão do gestor logado (Anderson) — usada no rodapé do PDF consolidado.
+  const { data: assinaturaGestor } = useQuery({
+    queryKey: ["admin-hora-extra-recebida-assinatura", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_signatures")
+        .select("signature_data,is_default,updated_at")
+        .eq("user_id", user!.id)
+        .order("is_default", { ascending: false })
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) return null;
+      return (data?.signature_data as string | undefined) ?? null;
+    },
+  });
 
   const { data: registros = [], isLoading } = useQuery({
     queryKey: ["admin-hora-extra-recebida"],
@@ -256,10 +282,17 @@ function AdministrativoHoraExtraRecebidaPage() {
     if (ids.length === 0) { toast.error("Nenhuma ficha aprovada nessa data"); return; }
     setGerandoConsolidado(dataYmd);
     try {
-      const out = await buildHoraExtraConsolidadoPdf(ids);
+      const out = await buildHoraExtraConsolidadoPdf(ids, {
+        assinaturaGestorDataUrl: assinaturaGestor ?? null,
+      });
       if (!out) { toast.error("Falha ao montar o PDF"); return; }
       setPdfConsDoc(out.doc);
       setPdfConsFile(out.fileName);
+      setGerados((prev) => {
+        const next = new Set(prev); next.add(dataYmd);
+        try { window.localStorage.setItem(GERADOS_KEY, JSON.stringify(Array.from(next))); } catch {}
+        return next;
+      });
     } catch (e: any) {
       toast.error(e?.message ?? "Erro ao gerar PDF consolidado");
     } finally {
@@ -379,34 +412,55 @@ function AdministrativoHoraExtraRecebidaPage() {
       )}
 
       {datasConsolidado.length > 0 && (
-        <Card className="glass-card">
-          <CardHeader className="p-3 pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <FileDown className="h-4 w-4 text-amber-300" />
-              PDF consolidado por dia
-              <span className="text-[11px] font-normal text-muted-foreground">
-                (junta todas as fichas aprovadas do dia num único formulário, agrupado por empresa)
-              </span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-3 pt-0 flex flex-wrap gap-2">
-            {datasConsolidado.map(([data, qtd]) => (
-              <Button
-                key={data}
-                variant="outline"
-                size="sm"
-                className="h-8"
-                disabled={gerandoConsolidado === data}
-                onClick={() => gerarConsolidado(data)}
-              >
-                <FileDown className="h-3.5 w-3.5 mr-1.5" />
-                {fmtBR(data)}
-                <span className="ml-1.5 text-[10px] text-muted-foreground">({qtd} ficha{qtd === 1 ? "" : "s"})</span>
-                {gerandoConsolidado === data && <span className="ml-1.5 text-[10px] text-amber-300">gerando…</span>}
-              </Button>
-            ))}
-          </CardContent>
-        </Card>
+        <div className="flex justify-start">
+          <Card className="glass-card w-full md:w-auto md:max-w-2xl border-amber-400/20">
+            <CardHeader className="p-3 pb-2">
+              <CardTitle className="text-sm flex items-center gap-2 flex-wrap">
+                <FileDown className="h-4 w-4 text-amber-300" />
+                PDF consolidado por dia
+                {assinaturaGestor ? (
+                  <span className="prism-pill accent-emerald px-2 py-0.5 text-[10px] text-emerald-100">
+                    assinado por {(user?.user_metadata as any)?.nome_completo ?? user?.email ?? "gestor"}
+                  </span>
+                ) : (
+                  <span className="prism-pill accent-amber px-2 py-0.5 text-[10px] text-amber-100">
+                    sem assinatura cadastrada
+                  </span>
+                )}
+              </CardTitle>
+              <p className="text-[11px] font-normal text-muted-foreground mt-1">
+                Junta todas as fichas aprovadas do dia num único formulário, agrupado por empresa.
+                Fichas em <span className="text-amber-300 font-semibold">âmbar pulsante</span> ainda não foram geradas.
+              </p>
+            </CardHeader>
+            <CardContent className="p-3 pt-0 flex flex-wrap gap-2">
+              {datasConsolidado.map(([data, qtd]) => {
+                const jaGerado = gerados.has(data);
+                return (
+                  <Button
+                    key={data}
+                    variant="outline"
+                    size="sm"
+                    className={
+                      "h-8 transition-all " +
+                      (jaGerado
+                        ? "opacity-80"
+                        : "border-amber-400/70 text-amber-100 bg-amber-500/10 hover:bg-amber-500/20 shadow-[0_0_18px_rgba(251,191,36,0.55)] animate-pulse")
+                    }
+                    disabled={gerandoConsolidado === data}
+                    onClick={() => gerarConsolidado(data)}
+                    title={jaGerado ? "PDF já gerado nesta sessão" : "Ainda não gerado — clique para consolidar"}
+                  >
+                    <FileDown className="h-3.5 w-3.5 mr-1.5" />
+                    {fmtBR(data)}
+                    <span className="ml-1.5 text-[10px] text-muted-foreground">({qtd} ficha{qtd === 1 ? "" : "s"})</span>
+                    {gerandoConsolidado === data && <span className="ml-1.5 text-[10px] text-amber-300">gerando…</span>}
+                  </Button>
+                );
+              })}
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       <PDFPreviewDialog

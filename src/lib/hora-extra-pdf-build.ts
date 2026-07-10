@@ -121,7 +121,11 @@ export async function buildHoraExtraPdf(
  */
 export async function buildHoraExtraConsolidadoPdf(
   ids: string[],
-  opts?: { dataOverride?: string; tituloExtra?: string | null },
+  opts?: {
+    dataOverride?: string;
+    tituloExtra?: string | null;
+    assinaturaGestorDataUrl?: string | null;
+  },
 ): Promise<{ doc: jsPDF; fileName: string } | null> {
   if (ids.length === 0) return null;
 
@@ -214,6 +218,8 @@ export async function buildHoraExtraConsolidadoPdf(
   }
   const setorConsolidado = setoresSet.size > 0 ? Array.from(setoresSet).join(" · ") : "CONSOLIDADO";
 
+  const gestorSig = await compressSignatureForPdf(opts?.assinaturaGestorDataUrl ?? null);
+
   const doc = gerarHoraExtraSabadoPDF({
     data: ddmmyyyy,
     diaSemana: dia,
@@ -225,7 +231,7 @@ export async function buildHoraExtraConsolidadoPdf(
     observacao: opts?.tituloExtra ?? null,
     logoDataUrl: logo,
     assinaturaTstDataUrl: null,
-    assinaturaGestorDataUrl: null,
+    assinaturaGestorDataUrl: gestorSig,
     solicitanteNome: "Consolidado — Administrativo",
     empresasEnvolvidas,
     paginas,
