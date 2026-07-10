@@ -104,7 +104,7 @@ function ChildrenCollapsible({
           <ChevronRight className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-90" : ""}`} />
         </button>
       </CollapsibleTrigger>
-      <CollapsibleContent>
+      <CollapsibleContent className="data-[state=closed]:hidden">
         <SidebarMenuSub>
           {items.map((c) => {
             const CIcon = c.icon ?? ShieldCheck;
@@ -359,8 +359,11 @@ export function AppSidebar() {
   // Conteúdo dos módulos SEMPRE fica dentro do CollapsibleContent.
   // Antes, quando a sidebar estava "collapsed", os filhos eram renderizados
   // direto e por isso todos os menus ficavam aparecendo no drawer/tablet.
-  const Body = ({ children }: { children: React.ReactNode }) =>
-    <CollapsibleContent>{children}</CollapsibleContent>;
+  const Body = ({ children }: { children: React.ReactNode }) => (
+    <CollapsibleContent className="data-[state=closed]:hidden">
+      {children}
+    </CollapsibleContent>
+  );
 
   return (
     <Sidebar
