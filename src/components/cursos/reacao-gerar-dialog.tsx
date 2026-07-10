@@ -8,6 +8,7 @@ import { Download, PenLine, X, MessageSquare, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
 import { gerarAvaliacaoReacao } from "@/lib/reacao-treinamento-pdf";
+import { baixarBlob, baixarPdf } from "@/lib/lista-presenca-pdf";
 
 type Props = {
   open: boolean;
@@ -83,12 +84,7 @@ export function ReacaoGerarDialog({ open, onClose, turma, course, participantesC
         zip.file(`reacao_${course.codigo}_${turma.data_realizacao}_${nn}.pdf`, blob);
       }
       const content = await zip.generateAsync({ type: "blob" });
-      const url = URL.createObjectURL(content);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `reacao_${course.codigo}_${turma.data_realizacao}.zip`;
-      a.click();
-      URL.revokeObjectURL(url);
+      baixarBlob(content, `reacao_${course.codigo}_${turma.data_realizacao}.zip`);
       toast.success(`${qtd} avaliações geradas`);
     } catch (e: any) {
       toast.error(e.message ?? "Erro ao gerar PDFs");
@@ -100,7 +96,7 @@ export function ReacaoGerarDialog({ open, onClose, turma, course, participantesC
   async function gerarUnico() {
     try {
       const doc = await gerarAvaliacaoReacao(buildParams());
-      doc.save(`reacao_${course.codigo}_${turma.data_realizacao}_modelo.pdf`);
+      baixarPdf(doc, `reacao_${course.codigo}_${turma.data_realizacao}_modelo.pdf`);
     } catch (e: any) {
       toast.error(e.message ?? "Erro");
     }
