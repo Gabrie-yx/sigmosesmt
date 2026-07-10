@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { Sparkles } from "lucide-react";
 import { CATEGORIA_COLOR, CATEGORIA_LABEL } from "@/lib/matriz-status";
-import { gerarListaPresenca } from "@/lib/lista-presenca-pdf";
+import { gerarListaPresenca, baixarPdf } from "@/lib/lista-presenca-pdf";
 import { sortMatrixCourses } from "@/lib/nr-order";
 import { AttendeesDialog } from "@/routes/app.trainings";
 import { MediaViewerDialog, type MediaItem } from "@/components/media-viewer-dialog";
@@ -543,7 +543,7 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
         participantes,
         agruparPorEmpresa,
       });
-      doc.save(`lista-presenca-${course.codigo}-${turma.data_realizacao}.pdf`);
+      baixarPdf(doc, `lista-presenca-${course.codigo}-${turma.data_realizacao}.pdf`);
       const comSig = sigs.filter(Boolean).length;
       toast.success(
         `Lista gerada com ${participantes.length} participante(s)` +
