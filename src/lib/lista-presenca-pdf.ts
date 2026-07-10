@@ -203,15 +203,15 @@ export function gerarListaPresenca(p: ListaPresencaParams): jsPDF {
     const cw = [contentW * 0.16, contentW * 0.20, contentW * 0.32, contentW - contentW * 0.16 - contentW * 0.20 - contentW * 0.32];
     let cx = margin;
     cw.forEach((w, i) => { if (i > 0) doc.line(cx, y, cx, y + rowH4); cx += w; });
-    doc.setFont("helvetica", "bold").setFontSize(8);
     const labels = ["DATA:", "C. HORÁRIA TOTAL:", "INSTITUIÇÃO:", "LOCAL:"];
     const values = [p.data, p.cargaHoraria, p.instituicao, p.local];
     cx = margin;
     labels.forEach((lab, i) => {
       doc.setFont("helvetica", "bold").setFontSize(8);
-      doc.text(lab, cx + 1.5, y + 3.2);
-      doc.setFont("helvetica", "normal").setFontSize(9);
-      doc.text(values[i] || "", cx + 1.5, y + 6.2, { maxWidth: cw[i] - 3 });
+      doc.text(lab, cx + 1.5, y + 4.5);
+      const labW = doc.getTextWidth(lab);
+      doc.setFont("helvetica", "normal").setFontSize(8);
+      doc.text(values[i] || "", cx + 1.5 + labW + 1.2, y + 4.5, { maxWidth: cw[i] - 3 - labW - 1.2 });
       cx += cw[i];
     });
     y += rowH4;
