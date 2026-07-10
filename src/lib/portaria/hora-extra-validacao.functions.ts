@@ -76,7 +76,7 @@ export const listHoraExtraHoje = createServerFn({ method: "GET" })
           employees:employee_id(foto_url, company:company_id(name))
         )
       `)
-      .eq("data", hoje)
+      .gte("data", hoje)
       .eq("status", "APROVADA")
       .is("deleted_at", null)
       .order("horario_inicio", { ascending: true });
