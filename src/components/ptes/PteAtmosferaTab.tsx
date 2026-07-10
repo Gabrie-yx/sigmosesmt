@@ -91,6 +91,7 @@ import { CatalogoGasesManager } from "@/components/sesmt/CatalogoGasesManager";
          .from("pte_medicoes_atmosfericas")
          .select("*")
          .eq("pte_id", petId!)
+        .is("deleted_at", null)
          .order("medido_em", { ascending: false });
        if (error) throw error;
        return (data ?? []) as unknown as Medicao[];
@@ -177,13 +178,15 @@ import { CatalogoGasesManager } from "@/components/sesmt/CatalogoGasesManager";
    });
  
    const remove = useMutation({
-     mutationFn: async (id: string) => {
-       const { error } = await supabase.from("pte_medicoes_atmosfericas").delete().eq("id", id);
-       if (error) throw error;
-     },
+    mutationFn: async ({ id, motivo }: { id: string; motivo: string }) => {
+      const { error } = await supabase.rpc("medicao_soft_delete", { _id: id, _motivo: motivo });
+      if (error) throw error;
+    },
      onSuccess: () => {
-       toast.success("Medição removida");
+      toast.success("Medição arquivada (soft delete — prova preservada)");
        qc.invalidateQueries({ queryKey: ["pte-medicoes-atmosfericas", petId] });
+      qc.invalidateQueries({ queryKey: ["ptes"] });
+      qc.invalidateQueries({ queryKey: ["pte-medicoes-all"] });
      },
      onError: (err: any) => toast.error(err.message ?? "Erro ao remover"),
    });
@@ -276,7 +279,15 @@ import { CatalogoGasesManager } from "@/components/sesmt/CatalogoGasesManager";
                  size="sm"
                  variant="ghost"
                  onClick={() => {
-                   if (confirm("Remover esta medição?")) remove.mutate(m.id);
+                  const motivo = prompt(
+                    "Motivo do arquivamento desta medição (mínimo 10 caracteres — fica registrado em auditoria):"
+                  );
+                  if (!motivo) return;
+                  if (motivo.trim().length < 10) {
+                    toast.error("Motivo precisa ter no mínimo 10 caracteres.");
+                    return;
+                  }
+                  remove.mutate({ id: m.id, motivo: motivo.trim() });
                  }}
                  className="h-7 px-2 text-red-600 hover:bg-red-50"
                >

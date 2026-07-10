@@ -40,3 +40,4 @@ Aline Farias saiu; TST atual é Francisco Bandeira Almeida. Todo import (CAL/PGR
 - [NAO_MEI → CLT](mem://features/rename-clt-tipo-cadastro) — tipo_cadastro aceita só MEI/CLT/AVULSO. Default AVULSO. Trigger seta MEI quando empresa é DMN (companies.type='CLT').
 - [Aline Farias fora](mem://constraints/aline-farias-fora.md) — Sanitizar em TODO parser/import: "Aline Farias" → "Francisco Bandeira Almeida". Já aplicado em cal-parser + import de PAs.
 - [SIGMO resiliência sem IA](mem://features/sigmo-resiliencia-sem-ia) — Estratégia 2 camadas (templates determinísticos + IA opcional) para importar PGR/PCMSO/LTCAT/LIP sem quebrar se a IA cair. Pausado; retomar junto com Rev.06.
+- [Onda 3 · PET blindada C-11/12/13](mem://features/onda3-blindagem-pet) — Modo strict opt-in, plano_resgate estruturado, soft delete medições. Pendente teste + UI do toggle strict.

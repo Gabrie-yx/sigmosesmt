@@ -45,6 +45,11 @@ function PtesPage() {
     executantes_ids: [] as string[],
     vigia_id: "" as string,
     supervisor_entrada_id: "" as string,
+    plano_equipe_resgate: "",
+    plano_equipamentos: "",
+    plano_hospital_referencia: "",
+    plano_tempo_resposta_min: "",
+    plano_meio_comunicacao: "",
   };
   const [f, setF] = useState<any>(emptyForm);
 
@@ -52,6 +57,43 @@ function PtesPage() {
     queryKey: ["ptes"],
     queryFn: async () => (await supabase.from("ptes").select("*").order("data_emissao", { ascending: false })).data ?? [],
   });
+  // Medições ativas de todas as PETs — usado pra computar badges de alerta no histórico
+  const { data: medsAll = [] } = useQuery({
+    queryKey: ["pte-medicoes-all"],
+    queryFn: async () => (await supabase
+      .from("pte_medicoes_atmosfericas")
+      .select("pte_id,momento,tem_fora_limite,medido_em")
+      .is("deleted_at", null)
+    ).data ?? [],
+  });
+  // Modo strict (por empresa)
+  const { data: petModoStrict = false } = useQuery({
+    queryKey: ["pet-modo-strict"],
+    queryFn: async () => {
+      const { data } = await supabase.from("company_settings").select("pet_modo_strict").limit(1).maybeSingle();
+      return !!data?.pet_modo_strict;
+    },
+  });
+  // Calcula alertas por PET (client-side, sem N+1)
+  const petAlertas = useMemo(() => {
+    const map = new Map<string, { needsEntrada: boolean; foraLimite: boolean; needsPlano: boolean }>();
+    for (const p of ptes as any[]) {
+      if (p.tipo_pt !== "PET") continue;
+      const meds = (medsAll as any[]).filter((m) => m.pte_id === p.id);
+      const temEntradaOk = meds.some((m) => m.momento === "ENTRADA" && !m.tem_fora_limite);
+      const ultima = meds.sort((a, b) => +new Date(b.medido_em) - +new Date(a.medido_em))[0];
+      const foraLimite = !!ultima?.tem_fora_limite;
+      const plano = p.plano_resgate;
+      const planoOk =
+        plano && typeof plano === "object" &&
+        (plano.equipe_resgate ?? "").toString().trim() !== "" &&
+        (plano.equipamentos ?? "").toString().trim() !== "" &&
+        (plano.hospital_referencia ?? "").toString().trim() !== "" &&
+        /^\d+$/.test(String(plano.tempo_resposta_min ?? ""));
+      map.set(p.id, { needsEntrada: !temEntradaOk, foraLimite, needsPlano: !planoOk });
+    }
+    return map;
+  }, [ptes, medsAll]);
   const { data: aprsAll = [] } = useQuery({
     queryKey: ["aprs-light-for-ptes"],
     queryFn: async () => (await supabase.from("aprs").select("id,numero,atividade_descricao,casco_id,empresa_id,local").order("data_emissao", { ascending: false })).data ?? [],
@@ -242,6 +284,13 @@ function PtesPage() {
         vigia_id: f.vigia_id || null,
         supervisor_entrada_id: f.supervisor_entrada_id || null,
         emitente_user_id: user?.id ?? null,
+        plano_resgate: f.tipo_pt === "PET" ? {
+          equipe_resgate: (f.plano_equipe_resgate ?? "").trim() || null,
+          equipamentos: (f.plano_equipamentos ?? "").trim() || null,
+          hospital_referencia: (f.plano_hospital_referencia ?? "").trim() || null,
+          tempo_resposta_min: /^\d+$/.test(String(f.plano_tempo_resposta_min ?? "")) ? String(f.plano_tempo_resposta_min).trim() : null,
+          meio_comunicacao: (f.plano_meio_comunicacao ?? "").trim() || null,
+        } : null,
       };
 
       if (editingId) {
@@ -302,6 +351,7 @@ function PtesPage() {
   function startEdit(p: any) {
     setEditingId(p.id);
     setLinkedAprId(p.apr_id ?? null);
+    const pr = (p.plano_resgate ?? {}) as any;
     setF({
       data: p.data,
       risco: p.risco ?? PTE_RISCOS[0],
@@ -319,6 +369,11 @@ function PtesPage() {
       executantes_ids: (p.executantes_ids as string[] | null) ?? (p.employee_id ? [p.employee_id] : []),
       vigia_id: p.vigia_id ?? "",
       supervisor_entrada_id: p.supervisor_entrada_id ?? "",
+      plano_equipe_resgate: pr.equipe_resgate ?? "",
+      plano_equipamentos: pr.equipamentos ?? "",
+      plano_hospital_referencia: pr.hospital_referencia ?? "",
+      plano_tempo_resposta_min: pr.tempo_resposta_min ?? "",
+      plano_meio_comunicacao: pr.meio_comunicacao ?? "",
     });
   }
   function cancelEdit() {
@@ -648,6 +703,85 @@ function PtesPage() {
               <PteAtmosferaTab petId={editingId} employees={emps as any[]} />
             )}
 
+            {/* NR-33 33.3.2.h — Plano de Resgate (apenas PET) */}
+            {f.tipo_pt === "PET" && (
+              <div className="mt-6 rounded-2xl border-2 border-amber-500/40 bg-gradient-to-br from-amber-950/40 to-black/40 p-5 space-y-3">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="h-5 w-5 text-amber-300" />
+                  <h3 className="text-xs font-black uppercase tracking-widest text-amber-200">
+                    Plano de Resgate (NR-33 33.3.2.h)
+                  </h3>
+                  {petModoStrict && (
+                    <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-red-600 text-white">
+                      Modo Strict — Obrigatório
+                    </span>
+                  )}
+                </div>
+                <p className="text-[10px] font-bold text-amber-200/60 uppercase">
+                  Sem plano de resgate documentado, o TST responde criminalmente em caso de óbito.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-[10px] font-black text-amber-200/80 uppercase">Equipe de Resgate *</Label>
+                    <Input
+                      value={f.plano_equipe_resgate}
+                      onChange={(e) => setF({ ...f, plano_equipe_resgate: e.target.value })}
+                      placeholder="Nomes/funções (ex: Brigada + Bombeiro Civil João)"
+                      className="bg-black/40 border-amber-500/30 text-amber-50 text-xs h-9"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[10px] font-black text-amber-200/80 uppercase">Equipamentos *</Label>
+                    <Input
+                      value={f.plano_equipamentos}
+                      onChange={(e) => setF({ ...f, plano_equipamentos: e.target.value })}
+                      placeholder="Tripé, maca, cinto paraquedista, EPR autônomo..."
+                      className="bg-black/40 border-amber-500/30 text-amber-50 text-xs h-9"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[10px] font-black text-amber-200/80 uppercase">Hospital de Referência *</Label>
+                    <Input
+                      value={f.plano_hospital_referencia}
+                      onChange={(e) => setF({ ...f, plano_hospital_referencia: e.target.value })}
+                      placeholder="Hospital + telefone (ex: HGCA — 22 2733-0000)"
+                      className="bg-black/40 border-amber-500/30 text-amber-50 text-xs h-9"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[10px] font-black text-amber-200/80 uppercase">Tempo Resposta (min) *</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={f.plano_tempo_resposta_min}
+                      onChange={(e) => setF({ ...f, plano_tempo_resposta_min: e.target.value })}
+                      placeholder="5"
+                      className="bg-black/40 border-amber-500/30 text-amber-50 text-xs h-9"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <Label className="text-[10px] font-black text-amber-200/80 uppercase">Meio de Comunicação</Label>
+                    <Input
+                      value={f.plano_meio_comunicacao}
+                      onChange={(e) => setF({ ...f, plano_meio_comunicacao: e.target.value })}
+                      placeholder="Rádio canal 5 + celular 22 99999-0000"
+                      className="bg-black/40 border-amber-500/30 text-amber-50 text-xs h-9"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Alerta pré-submit: PET sem plano e/ou sem medição em modo relax */}
+            {f.tipo_pt === "PET" && !petModoStrict && (
+              <div className="rounded-xl border-2 border-amber-500/40 bg-amber-950/30 px-4 py-3 flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-300 shrink-0 mt-0.5" />
+                <div className="text-[10px] font-bold text-amber-100 uppercase leading-relaxed">
+                  Modo Relax ativo. A PET vai ser emitida mesmo sem medição/plano de resgate — mas o sistema vai gritar no histórico. Ligue o Modo Strict em Configurações para bloquear PETs incompletas automaticamente.
+                </div>
+              </div>
+            )}
+
             <Button
               type="submit"
               disabled={save.isPending}
@@ -680,6 +814,21 @@ function PtesPage() {
                     <div className="text-[10px] font-black uppercase text-rose-200/70 tracking-widest">Nº <span className="text-rose-100">{p.numero}</span></div>
                     {p.tipo_pt && p.tipo_pt !== "PTE" && (
                       <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-indigo-950/70 text-indigo-200 border border-indigo-500/30">{p.tipo_pt}</span>
+                    )}
+                    {p.tipo_pt === "PET" && p.status === "ATIVA" && petAlertas.get(p.id)?.foraLimite && (
+                      <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-red-600 text-white flex items-center gap-1" title="Última medição atmosférica fora do limite NR-33">
+                        <AlertTriangle className="h-3 w-3" /> ATMOSFERA FORA DO LIMITE
+                      </span>
+                    )}
+                    {p.tipo_pt === "PET" && p.status === "ATIVA" && petAlertas.get(p.id)?.needsEntrada && (
+                      <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-amber-500 text-black flex items-center gap-1" title="PET ativa sem medição de ENTRADA conforme registrada">
+                        <AlertTriangle className="h-3 w-3" /> MEDIÇÃO PENDENTE
+                      </span>
+                    )}
+                    {p.tipo_pt === "PET" && petAlertas.get(p.id)?.needsPlano && (
+                      <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-orange-600 text-white flex items-center gap-1" title="Plano de resgate NR-33 33.3.2.h não preenchido">
+                        <AlertTriangle className="h-3 w-3" /> SEM PLANO DE RESGATE
+                      </span>
                     )}
                   </div>
                   <div className="flex gap-2 items-center">
