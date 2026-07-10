@@ -65,9 +65,7 @@ export function AppHeader() {
         </button>
 
         <Link to="/app" className="flex items-center gap-2 hover:opacity-90 transition-opacity shrink-0 min-w-0">
-          <div className="flex h-9 items-center justify-center rounded bg-white/95 px-1.5 py-1 shadow-sm shrink-0">
-            <img src={dmnLogo} alt="DMN Estaleiro" className="h-7 w-auto object-contain" />
-          </div>
+          <img src={dmnLogo} alt="DMN Estaleiro" className="h-9 w-auto object-contain shrink-0" />
           <div className="whitespace-nowrap leading-tight hidden sm:block">
             <h1 className="text-[15px] font-black uppercase tracking-tight text-white">
               ESTALEIRO DMN — SIGMO
