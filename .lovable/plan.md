@@ -1,81 +1,87 @@
-# Roadmap Hub de Catálogos SST
+# Painel de Templates de Documentos ISO 9001 — Caminho B
 
-Combinando sua sugestão + os pontos que você validou. Ordem pensada pra entregar valor rápido e deixar as automações (que dependem de fontes externas) pro final.
+Retomando com foco: upload de PDFs homologados que ficam arquivados como referência oficial, sistema continua emitindo com o motor de código atual e sinaliza pendência quando uma nova revisão é enviada.
 
-## Ordem de execução
+## Escopo desta entrega
+Somente o **painel + fluxo de upload/versionamento**. Não vou mexer nos módulos que já emitem (OS, EPI, APR, PTE, PET, DDS etc.) — só passam a exibir um selo "Baseado em Rev.XX" no rodapé em uma etapa posterior.
 
-### 🥇 Fase 1 — EPIs (rápido, tira "EM BREVE")
-- Criar rota `/app/sesmt/catalogos/epis` reaproveitando `epi_catalog` que já existe
-- Listagem + busca por CA/nome + filtros por status/validade
-- CRUD básico (adicionar/editar/desativar CA)
-- Remover flag "EM BREVE" do card no Hub
-- Add ao submenu do sidebar
+## Rota e permissão
+- Nova rota: `/app/configuracoes/templates-documentos`
+- Link no menu **Configurações** (só ADMIN vê)
+- Guard: `has_role(auth.uid(), 'admin')` — bloqueia hard tanto na UI quanto na RLS
 
-### 🥈 Fase 2 — Visão Geral no submenu (5 min)
-- Adicionar item **"Visão Geral"** como PRIMEIRO sub-item de "Hub de Catálogos SST" no sidebar
-- Aponta pra `/app/sesmt/catalogos` (a página com os cards grandes)
-- Resolve o "órfão" que você apontou
+## Banco (1 migração)
 
-### 🥉 Fase 3 — Auditoria dos Catálogos (governança)
-- Trigger genérico de auditoria (`audit_catalogo_trigger`) gravando em `audit_logs` (tabela já existe)
-- Aplicar em: `catalogo_riscos`, `catalogo_nrs`, `exam_catalog`, `catalogo_gases_atmosfericos`, `epi_catalog`, futuro `vacina_catalog`
-- Campos capturados: quem, quando, ação (INSERT/UPDATE/DELETE), tabela, ID do registro, diff antes/depois
-- Aba **"Histórico"** dentro de cada catálogo (opcional nessa fase — só o log já resolve compliance)
+**`document_templates`** — 1 linha por FOR-SEG (catálogo fixo, seedado)
+- `codigo` (ex: `FOR-SEG-01`), `nome`, `modulo_alvo`, `motor_render_id` (chave interna que o código de render usa), `descricao`, `ativo`
 
-### 🏅 Fase 4 — Vacinas Ocupacionais
-- Criar tabela `vacina_catalog` (nome, fabricante, doses, intervalo, via, indicações, contraindicações, PNI/privada, código eSocial se aplicável)
-- **Seed do PNI 2026** — dados públicos do Ministério da Saúde, hardcoded no migration (não dá pra "scraper" em runtime; a lista é estável e pequena): Hepatite B, dT (Difteria/Tétano), Febre Amarela, Tríplice Viral, Influenza, COVID-19, Meningocócica ACWY, Hepatite A
-- Rota `/app/sesmt/catalogos/vacinas` + CRUD
-- Remover flag "EM BREVE"
+**`document_template_versions`** — histórico com soft delete
+- `template_id` → `document_templates.id`
+- `revisao` (int, auto-incrementa por template)
+- `arquivo_path` (Storage), `arquivo_nome`, `arquivo_hash` (sha256), `tamanho_bytes`
+- `motivo_alteracao` (texto)
+- `status`: `EM_HOMOLOGACAO` | `HOMOLOGADA` | `SUPERSEDIDA`
+- `homologada_em`, `homologada_por`
+- `uploaded_at`, `uploaded_by`
+- `deleted_at`, `deleted_by` (soft delete — nunca DELETE físico)
 
-### 🎖️ Fase 5 — Validar Cruzamentos dos 16 riscos novos
-- Ler `risco_exames` e verificar quais dos 16 riscos novos (fumos de solda, sílica, CO, ozônio, névoas, poeira esmerilhamento, óleos, iluminação, sentado prolongado, pé prolongado, pressão psicológica, prensagem, corte por chapa, soterramento, colisão, fungos/mofo) já têm exames vinculados
-- Migration com vínculos padrão baseados em NR-07 + PCMSO REV.05 DMN:
-  - Fumos de solda → Espirometria, Rx tórax, hemograma
-  - Sílica → Espirometria + Rx tórax semestral
-  - CO / Ozônio → Espirometria + hemograma
-  - Ruído (já existente) → Audiometria (verificar)
-  - Ergonômicos → Avaliação clínica ocupacional
-  - etc.
-- Preencher `medidas_controle_padrao`, `epis_sugeridos`, `nrs_aplicaveis` onde estiverem vazios
-- Testar visualmente na tela `/app/sesmt/catalogos/cruzamentos`
+**`document_template_pendencias`** — fila de "motor precisa alinhar"
+- `version_id`, `criado_em`, `prazo_sugerido` (upload + 15 dias), `resolvido_em`, `resolvido_por`, `nota`
 
-### 🏵️ Fase 6 — Automação "Importar do PGR"
-- Botão no Hub e no Catálogo de Riscos: **"Importar riscos do PGR ativo"**
-- Server function que lê `pgr_inventario_riscos` do PGR mais recente
-- Diff contra `catalogo_riscos` (por `nome` + `categoria`)
-- Modal mostra: "X riscos novos serão adicionados ao catálogo — revisar antes de confirmar"
-- Segue a linha da memória `sigmo-resiliencia-sem-ia`: import é determinístico, sem depender de IA
-- Prepara o terreno pra quando você importar PGR/PCMSO/LTCAT/LIP em massa
+**Storage bucket:** `templates-homologados` (privado, só ADMIN)
 
-## Sobre "puxar da internet" (respostas honestas)
+**RLS:** SELECT autenticado / INSERT-UPDATE só ADMIN via `has_role`. GRANTs incluídos.
 
-### Tabela 27 eSocial (exames)
-❌ **Não tem API pública oficial do MTE/eSocial** com a Tabela 27 versionada. O que dá pra fazer:
-- **CRUD manual na UI** — libera você/Israel a adicionar código novo quando o MTE publicar nota técnica
-- **Baixar o PDF/XLSX oficial** de <https://www.gov.br/esocial/pt-br/documentacao-tecnica> e importar via upload (parser XLSX)
-- **Alerta manual** quando MTE publicar nova versão (semestral geralmente)
-- Recomendo: **CRUD + botão "Importar planilha oficial"** — não fica dependente de scraper que quebra
+## UI do painel
 
-### Vacinas (PNI Ministério da Saúde)
-❌ **Também não tem API estável**. O PNI muda 1x/ano em média. Seed hardcoded no migration é mais confiável que scraper — se mudar, novo migration.
-
-### Riscos (catálogo)
-❌ **Não existe "catálogo oficial" central de riscos no Brasil**. Cada empresa monta o seu com base em NR-09, NHO Fundacentro, ACGIH. O nosso catálogo customizado + import do PGR é o caminho certo.
-
-## Ordem final proposta
+Layout tipo lista/tabela dos 15 FOR-SEG:
 
 ```text
-Fase 1 (EPIs)         → 1 sessão de trabalho
-Fase 2 (Visão Geral)  → 5 min, junto com Fase 1
-Fase 3 (Auditoria)    → 1 migration + trigger genérico
-Fase 4 (Vacinas)      → 1 migration + seed + rota
-Fase 5 (Cruzamentos)  → 1 migration de vínculos + validação
-Fase 6 (Import PGR)   → 1 server function + botão + modal
+┌─────────────────────────────────────────────────────────────┐
+│ FOR-SEG-01  Ordem de Serviço          Rev.02 · Homologada   │
+│                                       [Ver histórico] [↑ Nova revisão] │
+├─────────────────────────────────────────────────────────────┤
+│ FOR-SEG-04  Ficha de Entrega EPI      Rev.03 · ⚠ Pendente   │
+│                                       Motor alinhando Rev.03 │
+│                                       [Ver histórico] [↑ Nova revisão] │
+├─────────────────────────────────────────────────────────────┤
+│ FOR-SEG-11  Calendário CIPA           — sem modelo —        │
+│                                       [↑ Enviar primeiro modelo] │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-## Confirmação
+**Modal "Nova revisão":**
+- Upload PDF (drag & drop, max 20 MB)
+- Campo obrigatório: motivo da alteração
+- Preview do PDF antes de confirmar
+- Ao confirmar:
+  1. Upload no Storage
+  2. Calcula hash sha256
+  3. Marca revisão anterior como `SUPERSEDIDA`
+  4. Insere nova versão como `EM_HOMOLOGACAO`
+  5. Cria pendência automática
+  6. Toast: "Rev.XX arquivada. Pendência criada para o motor de render."
 
-Se topar essa ordem, começo pela **Fase 1 (EPIs)** e **Fase 2 (Visão Geral)** juntas nessa próxima leva. As fases 3-6 vou entregando uma por vez pra você validar cada uma sem virar bolo indigesto.
+**Modal "Histórico":**
+- Timeline das revisões (mais nova no topo)
+- Cada card: revisão, quem subiu, quando, motivo, hash, badge status
+- Botão "Baixar PDF" (signed URL)
+- Botão "Restaurar" (só ADMIN) → reverte deleted_at e re-marca como HOMOLOGADA (o soft delete que você pediu)
+- Botão "Arquivar" (soft delete) com confirmação
 
-**Alternativa:** se preferir atacar por prioridade de compliance (auditoria primeiro, por causa da LGPD/NR-01), inverto pra Fase 3 → 1 → 2 → 4 → 5 → 6. Você decide. 😄
+## Seed inicial
+Popular `document_templates` com os 15 FOR-SEG do PROCO-SGI-SST-01 item 6.1 a 6.15, todos com `motor_render_id` mapeado para o código de render existente (ou `null` para os 4 que ainda não têm: FOR-SEG-10, 11, 12, 15).
+
+## Fora do escopo agora (marcado como próxima onda)
+- Selo "Baseado em Rev.XX" no rodapé de cada PDF emitido (só quando você aprovar)
+- Painel de pendências consumindo `document_template_pendencias` na home
+- Criação dos 4 módulos que faltam (FOR-SEG-10/11/12/15)
+
+## Arquivos que vou criar/editar
+- `supabase/migrations/...` — tabelas + bucket + RLS + seed
+- `src/routes/app.configuracoes.templates-documentos.tsx` — painel
+- `src/components/templates-documentos/` — cards, modais, histórico
+- `src/lib/templates-documentos.functions.ts` — server fns (upload, versionar, soft-delete, restaurar)
+- `src/lib/menu-catalog.ts` — link em Configurações (só ADMIN)
+
+Aprovando isso eu já disparo a migração e o código na sequência.
