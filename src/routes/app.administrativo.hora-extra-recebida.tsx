@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { HoraExtraSabadoDialog } from "@/components/hora-extra-sabado-dialog";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
+import { SignatureGallery } from "@/components/signature-gallery";
 import { buildHoraExtraPdf, buildHoraExtraConsolidadoPdf } from "@/lib/hora-extra-pdf-build";
 import type jsPDF from "jspdf";
 
@@ -168,46 +169,37 @@ function AdministrativoHoraExtraRecebidaPage() {
     } catch { return new Set(); }
   });
 
-  // Assinatura do gestor (Anderson) — usada no rodapé do PDF consolidado.
-  // Prioridade: 1) ficha do colaborador com mesmo nome do usuário logado
-  // (traz assinatura + carimbo já embutidos); 2) fallback para user_signatures.
-  const { data: assinaturaGestor } = useQuery({
+  // Assinatura do gestor para o rodapé "APROVAÇÃO / GESTOR" do PDF consolidado.
+  // Vem da Galeria de Assinaturas do usuário logado. Pega a marcada como
+  // padrão (is_default). Uma seleção manual (via botão "Trocar assinatura")
+  // sobrescreve a padrão apenas nesta sessão (guardada em localStorage).
+  const SIG_KEY = `admin-hora-extra-sig-${user?.id ?? "anon"}`;
+  const [sigOverride, setSigOverride] = useState<{ id: string; label: string; data: string } | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const raw = window.localStorage.getItem(SIG_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  });
+  const { data: assinaturaPadrao } = useQuery({
     queryKey: ["admin-hora-extra-recebida-assinatura", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const nome = (
-        (user?.user_metadata as any)?.full_name
-        ?? (user?.user_metadata as any)?.nome_completo
-        ?? (user?.user_metadata as any)?.name
-        ?? ""
-      ).trim() as string;
-      if (nome) {
-        const tokens = nome.split(/\s+/).filter((t) => t.length > 2);
-        const first = tokens[0];
-        const last = tokens[tokens.length - 1];
-        if (first && last) {
-          const { data: emp } = await supabase
-            .from("employees")
-            .select("nome,assinatura_url")
-            .ilike("nome", `${first}%${last}%`)
-            .not("assinatura_url", "is", null)
-            .limit(1)
-            .maybeSingle();
-          if (emp?.assinatura_url) return emp.assinatura_url as string;
-        }
-      }
       const { data, error } = await supabase
         .from("user_signatures")
-        .select("signature_data,is_default,updated_at")
-        .eq("user_id", user!.id)
+        .select("id,label,signature_data,is_default,updated_at")
         .order("is_default", { ascending: false })
         .order("updated_at", { ascending: false })
         .limit(1)
         .maybeSingle();
       if (error) return null;
-      return (data?.signature_data as string | undefined) ?? null;
+      return data ?? null;
     },
   });
+  const assinaturaAtiva = sigOverride ?? (assinaturaPadrao
+    ? { id: assinaturaPadrao.id, label: assinaturaPadrao.label, data: assinaturaPadrao.signature_data }
+    : null);
+  const assinaturaGestor = assinaturaAtiva?.data ?? null;
 
   const { data: registros = [], isLoading } = useQuery({
     queryKey: ["admin-hora-extra-recebida"],
@@ -441,20 +433,63 @@ function AdministrativoHoraExtraRecebidaPage() {
               <CardTitle className="text-sm flex items-center gap-2 flex-wrap">
                 <FileDown className="h-4 w-4 text-amber-300" />
                 PDF consolidado por dia
-                {assinaturaGestor ? (
-                  <span className="prism-pill accent-emerald px-2 py-0.5 text-[10px] text-emerald-100">
-                    assinado por {(user?.user_metadata as any)?.nome_completo ?? user?.email ?? "gestor"}
-                  </span>
-                ) : (
-                  <span className="prism-pill accent-amber px-2 py-0.5 text-[10px] text-amber-100">
-                    sem assinatura cadastrada
-                  </span>
-                )}
               </CardTitle>
               <p className="text-[11px] font-normal text-muted-foreground mt-1">
                 Junta todas as fichas aprovadas do dia num único formulário, agrupado por empresa.
                 Fichas em <span className="text-amber-300 font-semibold">âmbar pulsante</span> ainda não foram geradas.
               </p>
+              <div className="flex items-center gap-2 flex-wrap mt-2">
+                {assinaturaAtiva ? (
+                  <span className="prism-pill accent-emerald px-2 py-1 text-[10px] text-emerald-100 flex items-center gap-1.5">
+                    <img
+                      src={assinaturaAtiva.data}
+                      alt={assinaturaAtiva.label}
+                      className="h-4 w-8 object-contain bg-white/90 rounded-sm"
+                    />
+                    assinar como <strong className="uppercase">{assinaturaAtiva.label}</strong>
+                  </span>
+                ) : (
+                  <span className="prism-pill accent-amber px-2 py-0.5 text-[10px] text-amber-100">
+                    sem assinatura na galeria
+                  </span>
+                )}
+                <SignatureGallery
+                  onSelect={(data) => {
+                    // Descobre o label/id da assinatura escolhida
+                    supabase
+                      .from("user_signatures")
+                      .select("id,label,signature_data")
+                      .eq("signature_data", data)
+                      .limit(1)
+                      .maybeSingle()
+                      .then(({ data: row }) => {
+                        if (!row) return;
+                        const next = { id: row.id, label: row.label, data: row.signature_data };
+                        setSigOverride(next);
+                        try { window.localStorage.setItem(SIG_KEY, JSON.stringify(next)); } catch {}
+                        toast.success(`Usando "${row.label}" nos próximos PDFs`);
+                      });
+                  }}
+                  trigger={
+                    <Button variant="ghost" size="sm" className="h-6 text-[10px] px-2">
+                      Trocar assinatura
+                    </Button>
+                  }
+                />
+                {sigOverride && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 text-[10px] px-2 text-muted-foreground"
+                    onClick={() => {
+                      setSigOverride(null);
+                      try { window.localStorage.removeItem(SIG_KEY); } catch {}
+                    }}
+                  >
+                    voltar à padrão
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent className="p-3 pt-0 flex flex-wrap gap-2">
               {datasConsolidado.map(([data, qtd]) => {
