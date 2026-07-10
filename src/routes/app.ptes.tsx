@@ -45,6 +45,11 @@ function PtesPage() {
     executantes_ids: [] as string[],
     vigia_id: "" as string,
     supervisor_entrada_id: "" as string,
+    plano_equipe_resgate: "",
+    plano_equipamentos: "",
+    plano_hospital_referencia: "",
+    plano_tempo_resposta_min: "",
+    plano_meio_comunicacao: "",
   };
   const [f, setF] = useState<any>(emptyForm);
 
