@@ -314,6 +314,7 @@ function MesGroup({ mes, fichas, onEditar, defaultOpen }: {
 
 function FichaModuloCard({ ficha, onEditar }: { ficha: HoraExtraModulo; onEditar: (id: string) => void }) {
   const qc = useQueryClient();
+  const { isAdmin } = useAuth();
   const [open, setOpen] = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
   const funcs = ficha.hora_extra_sabado_funcionarios ?? [];
@@ -323,7 +324,9 @@ function FichaModuloCard({ ficha, onEditar }: { ficha: HoraExtraModulo; onEditar
     : ficha.status === "APROVADA"
       ? "border-emerald-500/30 text-emerald-300 bg-emerald-500/10"
       : "border-amber-500/30 text-amber-300 bg-amber-500/10";
-  const podeExcluir = ficha.status === "PENDENTE" || ficha.status === "INDEFERIDA";
+  // Admin pode arquivar em qualquer status (a RPC preserva histórico).
+  // Líder/marcador só arquiva PENDENTE/INDEFERIDA.
+  const podeExcluir = isAdmin || ficha.status === "PENDENTE" || ficha.status === "INDEFERIDA";
 
   const reenviar = useMutation({
     mutationFn: async () => {
