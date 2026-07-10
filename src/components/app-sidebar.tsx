@@ -343,14 +343,13 @@ export function AppSidebar() {
   const manutencaoHover = useHoverOpen();
   const portariaHover = useHoverOpen();
 
-  // Quando a sidebar está colapsada (icon mode), o label clicável some, então
-  // forçamos o conteúdo a aparecer sempre — assim os ícones de cada item ficam
-  // visíveis e acessíveis. No modo expandido, mantém o Collapsible normal.
-  // No modo colapsado (desktop icon) e no mobile (Sheet, sem hover), o conteúdo
-  // dos grupos precisa ficar sempre visível — caso contrário o usuário toca no
-  // cabeçalho e "nada acontece" porque o hover nunca dispara em toque.
+  // Desktop colapsado (icon mode): o label some, então o conteúdo precisa
+  // ficar sempre visível pra os ícones continuarem acessíveis.
+  // Desktop expandido + Mobile (drawer): usa o Collapsible normal — no mobile
+  // o toque no cabeçalho já dispara o clique do CollapsibleTrigger, então
+  // cada módulo abre/recolhe sob demanda em vez de aparecer tudo aberto.
   const Body = ({ children }: { children: React.ReactNode }) =>
-    collapsed || isMobile ? <>{children}</> : <CollapsibleContent>{children}</CollapsibleContent>;
+    collapsed ? <>{children}</> : <CollapsibleContent>{children}</CollapsibleContent>;
 
   return (
     <Sidebar
