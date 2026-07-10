@@ -34,6 +34,7 @@ import { Route as AppExtraSabadoAprovacoesRouteImport } from './routes/app.extra
 import { Route as AppExtintoresInspecaoFotoRouteImport } from './routes/app.extintores-inspecao-foto'
 import { Route as AppExtintoresRouteImport } from './routes/app.extintores'
 import { Route as AppEmployeesRouteImport } from './routes/app.employees'
+import { Route as AppCozinhaRouteImport } from './routes/app.cozinha'
 import { Route as AppControleDocumentosRouteImport } from './routes/app.controle-documentos'
 import { Route as AppConfiguracoesIndicadoresRouteImport } from './routes/app.configuracoes-indicadores'
 import { Route as AppCompaniesRouteImport } from './routes/app.companies'
@@ -246,6 +247,11 @@ const AppExtintoresRoute = AppExtintoresRouteImport.update({
 const AppEmployeesRoute = AppEmployeesRouteImport.update({
   id: '/employees',
   path: '/employees',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCozinhaRoute = AppCozinhaRouteImport.update({
+  id: '/cozinha',
+  path: '/cozinha',
   getParentRoute: () => AppRoute,
 } as any)
 const AppControleDocumentosRoute = AppControleDocumentosRouteImport.update({
@@ -728,6 +734,7 @@ export interface FileRoutesByFullPath {
   '/app/companies': typeof AppCompaniesRoute
   '/app/configuracoes-indicadores': typeof AppConfiguracoesIndicadoresRoute
   '/app/controle-documentos': typeof AppControleDocumentosRoute
+  '/app/cozinha': typeof AppCozinhaRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
   '/app/extintores': typeof AppExtintoresRoute
   '/app/extintores-inspecao-foto': typeof AppExtintoresInspecaoFotoRoute
@@ -840,6 +847,7 @@ export interface FileRoutesByTo {
   '/app/companies': typeof AppCompaniesRoute
   '/app/configuracoes-indicadores': typeof AppConfiguracoesIndicadoresRoute
   '/app/controle-documentos': typeof AppControleDocumentosRoute
+  '/app/cozinha': typeof AppCozinhaRoute
   '/app/extintores': typeof AppExtintoresRoute
   '/app/extintores-inspecao-foto': typeof AppExtintoresInspecaoFotoRoute
   '/app/extra-sabado-aprovacoes': typeof AppExtraSabadoAprovacoesRoute
@@ -951,6 +959,7 @@ export interface FileRoutesById {
   '/app/companies': typeof AppCompaniesRoute
   '/app/configuracoes-indicadores': typeof AppConfiguracoesIndicadoresRoute
   '/app/controle-documentos': typeof AppControleDocumentosRoute
+  '/app/cozinha': typeof AppCozinhaRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
   '/app/extintores': typeof AppExtintoresRoute
   '/app/extintores-inspecao-foto': typeof AppExtintoresInspecaoFotoRoute
@@ -1066,6 +1075,7 @@ export interface FileRouteTypes {
     | '/app/companies'
     | '/app/configuracoes-indicadores'
     | '/app/controle-documentos'
+    | '/app/cozinha'
     | '/app/employees'
     | '/app/extintores'
     | '/app/extintores-inspecao-foto'
@@ -1178,6 +1188,7 @@ export interface FileRouteTypes {
     | '/app/companies'
     | '/app/configuracoes-indicadores'
     | '/app/controle-documentos'
+    | '/app/cozinha'
     | '/app/extintores'
     | '/app/extintores-inspecao-foto'
     | '/app/extra-sabado-aprovacoes'
@@ -1288,6 +1299,7 @@ export interface FileRouteTypes {
     | '/app/companies'
     | '/app/configuracoes-indicadores'
     | '/app/controle-documentos'
+    | '/app/cozinha'
     | '/app/employees'
     | '/app/extintores'
     | '/app/extintores-inspecao-foto'
@@ -1569,6 +1581,13 @@ declare module '@tanstack/react-router' {
       path: '/employees'
       fullPath: '/app/employees'
       preLoaderRoute: typeof AppEmployeesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/cozinha': {
+      id: '/app/cozinha'
+      path: '/cozinha'
+      fullPath: '/app/cozinha'
+      preLoaderRoute: typeof AppCozinhaRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/controle-documentos': {
@@ -2276,6 +2295,7 @@ interface AppRouteChildren {
   AppCompaniesRoute: typeof AppCompaniesRoute
   AppConfiguracoesIndicadoresRoute: typeof AppConfiguracoesIndicadoresRoute
   AppControleDocumentosRoute: typeof AppControleDocumentosRoute
+  AppCozinhaRoute: typeof AppCozinhaRoute
   AppEmployeesRoute: typeof AppEmployeesRouteWithChildren
   AppExtintoresRoute: typeof AppExtintoresRoute
   AppExtintoresInspecaoFotoRoute: typeof AppExtintoresInspecaoFotoRoute
@@ -2364,6 +2384,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppCompaniesRoute: AppCompaniesRoute,
   AppConfiguracoesIndicadoresRoute: AppConfiguracoesIndicadoresRoute,
   AppControleDocumentosRoute: AppControleDocumentosRoute,
+  AppCozinhaRoute: AppCozinhaRoute,
   AppEmployeesRoute: AppEmployeesRouteWithChildren,
   AppExtintoresRoute: AppExtintoresRoute,
   AppExtintoresInspecaoFotoRoute: AppExtintoresInspecaoFotoRoute,
