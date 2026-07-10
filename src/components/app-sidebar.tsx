@@ -271,7 +271,7 @@ const PORTARIA_ITEMS: LeafItem[] = [
 export function AppSidebar() {
   const location = useLocation();
   const { roles, hasModule, hasMenu, isExtraSabadoMarcador } = useAuth();
-  const { state, setOpen, isMobile, setOpenMobile } = useSidebar();
+  const { state, setOpen, isMobile, openMobile, setOpenMobile } = useSidebar();
   const collapsed = !isMobile && state === "collapsed";
 
   // Fecha o drawer mobile automaticamente ao navegar
@@ -343,11 +343,25 @@ export function AppSidebar() {
   const manutencaoHover = useHoverOpen();
   const portariaHover = useHoverOpen();
 
-  // No mobile o drawer abre por `openMobile`, mas o estado desktop continua
-  // "collapsed". Por isso `collapsed` acima ignora mobile: senão os módulos
-  // ficavam sempre renderizados e o toque só dava uma piscada no chevron.
+  // No mobile o drawer deve voltar sempre com os módulos recolhidos.
+  useEffect(() => {
+    if (!isMobile || openMobile) return;
+    sesmtHover.setOpen(false);
+    estoqueHover.setOpen(false);
+    producaoHover.setOpen(false);
+    comprasHover.setOpen(false);
+    administrativoHover.setOpen(false);
+    almoxarifadoHover.setOpen(false);
+    manutencaoHover.setOpen(false);
+    portariaHover.setOpen(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMobile, openMobile]);
+
+  // Conteúdo dos módulos SEMPRE fica dentro do CollapsibleContent.
+  // Antes, quando a sidebar estava "collapsed", os filhos eram renderizados
+  // direto e por isso todos os menus ficavam aparecendo no drawer/tablet.
   const Body = ({ children }: { children: React.ReactNode }) =>
-    collapsed ? <>{children}</> : <CollapsibleContent>{children}</CollapsibleContent>;
+    <CollapsibleContent>{children}</CollapsibleContent>;
 
   return (
     <Sidebar
