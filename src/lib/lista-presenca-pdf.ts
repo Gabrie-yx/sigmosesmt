@@ -220,13 +220,15 @@ export function gerarListaPresenca(p: ListaPresencaParams): jsPDF {
   }
 
   function drawTable(yStart: number, rowsCount: number) {
-    // Header row 1: PARTICIPANTES | DATA E RUBRICA (fundo BRANCO — sem cinza)
     const partW = contentW * 0.55;
     const datW = contentW - partW;
     const headH = 5;
     doc.setLineWidth(0.3);
-    doc.rect(margin, yStart, partW, headH);
-    doc.rect(margin + partW, yStart, datW, headH);
+    // Header row 1: PARTICIPANTES | DATA E RUBRICA — fundo cinza igual ao "TIPO"
+    doc.setFillColor(220, 220, 220);
+    doc.rect(margin, yStart, partW, headH, "FD");
+    doc.rect(margin + partW, yStart, datW, headH, "FD");
+    doc.setFillColor(255, 255, 255);
     doc.setFont("helvetica", "bold").setFontSize(8);
     doc.text("PARTICIPANTES", margin + partW / 2, yStart + 3.5, { align: "center" });
     doc.text("DATA E RUBRICA", margin + partW + datW / 2, yStart + 3.5, { align: "center" });
