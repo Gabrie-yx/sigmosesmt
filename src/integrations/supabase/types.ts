@@ -3444,6 +3444,164 @@ export type Database = {
           },
         ]
       }
+      document_template_pendencias: {
+        Row: {
+          created_at: string
+          id: string
+          nota: string | null
+          prazo_sugerido: string | null
+          resolvido_em: string | null
+          resolvido_por: string | null
+          template_id: string
+          updated_at: string
+          version_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nota?: string | null
+          prazo_sugerido?: string | null
+          resolvido_em?: string | null
+          resolvido_por?: string | null
+          template_id: string
+          updated_at?: string
+          version_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nota?: string | null
+          prazo_sugerido?: string | null
+          resolvido_em?: string | null
+          resolvido_por?: string | null
+          template_id?: string
+          updated_at?: string
+          version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_template_pendencias_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "document_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_template_pendencias_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "document_template_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_template_versions: {
+        Row: {
+          arquivo_hash: string | null
+          arquivo_nome: string
+          arquivo_path: string
+          created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          homologada_em: string | null
+          homologada_por: string | null
+          id: string
+          motivo_alteracao: string
+          revisao: number
+          status: string
+          tamanho_bytes: number | null
+          template_id: string
+          updated_at: string
+          uploaded_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          arquivo_hash?: string | null
+          arquivo_nome: string
+          arquivo_path: string
+          created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          homologada_em?: string | null
+          homologada_por?: string | null
+          id?: string
+          motivo_alteracao: string
+          revisao: number
+          status?: string
+          tamanho_bytes?: number | null
+          template_id: string
+          updated_at?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          arquivo_hash?: string | null
+          arquivo_nome?: string
+          arquivo_path?: string
+          created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          homologada_em?: string | null
+          homologada_por?: string | null
+          id?: string
+          motivo_alteracao?: string
+          revisao?: number
+          status?: string
+          tamanho_bytes?: number | null
+          template_id?: string
+          updated_at?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_template_versions_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "document_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_templates: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          descricao: string | null
+          id: string
+          modulo_alvo: string | null
+          motor_render_id: string | null
+          nome: string
+          ordem: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          modulo_alvo?: string | null
+          motor_render_id?: string | null
+          nome: string
+          ordem?: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          modulo_alvo?: string | null
+          motor_render_id?: string | null
+          nome?: string
+          ordem?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       documentos_assinados: {
         Row: {
           assinado_por: string | null
