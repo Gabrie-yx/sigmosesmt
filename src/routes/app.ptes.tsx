@@ -351,6 +351,7 @@ function PtesPage() {
   function startEdit(p: any) {
     setEditingId(p.id);
     setLinkedAprId(p.apr_id ?? null);
+    const pr = (p.plano_resgate ?? {}) as any;
     setF({
       data: p.data,
       risco: p.risco ?? PTE_RISCOS[0],
@@ -368,6 +369,11 @@ function PtesPage() {
       executantes_ids: (p.executantes_ids as string[] | null) ?? (p.employee_id ? [p.employee_id] : []),
       vigia_id: p.vigia_id ?? "",
       supervisor_entrada_id: p.supervisor_entrada_id ?? "",
+      plano_equipe_resgate: pr.equipe_resgate ?? "",
+      plano_equipamentos: pr.equipamentos ?? "",
+      plano_hospital_referencia: pr.hospital_referencia ?? "",
+      plano_tempo_resposta_min: pr.tempo_resposta_min ?? "",
+      plano_meio_comunicacao: pr.meio_comunicacao ?? "",
     });
   }
   function cancelEdit() {
