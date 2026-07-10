@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { HoraExtraSabadoDialog } from "@/components/hora-extra-sabado-dialog";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
-import { buildHoraExtraPdf } from "@/lib/hora-extra-pdf-build";
+import { buildHoraExtraPdf, buildHoraExtraConsolidadoPdf } from "@/lib/hora-extra-pdf-build";
 import type jsPDF from "jspdf";
 
 export const Route = createFileRoute("/app/administrativo/hora-extra-recebida")({
@@ -156,6 +156,9 @@ function AdministrativoHoraExtraRecebidaPage() {
 
   const [q, setQ] = useState("");
   const [setorFilter, setSetorFilter] = useState<string>("__all");
+  const [pdfConsDoc, setPdfConsDoc] = useState<jsPDF | null>(null);
+  const [pdfConsFile, setPdfConsFile] = useState("hora-extra.pdf");
+  const [gerandoConsolidado, setGerandoConsolidado] = useState<string | null>(null);
 
   const { data: registros = [], isLoading } = useQuery({
     queryKey: ["admin-hora-extra-recebida"],
@@ -237,6 +240,32 @@ function AdministrativoHoraExtraRecebidaPage() {
       );
     });
   }, [registros, q, setorFilter]);
+
+  // Datas com fichas APROVADAS visíveis — insumo pro PDF consolidado do dia
+  const datasConsolidado = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const r of filtered) {
+      if (r.status !== "APROVADA") continue;
+      map.set(r.data, (map.get(r.data) ?? 0) + 1);
+    }
+    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
+  }, [filtered]);
+
+  async function gerarConsolidado(dataYmd: string) {
+    const ids = filtered.filter((r) => r.data === dataYmd && r.status === "APROVADA").map((r) => r.id);
+    if (ids.length === 0) { toast.error("Nenhuma ficha aprovada nessa data"); return; }
+    setGerandoConsolidado(dataYmd);
+    try {
+      const out = await buildHoraExtraConsolidadoPdf(ids);
+      if (!out) { toast.error("Falha ao montar o PDF"); return; }
+      setPdfConsDoc(out.doc);
+      setPdfConsFile(out.fileName);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erro ao gerar PDF consolidado");
+    } finally {
+      setGerandoConsolidado(null);
+    }
+  }
 
   // Agrupamento por setor — 1 registro pode aparecer em vários setores
   const grupos = useMemo(() => {
@@ -348,6 +377,45 @@ function AdministrativoHoraExtraRecebidaPage() {
           ))}
         </div>
       )}
+
+      {datasConsolidado.length > 0 && (
+        <Card className="glass-card">
+          <CardHeader className="p-3 pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <FileDown className="h-4 w-4 text-amber-300" />
+              PDF consolidado por dia
+              <span className="text-[11px] font-normal text-muted-foreground">
+                (junta todas as fichas aprovadas do dia num único formulário, agrupado por empresa)
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-3 pt-0 flex flex-wrap gap-2">
+            {datasConsolidado.map(([data, qtd]) => (
+              <Button
+                key={data}
+                variant="outline"
+                size="sm"
+                className="h-8"
+                disabled={gerandoConsolidado === data}
+                onClick={() => gerarConsolidado(data)}
+              >
+                <FileDown className="h-3.5 w-3.5 mr-1.5" />
+                {fmtBR(data)}
+                <span className="ml-1.5 text-[10px] text-muted-foreground">({qtd} ficha{qtd === 1 ? "" : "s"})</span>
+                {gerandoConsolidado === data && <span className="ml-1.5 text-[10px] text-amber-300">gerando…</span>}
+              </Button>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      <PDFPreviewDialog
+        open={!!pdfConsDoc}
+        onClose={() => setPdfConsDoc(null)}
+        doc={pdfConsDoc}
+        fileName={pdfConsFile}
+        title="PDF consolidado — Hora Extra do dia"
+      />
     </div>
   );
 }
