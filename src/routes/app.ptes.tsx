@@ -284,6 +284,13 @@ function PtesPage() {
         vigia_id: f.vigia_id || null,
         supervisor_entrada_id: f.supervisor_entrada_id || null,
         emitente_user_id: user?.id ?? null,
+        plano_resgate: f.tipo_pt === "PET" ? {
+          equipe_resgate: (f.plano_equipe_resgate ?? "").trim() || null,
+          equipamentos: (f.plano_equipamentos ?? "").trim() || null,
+          hospital_referencia: (f.plano_hospital_referencia ?? "").trim() || null,
+          tempo_resposta_min: /^\d+$/.test(String(f.plano_tempo_resposta_min ?? "")) ? String(f.plano_tempo_resposta_min).trim() : null,
+          meio_comunicacao: (f.plano_meio_comunicacao ?? "").trim() || null,
+        } : null,
       };
 
       if (editingId) {
