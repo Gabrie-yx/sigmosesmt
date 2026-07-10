@@ -57,6 +57,43 @@ function PtesPage() {
     queryKey: ["ptes"],
     queryFn: async () => (await supabase.from("ptes").select("*").order("data_emissao", { ascending: false })).data ?? [],
   });
+  // Medições ativas de todas as PETs — usado pra computar badges de alerta no histórico
+  const { data: medsAll = [] } = useQuery({
+    queryKey: ["pte-medicoes-all"],
+    queryFn: async () => (await supabase
+      .from("pte_medicoes_atmosfericas")
+      .select("pte_id,momento,tem_fora_limite,medido_em")
+      .is("deleted_at", null)
+    ).data ?? [],
+  });
+  // Modo strict (por empresa)
+  const { data: petModoStrict = false } = useQuery({
+    queryKey: ["pet-modo-strict"],
+    queryFn: async () => {
+      const { data } = await supabase.from("company_settings").select("pet_modo_strict").limit(1).maybeSingle();
+      return !!data?.pet_modo_strict;
+    },
+  });
+  // Calcula alertas por PET (client-side, sem N+1)
+  const petAlertas = useMemo(() => {
+    const map = new Map<string, { needsEntrada: boolean; foraLimite: boolean; needsPlano: boolean }>();
+    for (const p of ptes as any[]) {
+      if (p.tipo_pt !== "PET") continue;
+      const meds = (medsAll as any[]).filter((m) => m.pte_id === p.id);
+      const temEntradaOk = meds.some((m) => m.momento === "ENTRADA" && !m.tem_fora_limite);
+      const ultima = meds.sort((a, b) => +new Date(b.medido_em) - +new Date(a.medido_em))[0];
+      const foraLimite = !!ultima?.tem_fora_limite;
+      const plano = p.plano_resgate;
+      const planoOk =
+        plano && typeof plano === "object" &&
+        (plano.equipe_resgate ?? "").toString().trim() !== "" &&
+        (plano.equipamentos ?? "").toString().trim() !== "" &&
+        (plano.hospital_referencia ?? "").toString().trim() !== "" &&
+        /^\d+$/.test(String(plano.tempo_resposta_min ?? ""));
+      map.set(p.id, { needsEntrada: !temEntradaOk, foraLimite, needsPlano: !planoOk });
+    }
+    return map;
+  }, [ptes, medsAll]);
   const { data: aprsAll = [] } = useQuery({
     queryKey: ["aprs-light-for-ptes"],
     queryFn: async () => (await supabase.from("aprs").select("id,numero,atividade_descricao,casco_id,empresa_id,local").order("data_emissao", { ascending: false })).data ?? [],
