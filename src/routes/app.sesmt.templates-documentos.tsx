@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   listarTemplates,
@@ -71,7 +71,7 @@ function TemplatesDocumentosPage() {
 
 function PainelInterno() {
   const listar = useServerFn(listarTemplates);
-  const { data: templates } = useSuspenseQuery({
+  const { data: templates, isLoading } = useQuery({
     queryKey: ["document-templates"],
     queryFn: () => listar(),
   });
@@ -94,7 +94,8 @@ function PainelInterno() {
       </header>
 
       <div className="grid gap-3">
-        {templates.map((t: any) => (
+        {isLoading && <p className="text-sm text-rose-100/60">Carregando...</p>}
+        {(templates ?? []).map((t: any) => (
           <Card key={t.id} className="p-4 border-rose-500/20 bg-gradient-to-br from-rose-950/40 to-slate-950/60">
             <div className="flex items-start justify-between gap-4 flex-wrap">
               <div className="flex-1 min-w-[260px]">
