@@ -12,7 +12,6 @@ import { DoorOpen, Plus, LogOut, ChevronRight, AlertTriangle, Users, Clock, Car,
 import { useAuth } from "@/hooks/use-auth";
 import { deletePortariaVisita } from "@/lib/portaria/foto-ocr.functions";
 import { toast } from "sonner";
-import { InstallPwaCard } from "@/components/install-pwa-card";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
@@ -132,8 +131,6 @@ function ControleEntradaPage() {
       </div>
 
       <div className="mx-auto max-w-6xl px-3 lg:px-6 pt-4 lg:pt-5 space-y-4">
-        <InstallPwaCard />
-
         {/* KPIs + ações — linha compacta com flares */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
           <div className="relative overflow-hidden rounded-xl bg-card border border-border p-3 shadow-[0_1px_0_0_hsl(var(--border))]">
