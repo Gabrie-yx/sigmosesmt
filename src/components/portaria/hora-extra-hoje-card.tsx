@@ -318,15 +318,15 @@ function SolicitanteBloco({
     >
       <button
         onClick={() => setExpanded((v) => !v)}
-        className="w-full px-3.5 py-3 flex items-center justify-between gap-3 hover:bg-muted/40 transition text-left"
+        className="w-full px-3 py-3 flex items-center justify-between gap-2 hover:bg-muted/40 transition text-left min-w-0"
       >
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <h3 className="font-bold text-sm sm:text-base leading-tight truncate">{grupo.nome}</h3>
           {detalhe && <p className="text-[11px] text-muted-foreground truncate mt-0.5">{detalhe}</p>}
         </div>
-        <div className="shrink-0 flex items-center gap-2">
-          <span className="text-[11px] font-bold rounded-md border border-primary/25 bg-primary/10 px-2 py-1 tabular-nums">
-            {grupo.total} Func.
+        <div className="shrink-0 flex items-center gap-1.5">
+          <span className="text-[10px] sm:text-[11px] font-bold rounded-md border border-primary/25 bg-primary/10 px-1.5 py-0.5 tabular-nums whitespace-nowrap">
+            {grupo.total} func.
           </span>
           <span className="text-[11px] text-muted-foreground tabular-nums hidden sm:inline">
             {grupo.validados}/{grupo.total} validados
@@ -379,18 +379,18 @@ function EmpresaBloco({
 
   return (
     <div className="rounded-lg border border-border bg-background/30 overflow-hidden">
-      <div className="px-3 py-2.5 border-b border-border flex flex-wrap items-center justify-between gap-2 bg-muted/20">
-        <div className="min-w-0 flex items-center gap-2 flex-wrap">
+      <div className="px-2.5 py-2 border-b border-border flex items-center justify-between gap-2 bg-muted/20 min-w-0">
+        <div className="min-w-0 flex-1 flex items-center gap-2 flex-wrap">
           <span className="text-[10px] font-bold uppercase tracking-[0.12em] px-2 py-0.5 rounded-md bg-primary/15 text-primary border border-primary/30">
             {label}
           </span>
           {previsto && (
-            <span className="text-[11px] font-semibold text-foreground tabular-nums inline-flex items-center gap-1">
+            <span className="text-[11px] font-semibold text-foreground tabular-nums inline-flex items-center gap-1 whitespace-nowrap">
               <Clock3 className="h-3 w-3 text-muted-foreground" />{previsto}
             </span>
           )}
         </div>
-        <div className="text-[11px] text-muted-foreground inline-flex items-center gap-1 tabular-nums">
+        <div className="text-[11px] text-muted-foreground inline-flex items-center gap-1 tabular-nums shrink-0 whitespace-nowrap">
           <Users className="h-3 w-3" /> {validados}/{conv.funcionarios.length}
         </div>
       </div>
@@ -398,19 +398,19 @@ function EmpresaBloco({
         {empresas.map(([empresa, funcs]) => (
           <div key={empresa}>
             <div
-              className="px-3 py-2 border-y border-primary/40 flex items-center justify-between gap-2 bg-gradient-to-r from-primary/25 via-primary/10 to-primary/25"
+              className="px-2.5 py-2 border-y border-primary/40 flex items-center justify-between gap-2 bg-gradient-to-r from-primary/25 via-primary/10 to-primary/25 min-w-0"
               style={{
                 boxShadow:
                   "inset 0 0 0 1px color-mix(in oklab, var(--primary) 20%, transparent), inset 0 -1px 0 0 color-mix(in oklab, var(--primary) 45%, transparent)",
               }}
             >
-              <span className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-foreground inline-flex items-center gap-2">
-                <span className="h-5 w-5 rounded-md bg-primary/25 text-primary grid place-items-center ring-1 ring-primary/40">
+              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-[0.14em] text-foreground inline-flex items-center gap-2 min-w-0 flex-1">
+                <span className="h-5 w-5 rounded-md bg-primary/25 text-primary grid place-items-center ring-1 ring-primary/40 shrink-0">
                   <Building2 className="h-3 w-3" />
                 </span>
-                {empresa}
+                <span className="truncate">{empresa}</span>
               </span>
-              <span className="text-[10px] font-bold uppercase tracking-[0.12em] tabular-nums text-primary bg-primary/15 border border-primary/30 rounded-md px-2 py-0.5">
+              <span className="text-[10px] font-bold uppercase tracking-[0.10em] tabular-nums text-primary bg-primary/15 border border-primary/30 rounded-md px-1.5 py-0.5 shrink-0 whitespace-nowrap">
                 {funcs.length} func.
               </span>
             </div>
