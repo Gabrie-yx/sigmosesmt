@@ -156,19 +156,26 @@ export function HoraExtraHojeCard() {
           "0 0 0 1px color-mix(in oklab, var(--primary) 25%, transparent), 0 0 24px -4px color-mix(in oklab, var(--primary) 55%, transparent), inset 0 0 18px -8px color-mix(in oklab, var(--primary) 35%, transparent)",
       }}
     >
-      <div className="px-4 py-3 border-b border-primary/25 flex items-center justify-between bg-gradient-to-r from-primary/10 via-transparent to-primary/10">
+      <div
+        className="px-4 py-3 border-b-2 border-primary/60 flex items-center justify-between"
+        style={{
+          background:
+            "linear-gradient(135deg, color-mix(in oklab, var(--primary) 55%, black) 0%, color-mix(in oklab, var(--primary) 30%, black) 100%)",
+          boxShadow: "inset 0 -1px 0 0 color-mix(in oklab, var(--primary) 70%, transparent)",
+        }}
+      >
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="h-9 w-9 rounded-xl bg-primary/20 text-primary grid place-items-center shrink-0 ring-1 ring-primary/40">
+          <div className="h-9 w-9 rounded-xl bg-background/15 text-primary-foreground grid place-items-center shrink-0 ring-1 ring-primary-foreground/30">
             <CalendarClock className="h-4 w-4" />
           </div>
           <div className="min-w-0">
-            <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-muted-foreground">Portaria valida</p>
-            <h2 className="font-bold text-base leading-tight truncate">Horas Extras</h2>
+            <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-primary-foreground/70">Portaria valida</p>
+            <h2 className="font-bold text-base leading-tight truncate text-primary-foreground">Horas Extras</h2>
           </div>
         </div>
         <div className="text-right shrink-0">
-          <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-muted-foreground">Validados</p>
-          <p className="font-bold text-lg text-foreground tabular-nums">{totais.validados}<span className="text-muted-foreground text-sm">/{totais.total}</span></p>
+          <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-primary-foreground/70">Validados</p>
+          <p className="font-bold text-lg tabular-nums text-primary-foreground">{totais.validados}<span className="text-primary-foreground/60 text-sm">/{totais.total}</span></p>
         </div>
       </div>
 
@@ -217,9 +224,9 @@ export function HoraExtraHojeCard() {
       )}
 
       <Dialog open={!!openData} onOpenChange={(o) => !o && setOpenData(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl w-[calc(100vw-1rem)] sm:w-full max-h-[92vh] overflow-y-auto p-3 sm:p-6">
           <DialogHeader>
-            <DialogTitle className="capitalize">
+            <DialogTitle className="capitalize pr-8 text-left text-base sm:text-lg">
               Horas Extras · {openData ? fmtData(openData) : ""}
             </DialogTitle>
           </DialogHeader>
@@ -395,26 +402,27 @@ function FuncionarioRow({
   const completo = !!primeiro.at && !!segundo.at;
 
   return (
-    <li className={`px-3 lg:px-4 py-3 flex items-center gap-3 transition ${completo ? "bg-primary/[0.04]" : ""}`}>
-      <div className="shrink-0 relative">
-        <FuncionarioAvatar fotoUrl={f.foto_url} iniciais={iniciais} nome={f.nome} />
-        {completo && (
-          <span className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full bg-primary text-primary-foreground grid place-items-center border-2 border-card">
-            <CheckCircle2 className="h-2.5 w-2.5" />
-          </span>
-        )}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold truncate leading-tight">
-          {f.nome}
-          {f.externo && (
-            <span className="ml-1.5 text-[9px] font-bold uppercase tracking-wider text-muted-foreground">externo</span>
+    <li className={`px-3 lg:px-4 py-3 transition ${completo ? "bg-primary/[0.04]" : ""}`}>
+      <div className="flex items-center gap-3">
+        <div className="shrink-0 relative">
+          <FuncionarioAvatar fotoUrl={f.foto_url} iniciais={iniciais} nome={f.nome} />
+          {completo && (
+            <span className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full bg-primary text-primary-foreground grid place-items-center border-2 border-card">
+              <CheckCircle2 className="h-2.5 w-2.5" />
+            </span>
           )}
-        </p>
-        {f.funcao && <p className="text-[11px] text-muted-foreground truncate mt-0.5">{f.funcao}</p>}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold truncate leading-tight">
+            {f.nome}
+            {f.externo && (
+              <span className="ml-1.5 text-[9px] font-bold uppercase tracking-wider text-muted-foreground">externo</span>
+            )}
+          </p>
+          {f.funcao && <p className="text-[11px] text-muted-foreground truncate mt-0.5">{f.funcao}</p>}
+        </div>
       </div>
-
-      <div className="flex items-center gap-1.5 shrink-0">
+      <div className="mt-2 flex flex-wrap items-center gap-1.5 pl-[60px] sm:pl-0 sm:mt-0 sm:justify-end">
         <ValidacaoBtn
           label={primeiro.label} Icon={primeiro.icon} at={primeiro.at} por={primeiro.por} pending={pending}
           onClick={() => onConfirm(f, primeiro.key)}
