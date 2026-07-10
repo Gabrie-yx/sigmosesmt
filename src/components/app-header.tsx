@@ -8,7 +8,7 @@ import { ShieldCheck } from "lucide-react";
 import { exportBackup, importBackup } from "@/lib/backup";
 import { toast } from "sonner";
 import { useRef, useState } from "react";
-import dmnLogo from "@/assets/dmn-logo.png";
+import dmnLogo from "@/assets/dmn-logo-branco.png";
 import { PendenciasBadge } from "@/components/pendencias-badge";
 import { useSidebar } from "@/components/ui/sidebar";
 import {
