@@ -158,8 +158,12 @@ export function gerarListaPresenca(p: ListaPresencaParams): jsPDF {
 
     // Row: ASSUNTO | TIPO header
     const rowH2 = 5;
-    doc.rect(margin, y, contentW, rowH2);
     const tipoColW = contentW * 0.55;
+    // Preenchimento cinza no cabeçalho "TIPO" (fidelidade FORCP-GP-05)
+    doc.setFillColor(220, 220, 220);
+    doc.rect(margin + (contentW - tipoColW), y, tipoColW, rowH2, "F");
+    doc.setFillColor(255, 255, 255);
+    doc.rect(margin, y, contentW, rowH2);
     doc.line(margin + (contentW - tipoColW), y, margin + (contentW - tipoColW), y + rowH2);
     doc.setFont("helvetica", "bold").setFontSize(8);
     doc.text("ASSUNTO:", margin + 1.5, y + 3.5);
@@ -216,8 +220,11 @@ export function gerarListaPresenca(p: ListaPresencaParams): jsPDF {
     const datW = contentW - partW;
     const headH = 5;
     doc.setLineWidth(0.3);
-    doc.rect(margin, yStart, partW, headH);
-    doc.rect(margin + partW, yStart, datW, headH);
+    // Preenchimento cinza claro no cabeçalho da tabela (fidelidade FORCP-GP-05)
+    doc.setFillColor(220, 220, 220);
+    doc.rect(margin, yStart, partW, headH, "FD");
+    doc.rect(margin + partW, yStart, datW, headH, "FD");
+    doc.setFillColor(255, 255, 255);
     doc.setFont("helvetica", "bold").setFontSize(8);
     doc.text("PARTICIPANTES", margin + partW / 2, yStart + 3.5, { align: "center" });
     doc.text("DATA E RUBRICA", margin + partW + datW / 2, yStart + 3.5, { align: "center" });
@@ -233,8 +240,10 @@ export function gerarListaPresenca(p: ListaPresencaParams): jsPDF {
     const subCols = [colN, colNome, colEmpresa, colCargo];
     let cx = margin;
     doc.setFont("helvetica", "bold").setFontSize(7);
+    // Sub-header também com fundo cinza claro
+    doc.setFillColor(220, 220, 220);
     subCols.forEach((w, i) => {
-      doc.rect(cx, subY, w, subH);
+      doc.rect(cx, subY, w, subH, "FD");
       const label = ["Nº", "NOME", "EMPRESA", "CARGO"][i];
       doc.text(label, cx + w / 2, subY + 3.5, { align: "center" });
       cx += w;
@@ -242,8 +251,9 @@ export function gerarListaPresenca(p: ListaPresencaParams): jsPDF {
     // 5 sub cols rubrica
     const rubCol = datW / 5;
     for (let i = 0; i < 5; i++) {
-      doc.rect(margin + partW + i * rubCol, subY, rubCol, subH);
+      doc.rect(margin + partW + i * rubCol, subY, rubCol, subH, "FD");
     }
+    doc.setFillColor(255, 255, 255);
 
     // Body rows — a tabela para antes da área real do rodapé LGPD.
     let ry = subY + subH;
