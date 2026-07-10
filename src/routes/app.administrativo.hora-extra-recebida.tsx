@@ -21,7 +21,6 @@ import {
 } from "lucide-react";
 import { HoraExtraSabadoDialog } from "@/components/hora-extra-sabado-dialog";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
-import { SignatureGallery } from "@/components/signature-gallery";
 import { buildHoraExtraPdf, buildHoraExtraConsolidadoPdf } from "@/lib/hora-extra-pdf-build";
 import type jsPDF from "jspdf";
 
