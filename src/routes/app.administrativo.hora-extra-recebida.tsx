@@ -491,6 +491,65 @@ function FichaCard({ he, funcs }: { he: HoraExtra; funcs: Funcionario[] }) {
         </div>
         <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 mt-1" />
       </CardHeader>
+      {/* Ações rápidas — desktop only. Mobile mantém o modal-first como está. */}
+      <div
+        className="hidden md:flex items-center gap-1 px-3 pb-2 -mt-1"
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
+      >
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-7 px-2 text-[11px]"
+          onClick={(e) => { e.stopPropagation(); setEditOpen(true); }}
+          title="Editar ficha"
+        >
+          <Pencil className="h-3.5 w-3.5 mr-1" /> Editar
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-7 px-2 text-[11px]"
+          onClick={(e) => { e.stopPropagation(); gerarPdf(); }}
+          disabled={gerandoPdf}
+          title="Gerar PDF da ficha"
+        >
+          <FileDown className="h-3.5 w-3.5 mr-1" /> {gerandoPdf ? "Gerando…" : "PDF"}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-7 px-2 text-[11px] border-rose-500/40 text-rose-300 hover:bg-rose-500/10"
+          onClick={(e) => { e.stopPropagation(); setConfirmDel(true); }}
+          title="Excluir ficha (arquivar)"
+        >
+          <Trash2 className="h-3.5 w-3.5 mr-1" /> Excluir
+        </Button>
+        {he.status === "PENDENTE" && (
+          <>
+            <span className="mx-1 h-4 w-px bg-white/10" />
+            <Button
+              size="sm"
+              className="h-7 px-2 text-[11px] bg-emerald-600 hover:bg-emerald-700 text-white"
+              onClick={(e) => { e.stopPropagation(); aprovar.mutate(); }}
+              disabled={aprovar.isPending}
+              title="Deferir hora extra"
+            >
+              <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Deferir
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              className="h-7 px-2 text-[11px]"
+              onClick={(e) => { e.stopPropagation(); setIndeferirOpen(true); }}
+              disabled={aprovar.isPending}
+              title="Indeferir hora extra"
+            >
+              <XCircle className="h-3.5 w-3.5 mr-1" /> Indeferir
+            </Button>
+          </>
+        )}
+      </div>
     </Card>
 
     <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
