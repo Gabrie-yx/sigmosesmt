@@ -226,7 +226,7 @@ export function HoraExtraHojeCard() {
       <Dialog open={!!openData} onOpenChange={(o) => !o && setOpenData(null)}>
         <DialogContent className="max-w-2xl w-[calc(100vw-1rem)] sm:w-full max-h-[92vh] overflow-y-auto p-3 sm:p-6">
           <DialogHeader>
-            <DialogTitle className="capitalize">
+            <DialogTitle className="capitalize pr-8 text-left text-base sm:text-lg">
               Horas Extras · {openData ? fmtData(openData) : ""}
             </DialogTitle>
           </DialogHeader>
