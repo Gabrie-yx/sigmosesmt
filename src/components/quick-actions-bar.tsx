@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { DRAFTS_EVENT, deleteDraft, listDrafts, type DraftMeta } from "@/lib/draft-store";
-import { FileClock, X, Zap } from "lucide-react";
+import { FileClock, FileUp, X, Zap } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/use-auth";
 
 function timeAgo(ts: number): string {
   const s = Math.floor((Date.now() - ts) / 1000);
@@ -17,6 +18,8 @@ function timeAgo(ts: number): string {
 
 export function QuickActionsBar() {
   const [drafts, setDrafts] = useState<DraftMeta[]>([]);
+  const { roles } = useAuth();
+  const isAdmin = roles.includes("admin");
 
   useEffect(() => {
     const refresh = () => setDrafts(listDrafts());
@@ -54,6 +57,17 @@ export function QuickActionsBar() {
           <Zap className="h-3.5 w-3.5 text-sky-600" />
           Ações rápidas
         </button>
+
+        {isAdmin && (
+          <Link
+            to="/app/sesmt/templates-documentos"
+            className="shrink-0 inline-flex items-center gap-1.5 rounded-md border border-amber-300 bg-amber-100 px-2.5 py-1 font-black text-amber-950 hover:bg-amber-200 transition-colors shadow-sm"
+            title="Abrir upload dos modelos oficiais FOR-SEG"
+          >
+            <FileUp className="h-3.5 w-3.5" />
+            Upload FOR-SEG
+          </Link>
+        )}
 
         {drafts.length > 0 && (
           <>

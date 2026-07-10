@@ -41,6 +41,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: "/app/matriz-treinamento", label: "Matriz de Treinamento", group: "Navegar", icon: GraduationCap },
   { to: "/app/sesmt/procedimentos", label: "Procedimentos / POPs", group: "Navegar", icon: FileText },
   { to: "/app/sesmt/docs", label: "Documentos SESMT", group: "Navegar", icon: FileText },
+  { to: "/app/sesmt/templates-documentos", label: "Templates FOR-SEG — Upload", group: "Navegar", icon: FileText },
   { to: "/app/sesmt/requisicoes", label: "Requisições de Compra", group: "Navegar", icon: ShoppingCart },
   { to: "/app/sesmt/terceiros", label: "Painel de Terceiros", group: "Navegar", icon: Users },
   { to: "/app/ncs", label: "Não Conformidades", group: "Navegar", icon: AlertTriangle },
@@ -55,6 +56,7 @@ const NAV_ITEMS: NavItem[] = [
 ];
 
 const QUICK_ACTIONS: NavItem[] = [
+  { to: "/app/sesmt/templates-documentos", label: "Upload de Template FOR-SEG", group: "Ações", icon: Plus },
   { to: "/app/aprs", label: "Nova APR", group: "Ações", icon: Plus },
   { to: "/app/sesmt/requisicoes", label: "Nova Requisição de Compra", group: "Ações", icon: Plus },
   { to: "/app/employees", label: "Novo Funcionário", group: "Ações", icon: Plus },
