@@ -41,3 +41,4 @@ Aline Farias saiu; TST atual é Francisco Bandeira Almeida. Todo import (CAL/PGR
 - [Aline Farias fora](mem://constraints/aline-farias-fora.md) — Sanitizar em TODO parser/import: "Aline Farias" → "Francisco Bandeira Almeida". Já aplicado em cal-parser + import de PAs.
 - [SIGMO resiliência sem IA](mem://features/sigmo-resiliencia-sem-ia) — Estratégia 2 camadas (templates determinísticos + IA opcional) para importar PGR/PCMSO/LTCAT/LIP sem quebrar se a IA cair. Pausado; retomar junto com Rev.06.
 - [Onda 3 · PET blindada C-11/12/13](mem://features/onda3-blindagem-pet) — Modo strict opt-in, plano_resgate estruturado, soft delete medições. Pendente teste + UI do toggle strict.
+- [PAUSADO · Bloqueios OS x PET](mem://features/pausado-oss-pet-bloqueios) — Chamar de "bloqueios OS x PET" ou "os 44 da PET". 42 de 44 travados por ASO/NR faltando, não pela OS. Pendências: migração ASO legado, cargos elétrica sem NRs, tooltip do dropdown.
