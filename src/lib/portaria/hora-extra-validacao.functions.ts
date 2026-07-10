@@ -16,6 +16,11 @@ const ConfirmarSchema = z.object({
 
 const DesfazerSchema = ConfirmarSchema;
 
+const ConfirmarLoteSchema = z.object({
+  funcionarioIds: z.array(z.string().uuid()).min(1).max(500),
+  tipo: TipoValidacao,
+});
+
 export type HoraExtraHojeFuncionario = {
   id: string;
   hora_extra_id: string;
@@ -258,4 +263,45 @@ export const desfazerValidacaoPortaria = createServerFn({ method: "POST" })
       .eq("id", data.funcionarioId);
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+// Aplica confirmação em lote (permanência/entrada/saída) só nos funcionários
+// que ainda NÃO têm aquela validação, evitando sobrescrever hora/usuário.
+export const confirmarValidacaoPortariaLote = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => ConfirmarLoteSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: perfil } = await context.supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", context.userId)
+      .maybeSingle();
+    const nome = (perfil?.full_name || "Portaria") as string;
+    const now = new Date().toISOString();
+    const patch: Record<string, any> = {};
+    let filtroCol: string;
+    if (data.tipo === "permanencia") {
+      patch.permanencia_confirmada_at = now;
+      patch.permanencia_confirmada_por = context.userId;
+      patch.permanencia_confirmada_por_nome = nome;
+      filtroCol = "permanencia_confirmada_at";
+    } else if (data.tipo === "entrada") {
+      patch.entrada_confirmada_at = now;
+      patch.entrada_confirmada_por = context.userId;
+      patch.entrada_confirmada_por_nome = nome;
+      filtroCol = "entrada_confirmada_at";
+    } else {
+      patch.saida_confirmada_at = now;
+      patch.saida_confirmada_por = context.userId;
+      patch.saida_confirmada_por_nome = nome;
+      filtroCol = "saida_confirmada_at";
+    }
+    const { data: rows, error } = await context.supabase
+      .from("hora_extra_sabado_funcionarios")
+      .update(patch as any)
+      .in("id", data.funcionarioIds)
+      .is(filtroCol, null)
+      .select("id");
+    if (error) throw new Error(error.message);
+    return { ok: true, atualizados: (rows ?? []).length };
   });

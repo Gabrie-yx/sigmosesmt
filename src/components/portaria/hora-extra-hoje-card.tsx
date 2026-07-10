@@ -11,12 +11,13 @@ import {
   listHoraExtraHoje,
   confirmarValidacaoPortaria,
   desfazerValidacaoPortaria,
+  confirmarValidacaoPortariaLote,
   type HoraExtraHojeConvocacao,
   type HoraExtraHojeFuncionario,
 } from "@/lib/portaria/hora-extra-validacao.functions";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Clock3, CheckCircle2, LogIn, LogOut, Users, Undo2, Loader2, CalendarClock, Building2, ChevronDown, ChevronRight, CalendarDays, CalendarRange } from "lucide-react";
+import { Clock3, CheckCircle2, LogIn, LogOut, Users, Undo2, Loader2, CalendarClock, Building2, ChevronDown, ChevronRight, CalendarDays, CalendarRange, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { useSignedAvatarUrl } from "@/lib/signed-avatar-url";
@@ -71,6 +72,7 @@ export function HoraExtraHojeCard() {
   const listFn = useServerFn(listHoraExtraHoje);
   const confirmFn = useServerFn(confirmarValidacaoPortaria);
   const undoFn = useServerFn(desfazerValidacaoPortaria);
+  const confirmLoteFn = useServerFn(confirmarValidacaoPortariaLote);
   const { isAdmin } = useAuth();
   const [openData, setOpenData] = useState<string | null>(null);
   const [showFuturas, setShowFuturas] = useState(false);
@@ -103,6 +105,18 @@ export function HoraExtraHojeCard() {
     onError: (e: any) => toast.error(e?.message ?? "Falha ao desfazer"),
   });
 
+  const confirmarLote = useMutation({
+    mutationFn: (v: { funcionarioIds: string[]; tipo: "permanencia" | "entrada" | "saida" }) =>
+      confirmLoteFn({ data: v }),
+    onSuccess: (r: any, v) => {
+      const n = r?.atualizados ?? 0;
+      const label = v.tipo === "permanencia" ? "permanência" : v.tipo === "entrada" ? "entrada" : "saída";
+      toast.success(n > 0 ? `${n} ${label}${n > 1 ? "s" : ""} registrada${n > 1 ? "s" : ""}` : `Nada pendente de ${label}`);
+      qc.invalidateQueries({ queryKey: ["portaria-hora-extra-hoje"] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Falha no lote"),
+  });
+
   const totais = useMemo(() => {
     const conv = data ?? [];
     const funcs = conv.flatMap((c) => c.funcionarios);
@@ -127,6 +141,34 @@ export function HoraExtraHojeCard() {
   }, [data]);
 
   const grupoAberto = openData ? gruposPorData.find((g) => g.data === openData) ?? null : null;
+  // Pendências agregadas do dia aberto — respeita sábado (entrada) x dia útil (permanência)
+  const pendencias = useMemo(() => {
+    const permIds: string[] = [];
+    const entradaIds: string[] = [];
+    const saidaIds: string[] = [];
+    if (grupoAberto) {
+      for (const conv of grupoAberto.convocacoes) {
+        for (const f of conv.funcionarios) {
+          if (conv.is_sabado) {
+            if (!f.entrada_confirmada_at) entradaIds.push(f.id);
+          } else {
+            if (!f.permanencia_confirmada_at) permIds.push(f.id);
+          }
+          const primeiroOk = conv.is_sabado ? !!f.entrada_confirmada_at : !!f.permanencia_confirmada_at;
+          if (primeiroOk && !f.saida_confirmada_at) saidaIds.push(f.id);
+        }
+      }
+    }
+    return { permIds, entradaIds, saidaIds };
+  }, [grupoAberto]);
+  const totalPrimeiroPend = pendencias.permIds.length + pendencias.entradaIds.length;
+  const aplicarPrimeiroTodos = () => {
+    if (pendencias.permIds.length > 0) confirmarLote.mutate({ funcionarioIds: pendencias.permIds, tipo: "permanencia" });
+    if (pendencias.entradaIds.length > 0) confirmarLote.mutate({ funcionarioIds: pendencias.entradaIds, tipo: "entrada" });
+  };
+  const aplicarSaidaTodos = () => {
+    if (pendencias.saidaIds.length > 0) confirmarLote.mutate({ funcionarioIds: pendencias.saidaIds, tipo: "saida" });
+  };
   const hojeStr = todayYmd();
   const amanhaStr = tomorrowYmd();
   const gruposPrincipais = gruposPorData.filter((g) => g.data === hojeStr || g.data === amanhaStr);
@@ -281,6 +323,35 @@ export function HoraExtraHojeCard() {
               Horas Extras · {openData ? fmtData(openData) : ""}
             </DialogTitle>
           </DialogHeader>
+          {grupoAberto && (totalPrimeiroPend > 0 || pendencias.saidaIds.length > 0) && (
+            <div className="rounded-lg border border-primary/30 bg-primary/5 p-2 flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-primary inline-flex items-center gap-1">
+                <Zap className="h-3.5 w-3.5" /> Em massa
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 px-2 text-[11px] font-semibold"
+                disabled={totalPrimeiroPend === 0 || confirmarLote.isPending}
+                onClick={aplicarPrimeiroTodos}
+                title="Aplica Permanência (dia útil) e Entrada (sábado) em todos os pendentes"
+              >
+                {confirmarLote.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Clock3 className="h-3.5 w-3.5 mr-1" />}
+                Permanência/Entrada ({totalPrimeiroPend})
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 px-2 text-[11px] font-semibold"
+                disabled={pendencias.saidaIds.length === 0 || confirmarLote.isPending}
+                onClick={aplicarSaidaTodos}
+                title="Registra Saída em todos que já tiveram permanência/entrada confirmada"
+              >
+                {confirmarLote.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <LogOut className="h-3.5 w-3.5 mr-1" />}
+                Saída ({pendencias.saidaIds.length})
+              </Button>
+            </div>
+          )}
           <div className="space-y-3 min-w-0">
             {gruposSolicitanteAberto.map((grupo) => (
               <SolicitanteBloco
