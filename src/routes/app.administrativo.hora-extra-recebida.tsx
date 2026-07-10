@@ -159,6 +159,32 @@ function AdministrativoHoraExtraRecebidaPage() {
   const [pdfConsDoc, setPdfConsDoc] = useState<jsPDF | null>(null);
   const [pdfConsFile, setPdfConsFile] = useState("hora-extra.pdf");
   const [gerandoConsolidado, setGerandoConsolidado] = useState<string | null>(null);
+  const GERADOS_KEY = "admin-hora-extra-consolidado-gerados";
+  const [gerados, setGerados] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set();
+    try {
+      const raw = window.localStorage.getItem(GERADOS_KEY);
+      return new Set(raw ? (JSON.parse(raw) as string[]) : []);
+    } catch { return new Set(); }
+  });
+
+  // Assinatura padrão do gestor logado (Anderson) — usada no rodapé do PDF consolidado.
+  const { data: assinaturaGestor } = useQuery({
+    queryKey: ["admin-hora-extra-recebida-assinatura", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_signatures")
+        .select("signature_data,is_default,updated_at")
+        .eq("user_id", user!.id)
+        .order("is_default", { ascending: false })
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) return null;
+      return (data?.signature_data as string | undefined) ?? null;
+    },
+  });
 
   const { data: registros = [], isLoading } = useQuery({
     queryKey: ["admin-hora-extra-recebida"],
@@ -256,10 +282,17 @@ function AdministrativoHoraExtraRecebidaPage() {
     if (ids.length === 0) { toast.error("Nenhuma ficha aprovada nessa data"); return; }
     setGerandoConsolidado(dataYmd);
     try {
-      const out = await buildHoraExtraConsolidadoPdf(ids);
+      const out = await buildHoraExtraConsolidadoPdf(ids, {
+        assinaturaGestorDataUrl: assinaturaGestor ?? null,
+      });
       if (!out) { toast.error("Falha ao montar o PDF"); return; }
       setPdfConsDoc(out.doc);
       setPdfConsFile(out.fileName);
+      setGerados((prev) => {
+        const next = new Set(prev); next.add(dataYmd);
+        try { window.localStorage.setItem(GERADOS_KEY, JSON.stringify(Array.from(next))); } catch {}
+        return next;
+      });
     } catch (e: any) {
       toast.error(e?.message ?? "Erro ao gerar PDF consolidado");
     } finally {
