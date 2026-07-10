@@ -703,6 +703,85 @@ function PtesPage() {
               <PteAtmosferaTab petId={editingId} employees={emps as any[]} />
             )}
 
+            {/* NR-33 33.3.2.h — Plano de Resgate (apenas PET) */}
+            {f.tipo_pt === "PET" && (
+              <div className="mt-6 rounded-2xl border-2 border-amber-500/40 bg-gradient-to-br from-amber-950/40 to-black/40 p-5 space-y-3">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="h-5 w-5 text-amber-300" />
+                  <h3 className="text-xs font-black uppercase tracking-widest text-amber-200">
+                    Plano de Resgate (NR-33 33.3.2.h)
+                  </h3>
+                  {petModoStrict && (
+                    <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-red-600 text-white">
+                      Modo Strict — Obrigatório
+                    </span>
+                  )}
+                </div>
+                <p className="text-[10px] font-bold text-amber-200/60 uppercase">
+                  Sem plano de resgate documentado, o TST responde criminalmente em caso de óbito.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-[10px] font-black text-amber-200/80 uppercase">Equipe de Resgate *</Label>
+                    <Input
+                      value={f.plano_equipe_resgate}
+                      onChange={(e) => setF({ ...f, plano_equipe_resgate: e.target.value })}
+                      placeholder="Nomes/funções (ex: Brigada + Bombeiro Civil João)"
+                      className="bg-black/40 border-amber-500/30 text-amber-50 text-xs h-9"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[10px] font-black text-amber-200/80 uppercase">Equipamentos *</Label>
+                    <Input
+                      value={f.plano_equipamentos}
+                      onChange={(e) => setF({ ...f, plano_equipamentos: e.target.value })}
+                      placeholder="Tripé, maca, cinto paraquedista, EPR autônomo..."
+                      className="bg-black/40 border-amber-500/30 text-amber-50 text-xs h-9"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[10px] font-black text-amber-200/80 uppercase">Hospital de Referência *</Label>
+                    <Input
+                      value={f.plano_hospital_referencia}
+                      onChange={(e) => setF({ ...f, plano_hospital_referencia: e.target.value })}
+                      placeholder="Hospital + telefone (ex: HGCA — 22 2733-0000)"
+                      className="bg-black/40 border-amber-500/30 text-amber-50 text-xs h-9"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[10px] font-black text-amber-200/80 uppercase">Tempo Resposta (min) *</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={f.plano_tempo_resposta_min}
+                      onChange={(e) => setF({ ...f, plano_tempo_resposta_min: e.target.value })}
+                      placeholder="5"
+                      className="bg-black/40 border-amber-500/30 text-amber-50 text-xs h-9"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <Label className="text-[10px] font-black text-amber-200/80 uppercase">Meio de Comunicação</Label>
+                    <Input
+                      value={f.plano_meio_comunicacao}
+                      onChange={(e) => setF({ ...f, plano_meio_comunicacao: e.target.value })}
+                      placeholder="Rádio canal 5 + celular 22 99999-0000"
+                      className="bg-black/40 border-amber-500/30 text-amber-50 text-xs h-9"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Alerta pré-submit: PET sem plano e/ou sem medição em modo relax */}
+            {f.tipo_pt === "PET" && !petModoStrict && (
+              <div className="rounded-xl border-2 border-amber-500/40 bg-amber-950/30 px-4 py-3 flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-300 shrink-0 mt-0.5" />
+                <div className="text-[10px] font-bold text-amber-100 uppercase leading-relaxed">
+                  Modo Relax ativo. A PET vai ser emitida mesmo sem medição/plano de resgate — mas o sistema vai gritar no histórico. Ligue o Modo Strict em Configurações para bloquear PETs incompletas automaticamente.
+                </div>
+              </div>
+            )}
+
             <Button
               type="submit"
               disabled={save.isPending}
