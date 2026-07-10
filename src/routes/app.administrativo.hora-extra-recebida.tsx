@@ -412,34 +412,55 @@ function AdministrativoHoraExtraRecebidaPage() {
       )}
 
       {datasConsolidado.length > 0 && (
-        <Card className="glass-card">
-          <CardHeader className="p-3 pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <FileDown className="h-4 w-4 text-amber-300" />
-              PDF consolidado por dia
-              <span className="text-[11px] font-normal text-muted-foreground">
-                (junta todas as fichas aprovadas do dia num único formulário, agrupado por empresa)
-              </span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-3 pt-0 flex flex-wrap gap-2">
-            {datasConsolidado.map(([data, qtd]) => (
-              <Button
-                key={data}
-                variant="outline"
-                size="sm"
-                className="h-8"
-                disabled={gerandoConsolidado === data}
-                onClick={() => gerarConsolidado(data)}
-              >
-                <FileDown className="h-3.5 w-3.5 mr-1.5" />
-                {fmtBR(data)}
-                <span className="ml-1.5 text-[10px] text-muted-foreground">({qtd} ficha{qtd === 1 ? "" : "s"})</span>
-                {gerandoConsolidado === data && <span className="ml-1.5 text-[10px] text-amber-300">gerando…</span>}
-              </Button>
-            ))}
-          </CardContent>
-        </Card>
+        <div className="flex justify-start">
+          <Card className="glass-card w-full md:w-auto md:max-w-2xl border-amber-400/20">
+            <CardHeader className="p-3 pb-2">
+              <CardTitle className="text-sm flex items-center gap-2 flex-wrap">
+                <FileDown className="h-4 w-4 text-amber-300" />
+                PDF consolidado por dia
+                {assinaturaGestor ? (
+                  <span className="prism-pill accent-emerald px-2 py-0.5 text-[10px] text-emerald-100">
+                    assinado por {(user?.user_metadata as any)?.nome_completo ?? user?.email ?? "gestor"}
+                  </span>
+                ) : (
+                  <span className="prism-pill accent-amber px-2 py-0.5 text-[10px] text-amber-100">
+                    sem assinatura cadastrada
+                  </span>
+                )}
+              </CardTitle>
+              <p className="text-[11px] font-normal text-muted-foreground mt-1">
+                Junta todas as fichas aprovadas do dia num único formulário, agrupado por empresa.
+                Fichas em <span className="text-amber-300 font-semibold">âmbar pulsante</span> ainda não foram geradas.
+              </p>
+            </CardHeader>
+            <CardContent className="p-3 pt-0 flex flex-wrap gap-2">
+              {datasConsolidado.map(([data, qtd]) => {
+                const jaGerado = gerados.has(data);
+                return (
+                  <Button
+                    key={data}
+                    variant="outline"
+                    size="sm"
+                    className={
+                      "h-8 transition-all " +
+                      (jaGerado
+                        ? "opacity-80"
+                        : "border-amber-400/70 text-amber-100 bg-amber-500/10 hover:bg-amber-500/20 shadow-[0_0_18px_rgba(251,191,36,0.55)] animate-pulse")
+                    }
+                    disabled={gerandoConsolidado === data}
+                    onClick={() => gerarConsolidado(data)}
+                    title={jaGerado ? "PDF já gerado nesta sessão" : "Ainda não gerado — clique para consolidar"}
+                  >
+                    <FileDown className="h-3.5 w-3.5 mr-1.5" />
+                    {fmtBR(data)}
+                    <span className="ml-1.5 text-[10px] text-muted-foreground">({qtd} ficha{qtd === 1 ? "" : "s"})</span>
+                    {gerandoConsolidado === data && <span className="ml-1.5 text-[10px] text-amber-300">gerando…</span>}
+                  </Button>
+                );
+              })}
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       <PDFPreviewDialog
