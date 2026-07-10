@@ -53,11 +53,13 @@ export type HoraExtraHojeConvocacao = {
 export const listHoraExtraHoje = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<HoraExtraHojeConvocacao[]> => {
-    const nowLocal = new Date();
-    const y = nowLocal.getFullYear();
-    const m = String(nowLocal.getMonth() + 1).padStart(2, "0");
-    const day = String(nowLocal.getDate()).padStart(2, "0");
-    const hoje = `${y}-${m}-${day}`;
+    // Data "hoje" em horário de Brasília (UTC-3), evita bug quando o worker
+    // em UTC já virou o dia mas no BR ainda é o dia anterior (ou vice-versa).
+    const fmt = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Sao_Paulo",
+      year: "numeric", month: "2-digit", day: "2-digit",
+    });
+    const hoje = fmt.format(new Date()); // YYYY-MM-DD
     const { data, error } = await context.supabase
       .from("hora_extra_sabado")
       .select(`
