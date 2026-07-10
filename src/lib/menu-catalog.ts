@@ -18,6 +18,7 @@ export const MENU_CATALOG: MenuEntry[] = [
   { key: "/app/matriz-treinamento", label: "Matriz de Treinamento", module: "sesmt" },
   { key: "/app/sesmt/docs", label: "Documentos SESMT", module: "sesmt" },
   { key: "/app/sesmt/guia-documentos", label: "Guia: Onde encontrar laudos?", module: "sesmt" },
+  { key: "/app/sesmt/templates-documentos", label: "Templates de Documentos (FOR-SEG)", module: "sesmt" },
   { key: "/app/controle-documentos", label: "Controle de Documentos", module: "sesmt" },
   { key: "/app/extintores", label: "Controle de Extintores", module: "sesmt" },
   { key: "/app/sesmt/requisicoes", label: "Requisições de Compra", module: "sesmt" },
