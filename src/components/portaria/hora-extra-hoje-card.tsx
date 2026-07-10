@@ -15,7 +15,8 @@ import {
   type HoraExtraHojeFuncionario,
 } from "@/lib/portaria/hora-extra-validacao.functions";
 import { Button } from "@/components/ui/button";
-import { Clock3, CheckCircle2, LogIn, LogOut, Users, Undo2, Loader2, CalendarClock, Building2, ChevronDown, ChevronRight } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Clock3, CheckCircle2, LogIn, LogOut, Users, Undo2, Loader2, CalendarClock, Building2, ChevronDown, ChevronRight, CalendarDays } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { useSignedAvatarUrl } from "@/lib/signed-avatar-url";
@@ -24,6 +25,24 @@ function fmtHora(iso?: string | null) {
   if (!iso) return "--:--";
   return new Date(iso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 }
+
+function fmtData(ymd: string) {
+  const [y, m, d] = ymd.split("-").map(Number);
+  const dt = new Date(y, (m ?? 1) - 1, d ?? 1);
+  return dt.toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit" });
+}
+
+function todayYmd() {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`;
+}
+
+type GrupoData = {
+  data: string;
+  convocacoes: HoraExtraHojeConvocacao[];
+  total: number;
+  validados: number;
+};
 
 type GrupoSolicitante = {
   key: string;
@@ -47,6 +66,7 @@ export function HoraExtraHojeCard() {
   const confirmFn = useServerFn(confirmarValidacaoPortaria);
   const undoFn = useServerFn(desfazerValidacaoPortaria);
   const { isAdmin } = useAuth();
+  const [openData, setOpenData] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["portaria-hora-extra-hoje"],
@@ -87,18 +107,28 @@ export function HoraExtraHojeCard() {
     return { total, validados };
   }, [data]);
 
-  const gruposSolicitante = useMemo<GrupoSolicitante[]>(() => {
-    const map = new Map<string, GrupoSolicitante>();
+  const gruposPorData = useMemo<GrupoData[]>(() => {
+    const map = new Map<string, GrupoData>();
     for (const conv of data ?? []) {
+      const atual = map.get(conv.data) ?? { data: conv.data, convocacoes: [], total: 0, validados: 0 };
+      atual.convocacoes.push(conv);
+      atual.total += conv.funcionarios.length;
+      atual.validados += conv.funcionarios.filter((f) => isFuncionarioValidado(conv, f)).length;
+      map.set(conv.data, atual);
+    }
+    return Array.from(map.values()).sort((a, b) => a.data.localeCompare(b.data));
+  }, [data]);
+
+  const grupoAberto = openData ? gruposPorData.find((g) => g.data === openData) ?? null : null;
+  const gruposSolicitanteAberto = useMemo<GrupoSolicitante[]>(() => {
+    if (!grupoAberto) return [];
+    const map = new Map<string, GrupoSolicitante>();
+    for (const conv of grupoAberto.convocacoes) {
       const key = conv.solicitante_key || conv.id;
       const atual = map.get(key) ?? {
-        key,
-        nome: conv.solicitante_nome || "Solicitante",
-        funcao: conv.solicitante_funcao,
-        setor: conv.solicitante_setor,
-        total: 0,
-        validados: 0,
-        convocacoes: [],
+        key, nome: conv.solicitante_nome || "Solicitante",
+        funcao: conv.solicitante_funcao, setor: conv.solicitante_setor,
+        total: 0, validados: 0, convocacoes: [],
       };
       atual.total += conv.funcionarios.length;
       atual.validados += conv.funcionarios.filter((f) => isFuncionarioValidado(conv, f)).length;
@@ -106,7 +136,7 @@ export function HoraExtraHojeCard() {
       map.set(key, atual);
     }
     return Array.from(map.values()).sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
-  }, [data]);
+  }, [grupoAberto]);
 
   if (isLoading) {
     return (
@@ -133,7 +163,7 @@ export function HoraExtraHojeCard() {
           </div>
           <div className="min-w-0">
             <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-muted-foreground">Portaria valida</p>
-            <h2 className="font-bold text-base leading-tight truncate">Hora Extra Hoje</h2>
+            <h2 className="font-bold text-base leading-tight truncate">Horas Extras</h2>
           </div>
         </div>
         <div className="text-right shrink-0">
@@ -145,25 +175,68 @@ export function HoraExtraHojeCard() {
       {isEmpty ? (
         <div className="px-4 py-8 text-center">
           <CalendarClock className="h-7 w-7 mx-auto opacity-40 mb-2 text-muted-foreground" />
-          <p className="text-sm font-semibold text-foreground">Sem hora extra aprovada pra hoje</p>
+          <p className="text-sm font-semibold text-foreground">Sem hora extra aprovada</p>
           <p className="text-xs mt-1 text-muted-foreground max-w-sm mx-auto">
-            Assim que o encarregado abrir uma convocação e o supervisor aprovar, os funcionários aparecem aqui pra validar permanência/entrada e saída.
+            Assim que o encarregado abrir uma convocação e o supervisor aprovar, ela aparece aqui por data pra portaria validar.
           </p>
         </div>
       ) : (
-      <div className="space-y-3 p-3">
-        {gruposSolicitante.map((grupo) => (
-          <SolicitanteBloco
-            key={grupo.key}
-            grupo={grupo}
-            isAdmin={isAdmin}
-            onConfirm={(f, tipo) => confirmar.mutate({ funcionarioId: f.id, tipo })}
-            onUndo={(f, tipo) => desfazer.mutate({ funcionarioId: f.id, tipo })}
-            pendingId={confirmar.isPending ? (confirmar.variables?.funcionarioId ?? null) : desfazer.isPending ? (desfazer.variables?.funcionarioId ?? null) : null}
-          />
-        ))}
-      </div>
+      <ul className="divide-y divide-border">
+        {gruposPorData.map((g) => {
+          const isHoje = g.data === todayYmd();
+          const totalFichas = g.convocacoes.length;
+          return (
+            <li key={g.data}>
+              <button
+                onClick={() => setOpenData(g.data)}
+                className="w-full px-4 py-3 flex items-center gap-3 hover:bg-muted/40 transition text-left"
+              >
+                <div className="h-9 w-9 rounded-xl bg-primary/15 text-primary grid place-items-center shrink-0 ring-1 ring-primary/30">
+                  <CalendarDays className="h-4 w-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold leading-tight capitalize">
+                    {fmtData(g.data)}
+                    {isHoje && <span className="ml-2 text-[10px] font-bold uppercase tracking-wider text-primary">Hoje</span>}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5 tabular-nums">
+                    {totalFichas} ficha{totalFichas > 1 ? "s" : ""} · {g.total} func.
+                  </p>
+                </div>
+                <div className="shrink-0 text-right">
+                  <span className="text-[11px] font-bold tabular-nums text-foreground">
+                    {g.validados}/{g.total}
+                  </span>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground inline-block ml-1 -mt-0.5" />
+                </div>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
       )}
+
+      <Dialog open={!!openData} onOpenChange={(o) => !o && setOpenData(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="capitalize">
+              Horas Extras · {openData ? fmtData(openData) : ""}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            {gruposSolicitanteAberto.map((grupo) => (
+              <SolicitanteBloco
+                key={grupo.key}
+                grupo={grupo}
+                isAdmin={isAdmin}
+                onConfirm={(f, tipo) => confirmar.mutate({ funcionarioId: f.id, tipo })}
+                onUndo={(f, tipo) => desfazer.mutate({ funcionarioId: f.id, tipo })}
+                pendingId={confirmar.isPending ? (confirmar.variables?.funcionarioId ?? null) : desfazer.isPending ? (desfazer.variables?.funcionarioId ?? null) : null}
+              />
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
