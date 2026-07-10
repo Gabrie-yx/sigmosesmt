@@ -168,11 +168,34 @@ function AdministrativoHoraExtraRecebidaPage() {
     } catch { return new Set(); }
   });
 
-  // Assinatura padrão do gestor logado (Anderson) — usada no rodapé do PDF consolidado.
+  // Assinatura do gestor (Anderson) — usada no rodapé do PDF consolidado.
+  // Prioridade: 1) ficha do colaborador com mesmo nome do usuário logado
+  // (traz assinatura + carimbo já embutidos); 2) fallback para user_signatures.
   const { data: assinaturaGestor } = useQuery({
     queryKey: ["admin-hora-extra-recebida-assinatura", user?.id],
     enabled: !!user,
     queryFn: async () => {
+      const nome = (
+        (user?.user_metadata as any)?.full_name
+        ?? (user?.user_metadata as any)?.nome_completo
+        ?? (user?.user_metadata as any)?.name
+        ?? ""
+      ).trim() as string;
+      if (nome) {
+        const tokens = nome.split(/\s+/).filter((t) => t.length > 2);
+        const first = tokens[0];
+        const last = tokens[tokens.length - 1];
+        if (first && last) {
+          const { data: emp } = await supabase
+            .from("employees")
+            .select("nome,assinatura_url")
+            .ilike("nome", `${first}%${last}%`)
+            .not("assinatura_url", "is", null)
+            .limit(1)
+            .maybeSingle();
+          if (emp?.assinatura_url) return emp.assinatura_url as string;
+        }
+      }
       const { data, error } = await supabase
         .from("user_signatures")
         .select("signature_data,is_default,updated_at")
