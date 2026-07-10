@@ -2379,6 +2379,7 @@ export type Database = {
           meta_dias_perdidos_max_mes: number
           meta_inspecoes_pct: number
           meta_treinamentos_pct: number
+          pet_modo_strict: boolean
           pt_exige_apr_valida: boolean
           supervisor_geral_user_id: string | null
           updated_at: string
@@ -2393,6 +2394,7 @@ export type Database = {
           meta_dias_perdidos_max_mes?: number
           meta_inspecoes_pct?: number
           meta_treinamentos_pct?: number
+          pet_modo_strict?: boolean
           pt_exige_apr_valida?: boolean
           supervisor_geral_user_id?: string | null
           updated_at?: string
@@ -2407,6 +2409,7 @@ export type Database = {
           meta_dias_perdidos_max_mes?: number
           meta_inspecoes_pct?: number
           meta_treinamentos_pct?: number
+          pet_modo_strict?: boolean
           pt_exige_apr_valida?: boolean
           supervisor_geral_user_id?: string | null
           updated_at?: string
@@ -8799,6 +8802,9 @@ export type Database = {
           calibracao_validade: string | null
           created_at: string
           created_by: string | null
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_motivo: string | null
           equipamento_marca: string | null
           equipamento_modelo: string | null
           equipamento_serie: string | null
@@ -8818,6 +8824,9 @@ export type Database = {
           calibracao_validade?: string | null
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_motivo?: string | null
           equipamento_marca?: string | null
           equipamento_modelo?: string | null
           equipamento_serie?: string | null
@@ -8837,6 +8846,9 @@ export type Database = {
           calibracao_validade?: string | null
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_motivo?: string | null
           equipamento_marca?: string | null
           equipamento_modelo?: string | null
           equipamento_serie?: string | null
@@ -8921,6 +8933,7 @@ export type Database = {
           local: string | null
           numero: string | null
           pdf_path: string | null
+          plano_resgate: Json | null
           pts_relacionadas: string[] | null
           requisitante_id: string | null
           risco: string | null
@@ -8955,6 +8968,7 @@ export type Database = {
           local?: string | null
           numero?: string | null
           pdf_path?: string | null
+          plano_resgate?: Json | null
           pts_relacionadas?: string[] | null
           requisitante_id?: string | null
           risco?: string | null
@@ -8989,6 +9003,7 @@ export type Database = {
           local?: string | null
           numero?: string | null
           pdf_path?: string | null
+          plano_resgate?: Json | null
           pts_relacionadas?: string[] | null
           requisitante_id?: string | null
           risco?: string | null
@@ -10965,6 +10980,10 @@ export type Database = {
             }
             Returns: string
           }
+      medicao_soft_delete: {
+        Args: { _id: string; _motivo: string }
+        Returns: undefined
+      }
       melhor_combo_por_item: {
         Args: { _rc_id: string }
         Returns: {
@@ -11001,6 +11020,7 @@ export type Database = {
       oss_marcar_vencidas: { Args: never; Returns: number }
       peek_proximo_numero_apr: { Args: never; Returns: string }
       pegar_rc_para_cotar: { Args: { _token: string }; Returns: undefined }
+      pet_status_alerta: { Args: { _pte_id: string }; Returns: Json }
       pode_gerenciar_compras: { Args: { _user_id: string }; Returns: boolean }
       pode_gerir_extra_sabado: { Args: { _user_id: string }; Returns: boolean }
       pt_title_case: { Args: { s: string }; Returns: string }
