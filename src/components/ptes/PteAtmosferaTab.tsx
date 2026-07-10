@@ -279,7 +279,15 @@ import { CatalogoGasesManager } from "@/components/sesmt/CatalogoGasesManager";
                  size="sm"
                  variant="ghost"
                  onClick={() => {
-                   if (confirm("Remover esta medição?")) remove.mutate(m.id);
+                  const motivo = prompt(
+                    "Motivo do arquivamento desta medição (mínimo 10 caracteres — fica registrado em auditoria):"
+                  );
+                  if (!motivo) return;
+                  if (motivo.trim().length < 10) {
+                    toast.error("Motivo precisa ter no mínimo 10 caracteres.");
+                    return;
+                  }
+                  remove.mutate({ id: m.id, motivo: motivo.trim() });
                  }}
                  className="h-7 px-2 text-red-600 hover:bg-red-50"
                >
