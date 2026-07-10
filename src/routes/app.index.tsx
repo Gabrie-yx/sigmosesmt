@@ -3,7 +3,6 @@ import { Anchor, Compass, Gem, ShieldCheck, Leaf, Building2, Award, ArrowRight, 
 import shipyardImg from "@/assets/dmn-shipyard.jpg";
 import isoSeal from "@/assets/iso-9001.png";
 import { useAuth } from "@/hooks/use-auth";
-import { InstallPwaCard } from "@/components/install-pwa-card";
 
 export const Route = createFileRoute("/app/")({
   component: HomePage,
@@ -13,9 +12,6 @@ function HomePage() {
   const { isModerator } = useAuth();
   return (
     <div className="h-full overflow-y-auto custom-scrollbar bg-[#f1f5f9]">
-      <div className="px-4 md:px-8 pt-4 max-w-7xl mx-auto w-full">
-        <InstallPwaCard />
-      </div>
       {/* HERO */}
       <section className="relative overflow-hidden">
         <div
