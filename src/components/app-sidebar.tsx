@@ -272,7 +272,7 @@ export function AppSidebar() {
   const location = useLocation();
   const { roles, hasModule, hasMenu, isExtraSabadoMarcador } = useAuth();
   const { state, setOpen, isMobile, setOpenMobile } = useSidebar();
-  const collapsed = state === "collapsed";
+  const collapsed = !isMobile && state === "collapsed";
 
   // Fecha o drawer mobile automaticamente ao navegar
   useEffect(() => {
@@ -343,11 +343,9 @@ export function AppSidebar() {
   const manutencaoHover = useHoverOpen();
   const portariaHover = useHoverOpen();
 
-  // Desktop colapsado (icon mode): o label some, então o conteúdo precisa
-  // ficar sempre visível pra os ícones continuarem acessíveis.
-  // Desktop expandido + Mobile (drawer): usa o Collapsible normal — no mobile
-  // o toque no cabeçalho já dispara o clique do CollapsibleTrigger, então
-  // cada módulo abre/recolhe sob demanda em vez de aparecer tudo aberto.
+  // No mobile o drawer abre por `openMobile`, mas o estado desktop continua
+  // "collapsed". Por isso `collapsed` acima ignora mobile: senão os módulos
+  // ficavam sempre renderizados e o toque só dava uma piscada no chevron.
   const Body = ({ children }: { children: React.ReactNode }) =>
     collapsed ? <>{children}</> : <CollapsibleContent>{children}</CollapsibleContent>;
 

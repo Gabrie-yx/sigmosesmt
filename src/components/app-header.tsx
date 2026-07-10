@@ -56,7 +56,7 @@ export function AppHeader() {
         <button
           type="button"
           onClick={toggleSidebar}
-          className="md:hidden inline-flex h-10 items-center gap-1.5 rounded-lg bg-white/15 hover:bg-white/25 active:bg-white/30 px-2.5 text-white shrink-0 ring-1 ring-white/30 shadow-sm"
+          className="lg:hidden inline-flex h-10 items-center gap-1.5 rounded-lg bg-white/15 hover:bg-white/25 active:bg-white/30 px-2.5 text-white shrink-0 ring-1 ring-white/30 shadow-sm"
           aria-label="Abrir menu"
           title="Menu"
         >
@@ -81,11 +81,11 @@ export function AppHeader() {
           <Link
             to="/app/ajuda"
             title="Central de Ajuda"
-            className="hidden md:flex h-8 w-8 rounded-md text-header-foreground/80 hover:bg-white/10 hover:text-header-foreground items-center justify-center"
+            className="hidden lg:flex h-8 w-8 rounded-md text-header-foreground/80 hover:bg-white/10 hover:text-header-foreground items-center justify-center"
           >
             <HelpCircle className="h-4 w-4" />
           </Link>
-          <div className="hidden md:flex items-center gap-0.5 border-l border-white/10 pl-2">
+          <div className="hidden lg:flex items-center gap-0.5 border-l border-white/10 pl-2">
             <button
               title="Exportar backup"
               onClick={() => exportBackup()}
@@ -109,7 +109,7 @@ export function AppHeader() {
               onChange={(e) => e.target.files?.[0] && handleImport(e.target.files[0])}
             />
           </div>
-          <div className="hidden md:flex items-center gap-2 border-l border-white/10 pl-2">
+          <div className="hidden lg:flex items-center gap-2 border-l border-white/10 pl-2">
             <Link
               to="/app/conta/seguranca"
               title="Minha conta / Segurança (senha, MFA, sessões)"
@@ -156,7 +156,7 @@ export function AppHeader() {
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white/15 hover:bg-white/25 active:bg-white/30 text-white shrink-0 ring-1 ring-white/30 shadow-sm"
+                className="lg:hidden inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white/15 hover:bg-white/25 active:bg-white/30 text-white shrink-0 ring-1 ring-white/30 shadow-sm"
                 aria-label="Mais opções"
                 title="Mais"
               >
