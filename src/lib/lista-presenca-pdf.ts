@@ -332,17 +332,21 @@ export function gerarListaPresenca(p: ListaPresencaParams): jsPDF {
  * disparar o click, o que às vezes é perdido quando o React desmonta o botão).
  */
 export function baixarPdf(doc: jsPDF, fileName: string) {
-  const blob = doc.output("blob");
+  baixarBlob(doc.output("blob"), fileName);
+}
+
+export function baixarBlob(blob: Blob, fileName: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
   a.download = fileName;
   a.rel = "noopener";
+  a.target = "_self";
   a.style.display = "none";
   document.body.appendChild(a);
-  a.click();
+  a.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: window }));
   setTimeout(() => {
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }, 2000);
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  }, 1000);
 }
