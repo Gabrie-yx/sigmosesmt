@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { HoraExtraSabadoDialog } from "@/components/hora-extra-sabado-dialog";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
+import { SignatureGallery } from "@/components/signature-gallery";
 import { buildHoraExtraPdf, buildHoraExtraConsolidadoPdf } from "@/lib/hora-extra-pdf-build";
 import type jsPDF from "jspdf";
 
@@ -168,46 +169,37 @@ function AdministrativoHoraExtraRecebidaPage() {
     } catch { return new Set(); }
   });
 
-  // Assinatura do gestor (Anderson) — usada no rodapé do PDF consolidado.
-  // Prioridade: 1) ficha do colaborador com mesmo nome do usuário logado
-  // (traz assinatura + carimbo já embutidos); 2) fallback para user_signatures.
-  const { data: assinaturaGestor } = useQuery({
+  // Assinatura do gestor para o rodapé "APROVAÇÃO / GESTOR" do PDF consolidado.
+  // Vem da Galeria de Assinaturas do usuário logado. Pega a marcada como
+  // padrão (is_default). Uma seleção manual (via botão "Trocar assinatura")
+  // sobrescreve a padrão apenas nesta sessão (guardada em localStorage).
+  const SIG_KEY = `admin-hora-extra-sig-${user?.id ?? "anon"}`;
+  const [sigOverride, setSigOverride] = useState<{ id: string; label: string; data: string } | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const raw = window.localStorage.getItem(SIG_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  });
+  const { data: assinaturaPadrao } = useQuery({
     queryKey: ["admin-hora-extra-recebida-assinatura", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const nome = (
-        (user?.user_metadata as any)?.full_name
-        ?? (user?.user_metadata as any)?.nome_completo
-        ?? (user?.user_metadata as any)?.name
-        ?? ""
-      ).trim() as string;
-      if (nome) {
-        const tokens = nome.split(/\s+/).filter((t) => t.length > 2);
-        const first = tokens[0];
-        const last = tokens[tokens.length - 1];
-        if (first && last) {
-          const { data: emp } = await supabase
-            .from("employees")
-            .select("nome,assinatura_url")
-            .ilike("nome", `${first}%${last}%`)
-            .not("assinatura_url", "is", null)
-            .limit(1)
-            .maybeSingle();
-          if (emp?.assinatura_url) return emp.assinatura_url as string;
-        }
-      }
       const { data, error } = await supabase
         .from("user_signatures")
-        .select("signature_data,is_default,updated_at")
-        .eq("user_id", user!.id)
+        .select("id,label,signature_data,is_default,updated_at")
         .order("is_default", { ascending: false })
         .order("updated_at", { ascending: false })
         .limit(1)
         .maybeSingle();
       if (error) return null;
-      return (data?.signature_data as string | undefined) ?? null;
+      return data ?? null;
     },
   });
+  const assinaturaAtiva = sigOverride ?? (assinaturaPadrao
+    ? { id: assinaturaPadrao.id, label: assinaturaPadrao.label, data: assinaturaPadrao.signature_data }
+    : null);
+  const assinaturaGestor = assinaturaAtiva?.data ?? null;
 
   const { data: registros = [], isLoading } = useQuery({
     queryKey: ["admin-hora-extra-recebida"],
