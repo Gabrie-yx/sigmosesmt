@@ -271,8 +271,7 @@ const PORTARIA_ITEMS: LeafItem[] = [
 export function AppSidebar() {
   const location = useLocation();
   const { roles, hasModule, hasMenu, isExtraSabadoMarcador } = useAuth();
-  const { state, setOpen, isMobile, openMobile, setOpenMobile } = useSidebar();
-  const collapsed = !isMobile && state === "collapsed";
+  const { setOpen, isMobile, openMobile, setOpenMobile } = useSidebar();
 
   // Fecha o drawer mobile automaticamente ao navegar
   useEffect(() => {
@@ -342,9 +341,7 @@ export function AppSidebar() {
   const manutencaoHover = useHoverOpen();
   const portariaHover = useHoverOpen();
 
-  // No mobile o drawer deve voltar sempre com os módulos recolhidos.
-  useEffect(() => {
-    if (!isMobile || openMobile) return;
+  const closeAllModules = () => {
     sesmtHover.setOpen(false);
     estoqueHover.setOpen(false);
     producaoHover.setOpen(false);
@@ -353,6 +350,12 @@ export function AppSidebar() {
     almoxarifadoHover.setOpen(false);
     manutencaoHover.setOpen(false);
     portariaHover.setOpen(false);
+  };
+
+  // No mobile o drawer deve abrir e fechar sempre com os módulos recolhidos.
+  useEffect(() => {
+    if (!isMobile) return;
+    closeAllModules();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMobile, openMobile]);
 
@@ -360,7 +363,7 @@ export function AppSidebar() {
   // Antes, quando a sidebar estava "collapsed", os filhos eram renderizados
   // direto e por isso todos os menus ficavam aparecendo no drawer/tablet.
   const Body = ({ children }: { children: React.ReactNode }) => (
-    <CollapsibleContent className="data-[state=closed]:hidden">
+    <CollapsibleContent className="overflow-hidden data-[state=closed]:!hidden">
       {children}
     </CollapsibleContent>
   );
