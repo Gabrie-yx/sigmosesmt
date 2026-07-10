@@ -815,6 +815,21 @@ function PtesPage() {
                     {p.tipo_pt && p.tipo_pt !== "PTE" && (
                       <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-indigo-950/70 text-indigo-200 border border-indigo-500/30">{p.tipo_pt}</span>
                     )}
+                    {p.tipo_pt === "PET" && p.status === "ATIVA" && petAlertas.get(p.id)?.foraLimite && (
+                      <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-red-600 text-white flex items-center gap-1" title="Última medição atmosférica fora do limite NR-33">
+                        <AlertTriangle className="h-3 w-3" /> ATMOSFERA FORA DO LIMITE
+                      </span>
+                    )}
+                    {p.tipo_pt === "PET" && p.status === "ATIVA" && petAlertas.get(p.id)?.needsEntrada && (
+                      <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-amber-500 text-black flex items-center gap-1" title="PET ativa sem medição de ENTRADA conforme registrada">
+                        <AlertTriangle className="h-3 w-3" /> MEDIÇÃO PENDENTE
+                      </span>
+                    )}
+                    {p.tipo_pt === "PET" && petAlertas.get(p.id)?.needsPlano && (
+                      <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-orange-600 text-white flex items-center gap-1" title="Plano de resgate NR-33 33.3.2.h não preenchido">
+                        <AlertTriangle className="h-3 w-3" /> SEM PLANO DE RESGATE
+                      </span>
+                    )}
                   </div>
                   <div className="flex gap-2 items-center">
                     <div className={`text-[9px] font-black uppercase px-2 py-0.5 rounded tracking-widest border ${p.status === "ATIVA" ? "bg-gradient-to-br from-amber-600/80 to-amber-900/80 text-amber-50 border-amber-400/40 shadow-[0_0_12px_-2px_rgba(245,158,11,0.5)]" : "bg-black/40 text-rose-200/50 border-white/10"}`}>{p.status}</div>
