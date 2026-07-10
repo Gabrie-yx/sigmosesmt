@@ -323,3 +323,24 @@ export function gerarListaPresenca(p: ListaPresencaParams): jsPDF {
 
   return doc;
 }
+
+/**
+ * Força o download de um jsPDF de forma confiável, mesmo quando um Dialog é
+ * fechado logo em seguida (o `doc.save()` do jsPDF v4 usa `setTimeout(0)` para
+ * disparar o click, o que às vezes é perdido quando o React desmonta o botão).
+ */
+export function baixarPdf(doc: jsPDF, fileName: string) {
+  const blob = doc.output("blob");
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileName;
+  a.rel = "noopener";
+  a.style.display = "none";
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 2000);
+}

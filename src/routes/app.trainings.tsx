@@ -13,7 +13,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { GraduationCap, Plus, Pencil, Trash2, Users, Paperclip, Download, X, FileText, Clock, Link2, Building2, ClipboardList, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateBR, daysUntil } from "@/lib/utils-date";
-import { gerarListaPresenca } from "@/lib/lista-presenca-pdf";
+import { gerarListaPresenca, baixarPdf } from "@/lib/lista-presenca-pdf";
 import { CursosMinistradosPanel } from "@/components/cursos/cursos-ministrados-panel";
 import { sortMatrixCourses } from "@/lib/nr-order";
 
@@ -236,7 +236,7 @@ function TrainingsPage() {
         local: t.local ?? "",
         participantes,
       });
-      doc.save(`lista-presenca-${(t.titulo || t.tipo).replace(/[^\w-]/g, "_")}.pdf`);
+      baixarPdf(doc, `lista-presenca-${(t.titulo || t.tipo).replace(/[^\w-]/g, "_")}.pdf`);
     } catch (e: any) {
       toast.error(e.message ?? "Erro ao gerar lista");
     }
@@ -893,7 +893,8 @@ function GerarListaDialog({ training, onClose }: { training: any; onClose: () =>
               .map((e) => e.name.replace(/[^\w]+/g, ""))
               .join("-")
               .slice(0, 40) || "filtrada";
-      doc.save(
+      baixarPdf(
+        doc,
         `lista-presenca-${(training.titulo || training.tipo).replace(/[^\w-]/g, "_")}-${empresaTag}.pdf`,
       );
       toast.success(`PDF gerado com ${selecionados.length} participante(s).`);
