@@ -1,5 +1,5 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNovasDecisoesCompras } from "@/hooks/use-compras-novas-decisoes";
 import { useMinhasRcsDecididas } from "@/hooks/use-minhas-rcs-decididas";
 import {
@@ -280,7 +280,6 @@ export function AppSidebar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
-  const hoverTimer = (typeof window !== "undefined") ? (window as any) : null;
   const handleMouseEnter = () => {
     if (isMobile) return;
     if ((globalThis as any).__sbLeaveTimer) {
