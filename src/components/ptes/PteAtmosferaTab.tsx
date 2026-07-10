@@ -91,6 +91,7 @@ import { CatalogoGasesManager } from "@/components/sesmt/CatalogoGasesManager";
          .from("pte_medicoes_atmosfericas")
          .select("*")
          .eq("pte_id", petId!)
+        .is("deleted_at", null)
          .order("medido_em", { ascending: false });
        if (error) throw error;
        return (data ?? []) as unknown as Medicao[];
@@ -177,13 +178,15 @@ import { CatalogoGasesManager } from "@/components/sesmt/CatalogoGasesManager";
    });
  
    const remove = useMutation({
-     mutationFn: async (id: string) => {
-       const { error } = await supabase.from("pte_medicoes_atmosfericas").delete().eq("id", id);
-       if (error) throw error;
-     },
+    mutationFn: async ({ id, motivo }: { id: string; motivo: string }) => {
+      const { error } = await supabase.rpc("medicao_soft_delete", { _id: id, _motivo: motivo });
+      if (error) throw error;
+    },
      onSuccess: () => {
-       toast.success("Medição removida");
+      toast.success("Medição arquivada (soft delete — prova preservada)");
        qc.invalidateQueries({ queryKey: ["pte-medicoes-atmosfericas", petId] });
+      qc.invalidateQueries({ queryKey: ["ptes"] });
+      qc.invalidateQueries({ queryKey: ["pte-medicoes-all"] });
      },
      onError: (err: any) => toast.error(err.message ?? "Erro ao remover"),
    });
