@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 // TEMP: usado só para medir coordenadas do PDF-mãe em dev. Deletar depois.
-export const Route = createFileRoute("/api/public/_dev-fetch-template")({
+export const Route = createFileRoute("/api/public/dev-fetch-template")({
   server: {
     handlers: {
       GET: async ({ request }) => {
