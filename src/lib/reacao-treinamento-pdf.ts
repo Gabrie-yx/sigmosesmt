@@ -154,10 +154,10 @@ export async function gerarAvaliacaoReacao(p: ReacaoTreinamentoParams): Promise<
   y += rowH;
 
   // Linha 3: DATA TREINAMENTO | TIPO: | INTERNO [ ] | EXTERNO [ ]
-  const lblDataW = 32;
+  const lblDataW = 36;
   const valDataW = 40;
-  const lblTipoW = 16;
-  const boxTipoW = 6;
+  const lblTipoW = 14;
+  const boxTipoW = 7;
   const intLblW = 22;
   const extLblW = 22;
   const restW = contentW - lblDataW - valDataW - lblTipoW - boxTipoW - intLblW - boxTipoW - extLblW;
@@ -168,16 +168,24 @@ export async function gerarAvaliacaoReacao(p: ReacaoTreinamentoParams): Promise<
   valueText(p.data || "", cx, y, valDataW); cx += valDataW; doc.line(cx, y, cx, y + rowH);
   fillRect(doc, cx, y, lblTipoW, rowH, GRAY);
   labelText("TIPO:", cx, y); cx += lblTipoW; doc.line(cx, y, cx, y + rowH);
-  // caixa INTERNO
-  if (p.tipo === "INTERNO") {
-    doc.setFont("helvetica", "bold").setFontSize(11);
-    doc.text("X", cx + boxTipoW / 2, y + 4.3, { align: "center" });
+  // caixa INTERNO — box de check dentro da célula
+  {
+    const bx = cx + 1.2; const by = y + 1.2; const bs = rowH - 2.4;
+    doc.rect(bx, by, bs, bs);
+    if (p.tipo === "INTERNO") {
+      doc.setFont("helvetica", "bold").setFontSize(10);
+      doc.text("X", bx + bs / 2, by + bs - 0.6, { align: "center" });
+    }
   }
   cx += boxTipoW; doc.line(cx, y, cx, y + rowH);
   labelText("INTERNO", cx, y); cx += intLblW; doc.line(cx, y, cx, y + rowH);
-  if (p.tipo === "EXTERNO") {
-    doc.setFont("helvetica", "bold").setFontSize(11);
-    doc.text("X", cx + boxTipoW / 2, y + 4.3, { align: "center" });
+  {
+    const bx = cx + 1.2; const by = y + 1.2; const bs = rowH - 2.4;
+    doc.rect(bx, by, bs, bs);
+    if (p.tipo === "EXTERNO") {
+      doc.setFont("helvetica", "bold").setFontSize(10);
+      doc.text("X", bx + bs / 2, by + bs - 0.6, { align: "center" });
+    }
   }
   cx += boxTipoW; doc.line(cx, y, cx, y + rowH);
   labelText("EXTERNO", cx, y); cx += extLblW;
@@ -242,8 +250,12 @@ export async function gerarAvaliacaoReacao(p: ReacaoTreinamentoParams): Promise<
   }
 
   function drawItens(itens: string[]) {
-    const itemH = 5.5;
     itens.forEach((it, idx) => {
+      // Altura variável: texto centralizado; se o texto for longo o suficiente
+      // para envolver, usa 2 linhas.
+      doc.setFont("helvetica", "normal").setFontSize(9);
+      const lines = doc.splitTextToSize(it, itemColW - 4);
+      const itemH = Math.max(5.5, lines.length * 4 + 1.5);
       // borda externa da linha
       doc.rect(margin, y, contentW, itemH);
       // separadores de coluna
@@ -251,13 +263,12 @@ export async function gerarAvaliacaoReacao(p: ReacaoTreinamentoParams): Promise<
         const cxCol = margin + itemColW + i * escalaColW;
         doc.line(cxCol, y, cxCol, y + itemH);
       }
-      // texto do item — centralizado, fonte 9
-      doc.setFont("helvetica", "normal").setFontSize(9);
-      doc.text(it, margin + itemColW / 2, y + 3.7, { align: "center", maxWidth: itemColW - 4 });
+      // texto do item — centralizado vertical e horizontalmente
+      doc.text(lines, margin + itemColW / 2, y + itemH / 2 + 1.2 - (lines.length - 1) * 2, { align: "center" });
       // números 1..4 centralizados
       for (let i = 0; i < 4; i++) {
         const cxCol = margin + itemColW + i * escalaColW;
-        doc.text(String(i + 1), cxCol + escalaColW / 2, y + 3.7, { align: "center" });
+        doc.text(String(i + 1), cxCol + escalaColW / 2, y + itemH / 2 + 1.2, { align: "center" });
       }
       // separador pontilhado entre itens da mesma seção
       if (idx < itens.length - 1) {
@@ -311,6 +322,11 @@ export async function gerarAvaliacaoReacao(p: ReacaoTreinamentoParams): Promise<
   AVAL_GERAL.forEach((label, i) => {
     const ry = y + i * geralRowH;
     if (i > 0) doc.line(margin + geralLabelW, ry, margin + contentW, ry);
+    // checkbox
+    const bs = 4;
+    const bx = margin + geralLabelW + (geralBoxW - bs) / 2;
+    const by = ry + (geralRowH - bs) / 2;
+    doc.rect(bx, by, bs, bs);
     doc.setFont("helvetica", "normal").setFontSize(9);
     doc.text(label, margin + geralLabelW + geralBoxW + 2, ry + 4);
   });
