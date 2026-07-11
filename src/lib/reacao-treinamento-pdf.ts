@@ -66,7 +66,9 @@ async function loadAtemLogo(): Promise<string> {
 
 // Cores auxiliares — o original usa apenas cinza claro nos rótulos e nas
 // faixas de seção. Nada mais.
-const GRAY: [number, number, number] = [217, 217, 217];
+// ISO compliance: fundo dos campos = #E5E7EB, borda fina = #9CA3AF
+const GRAY: [number, number, number] = [229, 231, 235]; // #E5E7EB
+const BORDER_GRAY: [number, number, number] = [156, 163, 175]; // #9CA3AF
 const DOT_GRAY: [number, number, number] = [140, 140, 140];
 
 function fillRect(doc: jsPDF, x: number, y: number, w: number, h: number, rgb: [number, number, number]) {
@@ -83,7 +85,9 @@ export async function gerarAvaliacaoReacao(p: ReacaoTreinamentoParams): Promise<
   const contentW = pageW - margin * 2;
 
   doc.setLineWidth(0.4);
-  doc.setDrawColor(0, 0, 0);
+  doc.setDrawColor(BORDER_GRAY[0], BORDER_GRAY[1], BORDER_GRAY[2]);
+  // Tipografia base — Helvetica (Arial-equivalente no jsPDF core)
+  doc.setFont("helvetica", "normal");
 
   // ============ BORDA EXTERNA DA PÁGINA ============
   // O original tem um retângulo preto que envolve TODO o formulário até a
@@ -190,14 +194,14 @@ export async function gerarAvaliacaoReacao(p: ReacaoTreinamentoParams): Promise<
   labelText("TIPO:", cx3, ry);
   cx3 += lblTipoW;
   doc.line(cx3, ry, cx3, ry + rowH);
-  // checkbox INTERNO
+  // checkbox INTERNO — tamanho fixo 3.7mm (~14px), centralizado vertical
   {
-    const bs = rowH - 2.4;
+    const bs = 3.7;
     const bx = cx3 + (boxTipoW - bs) / 2;
-    const by = ry + 1.2;
+    const by = ry + (rowH - bs) / 2;
     doc.rect(bx, by, bs, bs);
     if (p.tipo === "INTERNO") {
-      doc.setFont("helvetica", "normal").setFontSize(9);
+      doc.setFont("helvetica", "bold").setFontSize(9);
       doc.text("X", bx + bs / 2, by + bs - 0.9, { align: "center" });
     }
   }
@@ -207,12 +211,12 @@ export async function gerarAvaliacaoReacao(p: ReacaoTreinamentoParams): Promise<
   cx3 += intLblW;
   doc.line(cx3, ry, cx3, ry + rowH);
   {
-    const bs = rowH - 2.4;
+    const bs = 3.7;
     const bx = cx3 + (boxTipoW - bs) / 2;
-    const by = ry + 1.2;
+    const by = ry + (rowH - bs) / 2;
     doc.rect(bx, by, bs, bs);
     if (p.tipo === "EXTERNO") {
-      doc.setFont("helvetica", "normal").setFontSize(9);
+      doc.setFont("helvetica", "bold").setFontSize(9);
       doc.text("X", bx + bs / 2, by + bs - 0.9, { align: "center" });
     }
   }
@@ -264,7 +268,7 @@ export async function gerarAvaliacaoReacao(p: ReacaoTreinamentoParams): Promise<
   const itemColW = contentW - escalaColW * 4;
   const headRowH = 6;
   doc.rect(margin, y, contentW, headRowH);
-  doc.setFont("helvetica", "bold").setFontSize(9);
+  doc.setFont("helvetica", "bold").setFontSize(10);
   // sublinhado nos cabeçalhos (como no original)
   doc.text("FATORES DE AVALIAÇÃO", margin + itemColW / 2, y + 4, { align: "center" });
   const underline = (text: string, cxCenter: number, yy: number) => {
@@ -286,7 +290,7 @@ export async function gerarAvaliacaoReacao(p: ReacaoTreinamentoParams): Promise<
   function drawSecaoHeader(titulo: string) {
     fillRect(doc, margin, y, contentW, 5, GRAY);
     doc.rect(margin, y, contentW, 5);
-    doc.setFont("helvetica", "bold").setFontSize(9);
+    doc.setFont("helvetica", "bold").setFontSize(10);
     doc.text(titulo, margin + contentW / 2, y + 3.6, { align: "center" });
     y += 5;
   }
@@ -334,7 +338,7 @@ export async function gerarAvaliacaoReacao(p: ReacaoTreinamentoParams): Promise<
       const cxCol = margin + itemColW + i * escalaColW;
       doc.line(cxCol, y, cxCol, y + h);
     }
-    doc.setFont("helvetica", "bold").setFontSize(9);
+    doc.setFont("helvetica", "bold").setFontSize(10);
     doc.text(titulo, margin + itemColW / 2, y + 3.6, { align: "center" });
     y += h;
   }
@@ -379,13 +383,32 @@ export async function gerarAvaliacaoReacao(p: ReacaoTreinamentoParams): Promise<
   AVAL_GERAL.forEach((label, i) => {
     const ry = y + i * geralRowH;
     if (i > 0) doc.line(margin + geralLabelW, ry, margin + contentW, ry);
-    // checkbox
-    const bs = 4;
+    // checkbox — tamanho fixo (~14px = 3.7mm)
+    const bs = 3.7;
     const bx = margin + geralLabelW + (geralBoxW - bs) / 2;
     const by = ry + (geralRowH - bs) / 2;
     doc.rect(bx, by, bs, bs);
     doc.setFont("helvetica", "normal").setFontSize(9);
     doc.text(label, margin + geralLabelW + geralBoxW + 2, ry + 4);
+  });
+
+  // ============ RODAPÉ FIXO NA BASE DA PÁGINA ============
+  const footerH = 6;
+  const footerY = pageH - margin - footerH;
+  fillRect(doc, margin, footerY, contentW, footerH, GRAY);
+  doc.setDrawColor(BORDER_GRAY[0], BORDER_GRAY[1], BORDER_GRAY[2]);
+  doc.rect(margin, footerY, contentW, footerH);
+  doc.setTextColor(0, 0, 0);
+  doc.setFont("helvetica", "bold").setFontSize(8);
+  const footerParts = [
+    `CÓD.: ${p.codigo ?? "FORCP-GP-16"}`,
+    `REVISÃO: ${p.revisao ?? "00"}`,
+    `DATA: ${p.dataDocumento ?? "23/06/2025"}`,
+    `PÁG.: 1 / 1`,
+  ];
+  const colW = contentW / footerParts.length;
+  footerParts.forEach((t, i) => {
+    doc.text(t, margin + colW * i + colW / 2, footerY + footerH / 2 + 1.4, { align: "center" });
   });
 
   return doc;
