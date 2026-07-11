@@ -85,6 +85,12 @@ export async function gerarAvaliacaoReacao(p: ReacaoTreinamentoParams): Promise<
   doc.setLineWidth(0.3);
   doc.setDrawColor(0, 0, 0);
 
+  // ============ BORDA EXTERNA DA PÁGINA ============
+  // O original tem um retângulo preto que envolve TODO o formulário até a
+  // margem inferior — replicamos aqui.
+  const outerH = pageH - margin * 2;
+  doc.rect(margin, margin, contentW, outerH);
+
   // ============ HEADER ============
   // 3 colunas: [atem logo] | [título centralizado] | [bloco de controle]
   const headerH = 16;
@@ -282,11 +288,26 @@ export async function gerarAvaliacaoReacao(p: ReacaoTreinamentoParams): Promise<
     });
   }
 
+  function drawSecaoHeaderTitleOnly(titulo: string) {
+    // Faixa de seção que só preenche em cinza a coluna do item; as 4 colunas
+    // da escala ficam brancas (como o RECURSOS DIDÁTICOS no original).
+    const h = 5;
+    fillRect(doc, margin, y, itemColW, h, GRAY);
+    doc.rect(margin, y, contentW, h);
+    for (let i = 0; i < 4; i++) {
+      const cxCol = margin + itemColW + i * escalaColW;
+      doc.line(cxCol, y, cxCol, y + h);
+    }
+    doc.setFont("helvetica", "bold").setFontSize(9);
+    doc.text(titulo, margin + itemColW / 2, y + 3.6, { align: "center" });
+    y += h;
+  }
+
   drawSecaoHeader("CONTEÚDO");
   drawItens(CONTEUDO_ITENS);
   drawSecaoHeader("INSTRUTOR");
   drawItens(INSTRUTOR_ITENS);
-  drawSecaoHeader("RECURSOS DIDÁTICOS");
+  drawSecaoHeaderTitleOnly("RECURSOS DIDÁTICOS");
   drawItens(RECURSOS_ITENS);
 
   // ============ CAMPOS ABERTOS ============
