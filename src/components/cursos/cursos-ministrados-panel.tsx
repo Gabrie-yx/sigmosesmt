@@ -8,12 +8,14 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
 import {
   GraduationCap, Plus, Search, Layers, Calendar, Clock, Users,
   ClipboardList, Image as ImageIcon, FileCheck2, MessageSquare,
   Upload, Download, Trash2, ChevronRight, Pencil, Eye, FileText,
+  PenLine, PenOff,
 } from "lucide-react";
 import { Sparkles } from "lucide-react";
 import { CATEGORIA_COLOR, CATEGORIA_LABEL } from "@/lib/matriz-status";
