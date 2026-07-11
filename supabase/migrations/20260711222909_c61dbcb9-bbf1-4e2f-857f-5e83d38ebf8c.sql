@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "temp_public_read_templates" ON storage.objects;
