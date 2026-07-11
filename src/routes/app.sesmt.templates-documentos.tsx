@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/dialog";
 import { FileText, Upload, History, Download, ShieldAlert, CheckCircle2, Archive, RotateCcw, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import { hasOverlay } from "@/lib/pdf-overlay-maps";
 
 export const Route = createFileRoute("/app/sesmt/templates-documentos")({
   component: TemplatesDocumentosPage,
@@ -133,8 +134,18 @@ function PainelInterno() {
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-mono text-xs px-2 py-0.5 rounded bg-rose-500/20 text-rose-200 border border-rose-500/30">{t.codigo}</span>
                   <h3 className="font-semibold text-rose-50">{t.nome}</h3>
-                  {t.motor_render_id ? null : (
-                    <Badge variant="outline" className="text-xs bg-slate-500/20 text-slate-300 border-slate-500/30">Sem motor</Badge>
+                  {hasOverlay(t.codigo) ? (
+                    <Badge variant="outline" className="text-xs bg-emerald-500/20 text-emerald-200 border-emerald-500/30">
+                      Overlay ativo
+                    </Badge>
+                  ) : t.versao_atual ? (
+                    <Badge variant="outline" className="text-xs bg-amber-500/20 text-amber-200 border-amber-500/30">
+                      PDF subido · aguardando mapeamento
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-xs bg-slate-500/20 text-slate-300 border-slate-500/30">
+                      Sem PDF-mãe
+                    </Badge>
                   )}
                 </div>
                 {t.descricao && <p className="text-xs text-rose-100/60 mt-1">{t.descricao}</p>}
