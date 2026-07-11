@@ -918,21 +918,42 @@ function GerarListaDialog({ training, onClose }: { training: any; onClose: () =>
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+          <div
+            className={`rounded-xl border p-3 transition-colors ${
+              autoSig
+                ? "border-emerald-500/40 bg-emerald-500/10"
+                : "border-amber-500/40 bg-amber-500/10"
+            }`}
+          >
             <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <Label className="text-[11px] font-bold uppercase tracking-wide">
-                  Estampar assinatura digital automaticamente
-                </Label>
-                <p className="text-[10px] text-muted-foreground mt-0.5 leading-snug">
-                  {comSigTotal} de {selecionados.length} selecionados têm assinatura cadastrada na ficha. Os demais aparecem com a célula em branco para rubrica manual.
-                </p>
+              <div className="min-w-0 flex items-start gap-2">
+                {autoSig ? (
+                  <PenLine className="h-5 w-5 text-emerald-400 shrink-0 mt-0.5" />
+                ) : (
+                  <PenOff className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
+                )}
+                <div className="min-w-0">
+                  <Label className="text-[11px] font-bold uppercase tracking-wide flex items-center gap-2">
+                    Puxar assinaturas cadastradas
+                    <span
+                      className={`text-[9px] font-black px-1.5 py-0.5 rounded ${
+                        autoSig ? "bg-emerald-500/30 text-emerald-100" : "bg-amber-500/30 text-amber-100"
+                      }`}
+                    >
+                      {autoSig ? "LIGADO" : "DESLIGADO"}
+                    </span>
+                  </Label>
+                  <p className="text-[10px] text-muted-foreground mt-0.5 leading-snug">
+                    {autoSig
+                      ? `Estampando as assinaturas digitais dos ${comSigTotal} de ${selecionados.length} selecionados que têm assinatura na ficha. Os demais ficam em branco para rubrica manual.`
+                      : `Todos os ${selecionados.length} participantes vão sair com a célula em branco para rubrica manual — nenhuma assinatura digital será estampada.`}
+                  </p>
+                </div>
               </div>
-              <input
-                type="checkbox"
+              <Switch
                 checked={autoSig}
-                onChange={(e) => setAutoSig(e.target.checked)}
-                className="h-5 w-5 accent-rose-500"
+                onCheckedChange={setAutoSig}
+                aria-label="Puxar assinaturas cadastradas"
               />
             </div>
           </div>
