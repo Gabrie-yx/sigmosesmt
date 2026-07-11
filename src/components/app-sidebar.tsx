@@ -751,6 +751,29 @@ export function AppSidebar() {
           </Collapsible>
         )}
 
+        {/* COZINHA — item solto, abaixo de Portaria, liberação via user_menu_access */}
+        {(isAdmin || hasMenu("/app/cozinha")) && (
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive("/app/cozinha")}
+                    tooltip="Cozinha — Refeições do dia"
+                    className="data-[active=true]:bg-amber-100 data-[active=true]:text-red-900 font-bold"
+                  >
+                    <Link to="/app/cozinha">
+                      <ChefHat className="text-red-700" />
+                      <span>Cozinha</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
       </SidebarContent>
 
       {/* CONFIGURAÇÕES (hover no rodapé) — só aparece se há pelo menos 1 item acessível */}
