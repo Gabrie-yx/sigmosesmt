@@ -329,6 +329,7 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const [reacaoOpen, setReacaoOpen] = useState(false);
   const [extrairIAOpen, setExtrairIAOpen] = useState(false);
+  const [autoSig, setAutoSig] = useState<boolean>(true);
 
   const { data: anexos = [] } = useQuery({
     queryKey: ["training-anexos", turma.id],
