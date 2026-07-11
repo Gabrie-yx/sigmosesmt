@@ -7,8 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Download, PenLine, X, MessageSquare, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
-import { gerarAvaliacaoReacao } from "@/lib/reacao-treinamento-pdf";
-import { baixarBlob, baixarPdf } from "@/lib/lista-presenca-pdf";
+import { gerarAvaliacaoReacao, preloadTemplateReacao } from "@/lib/reacao-treinamento-pdf";
+import { baixarBlob } from "@/lib/lista-presenca-pdf";
 
 type Props = {
   open: boolean;
@@ -76,10 +76,11 @@ export function ReacaoGerarDialog({ open, onClose, turma, course, participantesC
     setBusy(true);
     try {
       const params = buildParams();
+      // Baixa o PDF-template UMA vez e reaproveita em todas as cópias do lote.
+      const templateBytes = await preloadTemplateReacao();
       const zip = new JSZip();
       for (let i = 1; i <= qtd; i++) {
-        const doc = await gerarAvaliacaoReacao(params);
-        const blob = doc.output("blob");
+        const blob = await gerarAvaliacaoReacao({ ...params, templatePdfBytes: templateBytes });
         const nn = String(i).padStart(2, "0");
         zip.file(`reacao_${course.codigo}_${turma.data_realizacao}_${nn}.pdf`, blob);
       }
@@ -95,8 +96,8 @@ export function ReacaoGerarDialog({ open, onClose, turma, course, participantesC
 
   async function gerarUnico() {
     try {
-      const doc = await gerarAvaliacaoReacao(buildParams());
-      baixarPdf(doc, `reacao_${course.codigo}_${turma.data_realizacao}_modelo.pdf`);
+      const blob = await gerarAvaliacaoReacao(buildParams());
+      baixarBlob(blob, `reacao_${course.codigo}_${turma.data_realizacao}_modelo.pdf`);
     } catch (e: any) {
       toast.error(e.message ?? "Erro");
     }
