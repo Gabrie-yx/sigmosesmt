@@ -280,3 +280,60 @@ export const restaurarVersao = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/* ---------- HARD DELETE (remove definitivo: banco + storage) ----------
+ * Usar quando o admin sobe o PDF errado e quer literalmente apagar o
+ * arquivo, sem deixar rastro no histórico. Soft delete continua sendo
+ * o caminho padrão pra revisões válidas que só foram superadas. */
+export const excluirVersaoDefinitivo = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ versionId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: v, error: vErr } = await supabaseAdmin
+      .from("document_template_versions")
+      .select("id, template_id, arquivo_path, status")
+      .eq("id", data.versionId)
+      .single();
+    if (vErr || !v) throw new Error("Versão não encontrada.");
+
+    // remove pendências vinculadas
+    await supabaseAdmin
+      .from("document_template_pendencias")
+      .delete()
+      .eq("version_id", data.versionId);
+
+    // remove registro do banco
+    const { error: delErr } = await supabaseAdmin
+      .from("document_template_versions")
+      .delete()
+      .eq("id", data.versionId);
+    if (delErr) throw new Error(`Falha ao excluir versão: ${delErr.message}`);
+
+    // remove arquivo do storage (não bloqueia se falhar)
+    if (v.arquivo_path) {
+      await supabaseAdmin.storage.from("templates-homologados").remove([v.arquivo_path]);
+    }
+
+    // se essa era a revisão ativa, promove a anterior mais recente
+    if (v.status === "HOMOLOGADA" || v.status === "EM_HOMOLOGACAO") {
+      const { data: anterior } = await supabaseAdmin
+        .from("document_template_versions")
+        .select("id, revisao")
+        .eq("template_id", v.template_id)
+        .is("deleted_at", null)
+        .eq("status", "SUPERSEDIDA")
+        .order("revisao", { ascending: false })
+        .limit(1);
+      if (anterior && anterior[0]) {
+        await supabaseAdmin
+          .from("document_template_versions")
+          .update({ status: "HOMOLOGADA" })
+          .eq("id", anterior[0].id);
+      }
+    }
+
+    return { ok: true };
+  });

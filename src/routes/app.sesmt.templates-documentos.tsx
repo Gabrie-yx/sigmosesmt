@@ -10,6 +10,7 @@ import {
   homologarVersao,
   arquivarVersao,
   restaurarVersao,
+  excluirVersaoDefinitivo,
 } from "@/lib/templates-documentos.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { Card } from "@/components/ui/card";
@@ -27,7 +28,7 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { FileText, Upload, History, Download, ShieldAlert, CheckCircle2, Archive, RotateCcw, AlertCircle } from "lucide-react";
+import { FileText, Upload, History, Download, ShieldAlert, CheckCircle2, Archive, RotateCcw, AlertCircle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { hasOverlay } from "@/lib/pdf-overlay-maps";
 
@@ -127,10 +128,11 @@ function PainelInterno() {
                     Nenhum template nesta série ainda.
                   </Card>
                 )}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                 {lista.map((t: any) => (
           <Card key={t.id} className="p-4 border-rose-500/20 bg-gradient-to-br from-rose-950/40 to-slate-950/60">
-            <div className="flex items-start justify-between gap-4 flex-wrap">
-              <div className="flex-1 min-w-[260px]">
+            <div className="flex flex-col gap-3 h-full">
+              <div className="flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-mono text-xs px-2 py-0.5 rounded bg-rose-500/20 text-rose-200 border border-rose-500/30">{t.codigo}</span>
                   <h3 className="font-semibold text-rose-50">{t.nome}</h3>
@@ -149,30 +151,30 @@ function PainelInterno() {
                   )}
                 </div>
                 {t.descricao && <p className="text-xs text-rose-100/60 mt-1">{t.descricao}</p>}
-                <div className="flex items-center gap-3 mt-2 text-xs text-rose-100/80">
+                <div className="flex items-center gap-2 mt-2 text-xs text-rose-100/80 flex-wrap">
                   {t.versao_atual ? (
                     <>
                       <span className="font-medium">Rev.{String(t.versao_atual.revisao).padStart(2, "0")}</span>
                       {statusBadge(t.versao_atual.status)}
-                      <span className="text-rose-100/50">Enviada em {fmtDate(t.versao_atual.uploaded_at)}</span>
+                      <span className="text-rose-100/50">{fmtDate(t.versao_atual.uploaded_at)}</span>
                     </>
                   ) : (
                     <span className="italic text-rose-100/40">— sem modelo enviado —</span>
                   )}
                   {t.pendente && (
                     <Badge variant="outline" className="bg-amber-500/20 text-amber-200 border-amber-500/30 gap-1">
-                      <AlertCircle className="w-3 h-3" /> Motor precisa alinhar
+                      <AlertCircle className="w-3 h-3" /> Alinhar motor
                     </Badge>
                   )}
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap pt-2 border-t border-rose-500/10">
                 {t.total_versoes > 0 && (
                   <Button size="sm" variant="outline" onClick={() => setHistoryFor(t)}>
                     <History className="w-4 h-4 mr-1" /> Histórico ({t.total_versoes})
                   </Button>
                 )}
-                <Button size="sm" onClick={() => setUploadFor(t)}>
+                <Button size="sm" onClick={() => setUploadFor(t)} className="flex-1">
                   <Upload className="w-4 h-4 mr-1" />
                   {t.versao_atual ? "Nova revisão" : "Enviar 1º modelo"}
                 </Button>
@@ -180,6 +182,7 @@ function PainelInterno() {
             </div>
           </Card>
         ))}
+                </div>
               </TabsContent>
             );
           })}
@@ -286,6 +289,7 @@ function HistoryDialog({ template, onClose }: { template: any; onClose: () => vo
   const homologar = useServerFn(homologarVersao);
   const arquivar = useServerFn(arquivarVersao);
   const restaurar = useServerFn(restaurarVersao);
+  const excluir = useServerFn(excluirVersaoDefinitivo);
 
   const { data: versoes, isLoading, refetch } = useQuery({
     queryKey: ["document-template-history", template.id],
@@ -361,6 +365,13 @@ function HistoryDialog({ template, onClose }: { template: any; onClose: () => vo
                       <RotateCcw className="w-3 h-3 mr-1" /> Restaurar
                     </Button>
                   )}
+                  <Button size="sm" variant="outline" className="text-rose-300 border-rose-500/50 hover:bg-rose-500/10"
+                    onClick={() => {
+                      if (!confirm(`EXCLUIR DEFINITIVO da Rev.${String(v.revisao).padStart(2, "0")}?\n\nO PDF e o registro serão apagados sem possibilidade de recuperar. Use apenas se subiu um arquivo errado.`)) return;
+                      act(() => excluir({ data: { versionId: v.id } }), "Revisão excluída definitivamente.");
+                    }}>
+                    <Trash2 className="w-3 h-3 mr-1" /> Excluir
+                  </Button>
                 </div>
               </div>
             </Card>
