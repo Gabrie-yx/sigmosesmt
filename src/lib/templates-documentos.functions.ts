@@ -95,6 +95,56 @@ export const signedUrlTemplate = createServerFn({ method: "POST" })
     return { url: signed.signedUrl, nome: v.arquivo_nome };
   });
 
+/* ---------- BAIXAR PDF ATIVO DE UM TEMPLATE (por código) ----------
+ * Usado pelos motores de geração de documento (Avaliação de Reação, etc.)
+ * para sobrepor os campos variáveis em cima do PDF oficial homologado.
+ * Requer usuário autenticado — não é admin-only. */
+export const baixarTemplateAtivoPorCodigo = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ codigo: z.string().min(1).max(50) }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: tpl, error: tplErr } = await supabaseAdmin
+      .from("document_templates")
+      .select("id, codigo, nome")
+      .eq("codigo", data.codigo)
+      .eq("ativo", true)
+      .maybeSingle();
+    if (tplErr) throw new Error(tplErr.message);
+    if (!tpl) throw new Error(`Template ${data.codigo} não encontrado ou inativo.`);
+
+    const { data: vs, error: vsErr } = await supabaseAdmin
+      .from("document_template_versions")
+      .select("id, revisao, status, arquivo_path, arquivo_nome")
+      .eq("template_id", tpl.id)
+      .is("deleted_at", null)
+      .order("revisao", { ascending: false });
+    if (vsErr) throw new Error(vsErr.message);
+
+    const atual =
+      (vs ?? []).find((v: any) => v.status === "HOMOLOGADA") ??
+      (vs ?? []).find((v: any) => v.status === "EM_HOMOLOGACAO") ??
+      (vs ?? [])[0];
+    if (!atual) throw new Error(`Template ${data.codigo} sem versão disponível.`);
+
+    const { data: file, error: dlErr } = await supabaseAdmin.storage
+      .from("templates-homologados")
+      .download(atual.arquivo_path);
+    if (dlErr || !file) throw new Error(`Falha ao baixar PDF do template: ${dlErr?.message ?? ""}`);
+
+    const buf = new Uint8Array(await file.arrayBuffer());
+    // base64 seguro pra transportar no wire
+    let bin = "";
+    for (let i = 0; i < buf.length; i++) bin += String.fromCharCode(buf[i]);
+    const base64 = btoa(bin);
+    return {
+      base64,
+      codigo: tpl.codigo,
+      revisao: atual.revisao as number,
+      status: atual.status as string,
+    };
+  });
+
 /* ---------- NOVA REVISÃO ---------- */
 const NovaRevisaoSchema = z.object({
   templateId: z.string().uuid(),
