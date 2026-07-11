@@ -289,6 +289,7 @@ function HistoryDialog({ template, onClose }: { template: any; onClose: () => vo
   const homologar = useServerFn(homologarVersao);
   const arquivar = useServerFn(arquivarVersao);
   const restaurar = useServerFn(restaurarVersao);
+  const excluir = useServerFn(excluirVersaoDefinitivo);
 
   const { data: versoes, isLoading, refetch } = useQuery({
     queryKey: ["document-template-history", template.id],
@@ -364,6 +365,13 @@ function HistoryDialog({ template, onClose }: { template: any; onClose: () => vo
                       <RotateCcw className="w-3 h-3 mr-1" /> Restaurar
                     </Button>
                   )}
+                  <Button size="sm" variant="outline" className="text-rose-300 border-rose-500/50 hover:bg-rose-500/10"
+                    onClick={() => {
+                      if (!confirm(`EXCLUIR DEFINITIVO da Rev.${String(v.revisao).padStart(2, "0")}?\n\nO PDF e o registro serão apagados sem possibilidade de recuperar. Use apenas se subiu um arquivo errado.`)) return;
+                      act(() => excluir({ data: { versionId: v.id } }), "Revisão excluída definitivamente.");
+                    }}>
+                    <Trash2 className="w-3 h-3 mr-1" /> Excluir
+                  </Button>
                 </div>
               </div>
             </Card>
