@@ -1,0 +1,1 @@
+CREATE POLICY "temp_public_read_templates" ON storage.objects FOR SELECT TO anon USING (bucket_id='templates-homologados');
