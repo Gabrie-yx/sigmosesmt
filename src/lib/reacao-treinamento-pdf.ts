@@ -194,14 +194,14 @@ export async function gerarAvaliacaoReacao(p: ReacaoTreinamentoParams): Promise<
   labelText("TIPO:", cx3, ry);
   cx3 += lblTipoW;
   doc.line(cx3, ry, cx3, ry + rowH);
-  // checkbox INTERNO
+  // checkbox INTERNO — tamanho fixo 3.7mm (~14px), centralizado vertical
   {
-    const bs = rowH - 2.4;
+    const bs = 3.7;
     const bx = cx3 + (boxTipoW - bs) / 2;
-    const by = ry + 1.2;
+    const by = ry + (rowH - bs) / 2;
     doc.rect(bx, by, bs, bs);
     if (p.tipo === "INTERNO") {
-      doc.setFont("helvetica", "normal").setFontSize(9);
+      doc.setFont("helvetica", "bold").setFontSize(9);
       doc.text("X", bx + bs / 2, by + bs - 0.9, { align: "center" });
     }
   }
@@ -211,12 +211,12 @@ export async function gerarAvaliacaoReacao(p: ReacaoTreinamentoParams): Promise<
   cx3 += intLblW;
   doc.line(cx3, ry, cx3, ry + rowH);
   {
-    const bs = rowH - 2.4;
+    const bs = 3.7;
     const bx = cx3 + (boxTipoW - bs) / 2;
-    const by = ry + 1.2;
+    const by = ry + (rowH - bs) / 2;
     doc.rect(bx, by, bs, bs);
     if (p.tipo === "EXTERNO") {
-      doc.setFont("helvetica", "normal").setFontSize(9);
+      doc.setFont("helvetica", "bold").setFontSize(9);
       doc.text("X", bx + bs / 2, by + bs - 0.9, { align: "center" });
     }
   }
@@ -268,7 +268,7 @@ export async function gerarAvaliacaoReacao(p: ReacaoTreinamentoParams): Promise<
   const itemColW = contentW - escalaColW * 4;
   const headRowH = 6;
   doc.rect(margin, y, contentW, headRowH);
-  doc.setFont("helvetica", "bold").setFontSize(9);
+  doc.setFont("helvetica", "bold").setFontSize(10);
   // sublinhado nos cabeçalhos (como no original)
   doc.text("FATORES DE AVALIAÇÃO", margin + itemColW / 2, y + 4, { align: "center" });
   const underline = (text: string, cxCenter: number, yy: number) => {
@@ -290,7 +290,7 @@ export async function gerarAvaliacaoReacao(p: ReacaoTreinamentoParams): Promise<
   function drawSecaoHeader(titulo: string) {
     fillRect(doc, margin, y, contentW, 5, GRAY);
     doc.rect(margin, y, contentW, 5);
-    doc.setFont("helvetica", "bold").setFontSize(9);
+    doc.setFont("helvetica", "bold").setFontSize(10);
     doc.text(titulo, margin + contentW / 2, y + 3.6, { align: "center" });
     y += 5;
   }
@@ -338,7 +338,7 @@ export async function gerarAvaliacaoReacao(p: ReacaoTreinamentoParams): Promise<
       const cxCol = margin + itemColW + i * escalaColW;
       doc.line(cxCol, y, cxCol, y + h);
     }
-    doc.setFont("helvetica", "bold").setFontSize(9);
+    doc.setFont("helvetica", "bold").setFontSize(10);
     doc.text(titulo, margin + itemColW / 2, y + 3.6, { align: "center" });
     y += h;
   }
