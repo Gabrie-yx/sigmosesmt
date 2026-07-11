@@ -521,8 +521,10 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
           (a.empresa || "").localeCompare(b.empresa || "", "pt-BR") ||
           (a.nome || "").localeCompare(b.nome || "", "pt-BR"),
       );
-      // Estampa assinaturas digitais automaticamente
-      const sigs = await Promise.all(enriched.map((r) => urlToDataUrl(r.assinatura_url)));
+      // Estampa assinaturas digitais só se o toggle estiver ligado
+      const sigs = autoSig
+        ? await Promise.all(enriched.map((r) => urlToDataUrl(r.assinatura_url)))
+        : enriched.map(() => null);
       const empresasUnicas = new Set(enriched.map((r) => r.empresa || "(sem empresa)"));
       const agruparPorEmpresa = empresasUnicas.size > 1;
       const participantes = enriched.map((r, i) => ({
