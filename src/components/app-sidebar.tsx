@@ -72,6 +72,7 @@ import {
   Library,
   Sparkles,
   Syringe,
+  ChefHat,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -748,6 +749,29 @@ export function AppSidebar() {
               </Body>
             </SidebarGroup>
           </Collapsible>
+        )}
+
+        {/* COZINHA — item solto, abaixo de Portaria, liberação via user_menu_access */}
+        {(isAdmin || hasMenu("/app/cozinha")) && (
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive("/app/cozinha")}
+                    tooltip="Cozinha — Refeições do dia"
+                    className="data-[active=true]:bg-amber-100 data-[active=true]:text-red-900 font-bold"
+                  >
+                    <Link to="/app/cozinha">
+                      <ChefHat className="text-red-700" />
+                      <span>Cozinha</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
         )}
 
       </SidebarContent>
