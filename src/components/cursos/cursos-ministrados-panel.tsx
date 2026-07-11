@@ -668,6 +668,39 @@ function TurmaRow({ turma, course, expanded, onToggle, onEdit }: { turma: any; c
             <div className="text-[10px] font-black uppercase tracking-widest text-sky-200 mb-2 flex items-center gap-1.5">
               <Download className="h-3 w-3" /> 2. Gerar documentos (PDF em branco para impressão)
             </div>
+            <div
+              className={`mb-3 rounded-md border p-2.5 flex items-center justify-between gap-3 transition-colors ${
+                autoSig ? "border-emerald-500/40 bg-emerald-500/10" : "border-amber-500/40 bg-amber-500/10"
+              }`}
+            >
+              <div className="flex items-start gap-2 min-w-0">
+                {autoSig ? (
+                  <PenLine className="h-4 w-4 text-emerald-300 shrink-0 mt-0.5" />
+                ) : (
+                  <PenOff className="h-4 w-4 text-amber-300 shrink-0 mt-0.5" />
+                )}
+                <div className="min-w-0">
+                  <div className="text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5">
+                    <span className={autoSig ? "text-emerald-100" : "text-amber-100"}>
+                      Puxar assinaturas cadastradas
+                    </span>
+                    <span
+                      className={`text-[9px] font-black px-1.5 py-0.5 rounded ${
+                        autoSig ? "bg-emerald-500/30 text-emerald-100" : "bg-amber-500/30 text-amber-100"
+                      }`}
+                    >
+                      {autoSig ? "LIGADO" : "DESLIGADO"}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-sky-200/70 mt-0.5 leading-snug">
+                    {autoSig
+                      ? "Estampa a assinatura digital de cada participante que tem no cadastro. Quem não tem, sai em branco."
+                      : "Todos os participantes saem com a célula em branco para rubrica manual."}
+                  </p>
+                </div>
+              </div>
+              <Switch checked={autoSig} onCheckedChange={setAutoSig} aria-label="Puxar assinaturas" />
+            </div>
             <div className="flex flex-wrap gap-2">
               <Button size="sm" variant="outline" onClick={gerarLista} className="border-sky-400/40 bg-sky-500/10 text-sky-100 hover:bg-sky-500/20">
                 <ClipboardList className="h-4 w-4 mr-1" /> Lista de Presença
