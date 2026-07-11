@@ -234,12 +234,21 @@ export async function gerarAvaliacaoReacao(p: ReacaoTreinamentoParams): Promise<
   labelText("INSTITUIÇÃO:", xInstit, ry);
   doc.line(xInstit + lblInstitW, ry, xInstit + lblInstitW, ry + rowH);
   valueText(p.instituicao || "", xInstit + lblInstitW, ry, valInstitW);
+  // Redesenha separadores horizontais POR CIMA das faixas cinzas — os
+  // fillRect() das células cinza (CARGA HORÁRIA, TIPO, INSTITUIÇÃO) e da
+  // coluna de rótulos pintam por cima das linhas, então redesenhamos aqui.
+  for (let i = 1; i < 4; i++) {
+    const hy = blockTop + i * rowH;
+    doc.line(margin, hy, margin + contentW, hy);
+  }
+  // Reforça a moldura externa (o fillRect da coluna esquerda cobre a borda
+  // esquerda também).
+  doc.rect(margin, blockTop, contentW, blockH);
   y = blockTop + blockH;
 
   // ============ INSTRUÇÕES (faixa cinza) ============
-  // Fonte normal, texto centralizado, quebrado em EXATAMENTE 2 linhas
-  // (fiéis ao original: linha 1 termina em "Nos quesitos").
-  doc.setFont("helvetica", "normal").setFontSize(9);
+  // Fonte menor pra caber em 2 linhas sem vazar as bordas.
+  doc.setFont("helvetica", "normal").setFontSize(8);
   const instrLines = [
     "Para que possamos aprimorar e adequar nossos treinamentos, solicitamos que preencha atentamente este questionário. Nos quesitos",
     '"Fatores de Avaliação", atribua uma nota de 1 a 4 e responda os questionamentos apresentados abaixo. Sua opinião é muito importante!',
