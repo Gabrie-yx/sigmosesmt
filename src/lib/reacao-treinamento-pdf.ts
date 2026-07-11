@@ -82,7 +82,7 @@ export async function gerarAvaliacaoReacao(p: ReacaoTreinamentoParams): Promise<
   const margin = 10;
   const contentW = pageW - margin * 2;
 
-  doc.setLineWidth(0.3);
+  doc.setLineWidth(0.2);
   doc.setDrawColor(0, 0, 0);
 
   // ============ BORDA EXTERNA DA PÁGINA ============
@@ -124,8 +124,11 @@ export async function gerarAvaliacaoReacao(p: ReacaoTreinamentoParams): Promise<
   let y = margin + headerH;
 
   // ============ DADOS DO TREINAMENTO ============
-  // Cada label é uma célula cinza fixa; ao lado, célula branca para o valor.
+  // Coluna de rótulos com LARGURA ÚNICA para as 4 linhas — no original todos
+  // os rótulos (EMPRESA, TREINAMENTO, DATA TREINAMENTO, INSTRUTOR) começam e
+  // terminam no mesmo X, formando uma coluna cinza alinhada.
   const rowH = 6;
+  const lblColW = 36; // largura única da coluna de rótulos à esquerda
   const labelText = (t: string, x: number, yy: number) => {
     doc.setFont("helvetica", "normal").setFontSize(9);
     doc.text(t, x + 1.5, yy + 4);
@@ -135,92 +138,113 @@ export async function gerarAvaliacaoReacao(p: ReacaoTreinamentoParams): Promise<
     doc.text(t, x + 1.5, yy + 4, { maxWidth: maxW - 3 });
   };
 
-  // Linha 1: EMPRESA
-  const lblEmpresaW = 28;
-  fillRect(doc, margin, y, lblEmpresaW, rowH, GRAY);
-  doc.rect(margin, y, contentW, rowH);
-  doc.line(margin + lblEmpresaW, y, margin + lblEmpresaW, y + rowH);
-  labelText("EMPRESA:", margin, y);
-  valueText(p.empresa ?? "", margin + lblEmpresaW, y, contentW - lblEmpresaW);
-  y += rowH;
+  // Bloco de 4 linhas — desenha uma única moldura externa + linhas horizontais
+  // entre as linhas + linhas verticais SÓ onde há mudança de célula. Evita
+  // strokes duplicados que criam efeito de "relevo".
+  const blockTop = y;
+  const blockH = rowH * 4;
+  // moldura do bloco
+  doc.rect(margin, blockTop, contentW, blockH);
+  // separadores horizontais entre as 4 linhas
+  for (let i = 1; i < 4; i++) {
+    const hy = blockTop + i * rowH;
+    doc.line(margin, hy, margin + contentW, hy);
+  }
+  // coluna cinza única (rótulos das 4 linhas)
+  fillRect(doc, margin, blockTop, lblColW, blockH, GRAY);
+  // divisor vertical do rótulo (uma linha só, cobrindo todo o bloco)
+  doc.line(margin + lblColW, blockTop, margin + lblColW, blockTop + blockH);
 
-  // Linha 2: TREINAMENTO | CARGA HORÁRIA
-  const lblTreinW = 28;
+  // Linha 1 — EMPRESA
+  let ry = blockTop;
+  labelText("EMPRESA:", margin, ry);
+  valueText(p.empresa ?? "", margin + lblColW, ry, contentW - lblColW);
+  ry += rowH;
+
+  // Linha 2 — TREINAMENTO | CARGA HORÁRIA
   const lblCargaW = 30;
   const valCargaW = 26;
-  const valTreinW = contentW - lblTreinW - lblCargaW - valCargaW;
-  doc.rect(margin, y, contentW, rowH);
-  fillRect(doc, margin, y, lblTreinW, rowH, GRAY);
-  fillRect(doc, margin + lblTreinW + valTreinW, y, lblCargaW, rowH, GRAY);
-  let cx = margin;
-  labelText("TREINAMENTO:", cx, y); cx += lblTreinW; doc.line(cx, y, cx, y + rowH);
-  valueText(p.treinamento ?? "", cx, y, valTreinW); cx += valTreinW; doc.line(cx, y, cx, y + rowH);
-  labelText("CARGA HORÁRIA:", cx, y); cx += lblCargaW; doc.line(cx, y, cx, y + rowH);
-  valueText(p.cargaHoraria ?? "", cx, y, valCargaW);
-  y += rowH;
+  const valTreinW = contentW - lblColW - lblCargaW - valCargaW;
+  labelText("TREINAMENTO:", margin, ry);
+  valueText(p.treinamento ?? "", margin + lblColW, ry, valTreinW);
+  // separador vertical antes da célula CARGA HORÁRIA
+  const xCarga = margin + lblColW + valTreinW;
+  doc.line(xCarga, ry, xCarga, ry + rowH);
+  fillRect(doc, xCarga, ry, lblCargaW, rowH, GRAY);
+  labelText("CARGA HORÁRIA:", xCarga, ry);
+  doc.line(xCarga + lblCargaW, ry, xCarga + lblCargaW, ry + rowH);
+  valueText(p.cargaHoraria ?? "", xCarga + lblCargaW, ry, valCargaW);
+  ry += rowH;
 
-  // Linha 3: DATA TREINAMENTO | TIPO: | INTERNO [ ] | EXTERNO [ ]
-  const lblDataW = 36;
-  const valDataW = 40;
-  const lblTipoW = 14;
-  const boxTipoW = 7;
-  const intLblW = 22;
-  const extLblW = 22;
-  const restW = contentW - lblDataW - valDataW - lblTipoW - boxTipoW - intLblW - boxTipoW - extLblW;
-  doc.rect(margin, y, contentW, rowH);
-  cx = margin;
-  fillRect(doc, cx, y, lblDataW, rowH, GRAY);
-  labelText("DATA TREINAMENTO:", cx, y); cx += lblDataW; doc.line(cx, y, cx, y + rowH);
-  valueText(p.data || "", cx, y, valDataW); cx += valDataW; doc.line(cx, y, cx, y + rowH);
-  fillRect(doc, cx, y, lblTipoW, rowH, GRAY);
-  labelText("TIPO:", cx, y); cx += lblTipoW; doc.line(cx, y, cx, y + rowH);
-  // caixa INTERNO — box de check dentro da célula
+  // Linha 3 — DATA TREINAMENTO | TIPO | [X] INTERNO | [ ] EXTERNO
+  const valDataW = 44;
+  const lblTipoW = 16;
+  const boxTipoW = 8;
+  const intLblW = 24;
+  const extLblW = 24;
+  labelText("DATA TREINAMENTO:", margin, ry);
+  valueText(p.data || "", margin + lblColW, ry, valDataW);
+  let cx3 = margin + lblColW + valDataW;
+  doc.line(cx3, ry, cx3, ry + rowH);
+  fillRect(doc, cx3, ry, lblTipoW, rowH, GRAY);
+  labelText("TIPO:", cx3, ry);
+  cx3 += lblTipoW;
+  doc.line(cx3, ry, cx3, ry + rowH);
+  // checkbox INTERNO
   {
-    const bx = cx + 1.2; const by = y + 1.2; const bs = rowH - 2.4;
+    const bs = rowH - 2.4;
+    const bx = cx3 + (boxTipoW - bs) / 2;
+    const by = ry + 1.2;
     doc.rect(bx, by, bs, bs);
     if (p.tipo === "INTERNO") {
-      doc.setFont("helvetica", "bold").setFontSize(10);
-      doc.text("X", bx + bs / 2, by + bs - 0.6, { align: "center" });
+      doc.setFont("helvetica", "normal").setFontSize(9);
+      doc.text("X", bx + bs / 2, by + bs - 0.9, { align: "center" });
     }
   }
-  cx += boxTipoW; doc.line(cx, y, cx, y + rowH);
-  labelText("INTERNO", cx, y); cx += intLblW; doc.line(cx, y, cx, y + rowH);
+  cx3 += boxTipoW;
+  doc.line(cx3, ry, cx3, ry + rowH);
+  labelText("INTERNO", cx3, ry);
+  cx3 += intLblW;
+  doc.line(cx3, ry, cx3, ry + rowH);
   {
-    const bx = cx + 1.2; const by = y + 1.2; const bs = rowH - 2.4;
+    const bs = rowH - 2.4;
+    const bx = cx3 + (boxTipoW - bs) / 2;
+    const by = ry + 1.2;
     doc.rect(bx, by, bs, bs);
     if (p.tipo === "EXTERNO") {
-      doc.setFont("helvetica", "bold").setFontSize(10);
-      doc.text("X", bx + bs / 2, by + bs - 0.6, { align: "center" });
+      doc.setFont("helvetica", "normal").setFontSize(9);
+      doc.text("X", bx + bs / 2, by + bs - 0.9, { align: "center" });
     }
   }
-  cx += boxTipoW; doc.line(cx, y, cx, y + rowH);
-  labelText("EXTERNO", cx, y); cx += extLblW;
-  if (restW > 0.1) { doc.line(cx, y, cx, y + rowH); }
-  y += rowH;
+  cx3 += boxTipoW;
+  doc.line(cx3, ry, cx3, ry + rowH);
+  labelText("EXTERNO", cx3, ry);
+  ry += rowH;
 
-  // Linha 4: INSTRUTOR | INSTITUIÇÃO
-  const lblInstW = 22;
-  const lblInstitW = 24;
+  // Linha 4 — INSTRUTOR | INSTITUIÇÃO
+  const lblInstitW = 26;
   const halfW = contentW / 2;
-  const valInstW = halfW - lblInstW;
+  const valInstW = halfW - lblColW;
   const valInstitW = contentW - halfW - lblInstitW;
-  doc.rect(margin, y, contentW, rowH);
-  cx = margin;
-  fillRect(doc, cx, y, lblInstW, rowH, GRAY);
-  labelText("INSTRUTOR:", cx, y); cx += lblInstW; doc.line(cx, y, cx, y + rowH);
-  valueText(p.instrutor || "", cx, y, valInstW); cx += valInstW; doc.line(cx, y, cx, y + rowH);
-  fillRect(doc, cx, y, lblInstitW, rowH, GRAY);
-  labelText("INSTITUIÇÃO:", cx, y); cx += lblInstitW; doc.line(cx, y, cx, y + rowH);
-  valueText(p.instituicao || "", cx, y, valInstitW);
-  y += rowH;
+  labelText("INSTRUTOR:", margin, ry);
+  valueText(p.instrutor || "", margin + lblColW, ry, valInstW);
+  const xInstit = margin + halfW;
+  doc.line(xInstit, ry, xInstit, ry + rowH);
+  fillRect(doc, xInstit, ry, lblInstitW, rowH, GRAY);
+  labelText("INSTITUIÇÃO:", xInstit, ry);
+  doc.line(xInstit + lblInstitW, ry, xInstit + lblInstitW, ry + rowH);
+  valueText(p.instituicao || "", xInstit + lblInstitW, ry, valInstitW);
+  y = blockTop + blockH;
 
   // ============ INSTRUÇÕES (faixa cinza) ============
-  const instrLines = doc.splitTextToSize(INSTRUCOES, contentW - 6);
-  const instrH = instrLines.length * 4 + 3;
+  // Fonte mais leve (normal, não bold) e texto CENTRALIZADO horizontalmente
+  // dentro do bloco cinza — igual ao original.
+  doc.setFont("helvetica", "normal").setFontSize(9);
+  const instrLines = doc.splitTextToSize(INSTRUCOES, contentW - 8);
+  const instrH = instrLines.length * 4.2 + 3.5;
   fillRect(doc, margin, y, contentW, instrH, GRAY);
   doc.rect(margin, y, contentW, instrH);
-  doc.setFont("helvetica", "bold").setFontSize(8.5);
-  doc.text(instrLines, margin + 3, y + 4);
+  doc.text(instrLines, margin + contentW / 2, y + 4.2, { align: "center" });
   y += instrH;
 
   // ============ FATORES DE AVALIAÇÃO ============
