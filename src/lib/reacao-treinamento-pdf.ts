@@ -66,7 +66,9 @@ async function loadAtemLogo(): Promise<string> {
 
 // Cores auxiliares — o original usa apenas cinza claro nos rótulos e nas
 // faixas de seção. Nada mais.
-const GRAY: [number, number, number] = [217, 217, 217];
+// ISO compliance: fundo dos campos = #E5E7EB, borda fina = #9CA3AF
+const GRAY: [number, number, number] = [229, 231, 235]; // #E5E7EB
+const BORDER_GRAY: [number, number, number] = [156, 163, 175]; // #9CA3AF
 const DOT_GRAY: [number, number, number] = [140, 140, 140];
 
 function fillRect(doc: jsPDF, x: number, y: number, w: number, h: number, rgb: [number, number, number]) {
@@ -83,7 +85,9 @@ export async function gerarAvaliacaoReacao(p: ReacaoTreinamentoParams): Promise<
   const contentW = pageW - margin * 2;
 
   doc.setLineWidth(0.4);
-  doc.setDrawColor(0, 0, 0);
+  doc.setDrawColor(BORDER_GRAY[0], BORDER_GRAY[1], BORDER_GRAY[2]);
+  // Tipografia base — Helvetica (Arial-equivalente no jsPDF core)
+  doc.setFont("helvetica", "normal");
 
   // ============ BORDA EXTERNA DA PÁGINA ============
   // O original tem um retângulo preto que envolve TODO o formulário até a
@@ -379,13 +383,32 @@ export async function gerarAvaliacaoReacao(p: ReacaoTreinamentoParams): Promise<
   AVAL_GERAL.forEach((label, i) => {
     const ry = y + i * geralRowH;
     if (i > 0) doc.line(margin + geralLabelW, ry, margin + contentW, ry);
-    // checkbox
-    const bs = 4;
+    // checkbox — tamanho fixo (~14px = 3.7mm)
+    const bs = 3.7;
     const bx = margin + geralLabelW + (geralBoxW - bs) / 2;
     const by = ry + (geralRowH - bs) / 2;
     doc.rect(bx, by, bs, bs);
     doc.setFont("helvetica", "normal").setFontSize(9);
     doc.text(label, margin + geralLabelW + geralBoxW + 2, ry + 4);
+  });
+
+  // ============ RODAPÉ FIXO NA BASE DA PÁGINA ============
+  const footerH = 6;
+  const footerY = pageH - margin - footerH;
+  fillRect(doc, margin, footerY, contentW, footerH, GRAY);
+  doc.setDrawColor(BORDER_GRAY[0], BORDER_GRAY[1], BORDER_GRAY[2]);
+  doc.rect(margin, footerY, contentW, footerH);
+  doc.setTextColor(0, 0, 0);
+  doc.setFont("helvetica", "bold").setFontSize(8);
+  const footerParts = [
+    `CÓD.: ${p.codigo ?? "FORCP-GP-16"}`,
+    `REVISÃO: ${p.revisao ?? "00"}`,
+    `DATA: ${p.dataDocumento ?? "23/06/2025"}`,
+    `PÁG.: 1 / 1`,
+  ];
+  const colW = contentW / footerParts.length;
+  footerParts.forEach((t, i) => {
+    doc.text(t, margin + colW * i + colW / 2, footerY + footerH / 2 + 1.4, { align: "center" });
   });
 
   return doc;
