@@ -197,7 +197,13 @@ function UploadDialog({ template, onClose }: { template: any; onClose: () => voi
     setUploading(true);
     try {
       const buf = await file.arrayBuffer();
-      const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+      const bytes = new Uint8Array(buf);
+      let bin = "";
+      const CHUNK = 0x8000;
+      for (let i = 0; i < bytes.length; i += CHUNK) {
+        bin += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + CHUNK)) as any);
+      }
+      const b64 = btoa(bin);
       await novaRevisao({
         data: {
           templateId: template.id,
