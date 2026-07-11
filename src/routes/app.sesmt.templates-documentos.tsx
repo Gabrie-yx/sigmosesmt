@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -79,23 +80,53 @@ function PainelInterno() {
   const [uploadFor, setUploadFor] = useState<any>(null);
   const [historyFor, setHistoryFor] = useState<any>(null);
 
+  const grupos: Array<{ key: string; label: string; match: (c: string) => boolean; hint: string }> = [
+    { key: "for-seg", label: "FOR-SEG (Segurança)", match: (c) => c.startsWith("FOR-SEG"), hint: "Formulários operacionais do SESMT — OS, PT, EPI, requisições." },
+    { key: "forcp-gp", label: "FORCP-GP (Gestão de Pessoas)", match: (c) => c.startsWith("FORCP-GP"), hint: "Formulários de RH/T&D — avaliações de reação, eficácia e afins." },
+    { key: "outros", label: "Outros", match: (c) => !c.startsWith("FOR-SEG") && !c.startsWith("FORCP-GP"), hint: "Templates fora das séries padronizadas." },
+  ];
+
+  const byGrupo = (key: string) => (templates ?? []).filter((t: any) => grupos.find((g) => g.key === key)!.match(t.codigo));
+
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
       <header className="flex flex-col gap-2">
         <div className="flex items-center gap-3">
           <FileText className="w-6 h-6 text-rose-300" />
-          <h1 className="text-2xl font-bold text-rose-50">Templates de Documentos (FOR-SEG)</h1>
+          <h1 className="text-2xl font-bold text-rose-50">Templates de Documentos Homologados</h1>
         </div>
         <p className="text-sm text-rose-100/70 max-w-3xl">
-          Painel de gestão dos formulários homologados pela ISO 9001 (PROCO-SGI-SST-01).
+          Painel de gestão dos formulários homologados pela ISO 9001 (PROCO-SGI-SST-01), separados por série documental.
           Upload de nova revisão arquiva o PDF oficial e cria uma pendência para o motor de render alinhar.
           Enquanto isso, o sistema continua emitindo pela revisão anterior com selo no rodapé.
         </p>
       </header>
 
-      <div className="grid gap-3">
-        {isLoading && <p className="text-sm text-rose-100/60">Carregando...</p>}
-        {(templates ?? []).map((t: any) => (
+      {isLoading && <p className="text-sm text-rose-100/60">Carregando...</p>}
+
+      {!isLoading && (
+        <Tabs defaultValue="for-seg" className="w-full">
+          <TabsList className="bg-rose-950/40 border border-rose-500/20">
+            {grupos.map((g) => {
+              const n = byGrupo(g.key).length;
+              return (
+                <TabsTrigger key={g.key} value={g.key} className="data-[state=active]:bg-rose-500/20">
+                  {g.label} <span className="ml-2 text-xs opacity-60">({n})</span>
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
+          {grupos.map((g) => {
+            const lista = byGrupo(g.key);
+            return (
+              <TabsContent key={g.key} value={g.key} className="mt-4 space-y-3">
+                <p className="text-xs text-rose-100/60 italic">{g.hint}</p>
+                {lista.length === 0 && (
+                  <Card className="p-6 text-sm text-rose-100/50 italic border-rose-500/20 bg-rose-950/20">
+                    Nenhum template nesta série ainda.
+                  </Card>
+                )}
+                {lista.map((t: any) => (
           <Card key={t.id} className="p-4 border-rose-500/20 bg-gradient-to-br from-rose-950/40 to-slate-950/60">
             <div className="flex items-start justify-between gap-4 flex-wrap">
               <div className="flex-1 min-w-[260px]">
@@ -138,7 +169,11 @@ function PainelInterno() {
             </div>
           </Card>
         ))}
-      </div>
+              </TabsContent>
+            );
+          })}
+        </Tabs>
+      )}
 
       {uploadFor && <UploadDialog template={uploadFor} onClose={() => setUploadFor(null)} />}
       {historyFor && <HistoryDialog template={historyFor} onClose={() => setHistoryFor(null)} />}
