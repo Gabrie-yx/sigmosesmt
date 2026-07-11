@@ -104,7 +104,6 @@ import { Route as AppAdministrativoRequisicoesRecebidasRouteImport } from './rou
 import { Route as AppAdministrativoMarcadoresHoraExtraRouteImport } from './routes/app.administrativo.marcadores-hora-extra'
 import { Route as AppAdministrativoHoraExtraRecebidaRouteImport } from './routes/app.administrativo.hora-extra-recebida'
 import { Route as AppAdministrativoGestaoPontoRouteImport } from './routes/app.administrativo.gestao-ponto'
-import { Route as ApiPublicDevFetchTemplateRouteImport } from './routes/api/public/dev-fetch-template'
 import { Route as AppSesmtCatalogosIndexRouteImport } from './routes/app.sesmt.catalogos.index'
 import { Route as AppAdministrativoGestaoPontoIndexRouteImport } from './routes/app.administrativo.gestao-ponto.index'
 import { Route as AppSesmtEquipamentosMoveisArquivosMensaisRouteImport } from './routes/app.sesmt.equipamentos-moveis_.arquivos-mensais'
@@ -617,12 +616,6 @@ const AppAdministrativoGestaoPontoRoute =
     path: '/gestao-ponto',
     getParentRoute: () => AppAdministrativoRoute,
   } as any)
-const ApiPublicDevFetchTemplateRoute =
-  ApiPublicDevFetchTemplateRouteImport.update({
-    id: '/api/public/dev-fetch-template',
-    path: '/api/public/dev-fetch-template',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const AppSesmtCatalogosIndexRoute = AppSesmtCatalogosIndexRouteImport.update({
   id: '/sesmt/catalogos/',
   path: '/sesmt/catalogos/',
@@ -760,7 +753,6 @@ export interface FileRoutesByFullPath {
   '/app/users': typeof AppUsersRoute
   '/rc/$token': typeof RcTokenRoute
   '/app/': typeof AppIndexRoute
-  '/api/public/dev-fetch-template': typeof ApiPublicDevFetchTemplateRoute
   '/app/administrativo/gestao-ponto': typeof AppAdministrativoGestaoPontoRouteWithChildren
   '/app/administrativo/hora-extra-recebida': typeof AppAdministrativoHoraExtraRecebidaRoute
   '/app/administrativo/marcadores-hora-extra': typeof AppAdministrativoMarcadoresHoraExtraRoute
@@ -872,7 +864,6 @@ export interface FileRoutesByTo {
   '/app/users': typeof AppUsersRoute
   '/rc/$token': typeof RcTokenRoute
   '/app': typeof AppIndexRoute
-  '/api/public/dev-fetch-template': typeof ApiPublicDevFetchTemplateRoute
   '/app/administrativo/hora-extra-recebida': typeof AppAdministrativoHoraExtraRecebidaRoute
   '/app/administrativo/marcadores-hora-extra': typeof AppAdministrativoMarcadoresHoraExtraRoute
   '/app/administrativo/requisicoes-recebidas': typeof AppAdministrativoRequisicoesRecebidasRoute
@@ -987,7 +978,6 @@ export interface FileRoutesById {
   '/app/users': typeof AppUsersRoute
   '/rc/$token': typeof RcTokenRoute
   '/app/': typeof AppIndexRoute
-  '/api/public/dev-fetch-template': typeof ApiPublicDevFetchTemplateRoute
   '/app/administrativo/gestao-ponto': typeof AppAdministrativoGestaoPontoRouteWithChildren
   '/app/administrativo/hora-extra-recebida': typeof AppAdministrativoHoraExtraRecebidaRoute
   '/app/administrativo/marcadores-hora-extra': typeof AppAdministrativoMarcadoresHoraExtraRoute
@@ -1104,7 +1094,6 @@ export interface FileRouteTypes {
     | '/app/users'
     | '/rc/$token'
     | '/app/'
-    | '/api/public/dev-fetch-template'
     | '/app/administrativo/gestao-ponto'
     | '/app/administrativo/hora-extra-recebida'
     | '/app/administrativo/marcadores-hora-extra'
@@ -1216,7 +1205,6 @@ export interface FileRouteTypes {
     | '/app/users'
     | '/rc/$token'
     | '/app'
-    | '/api/public/dev-fetch-template'
     | '/app/administrativo/hora-extra-recebida'
     | '/app/administrativo/marcadores-hora-extra'
     | '/app/administrativo/requisicoes-recebidas'
@@ -1330,7 +1318,6 @@ export interface FileRouteTypes {
     | '/app/users'
     | '/rc/$token'
     | '/app/'
-    | '/api/public/dev-fetch-template'
     | '/app/administrativo/gestao-ponto'
     | '/app/administrativo/hora-extra-recebida'
     | '/app/administrativo/marcadores-hora-extra'
@@ -1417,7 +1404,6 @@ export interface RootRouteChildren {
   ApiPgrChatRoute: typeof ApiPgrChatRoute
   ApiSigmoChatRoute: typeof ApiSigmoChatRoute
   RcTokenRoute: typeof RcTokenRoute
-  ApiPublicDevFetchTemplateRoute: typeof ApiPublicDevFetchTemplateRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -2087,13 +2073,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdministrativoGestaoPontoRouteImport
       parentRoute: typeof AppAdministrativoRoute
     }
-    '/api/public/dev-fetch-template': {
-      id: '/api/public/dev-fetch-template'
-      path: '/api/public/dev-fetch-template'
-      fullPath: '/api/public/dev-fetch-template'
-      preLoaderRoute: typeof ApiPublicDevFetchTemplateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/app/sesmt/catalogos/': {
       id: '/app/sesmt/catalogos/'
       path: '/sesmt/catalogos'
@@ -2500,7 +2479,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPgrChatRoute: ApiPgrChatRoute,
   ApiSigmoChatRoute: ApiSigmoChatRoute,
   RcTokenRoute: RcTokenRoute,
-  ApiPublicDevFetchTemplateRoute: ApiPublicDevFetchTemplateRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
