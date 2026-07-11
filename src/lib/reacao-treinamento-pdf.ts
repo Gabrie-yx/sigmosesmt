@@ -82,7 +82,7 @@ export async function gerarAvaliacaoReacao(p: ReacaoTreinamentoParams): Promise<
   const margin = 10;
   const contentW = pageW - margin * 2;
 
-  doc.setLineWidth(0.2);
+  doc.setLineWidth(0.4);
   doc.setDrawColor(0, 0, 0);
 
   // ============ BORDA EXTERNA DA PÁGINA ============
@@ -237,10 +237,13 @@ export async function gerarAvaliacaoReacao(p: ReacaoTreinamentoParams): Promise<
   y = blockTop + blockH;
 
   // ============ INSTRUÇÕES (faixa cinza) ============
-  // Fonte mais leve (normal, não bold) e texto CENTRALIZADO horizontalmente
-  // dentro do bloco cinza — igual ao original.
+  // Fonte normal, texto centralizado, quebrado em EXATAMENTE 2 linhas
+  // (fiéis ao original: linha 1 termina em "Nos quesitos").
   doc.setFont("helvetica", "normal").setFontSize(9);
-  const instrLines = doc.splitTextToSize(INSTRUCOES, contentW - 8);
+  const instrLines = [
+    "Para que possamos aprimorar e adequar nossos treinamentos, solicitamos que preencha atentamente este questionário. Nos quesitos",
+    '"Fatores de Avaliação", atribua uma nota de 1 a 4 e responda os questionamentos apresentados abaixo. Sua opinião é muito importante!',
+  ];
   const instrH = instrLines.length * 4.2 + 3.5;
   fillRect(doc, margin, y, contentW, instrH, GRAY);
   doc.rect(margin, y, contentW, instrH);
