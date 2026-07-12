@@ -543,6 +543,9 @@ function PtesPage() {
     { id: "riscos", label: "Riscos", icon: AlertTriangle },
     { id: "snna", label: "S / N / NA", icon: CheckCircle2 },
     { id: "precaucoes", label: "Precauções", icon: ShieldCheck },
+    { id: "cargas_pintura", label: "Cargas & Pintura", icon: HardHat },
+    { id: "epis", label: "EPIs", icon: ShieldCheck },
+    { id: "assinaturas", label: "Equipe & Assinaturas", icon: UserCheck },
     ...(f.tipo_pt === "PET" ? [{ id: "pet", label: "PET / Resgate", icon: Wind }] : []),
     { id: "revisao", label: "Revisão", icon: Sparkles },
   ] as { id: string; label: string; icon: any }[];
