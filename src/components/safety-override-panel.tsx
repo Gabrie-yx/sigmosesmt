@@ -153,33 +153,32 @@ export function SafetyOverridePanel({ employeeId, employeeName, availableItemKey
       {active.map((o) => (
         <div
           key={o.id}
-          className="bg-white/5 rounded-lg p-3 border border-white/10 flex items-start gap-3"
+          className="bg-white/5 rounded-lg p-3 border border-white/10 flex flex-col gap-2 w-full"
         >
-          <Unlock className="h-4 w-4 text-amber-300 shrink-0 mt-0.5" />
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <Badge className="bg-amber-500/15 text-amber-100 border border-amber-300/30 text-[10px] font-black">
-                {o.scope === "GLOBAL" ? "TODOS OS BLOQUEIOS" : o.item_key}
-              </Badge>
-              <span className="text-[10px] text-white/55">
-                até {o.expira_em ? formatDateBR(o.expira_em.slice(0, 10)) : "indefinido"}
-              </span>
-            </div>
-            <div className="text-xs text-white/85 mt-1">{o.justificativa}</div>
-            <div className="text-[10px] text-white/50 mt-1">
-              Por {o.liberado_por_email ?? "—"} em {formatDateBR(o.liberado_em.slice(0, 10))}
-            </div>
+          <div className="flex items-center gap-2 flex-wrap w-full">
+            <Unlock className="h-4 w-4 text-amber-300 shrink-0" />
+            <Badge className="bg-amber-500/15 text-amber-100 border border-amber-300/30 text-[10px] font-black">
+              {o.scope === "GLOBAL" ? "TODOS OS BLOQUEIOS" : o.item_key}
+            </Badge>
+            <span className="text-[10px] text-white/55">
+              até {o.expira_em ? formatDateBR(o.expira_em.slice(0, 10)) : "indefinido"}
+            </span>
+            {isAdmin && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleRevoke(o.id)}
+                className="ml-auto text-[10px] h-7 border-rose-300/40 text-rose-200 hover:bg-rose-500/10 bg-transparent"
+              >
+                <Lock className="h-3 w-3 mr-1" /> Revogar
+              </Button>
+            )}
           </div>
-          {isAdmin && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => handleRevoke(o.id)}
-              className="text-[10px] h-7 border-rose-300/40 text-rose-200 hover:bg-rose-500/10 bg-transparent"
-            >
-              <Lock className="h-3 w-3 mr-1" /> Revogar
-            </Button>
-          )}
+          <div className="text-xs text-white/85 w-full break-words">{o.justificativa}</div>
+          <div className="flex flex-wrap items-center justify-between gap-2 w-full text-[10px] text-white/50">
+            <span>Por {o.liberado_por_email ?? "—"}</span>
+            <span>em {formatDateBR(o.liberado_em.slice(0, 10))}</span>
+          </div>
         </div>
       ))}
 
