@@ -120,16 +120,16 @@ export function SafetyOverridePanel({ employeeId, employeeName, availableItemKey
   }
 
   return (
-    <Card className="glass-vinho p-4 rounded-2xl h-full flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <ShieldAlert className="h-4 w-4 text-amber-300 shrink-0" />
-          <span className="text-xs font-black uppercase tracking-widest text-amber-100/90 truncate">
-            Liberações Manuais (Override SST)
+    <Card className="glass-vinho p-3 rounded-2xl flex flex-col gap-2">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <ShieldAlert className="h-3.5 w-3.5 text-amber-300 shrink-0" />
+          <span className="text-[11px] font-black uppercase tracking-widest text-amber-100/90 truncate">
+            Liberações SST
           </span>
           {active.length > 0 && (
-            <Badge className="bg-amber-500/20 text-amber-100 border border-amber-300/30 text-[10px]">
-              {active.length} ativa(s)
+            <Badge className="bg-amber-500/20 text-amber-100 border border-amber-300/30 text-[10px] px-1.5 py-0 h-4 shrink-0">
+              {active.length}
             </Badge>
           )}
         </div>
@@ -137,9 +137,11 @@ export function SafetyOverridePanel({ employeeId, employeeName, availableItemKey
           <Button
             size="sm"
             onClick={() => setOpenDialog(true)}
-            className="bg-white/10 hover:bg-white/15 border border-white/15 text-white text-xs h-8"
+            title="Nova liberação"
+            aria-label="Nova liberação"
+            className="h-7 w-7 p-0 bg-white/10 hover:bg-white/15 border border-white/15 text-white shrink-0"
           >
-            <Plus className="h-3 w-3 mr-1" /> Liberar
+            <Plus className="h-3.5 w-3.5" />
           </Button>
         )}
       </div>
@@ -153,31 +155,40 @@ export function SafetyOverridePanel({ employeeId, employeeName, availableItemKey
       {active.map((o) => (
         <div
           key={o.id}
-          className="bg-white/5 rounded-lg p-3 border border-white/10 flex flex-col gap-2 w-full"
+          className="bg-white/5 rounded-lg p-2.5 border border-white/10 flex flex-col gap-1.5 w-full"
         >
-          <div className="flex items-center gap-2 flex-wrap w-full">
-            <Unlock className="h-4 w-4 text-amber-300 shrink-0" />
-            <Badge className="bg-amber-500/15 text-amber-100 border border-amber-300/30 text-[10px] font-black">
-              {o.scope === "GLOBAL" ? "TODOS OS BLOQUEIOS" : o.item_key}
-            </Badge>
-            <span className="text-[10px] text-white/55">
-              até {o.expira_em ? formatDateBR(o.expira_em.slice(0, 10)) : "indefinido"}
-            </span>
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 w-full">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Unlock className="h-3.5 w-3.5 text-amber-300 shrink-0" />
+              <Badge className="bg-amber-500/15 text-amber-100 border border-amber-300/30 text-[10px] font-black truncate max-w-full">
+                {o.scope === "GLOBAL" ? "TODOS OS BLOQUEIOS" : o.item_key}
+              </Badge>
+            </div>
             {isAdmin && (
               <Button
                 size="sm"
                 variant="outline"
                 onClick={() => handleRevoke(o.id)}
-                className="ml-auto text-[10px] h-7 border-rose-300/40 text-rose-200 hover:bg-rose-500/10 bg-transparent"
+                title="Revogar liberação"
+                aria-label="Revogar liberação"
+                className="h-7 w-7 p-0 border-rose-300/40 text-rose-200 hover:bg-rose-500/10 bg-transparent shrink-0"
               >
-                <Lock className="h-3 w-3 mr-1" /> Revogar
+                <Lock className="h-3.5 w-3.5" />
               </Button>
             )}
           </div>
-          <div className="text-xs text-white/85 w-full break-words">{o.justificativa}</div>
-          <div className="flex flex-wrap items-center justify-between gap-2 w-full text-[10px] text-white/50">
-            <span>Por {o.liberado_por_email ?? "—"}</span>
-            <span>em {formatDateBR(o.liberado_em.slice(0, 10))}</span>
+          <div className="w-full">
+            <span className="text-[9px] font-bold uppercase tracking-wider text-white/50">Justificativa</span>
+            <div className="text-xs text-white/85 break-words leading-snug">{o.justificativa}</div>
+          </div>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 w-full text-[10px] text-white/50">
+            <span className="truncate min-w-0" title={o.liberado_por_email ?? undefined}>
+              {o.liberado_por_email ?? "—"}
+            </span>
+            <span className="opacity-60">·</span>
+            <span>{formatDateBR(o.liberado_em.slice(0, 10))}</span>
+            <span className="opacity-60">·</span>
+            <span>até {o.expira_em ? formatDateBR(o.expira_em.slice(0, 10)) : "indefinido"}</span>
           </div>
         </div>
       ))}
