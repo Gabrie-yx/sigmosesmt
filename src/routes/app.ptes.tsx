@@ -1222,6 +1222,43 @@ function PtesPage() {
               <p className="text-[11px] text-slate-300/80 font-medium">
                 Adicione cada colaborador que assinará a permissão. As assinaturas físicas serão coletadas na impressão.
               </p>
+              {/* Picker vinculado à empresa selecionada no passo Equipe */}
+              <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-2 items-center bg-black/25 border border-white/10 rounded-xl px-3 py-2">
+                <select
+                  value=""
+                  onChange={(e) => {
+                    const eid = e.target.value;
+                    if (!eid) return;
+                    const emp = emps.find((x: any) => x.id === eid);
+                    if (!emp) return;
+                    const role = roles.find((r: any) => r.id === emp.role_id);
+                    const nome = emp.nome ?? "";
+                    const funcao = (role as any)?.name ?? "";
+                    if ((f.equipe_lista ?? []).some((r: any) => r.nome === nome)) return;
+                    setF({ ...f, equipe_lista: [...(f.equipe_lista ?? []), { nome, funcao }] });
+                  }}
+                  className="w-full bg-black/40 border border-white/10 text-rose-50 rounded-lg px-3 py-2 text-xs font-bold uppercase outline-none focus:ring-2 focus:ring-lime-400/40"
+                >
+                  <option value="">
+                    {f.company_id
+                      ? "+ Adicionar da equipe da empresa selecionada"
+                      : "+ Adicionar colaborador (mostrando todos — filtre uma empresa no passo Equipe)"}
+                  </option>
+                  {empOptions.map(({ e, st, compName }) => (
+                    <option
+                      key={e.id}
+                      value={e.id}
+                      disabled={!st.acessoPermitido}
+                      style={{ color: st.acessoPermitido ? "#0f172a" : "#9f1239", background: "#fff" }}
+                    >
+                      {st.acessoPermitido ? "✅" : "🚫"} {e.nome} — [{compName}]
+                    </option>
+                  ))}
+                </select>
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-300/70">
+                  {f.company_id ? "Filtrado por empresa" : "Todas as empresas"}
+                </span>
+              </div>
               <div className="space-y-2">
                 {(f.equipe_lista ?? []).length === 0 && (
                   <div className="text-center text-slate-300/70 text-xs font-bold uppercase tracking-wider py-6 border border-dashed border-white/15 rounded-xl bg-black/20">
@@ -1264,19 +1301,57 @@ function PtesPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-3 border-t border-white/10">
                 <div>
                   <Label className="text-xs font-black text-amber-50/85/70 uppercase tracking-wider">Encarregado</Label>
+                  <select
+                    value={
+                      emps.find((x: any) => x.nome === f.assinatura_encarregado_nome)?.id ?? "__custom__"
+                    }
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      if (v === "__custom__" || !v) return;
+                      const emp = emps.find((x: any) => x.id === v);
+                      if (emp) setF({ ...f, assinatura_encarregado_nome: emp.nome });
+                    }}
+                    className="w-full bg-white/[0.05] border border-white/15 text-slate-50 rounded-md px-3 py-2 text-sm mt-2 uppercase font-bold outline-none focus:ring-2 focus:ring-lime-400/40"
+                  >
+                    <option value="__custom__">— SELECIONAR DA EMPRESA —</option>
+                    {empOptions.map(({ e, compName }) => (
+                      <option key={e.id} value={e.id} style={{ color: "#0f172a", background: "#fff" }}>
+                        {e.nome} — [{compName}]
+                      </option>
+                    ))}
+                  </select>
                   <Input
                     value={f.assinatura_encarregado_nome}
                     onChange={(e) => setF({ ...f, assinatura_encarregado_nome: e.target.value })}
-                    placeholder="Nome do encarregado"
+                    placeholder="Ou digite o nome do encarregado"
                     className="bg-white/[0.05] border-white/15 text-slate-50 placeholder:text-slate-400 text-sm mt-2"
                   />
                 </div>
                 <div>
                   <Label className="text-xs font-black text-amber-50/85/70 uppercase tracking-wider">Gerente da Empresa</Label>
+                  <select
+                    value={
+                      emps.find((x: any) => x.nome === f.assinatura_gerente_nome)?.id ?? "__custom__"
+                    }
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      if (v === "__custom__" || !v) return;
+                      const emp = emps.find((x: any) => x.id === v);
+                      if (emp) setF({ ...f, assinatura_gerente_nome: emp.nome });
+                    }}
+                    className="w-full bg-white/[0.05] border border-white/15 text-slate-50 rounded-md px-3 py-2 text-sm mt-2 uppercase font-bold outline-none focus:ring-2 focus:ring-lime-400/40"
+                  >
+                    <option value="__custom__">— SELECIONAR DA EMPRESA —</option>
+                    {empOptions.map(({ e, compName }) => (
+                      <option key={e.id} value={e.id} style={{ color: "#0f172a", background: "#fff" }}>
+                        {e.nome} — [{compName}]
+                      </option>
+                    ))}
+                  </select>
                   <Input
                     value={f.assinatura_gerente_nome}
                     onChange={(e) => setF({ ...f, assinatura_gerente_nome: e.target.value })}
-                    placeholder="Nome do gerente"
+                    placeholder="Ou digite o nome do gerente"
                     className="bg-white/[0.05] border-white/15 text-slate-50 placeholder:text-slate-400 text-sm mt-2"
                   />
                 </div>

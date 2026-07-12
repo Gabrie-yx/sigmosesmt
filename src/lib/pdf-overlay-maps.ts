@@ -68,7 +68,7 @@ export const OVERLAY_MAPS: Record<string, OverlayMap> = {
       teste_atmosfera_horario: { x: 151.61, top: 511.5, maxW: 42, size: 5.4, baselineOffset: 1.6 },
       teste_atmosfera_percentual: { x: 47.61, top: 517.5, maxW: 26, size: 5.4, baselineOffset: 1.6 },
       designado_liberacao: { x: 396.61, top: 501.7, maxW: 135, size: 5.4, baselineOffset: 1.6 },
-      responsavel_bloqueio: { x: 404.61, top: 735.7, maxW: 126, size: 5.4, baselineOffset: 1.6 },
+      responsavel_bloqueio: { x: 404.61, top: 732.7, maxW: 126, size: 5.4, baselineOffset: 1.6 },
     },
     checkboxes: {
       // Descrição das atividades a serem executadas
