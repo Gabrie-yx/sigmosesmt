@@ -23,6 +23,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { calculateSafetyStatus } from "@/lib/safety-engine";
 import { SafetyOverridePanel } from "@/components/safety-override-panel";
+import { filterActiveOverrides, type SafetyOverride } from "@/lib/safety-overrides";
 import { AnimatedTabsBar } from "@/components/animated-tabs-bar";
 import type { SafetyOverride } from "@/lib/safety-overrides";
 import { formatDateBR, addMonthsToDate } from "@/lib/utils-date";
