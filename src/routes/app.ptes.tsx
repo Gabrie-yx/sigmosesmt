@@ -531,6 +531,11 @@ function PtesPage() {
               <Input required value={f.local} onChange={(e) => setF({ ...f, local: e.target.value })} placeholder="Ex: Dique Seco, Navio XYZ..." className="bg-black/30 border-white/10 text-rose-50 placeholder:text-rose-200/30 mt-2 text-xs font-bold uppercase" />
             </div>
             <div>
+              <Label className="text-[10px] font-black text-rose-200/70 uppercase">Encarregado (PDF FOR-SEG-04)</Label>
+              <Input value={f.encarregado_nome} onChange={(e) => setF({ ...f, encarregado_nome: e.target.value })} placeholder="Nome do encarregado responsável" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-rose-200/30 mt-2 text-xs font-bold uppercase" />
+              <p className="text-[9px] text-rose-200/40 mt-1 uppercase">Se vazio, usa o requisitante no PDF.</p>
+            </div>
+            <div>
               <Label className="text-[10px] font-black text-rose-200/70 uppercase">Frente de Trabalho (Casco)</Label>
               <Select value={f.casco_id || "none"} onValueChange={(v) => setF({ ...f, casco_id: v === "none" ? "" : v })}>
                 <SelectTrigger className="bg-black/30 border-white/10 text-rose-50 mt-2 text-xs font-bold uppercase">
