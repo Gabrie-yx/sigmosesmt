@@ -50,15 +50,15 @@ export const OVERLAY_MAPS: Record<string, OverlayMap> = {
     pageHeight: 841.8,
     fields: {
       // Cabeçalho — data/hora início, data/hora fim e nº do PT
-      data_inicio:  { x:  45, top: 82, maxW: 95, size: 9, bold: true },
-      hora_inicio:  { x: 170, top: 82, maxW: 90, size: 9, bold: true },
-      data_fim:     { x: 285, top: 82, maxW: 70, size: 9, bold: true },
-      hora_fim:     { x: 382, top: 82, maxW: 80, size: 9, bold: true },
-      pt_numero:    { x: 497, top: 82, maxW: 55, size: 9, bold: true },
+      data_inicio:  { x:  45, top: 100, maxW: 95, size: 9, bold: true },
+      hora_inicio:  { x: 170, top: 100, maxW: 90, size: 9, bold: true },
+      data_fim:     { x: 285, top: 100, maxW: 70, size: 9, bold: true },
+      hora_fim:     { x: 382, top: 100, maxW: 80, size: 9, bold: true },
+      pt_numero:    { x: 497, top: 100, maxW: 95, size: 9, bold: true },
       // Identificação
-      empresa:          { x:  90, top: 158, maxW: 200, size: 9 },
-      encarregado:      { x: 390, top: 158, maxW: 160, size: 9 },
-      local_descricao:  { x:  32, top: 180, maxW: 520, size: 9 },
+      empresa:          { x:  90, top: 178, maxW: 200, size: 9 },
+      encarregado:      { x: 390, top: 178, maxW: 160, size: 9 },
+      local_descricao:  { x:  32, top: 200, maxW: 520, size: 9 },
     },
     checkboxes: {
       // Descrição das atividades a serem executadas
