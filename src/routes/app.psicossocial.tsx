@@ -26,15 +26,15 @@ function PsicossocialPage() {
   const [tab, setTab] = useState("catalogo");
 
   return (
-    <div className="h-full flex flex-col bg-slate-50">
-      <header className="px-6 pt-5 pb-3 border-b border-emerald-100 bg-gradient-to-r from-emerald-50 via-white to-teal-50 shadow-sm">
+    <div className="h-full flex flex-col bg-transparent">
+      <header className="px-6 pt-5 pb-3 border-b border-rose-500/20 bg-gradient-to-r from-rose-950/60 via-rose-900/30 to-slate-950/60">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-gradient-to-br from-emerald-600 to-teal-700 text-white shadow">
+          <div className="p-2 rounded-lg bg-gradient-to-br from-rose-600 to-rose-800 text-white shadow">
             <Brain className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-xl font-black text-slate-900 tracking-tight">Risco Psicossocial (NR-01)</h1>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <h1 className="text-xl font-black text-rose-50 tracking-tight">Risco Psicossocial (NR-01)</h1>
+            <p className="text-xs text-rose-100/60 mt-0.5">
               Portaria MTP 1.419/2024 · ISO 45003 · Instrumento anônimo com blindagem LGPD (n≥5)
             </p>
           </div>
@@ -43,7 +43,7 @@ function PsicossocialPage() {
 
       <div className="flex-1 min-h-0 overflow-y-auto">
         <Tabs value={tab} onValueChange={setTab} className="p-4">
-          <TabsList className="bg-white border border-slate-200 shadow-sm">
+          <TabsList className="bg-rose-950/40 border border-rose-500/20">
             <TabsTrigger value="catalogo"><ListChecks className="h-4 w-4 mr-1" />Catálogo</TabsTrigger>
             <TabsTrigger value="campanhas"><Users className="h-4 w-4 mr-1" />Campanhas</TabsTrigger>
             <TabsTrigger value="diagnostico"><BarChart3 className="h-4 w-4 mr-1" />Diagnóstico</TabsTrigger>
@@ -81,32 +81,32 @@ function CatalogoTab() {
     return g;
   }, [itens]);
 
-  if (isLoading) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-emerald-500" /></div>;
+  if (isLoading) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-rose-400" /></div>;
 
   return (
     <div className="space-y-3">
-      <Card className="p-4 bg-emerald-50 border-emerald-200">
-        <p className="text-sm text-slate-700">
+      <Card className="p-4 bg-rose-950/30 border-rose-500/20">
+        <p className="text-sm text-rose-100/80">
           Biblioteca-mãe de <b>{itens?.length ?? 0} perigos psicossociais</b> em 8 dimensões (ISO 45003 + Guia MTE 2025). Serve
           como base para o inventário do PGR de qualquer empresa/CNAE.
         </p>
       </Card>
       {Object.entries(grupos).map(([dim, lista]) => (
-        <Card key={dim} className="p-4">
+        <Card key={dim} className="p-4 border-rose-500/20 bg-gradient-to-br from-rose-950/40 to-slate-950/60">
           <h3 className="font-bold text-slate-900 mb-3 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span className="w-2 h-2 rounded-full bg-rose-500" />
             {DIMENSAO_LABEL[dim as keyof typeof DIMENSAO_LABEL] ?? dim}
             <Badge variant="outline" className="ml-auto">{lista.length} perigos</Badge>
           </h3>
           <div className="grid gap-2 md:grid-cols-2">
             {lista.map((p) => (
-              <div key={p.id} className="rounded-lg border border-slate-200 p-3 bg-slate-50/50">
+              <div key={p.id} className="rounded-lg border border-rose-500/20 p-3 bg-transparent/50">
                 <div className="flex items-start justify-between gap-2 mb-1">
-                  <p className="text-sm font-semibold text-slate-800">{p.perigo}</p>
+                  <p className="text-sm font-semibold text-rose-50">{p.perigo}</p>
                   <Badge variant="secondary" className="shrink-0 text-[10px]">{p.codigo}</Badge>
                 </div>
-                {p.agravo && <p className="text-xs text-rose-600"><b>Agravo:</b> {p.agravo}</p>}
-                {p.controles_sugeridos && <p className="text-xs text-emerald-700 mt-1"><b>Controles:</b> {p.controles_sugeridos}</p>}
+                {p.agravo && <p className="text-xs text-rose-300"><b>Agravo:</b> {p.agravo}</p>}
+                {p.controles_sugeridos && <p className="text-xs text-rose-200 mt-1"><b>Controles:</b> {p.controles_sugeridos}</p>}
               </div>
             ))}
           </div>
@@ -202,45 +202,45 @@ function CampanhasTab() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-bold text-slate-900">Campanhas de coleta</h2>
-          <p className="text-xs text-slate-500">Cada campanha gera links descartáveis (single-use) para os colaboradores.</p>
+          <p className="text-xs text-rose-100/50">Cada campanha gera links descartáveis (single-use) para os colaboradores.</p>
         </div>
-        <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={() => setDialog(true)}>
+        <Button className="bg-rose-600 hover:bg-rose-700 text-white" onClick={() => setDialog(true)}>
           <Plus className="h-4 w-4 mr-1" />Nova campanha
         </Button>
       </div>
 
-      {isLoading && <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-emerald-500" /></div>}
+      {isLoading && <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-rose-400" /></div>}
 
       <div className="grid gap-3 md:grid-cols-2">
         {(campanhas ?? []).map((c: any) => {
           const pct = c.total_tokens > 0 ? Math.round((c.total_respostas / c.total_tokens) * 100) : 0;
           return (
-            <Card key={c.id} className="p-4 space-y-2">
+            <Card key={c.id} className="p-4 space-y-2 border-rose-500/20 bg-gradient-to-br from-rose-950/40 to-slate-950/60">
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <h3 className="font-bold text-slate-900">{c.titulo}</h3>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-rose-100/50">
                     {new Date(c.data_inicio).toLocaleDateString("pt-BR")} → {new Date(c.data_fim).toLocaleDateString("pt-BR")}
                   </p>
                 </div>
                 <Badge className={statusColor(c.status)}>{c.status}</Badge>
               </div>
-              {c.descricao && <p className="text-xs text-slate-600 line-clamp-2">{c.descricao}</p>}
-              <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-100">
-                <span className="text-slate-500">
+              {c.descricao && <p className="text-xs text-rose-100/70 line-clamp-2">{c.descricao}</p>}
+              <div className="flex items-center justify-between text-xs pt-2 border-t border-rose-500/10">
+                <span className="text-rose-100/50">
                   <b className="text-slate-900">{c.total_respostas}</b> / {c.total_tokens} respostas
                 </span>
-                <span className="font-bold text-emerald-600">{pct}%</span>
+                <span className="font-bold text-rose-300">{pct}%</span>
               </div>
-              <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
-                <div className="h-full bg-emerald-500" style={{ width: `${pct}%` }} />
+              <div className="h-1 bg-rose-500/10 rounded-full overflow-hidden">
+                <div className="h-full bg-rose-500" style={{ width: `${pct}%` }} />
               </div>
             </Card>
           );
         })}
         {campanhas?.length === 0 && (
-          <Card className="p-6 text-center col-span-full">
-            <p className="text-sm text-slate-500">Nenhuma campanha ainda. Crie a primeira.</p>
+          <Card className="p-6 text-center col-span-full border-rose-500/20 bg-gradient-to-br from-rose-950/40 to-slate-950/60">
+            <p className="text-sm text-rose-100/50">Nenhuma campanha ainda. Crie a primeira.</p>
           </Card>
         )}
       </div>
@@ -283,7 +283,7 @@ function CampanhasTab() {
             <div>
               <Label>Quantidade de tokens (colaboradores esperados)</Label>
               <Input type="number" min={1} max={500} value={qtdTokens} onChange={(e) => setQtdTokens(Number(e.target.value))} />
-              <p className="text-[10px] text-slate-500 mt-1">
+              <p className="text-[10px] text-rose-100/50 mt-1">
                 Cada colaborador recebe 1 link único. Recomenda-se n ≥ 5 por GHE (LGPD).
               </p>
             </div>
@@ -291,7 +291,7 @@ function CampanhasTab() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialog(false)}>Cancelar</Button>
             <Button
-              className="bg-emerald-600 hover:bg-emerald-700"
+              className="bg-rose-600 hover:bg-rose-700 text-white"
               disabled={!titulo || criar.isPending}
               onClick={() => criar.mutate()}
             >
@@ -307,9 +307,9 @@ function CampanhasTab() {
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Links gerados — copie e distribua</DialogTitle></DialogHeader>
           <div className="space-y-2">
-            <Card className="p-3 bg-amber-50 border-amber-200">
-              <p className="text-xs text-slate-700 flex items-start gap-2">
-                <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+            <Card className="p-3 bg-amber-500/10 border-amber-500/30">
+              <p className="text-xs text-rose-100/80 flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-300 shrink-0 mt-0.5" />
                 <span>Esta lista aparece <b>uma única vez</b>. Copie agora — depois do fechamento do modal, os tokens em claro somem (por design de segurança).</span>
               </p>
             </Card>
@@ -325,9 +325,9 @@ function CampanhasTab() {
             </Button>
             <div className="space-y-1">
               {tokensGerados.map((t, i) => (
-                <div key={i} className="flex items-center gap-2 p-2 rounded bg-slate-50 text-xs">
-                  <span className="text-slate-400 w-8">#{i + 1}</span>
-                  <code className="flex-1 truncate text-slate-700">{t.url}</code>
+                <div key={i} className="flex items-center gap-2 p-2 rounded bg-transparent text-xs">
+                  <span className="text-rose-100/40 w-8">#{i + 1}</span>
+                  <code className="flex-1 truncate text-rose-100/80">{t.url}</code>
                   <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => { navigator.clipboard.writeText(t.url); toast.success("Copiado"); }}>
                     <Copy className="h-3 w-3" />
                   </Button>
@@ -368,9 +368,9 @@ function DiagnosticoTab() {
 
   return (
     <div className="space-y-3">
-      <Card className="p-4 flex items-center gap-3">
-        <ShieldCheck className="h-5 w-5 text-emerald-600 shrink-0" />
-        <p className="text-xs text-slate-600">
+      <Card className="p-4 flex items-center gap-3 border-rose-500/20 bg-gradient-to-br from-rose-950/40 to-slate-950/60">
+        <ShieldCheck className="h-5 w-5 text-rose-300 shrink-0" />
+        <p className="text-xs text-rose-100/70">
           Todos os recortes com <b>menos de 5 respondentes</b> são <b>automaticamente suprimidos</b> (mostrados como "🔒") para
           preservar o anonimato — conforme LGPD e ISO 45003.
         </p>
@@ -389,8 +389,8 @@ function DiagnosticoTab() {
       </div>
 
       {campanhaId && agregado && agregado.length === 0 && (
-        <Card className="p-6 text-center">
-          <p className="text-sm text-slate-500">Ainda não há respostas suficientes para gerar diagnóstico.</p>
+        <Card className="p-6 text-center border-rose-500/20 bg-gradient-to-br from-rose-950/40 to-slate-950/60">
+          <p className="text-sm text-rose-100/50">Ainda não há respostas suficientes para gerar diagnóstico.</p>
         </Card>
       )}
 
@@ -407,7 +407,7 @@ function MatrizDiagnostico({ linhas }: { linhas: any[] }) {
   const ghes = Array.from(new Set(linhas.map((l) => l.ghe_id))).filter(Boolean);
 
   return (
-    <Card className="p-4 overflow-x-auto">
+    <Card className="p-4 overflow-x-auto border-rose-500/20 bg-gradient-to-br from-rose-950/40 to-slate-950/60">
       <h3 className="font-bold text-slate-900 mb-3">Matriz agregada por GHE × Dimensão</h3>
       <table className="w-full text-xs">
         <thead>
@@ -421,12 +421,12 @@ function MatrizDiagnostico({ linhas }: { linhas: any[] }) {
         <tbody>
           {ghes.map((ghe) => (
             <tr key={ghe as string}>
-              <td className="p-2 border-b text-slate-700 font-semibold">{(ghe as string).slice(0, 8)}…</td>
+              <td className="p-2 border-b text-rose-100/80 font-semibold">{(ghe as string).slice(0, 8)}…</td>
               {dimensoes.map((d) => {
                 const cell = linhas.find((l) => l.ghe_id === ghe && l.dimensao === d);
-                if (!cell) return <td key={d} className="p-2 border-b text-center text-slate-300">—</td>;
+                if (!cell) return <td key={d} className="p-2 border-b text-center text-rose-100/30">—</td>;
                 if (cell.suprimido)
-                  return <td key={d} className="p-2 border-b text-center text-slate-400" title="Menos de 5 respondentes (LGPD)">🔒</td>;
+                  return <td key={d} className="p-2 border-b text-center text-rose-100/40" title="Menos de 5 respondentes (LGPD)">🔒</td>;
                 const cor = corPorMedia(Number(cell.media));
                 return (
                   <td key={d} className={`p-2 border-b text-center font-bold text-white ${cor}`}>
@@ -452,22 +452,22 @@ function InstrumentoTab() {
 
   return (
     <div className="space-y-3">
-      <Card className="p-4 bg-slate-50">
+      <Card className="p-4 bg-transparent">
         <h2 className="font-bold text-slate-900 mb-2">Instrumento HSE-IT BR ({PSICO_ITEMS.length} itens)</h2>
-        <p className="text-xs text-slate-600">
+        <p className="text-xs text-rose-100/70">
           Adaptação brasileira do HSE Indicator Tool (Health &amp; Safety Executive/UK, uso livre) + itens ISO 45003
           para assédio, violência e interface trabalho-vida. Escala Likert 1-5.
         </p>
       </Card>
       {Object.entries(grupos).map(([dim, itens]) => (
-        <Card key={dim} className="p-4">
+        <Card key={dim} className="p-4 border-rose-500/20 bg-gradient-to-br from-rose-950/40 to-slate-950/60">
           <h3 className="font-bold text-slate-900 mb-2">{DIMENSAO_LABEL[dim as keyof typeof DIMENSAO_LABEL]}</h3>
-          <ul className="space-y-2 text-sm text-slate-700">
+          <ul className="space-y-2 text-sm text-rose-100/80">
             {itens.map((it) => (
               <li key={it.codigo} className="flex items-start gap-2">
                 <Badge variant="outline" className="text-[10px] shrink-0">{it.codigo}</Badge>
                 <span>{it.texto}</span>
-                {it.invertido && <span className="text-[9px] text-slate-400 shrink-0">(inv.)</span>}
+                {it.invertido && <span className="text-[9px] text-rose-100/40 shrink-0">(inv.)</span>}
               </li>
             ))}
           </ul>
@@ -481,15 +481,15 @@ function InstrumentoTab() {
 
 function statusColor(s: string) {
   switch (s) {
-    case "ATIVA": return "bg-emerald-100 text-emerald-800 border-emerald-200";
-    case "ENCERRADA": return "bg-slate-100 text-slate-700 border-slate-200";
-    case "CANCELADA": return "bg-rose-100 text-rose-700 border-rose-200";
-    default: return "bg-amber-100 text-amber-800 border-amber-200";
+    case "ATIVA": return "bg-emerald-500/20 text-emerald-200 border-emerald-500/30";
+    case "ENCERRADA": return "bg-rose-950/200/20 text-rose-100/30 border-slate-500/30";
+    case "CANCELADA": return "bg-rose-500/20 text-rose-200 border-rose-500/30";
+    default: return "bg-amber-500/20 text-amber-200 border-amber-500/30";
   }
 }
 
 function corPorMedia(m: number) {
-  if (m < 2) return "bg-emerald-500";
+  if (m < 2) return "bg-rose-500";
   if (m < 2.75) return "bg-lime-500";
   if (m < 3.5) return "bg-amber-500";
   if (m < 4.25) return "bg-orange-500";
