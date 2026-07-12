@@ -490,6 +490,16 @@ function PtesPage() {
       precaucao_altura: d.precaucao_altura ?? {},
       precaucao_eletrica: d.precaucao_eletrica ?? {},
       responsavel_bloqueio: d.responsavel_bloqueio ?? "",
+      precaucao_carga: d.precaucao_carga ?? {},
+      precaucao_pintura: d.precaucao_pintura ?? {},
+      epis_col1: d.epis_col1 ?? {},
+      epis_col2: d.epis_col2 ?? {},
+      outros_epi: d.outros_epi ?? {},
+      outros_epi_texto: d.outros_epi_texto ?? "",
+      recomendacoes_adicionais: d.recomendacoes_adicionais ?? "",
+      equipe_lista: Array.isArray(d.equipe_lista) ? d.equipe_lista : [],
+      assinatura_encarregado_nome: d.assinatura_encarregado_nome ?? "",
+      assinatura_gerente_nome: d.assinatura_gerente_nome ?? "",
     });
   }
   function cancelEdit() {
