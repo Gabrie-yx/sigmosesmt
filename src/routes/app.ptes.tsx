@@ -50,6 +50,19 @@ function PtesPage() {
     plano_hospital_referencia: "",
     plano_tempo_resposta_min: "",
     plano_meio_comunicacao: "",
+    // FOR-SEG-04 — campos que só existem no PDF homologado (armazenados em `dados`)
+    encarregado_nome: "" as string,
+    mao_obra: "" as "" | "INTERNA" | "EXTERNA",
+    area_restrita: "" as "" | "SIM" | "NAO",
+    atv_movimentacao_cargas: false,
+    atv_manutencao_civil: false,
+    atv_gases_inflamaveis: false,
+    atv_altura_telhados: false,
+    atv_demolicao_escavacao: false,
+    atv_eletricidade: false,
+    atv_trabalho_quente: false,
+    atv_local_confinado: false,
+    atv_outros: false,
   };
   const [f, setF] = useState<any>(emptyForm);
 
