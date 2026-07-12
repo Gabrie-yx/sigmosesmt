@@ -53,15 +53,15 @@ export const OVERLAY_MAPS: Record<string, OverlayMap> = {
     pageHeight: 841.8,
     fields: {
       // Cabeçalho — data/hora início, data/hora fim e nº do PT
-      data_inicio:  { x:  54, top: 84.6, maxW: 64, size: 7, bold: true, baselineOffset: 1.8 },
-      hora_inicio:  { x: 178, top: 84.6, maxW: 54, size: 7, bold: true, baselineOffset: 1.8 },
-      data_fim:     { x: 292, top: 84.6, maxW: 64, size: 7, bold: true, baselineOffset: 1.8 },
-      hora_fim:     { x: 390, top: 84.6, maxW: 54, size: 7, bold: true, baselineOffset: 1.8 },
-      pt_numero:    { x: 501, top: 81.7, maxW: 60, size: 5.8, bold: true, baselineOffset: 1.8, clear: { x: 498, top: 78.8, width: 66, height: 14 } },
+      data_inicio:  { x:  54, top: 84.9, maxW: 64, size: 6.1, bold: true, baselineOffset: 1.5 },
+      hora_inicio:  { x: 178, top: 84.9, maxW: 54, size: 6.1, bold: true, baselineOffset: 1.5 },
+      data_fim:     { x: 292, top: 84.9, maxW: 64, size: 6.1, bold: true, baselineOffset: 1.5 },
+      hora_fim:     { x: 390, top: 84.9, maxW: 54, size: 6.1, bold: true, baselineOffset: 1.5 },
+      pt_numero:    { x: 503, top: 82.3, maxW: 56, size: 4.6, bold: true, baselineOffset: 1.4, clear: { x: 498, top: 79.8, width: 68, height: 12 } },
       // Identificação
-      empresa:          { x:  92, top: 162.2, maxW: 210, size: 6.2, bold: true, baselineOffset: 1.8 },
-      encarregado:      { x: 392, top: 162.2, maxW: 170, size: 6.2, bold: true, baselineOffset: 1.8 },
-      local_descricao:  { x: 118, top: 172.8, maxW: 444, size: 6.2, baselineOffset: 1.8 },
+      empresa:          { x:  96, top: 162.4, maxW: 206, size: 5.4, bold: true, baselineOffset: 1.5 },
+      encarregado:      { x: 398, top: 162.4, maxW: 164, size: 5.4, bold: true, baselineOffset: 1.5 },
+      local_descricao:  { x: 128, top: 173.0, maxW: 434, size: 5.3, baselineOffset: 1.5 },
       outros_atividade_texto: { x: 277, top: 135.2, maxW: 70, size: 5.4, baselineOffset: 1.6 },
       outros_risco_texto: { x: 415, top: 327.8, maxW: 140, size: 5.4, baselineOffset: 1.6 },
       outros_snna_texto: { x: 338, top: 395.2, maxW: 205, size: 5.4, baselineOffset: 1.6 },

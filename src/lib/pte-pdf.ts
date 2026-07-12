@@ -62,10 +62,11 @@ function prefixAnswers(prefix: string, values?: Record<string, "S" | "N" | "NA" 
  */
 export async function gerarPtePdf(p: PtePdfParams): Promise<Blob> {
   const tipo = p.tipo_pt;
+  const numero = String(p.numero ?? "").replace(/^OC\s*/i, "").trim();
   const base = await renderOverlay({
     codigo: "FOR-SEG-04",
     fields: {
-      pt_numero: p.numero,
+      pt_numero: numero,
       data_inicio: p.data_inicio,
       hora_inicio: p.hora_inicio,
       data_fim: p.data_fim,
@@ -114,7 +115,7 @@ export async function gerarPtePdf(p: PtePdfParams): Promise<Blob> {
   const maxW = 160, maxH = 32;
   const r = Math.min(maxW / png.width, maxH / png.height);
   const w = png.width * r, h = png.height * r;
-  const cx = 490, top = 605; // centro da célula na coluna TST, acima do rótulo
+  const cx = 459, top = 605; // centro visual da célula na coluna TST, acima do rótulo
   page.drawImage(png, {
     x: cx - w / 2,
     y: H - top - h / 2,
