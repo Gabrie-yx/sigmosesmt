@@ -1,7 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -32,6 +30,12 @@ type ValidateResp =
   | { ok: false; motivo: string };
 
 function PsicoPublicPage() {
+  // paleta SIGMO — vinho/rosa (não usar tokens do tema porque o app é dark)
+  //   vinho escuro  #4c0519   headings
+  //   vinho         #7f1d3a   detalhes / borda
+  //   rosa          #e11d48   ação / progresso / seleção
+  //   creme         #fdf2f8   fundo suave
+  //   cinza         #374151   texto corpo
   const { token } = Route.useParams();
   const [state, setState] = useState<"loading" | "ready" | "sending" | "done" | "erro">("loading");
   const [erroMotivo, setErroMotivo] = useState<string | null>(null);
@@ -93,10 +97,10 @@ function PsicoPublicPage() {
   if (state === "erro")
     return (
       <FullScreen>
-        <Card className="p-6 max-w-sm text-center space-y-3">
-          <XCircle className="h-12 w-12 text-rose-500 mx-auto" />
-          <h1 className="text-lg font-bold text-slate-900">Link inválido</h1>
-          <p className="text-sm text-slate-600">
+        <Panel className="max-w-sm text-center">
+          <XCircle className="h-12 w-12 text-rose-600 mx-auto" />
+          <h1 className="text-lg font-bold text-[#4c0519] mt-3">Link inválido</h1>
+          <p className="text-sm text-slate-600 mt-2">
             {erroMotivo === "TOKEN_JA_USADO"
               ? "Este link já foi usado. Cada link pode ser respondido uma única vez — isso garante o anonimato."
               : erroMotivo === "TOKEN_EXPIRADO"
@@ -105,21 +109,21 @@ function PsicoPublicPage() {
                   ? "A campanha não está mais ativa."
                   : "Não conseguimos validar seu link. Peça um novo ao TST/RH."}
           </p>
-        </Card>
+        </Panel>
       </FullScreen>
     );
 
   if (state === "done")
     return (
       <FullScreen>
-        <Card className="p-6 max-w-sm text-center space-y-3">
-          <CheckCircle2 className="h-14 w-14 text-emerald-500 mx-auto" />
-          <h1 className="text-lg font-bold text-slate-900">Obrigado!</h1>
-          <p className="text-sm text-slate-600">
+        <Panel className="max-w-sm text-center">
+          <CheckCircle2 className="h-14 w-14 text-rose-600 mx-auto" />
+          <h1 className="text-lg font-bold text-[#4c0519] mt-3">Obrigado!</h1>
+          <p className="text-sm text-slate-600 mt-2">
             Sua resposta foi enviada de forma <b>100% anônima</b>. Ela vai ajudar a melhorar o ambiente de trabalho.
           </p>
-          <p className="text-xs text-slate-400">Você pode fechar esta janela.</p>
-        </Card>
+          <p className="text-xs text-slate-400 mt-3">Você pode fechar esta janela.</p>
+        </Panel>
       </FullScreen>
     );
 
@@ -127,15 +131,20 @@ function PsicoPublicPage() {
   if (step === "consent")
     return (
       <FullScreen>
-        <Card className="p-6 max-w-md space-y-4">
+        <Panel className="max-w-md">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="h-6 w-6 text-emerald-600" />
-            <h1 className="text-lg font-bold text-slate-900">Avaliação Psicossocial — NR-01</h1>
+            <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-[#7f1d3a] to-[#4c0519] flex items-center justify-center shadow-sm">
+              <ShieldCheck className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <h1 className="text-base font-bold text-[#4c0519] leading-tight">Avaliação Psicossocial</h1>
+              <p className="text-[10px] text-[#7f1d3a] font-semibold tracking-wide">SIGMO · NR-01</p>
+            </div>
           </div>
-          {meta?.ghe.label && <p className="text-xs text-slate-500">{meta.ghe.label}</p>}
-          <div className="text-sm text-slate-700 space-y-2">
+          {meta?.ghe.label && <p className="text-xs text-slate-500 mt-3">{meta.ghe.label}</p>}
+          <div className="text-sm text-slate-700 space-y-2 mt-4">
             <p>
-              <b>Sua resposta é 100% anônima.</b> O sistema não sabe quem você é — não pedimos nome, CPF, e-mail ou
+              <b className="text-[#4c0519]">Sua resposta é 100% anônima.</b> O sistema não sabe quem você é — não pedimos nome, CPF, e-mail ou
               matrícula. O link que você abriu é descartável e é apagado depois do envio.
             </p>
             <p>
@@ -147,20 +156,26 @@ function PsicoPublicPage() {
               Dados individuais nunca serão vistos por RH ou liderança.
             </p>
           </div>
-          <div className="flex items-start gap-2 rounded-lg bg-slate-50 p-3">
-            <Checkbox id="c" checked={aceitou} onCheckedChange={(v) => setAceitou(!!v)} />
-            <Label htmlFor="c" className="text-sm text-slate-800 leading-relaxed">
+          <div className="flex items-start gap-2 rounded-lg bg-[#fdf2f8] border border-rose-100 p-3 mt-4">
+            <Checkbox
+              id="c"
+              checked={aceitou}
+              onCheckedChange={(v) => setAceitou(!!v)}
+              className="mt-0.5 border-rose-400 data-[state=checked]:bg-rose-600 data-[state=checked]:border-rose-600"
+            />
+            <Label htmlFor="c" className="text-sm text-slate-800 leading-relaxed cursor-pointer">
               Li, entendi e concordo em participar de forma anônima e voluntária.
             </Label>
           </div>
-          <Button
-            className="w-full bg-emerald-600 hover:bg-emerald-700"
+          <button
+            type="button"
             disabled={!aceitou}
             onClick={() => setStep("form")}
+            className="mt-4 w-full h-11 rounded-lg font-semibold text-white bg-gradient-to-r from-[#7f1d3a] to-[#e11d48] shadow-sm hover:opacity-95 transition disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Começar
-          </Button>
-        </Card>
+          </button>
+        </Panel>
       </FullScreen>
     );
 
@@ -168,35 +183,40 @@ function PsicoPublicPage() {
   const grupos = groupBy(PSICO_ITEMS, (i) => i.dimensao);
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-24">
-      <header className="sticky top-0 z-10 bg-white border-b border-slate-200 px-4 py-3 shadow-sm">
+    <div className="min-h-screen bg-[#fdf2f8] pb-24" style={{ colorScheme: "light" }}>
+      <header className="sticky top-0 z-10 bg-white border-b-2 border-[#7f1d3a] px-4 py-3 shadow-sm">
         <div className="max-w-md mx-auto flex items-center justify-between">
-          <div>
-            <h1 className="text-sm font-bold text-slate-900">Avaliação Psicossocial</h1>
-            {meta?.ghe.label && <p className="text-[10px] text-slate-500">{meta.ghe.label}</p>}
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-md bg-gradient-to-br from-[#7f1d3a] to-[#4c0519] flex items-center justify-center">
+              <ShieldCheck className="h-4 w-4 text-white" />
+            </div>
+            <div>
+              <h1 className="text-sm font-bold text-[#4c0519] leading-tight">Avaliação Psicossocial</h1>
+              {meta?.ghe.label && <p className="text-[10px] text-[#7f1d3a]">{meta.ghe.label}</p>}
+            </div>
           </div>
-          <div className="text-xs font-bold text-emerald-600">
+          <div className="text-xs font-bold text-rose-600 tabular-nums">
             {respondidos}/{totalItens}
           </div>
         </div>
-        <div className="max-w-md mx-auto h-1 bg-slate-100 rounded-full mt-2 overflow-hidden">
+        <div className="max-w-md mx-auto h-1.5 bg-rose-100 rounded-full mt-2 overflow-hidden">
           <div
-            className="h-full bg-emerald-500 transition-all"
+            className="h-full bg-gradient-to-r from-[#7f1d3a] to-[#e11d48] transition-all"
             style={{ width: `${(respondidos / totalItens) * 100}%` }}
           />
         </div>
       </header>
 
       <main className="max-w-md mx-auto p-4 space-y-4">
-        <Card className="p-4 space-y-3">
-          <p className="text-xs text-slate-600 leading-relaxed">
+        <Panel>
+          <p className="text-xs text-slate-700 leading-relaxed">
             Para cada afirmação, escolha o que mais se aproxima da sua realidade no trabalho <b>nos últimos 3 meses</b>.
           </p>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-2 mt-3">
             <div>
-              <Label className="text-[10px] text-slate-500">Faixa etária (opcional)</Label>
+              <Label className="text-[10px] text-[#7f1d3a] font-semibold">Faixa etária (opcional)</Label>
               <Select value={faixaEtaria || "__none__"} onValueChange={(v) => setFaixaEtaria(v === "__none__" ? "" : v)}>
-                <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="—" /></SelectTrigger>
+                <SelectTrigger className="h-9 text-xs bg-white border-rose-200 text-slate-800"><SelectValue placeholder="—" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__none__">—</SelectItem>
                   {FAIXA_ETARIA.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
@@ -204,9 +224,9 @@ function PsicoPublicPage() {
               </Select>
             </div>
             <div>
-              <Label className="text-[10px] text-slate-500">Tempo de casa (opcional)</Label>
+              <Label className="text-[10px] text-[#7f1d3a] font-semibold">Tempo de casa (opcional)</Label>
               <Select value={faixaTempo || "__none__"} onValueChange={(v) => setFaixaTempo(v === "__none__" ? "" : v)}>
-                <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="—" /></SelectTrigger>
+                <SelectTrigger className="h-9 text-xs bg-white border-rose-200 text-slate-800"><SelectValue placeholder="—" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__none__">—</SelectItem>
                   {FAIXA_TEMPO_CASA.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
@@ -214,16 +234,20 @@ function PsicoPublicPage() {
               </Select>
             </div>
           </div>
-        </Card>
+        </Panel>
 
         {Object.entries(grupos).map(([dim, itens]) => (
-          <Card key={dim} className="p-3 space-y-4">
-            <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wide">
-              {DIMENSAO_LABEL[dim as PsicoItem["dimensao"]]}
-            </h2>
+          <Panel key={dim}>
+            <div className="flex items-center gap-2 pb-2 border-b border-rose-100">
+              <div className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+              <h2 className="text-[11px] font-bold text-[#4c0519] uppercase tracking-wider">
+                {DIMENSAO_LABEL[dim as PsicoItem["dimensao"]]}
+              </h2>
+            </div>
+            <div className="space-y-5 mt-3">
             {itens.map((it) => (
               <div key={it.codigo} className="space-y-2">
-                <p className="text-sm text-slate-800 leading-snug">{it.texto}</p>
+                <p className="text-sm text-slate-800 leading-snug font-medium">{it.texto}</p>
                 <div className="grid grid-cols-5 gap-1">
                   {LIKERT_LABELS.map((op) => {
                     const active = respostas[it.codigo] === op.v;
@@ -234,28 +258,30 @@ function PsicoPublicPage() {
                         onClick={() => setRespostas({ ...respostas, [it.codigo]: op.v })}
                         className={`h-14 rounded-lg border text-[10px] font-semibold leading-tight transition-all flex flex-col items-center justify-center px-1 ${
                           active
-                            ? "bg-emerald-500 border-emerald-600 text-white shadow"
-                            : "bg-white border-slate-200 text-slate-600 hover:border-emerald-300"
+                            ? "bg-gradient-to-b from-[#e11d48] to-[#7f1d3a] border-[#4c0519] text-white shadow-md"
+                            : "bg-white border-rose-200 text-slate-600 hover:border-rose-400 hover:bg-rose-50"
                         }`}
                       >
                         <span className="text-base font-black">{op.v}</span>
-                        <span>{op.label}</span>
+                        <span className={active ? "opacity-90" : "opacity-70"}>{op.label}</span>
                       </button>
                     );
                   })}
                 </div>
               </div>
             ))}
-          </Card>
+            </div>
+          </Panel>
         ))}
       </main>
 
-      <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-3">
+      <footer className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-[#7f1d3a] p-3 shadow-[0_-4px_12px_rgba(127,29,58,0.08)]">
         <div className="max-w-md mx-auto">
-          <Button
-            className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300"
+          <button
+            type="button"
             disabled={!podeEnviar || state === "sending"}
             onClick={enviar}
+            className="w-full h-12 rounded-lg font-semibold text-white bg-gradient-to-r from-[#7f1d3a] to-[#e11d48] shadow-md hover:opacity-95 transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center"
           >
             {state === "sending" ? (
               <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Enviando...</>
@@ -264,7 +290,7 @@ function PsicoPublicPage() {
             ) : (
               `Faltam ${totalItens - respondidos} de ${totalItens}`
             )}
-          </Button>
+          </button>
         </div>
       </footer>
     </div>
@@ -272,7 +298,24 @@ function PsicoPublicPage() {
 }
 
 function FullScreen({ children }: { children: React.ReactNode }) {
-  return <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">{children}</div>;
+  return (
+    <div
+      className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-[#fdf2f8] via-white to-[#fce7ef]"
+      style={{ colorScheme: "light" }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function Panel({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div
+      className={`bg-white rounded-xl shadow-[0_4px_20px_rgba(127,29,58,0.08)] border border-rose-100 p-5 ${className}`}
+    >
+      {children}
+    </div>
+  );
 }
 
 function groupBy<T, K extends string>(arr: T[], fn: (t: T) => K): Record<K, T[]> {
