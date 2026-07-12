@@ -12,6 +12,7 @@ import {
   FAIXA_TEMPO_CASA,
   type PsicoItem,
 } from "@/lib/psico-instrument";
+import { validatePsicoToken, type PsicoValidateResult } from "@/lib/psico-public.functions";
 
 export const Route = createFileRoute("/psico/$token")({
   head: () => ({
@@ -22,12 +23,63 @@ export const Route = createFileRoute("/psico/$token")({
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
+  // Valida o token no servidor (SSR): a página abre já com o resultado,
+  // sem esperar por um fetch client-side. Tira ~1 round-trip do caminho crítico.
+  loader: async ({ params }): Promise<PsicoValidateResult> => {
+    try {
+      return await validatePsicoToken({ data: { token: params.token } });
+    } catch {
+      return { ok: false, motivo: "DB" };
+    }
+  },
+  // Cache curto: se o usuário voltar/atualizar em segundos, não bate o banco de novo.
+  staleTime: 30_000,
   component: PsicoPublicPage,
 });
 
-type ValidateResp =
-  | { ok: true; campanha: { id: string; titulo: string; descricao: string | null; instrumento: string }; ghe: { id: string | null; label: string | null } }
-  | { ok: false; motivo: string };
+type ValidateResp = PsicoValidateResult;
+
+// ── persistência das respostas em sessionStorage ────────────────────────────
+// PROBLEMA: navegador mobile recarrega abas em segundo plano, e as respostas
+// (que ficavam só em useState) sumiam. Agora a gente salva por token — se a
+// aba recarregar no meio, o formulário volta exatamente onde estava.
+type PersistedAnswers = {
+  step: "consent" | "form";
+  aceitou: boolean;
+  faixaEtaria: string;
+  faixaTempo: string;
+  respostas: Record<string, number>;
+};
+const STORAGE_VERSION = "v1";
+function storageKey(token: string) {
+  return `sigmo.psico.${STORAGE_VERSION}.${token}`;
+}
+function loadPersisted(token: string): PersistedAnswers | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.sessionStorage.getItem(storageKey(token));
+    if (!raw) return null;
+    return JSON.parse(raw) as PersistedAnswers;
+  } catch {
+    return null;
+  }
+}
+function savePersisted(token: string, data: PersistedAnswers) {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(storageKey(token), JSON.stringify(data));
+  } catch {
+    /* quota / private mode — segue sem persistir */
+  }
+}
+function clearPersisted(token: string) {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.removeItem(storageKey(token));
+  } catch {
+    /* noop */
+  }
+}
 
 function PsicoPublicPage() {
   // paleta SIGMO — vinho/rosa (não usar tokens do tema porque o app é dark)
@@ -37,29 +89,44 @@ function PsicoPublicPage() {
   //   creme         #fdf2f8   fundo suave
   //   cinza         #374151   texto corpo
   const { token } = Route.useParams();
-  const [state, setState] = useState<"loading" | "ready" | "sending" | "done" | "erro">("loading");
-  const [erroMotivo, setErroMotivo] = useState<string | null>(null);
-  const [meta, setMeta] = useState<Extract<ValidateResp, { ok: true }> | null>(null);
+  const loaderData = Route.useLoaderData();
+
+  // Se o loader já classificou como erro, mostramos direto.
+  const initialErro = !loaderData.ok ? loaderData.motivo : null;
+  const initialMeta = loaderData.ok ? loaderData : null;
+
+  const [state, setState] = useState<"ready" | "sending" | "done" | "erro">(
+    initialErro ? "erro" : "ready",
+  );
+  const [erroMotivo, setErroMotivo] = useState<string | null>(initialErro);
+  const meta = initialMeta;
+
+  // ── estado do formulário (hidratado do sessionStorage se existir) ─────────
   const [step, setStep] = useState<"consent" | "form">("consent");
   const [aceitou, setAceitou] = useState(false);
   const [faixaEtaria, setFaixaEtaria] = useState<string>("");
   const [faixaTempo, setFaixaTempo] = useState<string>("");
   const [respostas, setRespostas] = useState<Record<string, number>>({});
+  const [hidratou, setHidratou] = useState(false);
 
+  // Hidrata do sessionStorage 1x, no cliente (nunca no SSR).
   useEffect(() => {
-    fetch(`/api/public/psico/${encodeURIComponent(token)}`)
-      .then((r) => r.json())
-      .then((j: ValidateResp) => {
-        if (j.ok) {
-          setMeta(j);
-          setState("ready");
-        } else {
-          setErroMotivo(j.motivo);
-          setState("erro");
-        }
-      })
-      .catch(() => setState("erro"));
+    const saved = loadPersisted(token);
+    if (saved) {
+      setStep(saved.step);
+      setAceitou(saved.aceitou);
+      setFaixaEtaria(saved.faixaEtaria);
+      setFaixaTempo(saved.faixaTempo);
+      setRespostas(saved.respostas ?? {});
+    }
+    setHidratou(true);
   }, [token]);
+
+  // Salva a cada mudança (após hidratação).
+  useEffect(() => {
+    if (!hidratou) return;
+    savePersisted(token, { step, aceitou, faixaEtaria, faixaTempo, respostas });
+  }, [hidratou, token, step, aceitou, faixaEtaria, faixaTempo, respostas]);
 
   const totalItens = PSICO_ITEMS.length;
   const respondidos = Object.keys(respostas).length;
@@ -85,14 +152,14 @@ function PsicoPublicPage() {
       body: JSON.stringify(body),
     });
     const j = await r.json();
-    if (j.ok) setState("done");
-    else {
+    if (j.ok) {
+      clearPersisted(token); // resposta enviada → limpa o cache local
+      setState("done");
+    } else {
       setErroMotivo(j.error);
       setState("erro");
     }
   }
-
-  if (state === "loading") return <FullScreen><Loader2 className="h-8 w-8 animate-spin text-rose-500" /></FullScreen>;
 
   if (state === "erro")
     return (
@@ -154,6 +221,9 @@ function PsicoPublicPage() {
             <p>
               Base legal (LGPD): cumprimento de obrigação regulatória (NR-01, Portaria MTP 1.419/2024) e seu consentimento.
               Dados individuais nunca serão vistos por RH ou liderança.
+            </p>
+            <p className="text-xs text-[#7f1d3a] font-semibold pt-1">
+              São {totalItens} perguntas rápidas · leva ~8 a 12 minutos. Se fechar a aba, suas respostas ficam salvas nesse celular até você enviar.
             </p>
           </div>
           <div className="flex items-start gap-2 rounded-lg bg-[#fdf2f8] border border-rose-100 p-3 mt-4">
