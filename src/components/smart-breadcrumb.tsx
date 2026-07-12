@@ -136,7 +136,7 @@ export function SmartBreadcrumb() {
   }, [stack]);
 
   // Cap visual: mostra no máximo N itens com "…" no meio (primeiro + últimos).
-  const MAX_VISIBLE = 6;
+  const MAX_VISIBLE = 10;
   const visibleTrail = useMemo(() => {
     if (trail.length <= MAX_VISIBLE) {
       return trail.map((c) => ({ kind: "item" as const, ...c }));
