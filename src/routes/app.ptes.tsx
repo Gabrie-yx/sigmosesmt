@@ -486,6 +486,36 @@ function PtesPage() {
     }));
   }
 
+  // Wizard horizontal — abas/pills
+  const [activeStep, setActiveStep] = useState<string>("ident");
+  const stepChecks = useMemo(() => ({
+    ident: !!(f.tipo_pt && f.local && f.data && (linkedAprId || f.emergencia_sem_apr)),
+    equipe: !!(f.requisitante_id && (f.executantes_ids?.length ?? 0) > 0 &&
+      (f.tipo_pt !== "PET" || (f.vigia_id && f.supervisor_entrada_id))),
+    atividades: Object.entries(f).some(([k, v]) => k.startsWith("atv_") && v) || !!f.mao_obra || !!f.area_restrita,
+    riscos: Object.values(f.riscos_potenciais ?? {}).some(Boolean),
+    snna: Object.values(f.preenchimento_snna ?? {}).some((v) => v === "S" || v === "N" || v === "NA"),
+    precaucoes: Object.values(f.precaucao_quente ?? {}).some(Boolean) ||
+      Object.values(f.precaucao_altura ?? {}).some(Boolean) ||
+      Object.values(f.precaucao_eletrica ?? {}).some(Boolean),
+    pet: f.tipo_pt !== "PET" || !!(f.plano_equipe_resgate && f.plano_equipamentos && f.plano_hospital_referencia && f.plano_tempo_resposta_min),
+  }), [f, linkedAprId]);
+  const STEPS = [
+    { id: "ident", label: "Identificação", icon: IdCard },
+    { id: "equipe", label: "Equipe", icon: Users },
+    { id: "atividades", label: "Atividades", icon: ClipboardList },
+    { id: "riscos", label: "Riscos", icon: AlertTriangle },
+    { id: "snna", label: "S / N / NA", icon: CheckCircle2 },
+    { id: "precaucoes", label: "Precauções", icon: ShieldCheck },
+    ...(f.tipo_pt === "PET" ? [{ id: "pet", label: "PET / Resgate", icon: Wind }] : []),
+    { id: "revisao", label: "Revisão", icon: Sparkles },
+  ] as { id: string; label: string; icon: any }[];
+  const stepIndex = Math.max(0, STEPS.findIndex((s) => s.id === activeStep));
+  const isFirst = stepIndex === 0;
+  const isLast = stepIndex === STEPS.length - 1;
+  const goPrev = () => !isFirst && setActiveStep(STEPS[stepIndex - 1].id);
+  const goNext = () => !isLast && setActiveStep(STEPS[stepIndex + 1].id);
+
   function PdfCheckboxGroup({ title, group, items }: { title: string; group: string; items: readonly PteOfficialItem[] }) {
     return (
       <div className="space-y-2">
