@@ -101,12 +101,12 @@ export async function renderOverlay(input: RenderOverlayInput): Promise<Blob> {
     const page = pdf.getPage(cfg.page ?? 0);
     const mediaX = page.getMediaBox().x ?? 0;
     const mark = raw === true ? "X" : String(raw).toUpperCase();
-    const size = cfg.size ?? (input.codigo === "FOR-SEG-04" ? (mark.length > 1 ? 3.1 : 3.8) : (mark.length > 1 ? 4.2 : 5.2));
+    const size = cfg.size ?? (input.codigo === "FOR-SEG-04" ? (mark.length > 1 ? 3.1 : 5.8) : (mark.length > 1 ? 4.2 : 5.2));
     const w = fontBold.widthOfTextAtSize(mark, size);
     const cy = input.codigo === "FOR-SEG-04" ? cfg.cy - 8.4 : cfg.cy;
     page.drawText(mark, {
       x: cfg.cx + mediaX - w / 2,
-      y: H - cy - size / 2 + 1.1,
+      y: H - cy - size / 2 + 0.1,
       size,
       font: fontBold,
       color: black,
