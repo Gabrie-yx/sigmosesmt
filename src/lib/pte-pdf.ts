@@ -22,11 +22,39 @@ export type PtePdfParams = {
     altura_telhados?: boolean;
     demolicao_escavacao?: boolean;
     eletricidade?: boolean;
+    trabalho_quente?: boolean;
+    local_confinado?: boolean;
     outros?: boolean;
   };
+  outros_atividade_texto?: string;
+  riscos_potenciais?: Record<string, boolean>;
+  outros_risco_texto?: string;
+  preenchimento_snna?: Record<string, "S" | "N" | "NA" | "">;
+  outros_snna_texto?: string;
+  precaucao_quente?: Record<string, boolean>;
+  teste_atmosfera_horario?: string;
+  teste_atmosfera_percentual?: string;
+  designado_liberacao?: string;
+  precaucao_altura?: Record<string, boolean>;
+  precaucao_eletrica?: Record<string, boolean>;
+  responsavel_bloqueio?: string;
   /** Assinatura do TST (Segurança do Trabalho) em data URL PNG — carimba pg 2. */
   assinatura_tst_data_url?: string | null;
 };
+
+function prefixChecks(prefix: string, values?: Record<string, boolean>) {
+  return Object.fromEntries(
+    Object.entries(values ?? {}).map(([key, value]) => [`${prefix}_${key}`, !!value]),
+  );
+}
+
+function prefixAnswers(prefix: string, values?: Record<string, "S" | "N" | "NA" | "">) {
+  return Object.fromEntries(
+    Object.entries(values ?? {})
+      .filter(([, value]) => value === "S" || value === "N" || value === "NA")
+      .map(([key, value]) => [`${prefix}_${key}`, value]),
+  );
+}
 
 /**
  * Permissão de Trabalho Especial (FOR-SEG-04) — usa o PDF-mãe homologado
@@ -45,6 +73,13 @@ export async function gerarPtePdf(p: PtePdfParams): Promise<Blob> {
       empresa: p.empresa,
       encarregado: p.encarregado,
       local_descricao: p.local_descricao,
+      outros_atividade_texto: p.outros_atividade_texto,
+      outros_risco_texto: p.outros_risco_texto,
+      outros_snna_texto: p.outros_snna_texto,
+      teste_atmosfera_horario: p.teste_atmosfera_horario,
+      teste_atmosfera_percentual: p.teste_atmosfera_percentual,
+      designado_liberacao: p.designado_liberacao,
+      responsavel_bloqueio: p.responsavel_bloqueio,
     },
     checkboxes: {
       movimentacao_cargas: p.atividades?.movimentacao_cargas || tipo === "PTI",
@@ -53,8 +88,8 @@ export async function gerarPtePdf(p: PtePdfParams): Promise<Blob> {
       altura_telhados:     p.atividades?.altura_telhados || tipo === "PTA",
       demolicao_escavacao: p.atividades?.demolicao_escavacao,
       eletricidade:        p.atividades?.eletricidade || tipo === "PTEL",
-      trabalho_quente:     tipo === "PTQ",
-      local_confinado:     tipo === "PET",
+      trabalho_quente:     p.atividades?.trabalho_quente || tipo === "PTQ",
+      local_confinado:     p.atividades?.local_confinado || tipo === "PET",
       outros_atividade:    p.atividades?.outros,
       mao_interna: p.mao_obra === "INTERNA",
       mao_externa: p.mao_obra === "EXTERNA",
@@ -62,6 +97,11 @@ export async function gerarPtePdf(p: PtePdfParams): Promise<Blob> {
       fds_nao: p.fim_de_semana === false,
       area_restrita_sim: p.area_restrita === true,
       area_restrita_nao: p.area_restrita === false,
+      ...prefixChecks("ris", p.riscos_potenciais),
+      ...prefixAnswers("snna", p.preenchimento_snna),
+      ...prefixChecks("hot", p.precaucao_quente),
+      ...prefixChecks("alt", p.precaucao_altura),
+      ...prefixChecks("ele", p.precaucao_eletrica),
     },
   });
   if (!p.assinatura_tst_data_url) return base;
