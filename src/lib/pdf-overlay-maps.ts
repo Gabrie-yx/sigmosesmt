@@ -6,6 +6,7 @@ export type OverlayField = {
   size?: number;
   baselineOffset?: number;
   bold?: boolean;
+  clear?: { x?: number; top?: number; width: number; height: number };
 };
 
 export type OverlayCheckbox = {
@@ -56,11 +57,11 @@ export const OVERLAY_MAPS: Record<string, OverlayMap> = {
       hora_inicio:  { x: 178, top: 84.6, maxW: 54, size: 7, bold: true, baselineOffset: 1.8 },
       data_fim:     { x: 292, top: 84.6, maxW: 64, size: 7, bold: true, baselineOffset: 1.8 },
       hora_fim:     { x: 390, top: 84.6, maxW: 54, size: 7, bold: true, baselineOffset: 1.8 },
-      pt_numero:    { x: 501, top: 81.7, maxW: 48, size: 6.2, bold: true, baselineOffset: 1.8 },
+      pt_numero:    { x: 501, top: 81.7, maxW: 60, size: 5.8, bold: true, baselineOffset: 1.8, clear: { x: 500, top: 80.8, width: 60, height: 9 } },
       // Identificação
       empresa:          { x:  92, top: 162.2, maxW: 210, size: 6.2, bold: true, baselineOffset: 1.8 },
       encarregado:      { x: 392, top: 162.2, maxW: 170, size: 6.2, bold: true, baselineOffset: 1.8 },
-      local_descricao:  { x:  92, top: 172.8, maxW: 470, size: 6.2, baselineOffset: 1.8 },
+      local_descricao:  { x: 112, top: 172.8, maxW: 450, size: 6.2, baselineOffset: 1.8 },
       outros_atividade_texto: { x: 277, top: 135.2, maxW: 70, size: 5.4, baselineOffset: 1.6 },
       outros_risco_texto: { x: 415, top: 327.8, maxW: 140, size: 5.4, baselineOffset: 1.6 },
       outros_snna_texto: { x: 338, top: 395.2, maxW: 205, size: 5.4, baselineOffset: 1.6 },
