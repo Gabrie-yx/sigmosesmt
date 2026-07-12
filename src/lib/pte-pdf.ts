@@ -38,6 +38,15 @@ export type PtePdfParams = {
   precaucao_altura?: Record<string, boolean>;
   precaucao_eletrica?: Record<string, boolean>;
   responsavel_bloqueio?: string;
+  precaucao_carga?: Record<string, boolean>;
+  precaucao_pintura?: Record<string, boolean>;
+  epis_col1?: Record<string, boolean>;
+  epis_col2?: Record<string, boolean>;
+  outros_epi?: Record<string, boolean>;
+  recomendacoes_adicionais?: string;
+  equipe_lista?: { nome?: string; funcao?: string }[];
+  assinatura_encarregado_nome?: string;
+  assinatura_gerente_nome?: string;
   /** Assinatura do TST (Segurança do Trabalho) em data URL PNG — carimba pg 2. */
   assinatura_tst_data_url?: string | null;
 };
@@ -63,6 +72,13 @@ function prefixAnswers(prefix: string, values?: Record<string, "S" | "N" | "NA" 
 export async function gerarPtePdf(p: PtePdfParams): Promise<Blob> {
   const tipo = p.tipo_pt;
   const numero = String(p.numero ?? "").replace(/^OC\s*/i, "").trim();
+  // Explode a lista de equipe em campos equipe_nome_N / equipe_funcao_N (até 12 linhas do PDF)
+  const equipeFields: Record<string, string> = {};
+  const equipe = (p.equipe_lista ?? []).slice(0, 12);
+  equipe.forEach((row, i) => {
+    if (row?.nome) equipeFields[`equipe_nome_${i}`] = row.nome;
+    if (row?.funcao) equipeFields[`equipe_funcao_${i}`] = row.funcao;
+  });
   const base = await renderOverlay({
     codigo: "FOR-SEG-04",
     fields: {
@@ -81,6 +97,10 @@ export async function gerarPtePdf(p: PtePdfParams): Promise<Blob> {
       teste_atmosfera_percentual: p.teste_atmosfera_percentual,
       designado_liberacao: p.designado_liberacao,
       responsavel_bloqueio: p.responsavel_bloqueio,
+      recomendacoes_adicionais: p.recomendacoes_adicionais,
+      assinatura_encarregado_nome: p.assinatura_encarregado_nome,
+      assinatura_gerente_nome: p.assinatura_gerente_nome,
+      ...equipeFields,
     },
     checkboxes: {
       movimentacao_cargas: p.atividades?.movimentacao_cargas || tipo === "PTI",
@@ -103,6 +123,11 @@ export async function gerarPtePdf(p: PtePdfParams): Promise<Blob> {
       ...prefixChecks("hot", p.precaucao_quente),
       ...prefixChecks("alt", p.precaucao_altura),
       ...prefixChecks("ele", p.precaucao_eletrica),
+      ...prefixChecks("carga", p.precaucao_carga),
+      ...prefixChecks("pint", p.precaucao_pintura),
+      ...prefixChecks("epi1", p.epis_col1),
+      ...prefixChecks("epi2", p.epis_col2),
+      ...prefixChecks("outrosepi", p.outros_epi),
     },
   });
   if (!p.assinatura_tst_data_url) return base;
