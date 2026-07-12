@@ -809,7 +809,7 @@ function QuickTabBtn({ icon: Icon, label, tone = "rose", active, onClick }: { ic
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-[11px] font-black uppercase tracking-widest shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_4px_12px_-2px_rgba(0,0,0,0.45)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_8px_20px_-4px_rgba(0,0,0,0.55)] hover:-translate-y-0.5 transition-all ring-1 ${palette} ${active ? "ring-2 ring-offset-2 ring-offset-rose-950 ring-rose-300/70" : ""}`}
+      className={`inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-[10px] font-black uppercase tracking-widest shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_4px_12px_-2px_rgba(0,0,0,0.45)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_8px_20px_-4px_rgba(0,0,0,0.55)] hover:-translate-y-0.5 transition-all ring-1 ${palette} ${active ? "ring-2 ring-offset-2 ring-offset-rose-950 ring-rose-300/70" : ""}`}
     >
       <Icon className="h-3.5 w-3.5" /> {label}
     </button>
