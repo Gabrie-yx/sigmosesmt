@@ -949,18 +949,14 @@ function PtesPage() {
                 Emitente: <span className="text-rose-100 font-black">{user?.email ?? "—"}</span> (usuário logado)
               </div>
             </div>
+          </div>
 
-            {/* FM-SGI-05 — Medição Atmosférica (apenas PET / NR-33) */}
-            {f.tipo_pt === "PET" && (
-              <PteAtmosferaTab petId={editingId} employees={emps as any[]} />
-            )}
-
-            {/* FOR-SEG-04 — CAMPOS DO PDF HOMOLOGADO */}
+          {/* ATIVIDADES */}
+          <div hidden={activeStep !== "atividades"} className="space-y-6">
             <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-5 space-y-5">
-              <h3 className="text-xs font-black uppercase tracking-widest text-rose-100 border-b border-white/10 pb-2">
-                Formulário oficial PTE — FOR-SEG-04
+              <h3 className="text-xs font-black uppercase tracking-widest text-rose-100 border-b border-white/10 pb-2 flex items-center gap-2">
+                <ClipboardList className="h-4 w-4 text-amber-300" /> Descrição das atividades (FOR-SEG-04)
               </h3>
-
               <div className="space-y-2">
                 <Label className="text-[10px] font-black text-rose-200/70 uppercase block">Descrição das atividades a serem executadas</Label>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
@@ -1008,34 +1004,71 @@ function PtesPage() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
 
-              <PdfCheckboxGroup title="Riscos potenciais" group="riscos_potenciais" items={PTE_RISCOS_POTENCIAIS} />
+          {/* RISCOS */}
+          <div hidden={activeStep !== "riscos"} className="space-y-6">
+            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-5 space-y-4">
+              <h3 className="text-xs font-black uppercase tracking-widest text-rose-100 border-b border-white/10 pb-2 flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-300" /> Riscos potenciais
+              </h3>
+              <PdfCheckboxGroup title="Marque os que se aplicam" group="riscos_potenciais" items={PTE_RISCOS_POTENCIAIS} />
               {f.riscos_potenciais?.outros && (
                 <Input value={f.outros_risco_texto} onChange={(e) => setF({ ...f, outros_risco_texto: e.target.value })} placeholder="Outros riscos" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-rose-200/30 text-xs font-bold uppercase" />
               )}
+            </div>
+          </div>
 
-              <PdfAnswerGroup title="Preenchimento — S / N / NA" group="preenchimento_snna" items={PTE_PREENCIMENTO_SNNA} />
+          {/* S/N/NA */}
+          <div hidden={activeStep !== "snna"} className="space-y-6">
+            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-5 space-y-4">
+              <h3 className="text-xs font-black uppercase tracking-widest text-rose-100 border-b border-white/10 pb-2 flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-lime-300" /> Preenchimento — S / N / NA
+              </h3>
+              <PdfAnswerGroup title="(S) Sim · (N) Não · (NA) Não Aplicável" group="preenchimento_snna" items={PTE_PREENCIMENTO_SNNA} />
               {f.preenchimento_snna?.outros && (
                 <Input value={f.outros_snna_texto} onChange={(e) => setF({ ...f, outros_snna_texto: e.target.value })} placeholder="Outros" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-rose-200/30 text-xs font-bold uppercase" />
               )}
+            </div>
+          </div>
 
-              <PdfCheckboxGroup title="Precaução para trabalho a quente" group="precaucao_quente" items={PTE_PRECAUCOES_QUENTE} />
+          {/* PRECAUÇÕES */}
+          <div hidden={activeStep !== "precaucoes"} className="space-y-6">
+            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-5 space-y-4">
+              <h3 className="text-xs font-black uppercase tracking-widest text-rose-100 border-b border-white/10 pb-2 flex items-center gap-2">
+                <Flame className="h-4 w-4 text-amber-300" /> Trabalho a Quente
+              </h3>
+              <PdfCheckboxGroup title="Precauções" group="precaucao_quente" items={PTE_PRECAUCOES_QUENTE} />
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <Input value={f.teste_atmosfera_horario} onChange={(e) => setF({ ...f, teste_atmosfera_horario: e.target.value })} placeholder="Horário teste atmosfera" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-rose-200/30 text-xs font-bold uppercase" />
                 <Input value={f.teste_atmosfera_percentual} onChange={(e) => setF({ ...f, teste_atmosfera_percentual: e.target.value })} placeholder="Concentração %" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-rose-200/30 text-xs font-bold uppercase" />
                 <Input value={f.designado_liberacao} onChange={(e) => setF({ ...f, designado_liberacao: e.target.value })} placeholder="Designado pela liberação" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-rose-200/30 text-xs font-bold uppercase" />
               </div>
-
-              <PdfCheckboxGroup title="Precauções para trabalho em altura" group="precaucao_altura" items={PTE_PRECAUCOES_ALTURA} />
-              <PdfCheckboxGroup title="Precauções para eletricidade / fonte de energia" group="precaucao_eletrica" items={PTE_PRECAUCOES_ELETRICA} />
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-5 space-y-3">
+              <h3 className="text-xs font-black uppercase tracking-widest text-rose-100 border-b border-white/10 pb-2 flex items-center gap-2">
+                <Layers className="h-4 w-4 text-lime-300" /> Trabalho em Altura
+              </h3>
+              <PdfCheckboxGroup title="Precauções" group="precaucao_altura" items={PTE_PRECAUCOES_ALTURA} />
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-5 space-y-3">
+              <h3 className="text-xs font-black uppercase tracking-widest text-rose-100 border-b border-white/10 pb-2 flex items-center gap-2">
+                <Zap className="h-4 w-4 text-amber-300" /> Eletricidade / Fonte de Energia
+              </h3>
+              <PdfCheckboxGroup title="Precauções" group="precaucao_eletrica" items={PTE_PRECAUCOES_ELETRICA} />
               <Input value={f.responsavel_bloqueio} onChange={(e) => setF({ ...f, responsavel_bloqueio: e.target.value })} placeholder="Responsável pelo bloqueio" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-rose-200/30 text-xs font-bold uppercase" />
-
               <p className="text-[9px] font-bold uppercase text-rose-200/40">
                 Fim de semana / feriado é preenchido automaticamente no PDF conforme a data selecionada.
               </p>
             </div>
+          </div>
 
-            {/* NR-33 33.3.2.h — Plano de Resgate (apenas PET) */}
+          {/* PET / RESGATE */}
+          <div hidden={activeStep !== "pet"} className="space-y-6">
+            {f.tipo_pt === "PET" && (
+              <PteAtmosferaTab petId={editingId} employees={emps as any[]} />
+            )}
             {f.tipo_pt === "PET" && (
               <div className="mt-6 rounded-2xl border-2 border-amber-500/40 bg-gradient-to-br from-amber-950/40 to-black/40 p-5 space-y-3">
                 <div className="flex items-center gap-2">
@@ -1103,8 +1136,6 @@ function PtesPage() {
                 </div>
               </div>
             )}
-
-            {/* Alerta pré-submit: PET sem plano e/ou sem medição em modo relax */}
             {f.tipo_pt === "PET" && !petModoStrict && (
               <div className="rounded-xl border-2 border-amber-500/40 bg-amber-950/30 px-4 py-3 flex items-start gap-2">
                 <AlertTriangle className="h-4 w-4 text-amber-300 shrink-0 mt-0.5" />
@@ -1113,18 +1144,84 @@ function PtesPage() {
                 </div>
               </div>
             )}
+          </div>
 
-            <Button
-              type="submit"
-              disabled={save.isPending}
-              className={`w-full text-xs font-black uppercase tracking-widest h-auto px-8 py-4 rounded-xl flex items-center justify-center gap-2 text-rose-50 border transition-all ${
-                editingId
-                  ? "bg-gradient-to-br from-blue-600/80 to-blue-900/80 border-blue-400/30 shadow-[0_0_24px_-4px_rgba(59,130,246,0.6)] hover:shadow-[0_0_32px_-2px_rgba(59,130,246,0.8)]"
-                  : "bg-gradient-to-br from-rose-600/90 to-rose-900/90 border-rose-400/40 shadow-[0_0_24px_-4px_rgba(220,38,70,0.7)] hover:shadow-[0_0_36px_-2px_rgba(220,38,70,0.9)]"
-              }`}
+          {/* REVISÃO */}
+          <div hidden={activeStep !== "revisao"} className="space-y-4">
+            <div className="rounded-2xl border border-lime-400/30 bg-gradient-to-br from-lime-500/5 via-black/40 to-rose-950/30 p-5 space-y-4">
+              <h3 className="text-xs font-black uppercase tracking-widest text-lime-200 border-b border-lime-400/20 pb-2 flex items-center gap-2">
+                <Sparkles className="h-4 w-4" /> Revisão & Emissão
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                {STEPS.filter((s) => s.id !== "revisao").map((s) => {
+                  const ok = (stepChecks as any)[s.id] === true;
+                  return (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => setActiveStep(s.id)}
+                      className={`text-left rounded-xl border px-3 py-2.5 transition-all ${
+                        ok
+                          ? "bg-lime-500/10 border-lime-400/40 text-lime-100 hover:bg-lime-500/20"
+                          : "bg-amber-500/10 border-amber-400/40 text-amber-100 hover:bg-amber-500/20"
+                      }`}
+                    >
+                      <div className="text-[9px] font-black uppercase tracking-widest opacity-70">{s.label}</div>
+                      <div className="text-[10px] font-black uppercase flex items-center gap-1 mt-0.5">
+                        {ok ? <><CheckCircle2 className="h-3 w-3" /> Pronto</> : <><AlertTriangle className="h-3 w-3" /> Pendente</>}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-[10px] font-bold uppercase text-rose-200/70">
+                <div className="bg-black/40 border border-white/10 rounded-lg px-3 py-2">Tipo: <span className="text-rose-50 font-black">{f.tipo_pt}</span></div>
+                <div className="bg-black/40 border border-white/10 rounded-lg px-3 py-2">Data: <span className="text-rose-50 font-black">{formatDateBR(f.data)}</span></div>
+                <div className="bg-black/40 border border-white/10 rounded-lg px-3 py-2">Horário: <span className="text-rose-50 font-black">{f.hora_inicio} → {f.hora_fim}</span></div>
+                <div className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 md:col-span-2">Local: <span className="text-rose-50 font-black">{f.local || "—"}</span></div>
+                <div className="bg-black/40 border border-white/10 rounded-lg px-3 py-2">Executantes: <span className="text-rose-50 font-black">{f.executantes_ids?.length ?? 0}</span></div>
+              </div>
+              <Button
+                type="submit"
+                disabled={save.isPending}
+                className={`w-full text-xs font-black uppercase tracking-widest h-auto px-8 py-4 rounded-xl flex items-center justify-center gap-2 text-white border transition-all ${
+                  editingId
+                    ? "bg-gradient-to-br from-blue-600/90 to-blue-900/90 border-blue-400/40 shadow-[0_0_24px_-4px_rgba(59,130,246,0.6)] hover:shadow-[0_0_32px_-2px_rgba(59,130,246,0.9)]"
+                    : "bg-gradient-to-r from-lime-500 via-amber-500 to-rose-600 border-amber-300/50 shadow-[0_0_28px_-4px_rgba(245,158,11,0.9)] hover:shadow-[0_0_40px_-2px_rgba(220,38,70,0.9)]"
+                }`}
+              >
+                <Printer className="h-4 w-4" /> {editingId ? "Salvar Alterações" : "Emitir Permissão"}
+              </Button>
+            </div>
+          </div>
+
+          {/* Navegação inferior */}
+          <div className="flex items-center justify-between gap-3 pt-4 border-t border-white/10">
+            <button
+              type="button"
+              onClick={goPrev}
+              disabled={isFirst}
+              className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest bg-black/40 text-rose-100 border border-white/10 px-4 py-2.5 rounded-xl hover:bg-black/60 disabled:opacity-30 disabled:cursor-not-allowed"
             >
-              <Printer className="h-4 w-4" /> {editingId ? "Salvar Alterações" : "Emitir Permissão"}
-            </Button>
+              <ChevronLeft className="h-3.5 w-3.5" /> Voltar
+            </button>
+            <div className="text-[9px] font-black uppercase tracking-widest text-rose-200/50">
+              {stepIndex + 1} / {STEPS.length}
+            </div>
+            {!isLast ? (
+              <button
+                type="button"
+                onClick={goNext}
+                className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest bg-gradient-to-r from-amber-500 to-rose-600 text-white border border-amber-300/50 px-4 py-2.5 rounded-xl hover:shadow-[0_0_20px_-4px_rgba(245,158,11,0.9)]"
+              >
+                Avançar <ChevronRight className="h-3.5 w-3.5" />
+              </button>
+            ) : (
+              <span className="text-[9px] font-black uppercase tracking-widest text-lime-300 flex items-center gap-1">
+                <CheckCircle2 className="h-3.5 w-3.5" /> Última etapa
+              </span>
+            )}
+          </div>
           </form>
         </div>
 
