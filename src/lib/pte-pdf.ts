@@ -49,6 +49,12 @@ export type PtePdfParams = {
   assinatura_gerente_nome?: string;
   /** Assinatura do TST (Segurança do Trabalho) em data URL PNG — carimba pg 2. */
   assinatura_tst_data_url?: string | null;
+  /** Assinatura do Encarregado em data URL PNG — carimba pg 2 (col 1). */
+  assinatura_encarregado_data_url?: string | null;
+  /** Assinatura do Gerente em data URL PNG — carimba pg 2 (col 2). */
+  assinatura_gerente_data_url?: string | null;
+  /** Assinatura de cada membro da equipe (mesma ordem de equipe_lista) — col 3. */
+  equipe_assinaturas_data_urls?: (string | null | undefined)[];
 };
 
 function prefixChecks(prefix: string, values?: Record<string, boolean>) {
