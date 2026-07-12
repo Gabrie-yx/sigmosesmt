@@ -23,6 +23,11 @@ import {
   PTE_PRECAUCOES_ALTURA,
   PTE_PRECAUCOES_ELETRICA,
   PTE_PRECAUCOES_QUENTE,
+  PTE_PRECAUCOES_CARGA,
+  PTE_PRECAUCOES_PINTURA,
+  PTE_EPIS_1,
+  PTE_EPIS_2,
+  PTE_OUTROS_EPI,
   PTE_PREENCIMENTO_SNNA,
   PTE_RISCOS_POTENCIAIS,
   type PteOfficialItem,
@@ -85,6 +90,17 @@ function PtesPage() {
     precaucao_altura: {} as Record<string, boolean>,
     precaucao_eletrica: {} as Record<string, boolean>,
     responsavel_bloqueio: "",
+    // Novos blocos do PDF oficial
+    precaucao_carga: {} as Record<string, boolean>,
+    precaucao_pintura: {} as Record<string, boolean>,
+    epis_col1: {} as Record<string, boolean>,
+    epis_col2: {} as Record<string, boolean>,
+    outros_epi: {} as Record<string, boolean>,
+    outros_epi_texto: "",
+    recomendacoes_adicionais: "",
+    equipe_lista: [] as { nome: string; funcao: string }[],
+    assinatura_encarregado_nome: "",
+    assinatura_gerente_nome: "",
   };
   const [f, setF] = useState<any>(emptyForm);
 
