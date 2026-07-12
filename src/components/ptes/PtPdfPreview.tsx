@@ -20,7 +20,7 @@ interface Props {
 const EMPTY = "\u00a0";
 
 const pteDocumentCss = `
-  .pte-document-root { background: #e7e5e4; color: #111827; font-family: Arial, Helvetica, sans-serif; }
+  .pte-document-root { width: 210mm; margin: 0 auto; background: #e7e5e4; color: #111827; font-family: Arial, Helvetica, sans-serif; }
   .pte-sheet { width: 210mm; min-height: 297mm; margin: 0 auto 16px; padding: 7mm; background: #fff; box-shadow: 0 18px 45px rgba(0,0,0,.18); box-sizing: border-box; }
   .pte-sheet * { box-sizing: border-box; }
   .pte-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
