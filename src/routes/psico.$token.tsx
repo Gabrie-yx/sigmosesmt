@@ -195,18 +195,20 @@ function PsicoPublicPage() {
           <div className="grid grid-cols-2 gap-2">
             <div>
               <Label className="text-[10px] text-slate-500">Faixa etária (opcional)</Label>
-              <Select value={faixaEtaria} onValueChange={setFaixaEtaria}>
+              <Select value={faixaEtaria || "__none__"} onValueChange={(v) => setFaixaEtaria(v === "__none__" ? "" : v)}>
                 <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="—" /></SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="__none__">—</SelectItem>
                   {FAIXA_ETARIA.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div>
               <Label className="text-[10px] text-slate-500">Tempo de casa (opcional)</Label>
-              <Select value={faixaTempo} onValueChange={setFaixaTempo}>
+              <Select value={faixaTempo || "__none__"} onValueChange={(v) => setFaixaTempo(v === "__none__" ? "" : v)}>
                 <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="—" /></SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="__none__">—</SelectItem>
                   {FAIXA_TEMPO_CASA.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
                 </SelectContent>
               </Select>
