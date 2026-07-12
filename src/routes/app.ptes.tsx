@@ -809,6 +809,7 @@ function PtesPage() {
               </div>
             )}
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <Label className="text-xs font-black text-amber-200/90 uppercase tracking-wider">Local do Trabalho / Instalação</Label>
               <Input required value={f.local} onChange={(e) => setF({ ...f, local: e.target.value })} placeholder="Ex: Dique Seco, Navio XYZ..." className="bg-black/30 border-white/10 text-rose-50 placeholder:text-slate-400/70 mt-2 text-xs font-bold uppercase" />
@@ -840,6 +841,7 @@ function PtesPage() {
                 <SelectTrigger className="bg-black/30 border-white/10 text-rose-50 mt-2 text-xs font-bold uppercase"><SelectValue /></SelectTrigger>
                 <SelectContent>{PTE_RISCOS.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
               </Select>
+            </div>
             </div>
 
             {/* DATA + HORÁRIOS */}
