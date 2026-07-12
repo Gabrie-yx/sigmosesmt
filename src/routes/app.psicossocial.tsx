@@ -453,26 +453,38 @@ function InstrumentoTab() {
   return (
     <div className="space-y-3">
       <Card className="p-4 bg-transparent">
-        <h2 className="font-bold text-slate-900 mb-2">Instrumento HSE-IT BR ({PSICO_ITEMS.length} itens)</h2>
+        <h2 className="font-bold text-rose-50 mb-2">Instrumento HSE-IT BR ({PSICO_ITEMS.length} itens)</h2>
         <p className="text-xs text-rose-100/70">
           Adaptação brasileira do HSE Indicator Tool (Health &amp; Safety Executive/UK, uso livre) + itens ISO 45003
           para assédio, violência e interface trabalho-vida. Escala Likert 1-5.
         </p>
       </Card>
-      {Object.entries(grupos).map(([dim, itens]) => (
-        <Card key={dim} className="p-4 border-rose-500/20 bg-gradient-to-br from-rose-950/40 to-slate-950/60">
-          <h3 className="font-bold text-slate-900 mb-2">{DIMENSAO_LABEL[dim as keyof typeof DIMENSAO_LABEL]}</h3>
-          <ul className="space-y-2 text-sm text-rose-100/80">
-            {itens.map((it) => (
-              <li key={it.codigo} className="flex items-start gap-2">
-                <Badge variant="outline" className="text-[10px] shrink-0">{it.codigo}</Badge>
-                <span>{it.texto}</span>
-                {it.invertido && <span className="text-[9px] text-rose-100/40 shrink-0">(inv.)</span>}
-              </li>
-            ))}
-          </ul>
-        </Card>
-      ))}
+      <div className="grid gap-3 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+        {Object.entries(grupos).map(([dim, itens]) => (
+          <Card key={dim} className="p-4 border-rose-500/20 bg-gradient-to-br from-rose-950/40 to-slate-950/60 flex flex-col">
+            <h3 className="font-bold text-rose-50 mb-3 flex items-center gap-2 text-sm">
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-400 shrink-0" />
+              <span className="truncate">{DIMENSAO_LABEL[dim as keyof typeof DIMENSAO_LABEL]}</span>
+              <Badge variant="outline" className="ml-auto text-[10px] bg-rose-500/10 text-rose-200 border-rose-500/30 shrink-0">
+                {itens.length}
+              </Badge>
+            </h3>
+            <ul className="space-y-2.5 text-[13px] leading-snug text-rose-100/80">
+              {itens.map((it) => (
+                <li key={it.codigo} className="grid grid-cols-[auto_minmax(0,1fr)] gap-2 items-start">
+                  <Badge variant="outline" className="text-[9px] font-mono shrink-0 bg-rose-500/10 text-rose-200 border-rose-500/30 mt-0.5">
+                    {it.codigo}
+                  </Badge>
+                  <span className="break-words">
+                    {it.texto}
+                    {it.invertido && <span className="text-[9px] text-rose-100/40 ml-1">(inv.)</span>}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }
