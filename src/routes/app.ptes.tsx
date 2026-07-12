@@ -680,7 +680,7 @@ function PtesPage() {
                         onClick={() => setActiveStep(s.id)}
                         className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wider border transition-all whitespace-nowrap ${
                           active
-                            ? "bg-amber-200/80 text-slate-900 border-amber-100/60"
+                            ? "bg-amber-200/80 text-[#120307] border-amber-100/60"
                             : done
                               ? "bg-lime-500/15 text-lime-100 border-lime-400/40"
                               : "bg-white/[0.05] text-slate-200 border-white/10"
@@ -708,14 +708,14 @@ function PtesPage() {
                         onClick={() => setActiveStep(s.id)}
                         className={`w-full flex items-center gap-2 rounded-lg pl-2 pr-3 py-2 text-[11px] font-bold tracking-wide transition-all border ${
                           active
-                            ? "bg-gradient-to-r from-amber-300/95 to-lime-400/95 text-slate-900 border-amber-100/60 shadow-[0_0_16px_-6px_rgba(245,158,11,0.9)]"
+                            ? "bg-gradient-to-r from-amber-300/95 to-lime-400/95 text-[#120307] border-amber-100/60 shadow-[0_0_16px_-6px_rgba(245,158,11,0.9)]"
                             : done
                               ? "bg-lime-500/10 text-lime-100 border-lime-400/25 hover:bg-lime-500/20"
                               : "bg-transparent text-slate-200 border-transparent hover:bg-white/[0.05] hover:text-white"
                         }`}
                       >
                         <span className={`h-5 w-5 shrink-0 rounded-full flex items-center justify-center text-[10px] font-black ${
-                          active ? "bg-slate-900/25 text-slate-900" : done ? "bg-lime-400/30 text-lime-50" : "bg-white/10 text-slate-100"
+                          active ? "bg-[#120307]/80 text-amber-50" : done ? "bg-lime-400/30 text-lime-50" : "bg-white/10 text-slate-100"
                         }`}>
                           {done && !active ? <CheckCircle2 className="h-3 w-3" /> : i + 1}
                         </span>
