@@ -1447,6 +1447,7 @@ function PtesPage() {
             )}
           </div>
           </form>
+          </div>
         </div>
 
         {/* HISTORY */}
