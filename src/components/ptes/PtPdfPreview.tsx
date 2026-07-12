@@ -24,11 +24,6 @@ function isWeekend(date?: string | null) {
   return d.getDay() === 0 || d.getDay() === 6;
 }
 
-function includesAny(source: string, terms: string[]) {
-  const normalized = source.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-  return terms.some((term) => normalized.includes(term));
-}
-
 export function PtPdfPreview({ open, onClose, pt, apr, casco, company, employees = [] }: Props) {
   const [assinaturaTst, setAssinaturaTst] = useState<string | null>(null);
   const [padOpen, setPadOpen] = useState(false);
@@ -42,13 +37,14 @@ export function PtPdfPreview({ open, onClose, pt, apr, casco, company, employees
     if (!pt) return null;
     const employeeMap = new Map((employees ?? []).map((e: any) => [e.id, e]));
     const employeeName = (id?: string | null) => (id ? employeeMap.get(id)?.nome : "");
-    const encarregado = pt.encarregado_nome
-      ?? employeeName(pt.requisitante_id)
-      ?? pt.employee_name
-      ?? "";
+    const dados = (pt.dados ?? {}) as any;
+    const atv = (dados.atividades ?? {}) as any;
+    const encarregado = (dados.encarregado_nome && String(dados.encarregado_nome).trim())
+      || employeeName(pt.requisitante_id)
+      || pt.employee_name
+      || "";
     const localTexto = [pt.local, casco ? `CASCO ${casco.numero}${casco.nome ? ` — ${casco.nome}` : ""}` : null]
       .filter(Boolean).join(" · ");
-    const sourceText = [pt.tipo_pt, pt.risco, pt.local, apr?.atividade_descricao].filter(Boolean).join(" ");
     return {
       numero: pt.numero,
       data_inicio: formatDateBR(pt.data_emissao || pt.data),
@@ -59,17 +55,17 @@ export function PtPdfPreview({ open, onClose, pt, apr, casco, company, employees
       encarregado,
       local_descricao: localTexto,
       tipo_pt: pt.tipo_pt,
-      mao_obra: pt.mao_obra ?? null,
+      mao_obra: (dados.mao_obra ?? null) as any,
       fim_de_semana: isWeekend(pt.data_emissao || pt.data),
-      area_restrita: pt.area_restrita ?? null,
+      area_restrita: typeof dados.area_restrita === "boolean" ? dados.area_restrita : null,
       atividades: {
-        movimentacao_cargas: includesAny(sourceText, ["icamento", "movimentacao", "carga", "guindaste"]),
-        manutencao_civil: includesAny(sourceText, ["manutencao civil", "civil", "alvenaria", "concreto"]),
-        gases_inflamaveis: includesAny(sourceText, ["gas", "gases", "inflamavel", "inflamaveis"]),
-        altura_telhados: includesAny(sourceText, ["altura", "telhado", "andaime"]),
-        demolicao_escavacao: includesAny(sourceText, ["demolicao", "escavacao", "vala"]),
-        eletricidade: includesAny(sourceText, ["eletric", "loto", "alta tensao"]),
-        outros: false,
+        movimentacao_cargas: !!atv.movimentacao_cargas,
+        manutencao_civil: !!atv.manutencao_civil,
+        gases_inflamaveis: !!atv.gases_inflamaveis,
+        altura_telhados: !!atv.altura_telhados,
+        demolicao_escavacao: !!atv.demolicao_escavacao,
+        eletricidade: !!atv.eletricidade,
+        outros: !!atv.outros,
       },
       assinatura_tst_data_url: assinaturaTst,
     };

@@ -50,6 +50,19 @@ function PtesPage() {
     plano_hospital_referencia: "",
     plano_tempo_resposta_min: "",
     plano_meio_comunicacao: "",
+    // FOR-SEG-04 — campos que só existem no PDF homologado (armazenados em `dados`)
+    encarregado_nome: "" as string,
+    mao_obra: "" as "" | "INTERNA" | "EXTERNA",
+    area_restrita: "" as "" | "SIM" | "NAO",
+    atv_movimentacao_cargas: false,
+    atv_manutencao_civil: false,
+    atv_gases_inflamaveis: false,
+    atv_altura_telhados: false,
+    atv_demolicao_escavacao: false,
+    atv_eletricidade: false,
+    atv_trabalho_quente: false,
+    atv_local_confinado: false,
+    atv_outros: false,
   };
   const [f, setF] = useState<any>(emptyForm);
 
@@ -292,17 +305,34 @@ function PtesPage() {
           meio_comunicacao: (f.plano_meio_comunicacao ?? "").trim() || null,
         } : null,
       };
+      // FOR-SEG-04 — campos do PDF homologado (não têm coluna própria, ficam em `dados`)
+      const dadosPdf = {
+        encarregado_nome: (f.encarregado_nome ?? "").trim() || null,
+        mao_obra: f.mao_obra || null,
+        area_restrita: f.area_restrita === "SIM" ? true : f.area_restrita === "NAO" ? false : null,
+        atividades: {
+          movimentacao_cargas: !!f.atv_movimentacao_cargas,
+          manutencao_civil: !!f.atv_manutencao_civil,
+          gases_inflamaveis: !!f.atv_gases_inflamaveis,
+          altura_telhados: !!f.atv_altura_telhados,
+          demolicao_escavacao: !!f.atv_demolicao_escavacao,
+          eletricidade: !!f.atv_eletricidade,
+          trabalho_quente: !!f.atv_trabalho_quente,
+          local_confinado: !!f.atv_local_confinado,
+          outros: !!f.atv_outros,
+        },
+      };
 
       if (editingId) {
         // Reemissão: ao atualizar, considera como nova emissão (zera o "envelhecimento" de 7 dias)
         const { error } = await supabase
           .from("ptes")
-          .update({ ...commonPayload, data_emissao: new Date().toISOString() })
+          .update({ ...commonPayload, data_emissao: new Date().toISOString(), dados: dadosPdf })
           .eq("id", editingId);
         if (error) throw error;
       } else {
         const numero = `${f.tipo_pt}-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000 + 1000)}`;
-        const { error } = await supabase.from("ptes").insert({ ...commonPayload, numero, status: "ATIVA", dados: {} });
+        const { error } = await supabase.from("ptes").insert({ ...commonPayload, numero, status: "ATIVA", dados: dadosPdf });
         if (error) throw error;
       }
     },
@@ -352,6 +382,8 @@ function PtesPage() {
     setEditingId(p.id);
     setLinkedAprId(p.apr_id ?? null);
     const pr = (p.plano_resgate ?? {}) as any;
+    const d = (p.dados ?? {}) as any;
+    const atv = (d.atividades ?? {}) as any;
     setF({
       data: p.data,
       risco: p.risco ?? PTE_RISCOS[0],
@@ -374,6 +406,18 @@ function PtesPage() {
       plano_hospital_referencia: pr.hospital_referencia ?? "",
       plano_tempo_resposta_min: pr.tempo_resposta_min ?? "",
       plano_meio_comunicacao: pr.meio_comunicacao ?? "",
+      encarregado_nome: d.encarregado_nome ?? "",
+      mao_obra: d.mao_obra ?? "",
+      area_restrita: d.area_restrita === true ? "SIM" : d.area_restrita === false ? "NAO" : "",
+      atv_movimentacao_cargas: !!atv.movimentacao_cargas,
+      atv_manutencao_civil: !!atv.manutencao_civil,
+      atv_gases_inflamaveis: !!atv.gases_inflamaveis,
+      atv_altura_telhados: !!atv.altura_telhados,
+      atv_demolicao_escavacao: !!atv.demolicao_escavacao,
+      atv_eletricidade: !!atv.eletricidade,
+      atv_trabalho_quente: !!atv.trabalho_quente,
+      atv_local_confinado: !!atv.local_confinado,
+      atv_outros: !!atv.outros,
     });
   }
   function cancelEdit() {
@@ -485,6 +529,11 @@ function PtesPage() {
             <div>
               <Label className="text-[10px] font-black text-rose-200/70 uppercase">Local do Trabalho / Instalação</Label>
               <Input required value={f.local} onChange={(e) => setF({ ...f, local: e.target.value })} placeholder="Ex: Dique Seco, Navio XYZ..." className="bg-black/30 border-white/10 text-rose-50 placeholder:text-rose-200/30 mt-2 text-xs font-bold uppercase" />
+            </div>
+            <div>
+              <Label className="text-[10px] font-black text-rose-200/70 uppercase">Encarregado (PDF FOR-SEG-04)</Label>
+              <Input value={f.encarregado_nome} onChange={(e) => setF({ ...f, encarregado_nome: e.target.value })} placeholder="Nome do encarregado responsável" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-rose-200/30 mt-2 text-xs font-bold uppercase" />
+              <p className="text-[9px] text-rose-200/40 mt-1 uppercase">Se vazio, usa o requisitante no PDF.</p>
             </div>
             <div>
               <Label className="text-[10px] font-black text-rose-200/70 uppercase">Frente de Trabalho (Casco)</Label>
@@ -702,6 +751,90 @@ function PtesPage() {
             {f.tipo_pt === "PET" && (
               <PteAtmosferaTab petId={editingId} employees={emps as any[]} />
             )}
+
+            {/* FOR-SEG-04 — CAMPOS DO PDF HOMOLOGADO */}
+            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-5 space-y-4">
+              <h3 className="text-xs font-black uppercase tracking-widest text-rose-100 border-b border-white/10 pb-2">
+                Campos do PDF FOR-SEG-04
+              </h3>
+
+              <div>
+                <Label className="text-[10px] font-black text-rose-200/70 uppercase mb-2 block">
+                  Descrição das atividades a serem executadas
+                </Label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {[
+                    { k: "atv_movimentacao_cargas", l: "Movimentação de cargas" },
+                    { k: "atv_manutencao_civil", l: "Manutenção civil" },
+                    { k: "atv_gases_inflamaveis", l: "Gases inflamáveis" },
+                    { k: "atv_altura_telhados", l: "Altura / telhados" },
+                    { k: "atv_demolicao_escavacao", l: "Demolição / escavação" },
+                    { k: "atv_eletricidade", l: "Eletricidade" },
+                    { k: "atv_trabalho_quente", l: "Trabalho a quente" },
+                    { k: "atv_local_confinado", l: "Local confinado" },
+                    { k: "atv_outros", l: "Outros" },
+                  ].map((o) => (
+                    <label key={o.k} className="flex items-center gap-2 text-[11px] font-bold uppercase text-rose-100 bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 cursor-pointer hover:border-rose-500/40">
+                      <Checkbox
+                        checked={!!(f as any)[o.k]}
+                        onCheckedChange={(v) => setF({ ...f, [o.k]: !!v })}
+                      />
+                      {o.l}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-[10px] font-black text-rose-200/70 uppercase mb-2 block">Mão de obra</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { v: "INTERNA", l: "Interna" },
+                      { v: "EXTERNA", l: "Externa" },
+                    ].map((o) => (
+                      <button
+                        key={o.v}
+                        type="button"
+                        onClick={() => setF({ ...f, mao_obra: f.mao_obra === o.v ? "" : o.v })}
+                        className={`py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${
+                          f.mao_obra === o.v
+                            ? "bg-gradient-to-br from-rose-600/90 to-rose-900/90 text-rose-50 border-rose-400/40"
+                            : "bg-black/30 text-rose-200/70 border-white/10 hover:bg-black/50"
+                        }`}
+                      >
+                        {o.l}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-[10px] font-black text-rose-200/70 uppercase mb-2 block">Área restrita</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { v: "SIM", l: "Sim" },
+                      { v: "NAO", l: "Não" },
+                    ].map((o) => (
+                      <button
+                        key={o.v}
+                        type="button"
+                        onClick={() => setF({ ...f, area_restrita: f.area_restrita === o.v ? "" : o.v })}
+                        className={`py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${
+                          f.area_restrita === o.v
+                            ? "bg-gradient-to-br from-rose-600/90 to-rose-900/90 text-rose-50 border-rose-400/40"
+                            : "bg-black/30 text-rose-200/70 border-white/10 hover:bg-black/50"
+                        }`}
+                      >
+                        {o.l}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <p className="text-[9px] font-bold uppercase text-rose-200/40">
+                Fim de semana / feriado é preenchido automaticamente no PDF conforme a data selecionada.
+              </p>
+            </div>
 
             {/* NR-33 33.3.2.h — Plano de Resgate (apenas PET) */}
             {f.tipo_pt === "PET" && (
