@@ -1557,14 +1557,14 @@ function PtesPage() {
           <h3 className="text-sm font-black text-rose-100 uppercase tracking-widest mb-6 border-b border-white/10 pb-4 flex items-center gap-2">
             <Files className="h-5 w-5" /> Histórico de Permissões
           </h3>
-          <div className="space-y-4 max-h-[600px] overflow-y-auto custom-scrollbar pr-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 max-h-[600px] overflow-y-auto custom-scrollbar pr-2">
             {ptes.length === 0 && (
-              <div className="text-center text-slate-300/60 py-10 font-bold uppercase text-xs border border-dashed border-white/10 rounded-2xl bg-black/20">
+              <div className="col-span-full text-center text-slate-300/60 py-10 font-bold uppercase text-xs border border-dashed border-white/10 rounded-2xl bg-black/20">
                 Nenhuma permissão foi emitida até o momento.
               </div>
             )}
             {ptes.map((p: any) => (
-              <div key={p.id} className={`glass-card p-5 rounded-2xl transition-all hover:-translate-y-0.5 ${p.status !== "ATIVA" ? "opacity-60" : ""}`}>
+              <div key={p.id} className={`glass-card p-4 rounded-2xl transition-all hover:-translate-y-0.5 flex flex-col ${p.status !== "ATIVA" ? "opacity-60" : ""}`}>
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex items-center gap-2">
                     <div className="text-[10px] font-black uppercase text-slate-200/90 tracking-widest">Nº <span className="text-rose-100">{p.numero}</span></div>
