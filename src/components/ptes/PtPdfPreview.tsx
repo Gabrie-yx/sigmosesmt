@@ -24,11 +24,6 @@ function isWeekend(date?: string | null) {
   return d.getDay() === 0 || d.getDay() === 6;
 }
 
-function includesAny(source: string, terms: string[]) {
-  const normalized = source.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-  return terms.some((term) => normalized.includes(term));
-}
-
 export function PtPdfPreview({ open, onClose, pt, apr, casco, company, employees = [] }: Props) {
   const [assinaturaTst, setAssinaturaTst] = useState<string | null>(null);
   const [padOpen, setPadOpen] = useState(false);
