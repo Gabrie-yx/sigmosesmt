@@ -578,20 +578,80 @@ function PtesPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8 items-start">
-        {/* FORM */}
+      <div className="flex flex-col gap-6 md:gap-8">
+        {/* FORM — WIZARD HORIZONTAL */}
         <div className="glass-card glass-shine rounded-2xl p-4 sm:p-6 md:p-8">
-          <h3 className="text-sm font-black text-rose-100 uppercase tracking-widest mb-6 border-b border-white/10 pb-4 flex items-center justify-between">
-            <span className="flex items-center gap-2"><FileText className="h-5 w-5" />
-              {editingId ? "Editar Permissão" : "Nova Permissão de Trabalho"}
-            </span>
-            {editingId && (
-              <button type="button" onClick={cancelEdit} className="text-[10px] bg-black/40 text-rose-200 border border-white/10 px-3 py-1.5 rounded-lg hover:bg-black/60 uppercase font-black">
-                Cancelar Edição
-              </button>
-            )}
-          </h3>
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-white/10 mb-5">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-rose-600/80 to-amber-500/70 flex items-center justify-center shadow-[0_0_18px_-2px_rgba(245,158,11,0.55)]">
+                <FileText className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <div className="text-sm font-black text-rose-100 uppercase tracking-widest">
+                  {editingId ? "Editar Permissão" : "Nova Permissão de Trabalho"}
+                </div>
+                <div className="text-[9px] font-bold uppercase tracking-widest text-rose-200/50">
+                  Passo {stepIndex + 1} de {STEPS.length} · {STEPS[stepIndex]?.label}
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-400/30 flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" /> {f.tipo_pt}
+              </span>
+              {linkedAprId && (
+                <span className="text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-lg bg-lime-500/15 text-lime-200 border border-lime-400/30 flex items-center gap-1">
+                  <Link2 className="h-3 w-3" /> APR
+                </span>
+              )}
+              {f.emergencia_sem_apr && (
+                <span className="text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-lg bg-amber-500/20 text-amber-200 border border-amber-400/40 flex items-center gap-1">
+                  <AlertTriangle className="h-3 w-3" /> Emergência
+                </span>
+              )}
+              {editingId && (
+                <button type="button" onClick={cancelEdit} className="text-[10px] bg-black/40 text-rose-200 border border-white/10 px-3 py-1.5 rounded-lg hover:bg-black/60 uppercase font-black">
+                  Cancelar
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Pills horizontais */}
+          <div className="mb-6 -mx-1 overflow-x-auto custom-scrollbar">
+            <div className="flex items-center gap-2 px-1 min-w-max pb-1">
+              {STEPS.map((s, i) => {
+                const active = s.id === activeStep;
+                const done = (stepChecks as any)[s.id] === true;
+                const Icon = s.icon;
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => setActiveStep(s.id)}
+                    className={`group flex items-center gap-2 rounded-full px-3.5 py-2 text-[10px] font-black uppercase tracking-widest border transition-all whitespace-nowrap ${
+                      active
+                        ? "bg-gradient-to-r from-amber-500 to-rose-600 text-white border-amber-300/60 shadow-[0_0_20px_-4px_rgba(245,158,11,0.9)]"
+                        : done
+                          ? "bg-lime-500/10 text-lime-200 border-lime-400/40 hover:bg-lime-500/20"
+                          : "bg-black/40 text-rose-200/70 border-white/10 hover:bg-black/60 hover:text-rose-100"
+                    }`}
+                  >
+                    <span className={`h-5 w-5 rounded-full flex items-center justify-center text-[9px] ${
+                      active ? "bg-white/25" : done ? "bg-lime-400/25" : "bg-white/5"
+                    }`}>
+                      {done && !active ? <CheckCircle2 className="h-3 w-3" /> : i + 1}
+                    </span>
+                    <Icon className="h-3.5 w-3.5" />
+                    {s.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <form onSubmit={(e) => { e.preventDefault(); save.mutate(); }} className="space-y-6">
+          <div hidden={activeStep !== "ident"} className="space-y-6">
 
             {/* TIPO DA PT */}
             <div>
