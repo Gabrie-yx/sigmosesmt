@@ -678,14 +678,14 @@ function PtesPage() {
                     onClick={() => setActiveStep(s.id)}
                     className={`group flex items-center gap-2 rounded-full px-3.5 py-2 text-[10px] font-black uppercase tracking-widest border transition-all whitespace-nowrap ${
                       active
-                        ? "bg-gradient-to-r from-amber-500 to-rose-600 text-white border-amber-300/60 shadow-[0_0_20px_-4px_rgba(245,158,11,0.9)]"
+                        ? "bg-gradient-to-r from-amber-300 via-amber-400 to-lime-400 text-slate-900 border-white/50 shadow-[0_0_20px_-4px_rgba(245,158,11,0.9)]"
                         : done
-                          ? "bg-lime-500/10 text-lime-200 border-lime-400/40 hover:bg-lime-500/20"
-                          : "bg-black/40 text-rose-200/70 border-white/10 hover:bg-black/60 hover:text-rose-100"
+                          ? "bg-lime-500/20 text-lime-100 border-lime-300/60 hover:bg-lime-500/30"
+                          : "bg-white/[0.06] text-slate-100 border-white/15 hover:bg-white/10 hover:border-amber-300/40"
                     }`}
                   >
                     <span className={`h-5 w-5 rounded-full flex items-center justify-center text-[9px] ${
-                      active ? "bg-white/25" : done ? "bg-lime-400/25" : "bg-white/5"
+                      active ? "bg-slate-900/20" : done ? "bg-lime-400/30" : "bg-white/10"
                     }`}>
                       {done && !active ? <CheckCircle2 className="h-3 w-3" /> : i + 1}
                     </span>
