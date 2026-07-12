@@ -232,7 +232,7 @@ function CampanhasTab() {
       const { error } = await sb.from("psico_tokens").insert(rows);
       if (error) { toast.error("Erro ao gerar tokens: " + error.message); return; }
 
-      const base = window.location.origin;
+      const base = getPsicoPublicBase();
       setTokensGerados(pares.map((p) => ({ token: p.raw, url: `${base}/psico/${p.raw}` })));
       setTokensDialogOpen(true);
       setDialog(false);
@@ -788,6 +788,15 @@ function randomToken() {
   const arr = new Uint8Array(24);
   crypto.getRandomValues(arr);
   return Array.from(arr).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function getPsicoPublicBase() {
+  if (typeof window === "undefined") return "https://sigmosesmt.lovable.app";
+  const host = window.location.hostname;
+  if (host.includes("lovableproject.com") || host.includes("lovable.app") || host === "localhost") {
+    return "https://sigmosesmt.lovable.app";
+  }
+  return window.location.origin;
 }
 
 async function sha256Hex(s: string) {
