@@ -140,6 +140,7 @@ const SESMT_GROUPS: { title: string; items: LeafItem[] }[] = [
       { to: "/app/sesmt/procedimentos", label: "Procedimentos / POPs", icon: ClipboardList },
       { to: "/app/matriz-treinamento", label: "Matriz de Treinamento", icon: GraduationCap },
       { to: "/app/pgr", label: "PGR — Programa de Riscos", icon: ShieldCheck },
+      { to: "/app/psicossocial", label: "Risco Psicossocial (NR-01)", icon: Brain },
       { to: "/app/sesmt/docs", label: "Documentos SESMT", icon: FileText },
       { to: "/app/sesmt/templates-documentos", label: "Templates FOR-SEG", icon: FileCheck2 },
       { to: "/app/sesmt/guia-documentos", label: "Guia: Onde encontrar laudos?", icon: BookOpenCheck },
