@@ -625,33 +625,21 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
                 {status!.msgs.length}
               </Badge>
             </div>
-            <div className="flex flex-col gap-2">
-              {status!.msgs.map((m, i) => {
+            <div className="flex flex-wrap gap-1.5">
+              {status!.msgs.flatMap((m, i) => {
                 const [prefixRaw, tailRaw] = m.split(/\s+—\s+|\s+-\s+/);
-                const prefix = tailRaw ? prefixRaw : "";
                 const items = (tailRaw ?? prefixRaw)
                   .split(/,\s*/)
                   .map((s) => s.trim())
                   .filter(Boolean);
-                return (
-                  <div key={i} className="flex flex-col gap-1.5">
-                    {prefix && (
-                      <span className="text-[9px] font-bold uppercase tracking-wider text-rose-100/55">
-                        {prefix}
-                      </span>
-                    )}
-                    <div className="flex flex-wrap gap-1.5">
-                      {items.map((it, j) => (
-                        <span
-                          key={j}
-                          className="inline-flex items-center rounded-full border border-rose-300/40 bg-white/10 text-rose-50 text-[10px] font-semibold px-2 py-0.5"
-                        >
-                          {it}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                );
+                return items.map((it, j) => (
+                  <span
+                    key={`${i}-${j}`}
+                    className="inline-flex items-center rounded-full border border-rose-300/40 bg-white/10 text-rose-50 text-[10px] font-semibold px-2 py-0.5 whitespace-nowrap"
+                  >
+                    {it}
+                  </span>
+                ));
               })}
             </div>
           </Card>
