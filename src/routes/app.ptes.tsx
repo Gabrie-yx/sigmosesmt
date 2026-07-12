@@ -382,6 +382,8 @@ function PtesPage() {
     setEditingId(p.id);
     setLinkedAprId(p.apr_id ?? null);
     const pr = (p.plano_resgate ?? {}) as any;
+    const d = (p.dados ?? {}) as any;
+    const atv = (d.atividades ?? {}) as any;
     setF({
       data: p.data,
       risco: p.risco ?? PTE_RISCOS[0],
@@ -404,6 +406,18 @@ function PtesPage() {
       plano_hospital_referencia: pr.hospital_referencia ?? "",
       plano_tempo_resposta_min: pr.tempo_resposta_min ?? "",
       plano_meio_comunicacao: pr.meio_comunicacao ?? "",
+      encarregado_nome: d.encarregado_nome ?? "",
+      mao_obra: d.mao_obra ?? "",
+      area_restrita: d.area_restrita === true ? "SIM" : d.area_restrita === false ? "NAO" : "",
+      atv_movimentacao_cargas: !!atv.movimentacao_cargas,
+      atv_manutencao_civil: !!atv.manutencao_civil,
+      atv_gases_inflamaveis: !!atv.gases_inflamaveis,
+      atv_altura_telhados: !!atv.altura_telhados,
+      atv_demolicao_escavacao: !!atv.demolicao_escavacao,
+      atv_eletricidade: !!atv.eletricidade,
+      atv_trabalho_quente: !!atv.trabalho_quente,
+      atv_local_confinado: !!atv.local_confinado,
+      atv_outros: !!atv.outros,
     });
   }
   function cancelEdit() {
