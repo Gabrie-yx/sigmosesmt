@@ -11,7 +11,7 @@ import { OVERLAY_MAPS, type OverlayField } from "@/lib/pdf-overlay-maps";
 export type RenderOverlayInput = {
   codigo: string;
   fields?: Record<string, string | undefined>;
-  checkboxes?: Record<string, boolean | undefined>;
+  checkboxes?: Record<string, boolean | string | undefined>;
   templatePdfBytes?: Uint8Array;
 };
 
@@ -54,12 +54,12 @@ export async function renderOverlay(input: RenderOverlayInput): Promise<Blob> {
   const pdf = await PDFDocument.load(bytes);
   const font = await pdf.embedFont(StandardFonts.Helvetica);
   const fontBold = await pdf.embedFont(StandardFonts.HelveticaBold);
-  const page = pdf.getPage(0);
   const H = map.pageHeight;
   const black = rgb(0, 0, 0);
 
   const drawField = (value: string | undefined, f: OverlayField) => {
     if (!value) return;
+    const page = pdf.getPage(f.page ?? 0);
     const size = f.size ?? 9;
     const chosen = f.bold ? fontBold : font;
     const t = truncateToWidth(String(value), chosen, size, f.maxW);
@@ -77,12 +77,15 @@ export async function renderOverlay(input: RenderOverlayInput): Promise<Blob> {
   }
 
   for (const [key, cfg] of Object.entries(map.checkboxes ?? {})) {
-    if (!input.checkboxes?.[key]) continue;
-    const size = cfg.size ?? 10;
-    const w = fontBold.widthOfTextAtSize("X", size);
-    page.drawText("X", {
+    const raw = input.checkboxes?.[key];
+    if (!raw) continue;
+    const page = pdf.getPage(cfg.page ?? 0);
+    const mark = raw === true ? "X" : String(raw).toUpperCase();
+    const size = cfg.size ?? (mark.length > 1 ? 4.2 : 5.2);
+    const w = fontBold.widthOfTextAtSize(mark, size);
+    page.drawText(mark, {
       x: cfg.cx - w / 2,
-      y: H - cfg.cy - size / 2 + 1,
+      y: H - cfg.cy - size / 2 + 1.1,
       size,
       font: fontBold,
       color: black,
