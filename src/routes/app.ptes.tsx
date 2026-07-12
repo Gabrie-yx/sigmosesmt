@@ -18,6 +18,15 @@ import { PtPdfPreview } from "@/components/ptes/PtPdfPreview";
 import { PteAtmosferaTab } from "@/components/ptes/PteAtmosferaTab";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  PTE_PRECAUCOES_ALTURA,
+  PTE_PRECAUCOES_ELETRICA,
+  PTE_PRECAUCOES_QUENTE,
+  PTE_PREENCIMENTO_SNNA,
+  PTE_RISCOS_POTENCIAIS,
+  type PteOfficialItem,
+  type PteTriValue,
+} from "@/lib/pte-official-fields";
 
 export const Route = createFileRoute("/app/ptes")({
   component: PtesPage,
@@ -63,6 +72,18 @@ function PtesPage() {
     atv_trabalho_quente: false,
     atv_local_confinado: false,
     atv_outros: false,
+    outros_atividade_texto: "",
+    riscos_potenciais: {} as Record<string, boolean>,
+    outros_risco_texto: "",
+    preenchimento_snna: {} as Record<string, PteTriValue | "">,
+    outros_snna_texto: "",
+    precaucao_quente: {} as Record<string, boolean>,
+    teste_atmosfera_horario: "",
+    teste_atmosfera_percentual: "",
+    designado_liberacao: "",
+    precaucao_altura: {} as Record<string, boolean>,
+    precaucao_eletrica: {} as Record<string, boolean>,
+    responsavel_bloqueio: "",
   };
   const [f, setF] = useState<any>(emptyForm);
 
@@ -321,6 +342,18 @@ function PtesPage() {
           local_confinado: !!f.atv_local_confinado,
           outros: !!f.atv_outros,
         },
+        outros_atividade_texto: (f.outros_atividade_texto ?? "").trim() || null,
+        riscos_potenciais: f.riscos_potenciais ?? {},
+        outros_risco_texto: (f.outros_risco_texto ?? "").trim() || null,
+        preenchimento_snna: f.preenchimento_snna ?? {},
+        outros_snna_texto: (f.outros_snna_texto ?? "").trim() || null,
+        precaucao_quente: f.precaucao_quente ?? {},
+        teste_atmosfera_horario: (f.teste_atmosfera_horario ?? "").trim() || null,
+        teste_atmosfera_percentual: (f.teste_atmosfera_percentual ?? "").trim() || null,
+        designado_liberacao: (f.designado_liberacao ?? "").trim() || null,
+        precaucao_altura: f.precaucao_altura ?? {},
+        precaucao_eletrica: f.precaucao_eletrica ?? {},
+        responsavel_bloqueio: (f.responsavel_bloqueio ?? "").trim() || null,
       };
 
       if (editingId) {
@@ -418,12 +451,89 @@ function PtesPage() {
       atv_trabalho_quente: !!atv.trabalho_quente,
       atv_local_confinado: !!atv.local_confinado,
       atv_outros: !!atv.outros,
+      outros_atividade_texto: d.outros_atividade_texto ?? "",
+      riscos_potenciais: d.riscos_potenciais ?? {},
+      outros_risco_texto: d.outros_risco_texto ?? "",
+      preenchimento_snna: d.preenchimento_snna ?? {},
+      outros_snna_texto: d.outros_snna_texto ?? "",
+      precaucao_quente: d.precaucao_quente ?? {},
+      teste_atmosfera_horario: d.teste_atmosfera_horario ?? "",
+      teste_atmosfera_percentual: d.teste_atmosfera_percentual ?? "",
+      designado_liberacao: d.designado_liberacao ?? "",
+      precaucao_altura: d.precaucao_altura ?? {},
+      precaucao_eletrica: d.precaucao_eletrica ?? {},
+      responsavel_bloqueio: d.responsavel_bloqueio ?? "",
     });
   }
   function cancelEdit() {
     setEditingId(null);
     setLinkedAprId(null);
     setF(emptyForm);
+  }
+
+  function setPdfFlag(group: string, key: string, value: boolean) {
+    setF((cur: any) => ({ ...cur, [group]: { ...(cur[group] ?? {}), [key]: value } }));
+  }
+
+  function setPdfAnswer(group: string, key: string, value: PteTriValue) {
+    setF((cur: any) => ({
+      ...cur,
+      [group]: {
+        ...(cur[group] ?? {}),
+        [key]: cur[group]?.[key] === value ? "" : value,
+      },
+    }));
+  }
+
+  function PdfCheckboxGroup({ title, group, items }: { title: string; group: string; items: readonly PteOfficialItem[] }) {
+    return (
+      <div className="space-y-2">
+        <Label className="text-[10px] font-black text-rose-200/70 uppercase block">{title}</Label>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
+          {items.map((o) => (
+            <label key={o.key} className="flex items-start gap-2 text-[10px] leading-snug font-bold uppercase text-rose-100 bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 cursor-pointer hover:border-rose-500/40">
+              <Checkbox
+                checked={!!f[group]?.[o.key]}
+                onCheckedChange={(v) => setPdfFlag(group, o.key, !!v)}
+                className="mt-0.5"
+              />
+              <span>{o.label}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  function PdfAnswerGroup({ title, group, items }: { title: string; group: string; items: readonly PteOfficialItem[] }) {
+    return (
+      <div className="space-y-2">
+        <Label className="text-[10px] font-black text-rose-200/70 uppercase block">{title}</Label>
+        <div className="grid grid-cols-1 gap-1.5">
+          {items.map((o) => (
+            <div key={o.key} className="grid grid-cols-[1fr_auto] gap-2 items-center text-[10px] leading-snug font-bold uppercase text-rose-100 bg-black/40 border border-white/10 rounded-lg px-2 py-1.5">
+              <span>{o.label}</span>
+              <div className="flex gap-1">
+                {(["S", "N", "NA"] as const).map((v) => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => setPdfAnswer(group, o.key, v)}
+                    className={`h-7 w-8 rounded border text-[10px] font-black transition-all ${
+                      f[group]?.[o.key] === v
+                        ? "bg-rose-600/90 text-rose-50 border-rose-300/60"
+                        : "bg-black/30 text-rose-200/70 border-white/10 hover:bg-black/50"
+                    }`}
+                  >
+                    {v}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -753,15 +863,13 @@ function PtesPage() {
             )}
 
             {/* FOR-SEG-04 — CAMPOS DO PDF HOMOLOGADO */}
-            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-5 space-y-4">
+            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-5 space-y-5">
               <h3 className="text-xs font-black uppercase tracking-widest text-rose-100 border-b border-white/10 pb-2">
-                Campos do PDF FOR-SEG-04
+                Formulário oficial PTE — FOR-SEG-04
               </h3>
 
-              <div>
-                <Label className="text-[10px] font-black text-rose-200/70 uppercase mb-2 block">
-                  Descrição das atividades a serem executadas
-                </Label>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black text-rose-200/70 uppercase block">Descrição das atividades a serem executadas</Label>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                   {[
                     { k: "atv_movimentacao_cargas", l: "Movimentação de cargas" },
@@ -774,35 +882,23 @@ function PtesPage() {
                     { k: "atv_local_confinado", l: "Local confinado" },
                     { k: "atv_outros", l: "Outros" },
                   ].map((o) => (
-                    <label key={o.k} className="flex items-center gap-2 text-[11px] font-bold uppercase text-rose-100 bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 cursor-pointer hover:border-rose-500/40">
-                      <Checkbox
-                        checked={!!(f as any)[o.k]}
-                        onCheckedChange={(v) => setF({ ...f, [o.k]: !!v })}
-                      />
+                    <label key={o.k} className="flex items-center gap-2 text-[10px] font-bold uppercase text-rose-100 bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 cursor-pointer hover:border-rose-500/40">
+                      <Checkbox checked={!!(f as any)[o.k]} onCheckedChange={(v) => setF({ ...f, [o.k]: !!v })} />
                       {o.l}
                     </label>
                   ))}
                 </div>
+                {f.atv_outros && (
+                  <Input value={f.outros_atividade_texto} onChange={(e) => setF({ ...f, outros_atividade_texto: e.target.value })} placeholder="Descreva outros" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-rose-200/30 text-xs font-bold uppercase" />
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label className="text-[10px] font-black text-rose-200/70 uppercase mb-2 block">Mão de obra</Label>
                   <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { v: "INTERNA", l: "Interna" },
-                      { v: "EXTERNA", l: "Externa" },
-                    ].map((o) => (
-                      <button
-                        key={o.v}
-                        type="button"
-                        onClick={() => setF({ ...f, mao_obra: f.mao_obra === o.v ? "" : o.v })}
-                        className={`py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${
-                          f.mao_obra === o.v
-                            ? "bg-gradient-to-br from-rose-600/90 to-rose-900/90 text-rose-50 border-rose-400/40"
-                            : "bg-black/30 text-rose-200/70 border-white/10 hover:bg-black/50"
-                        }`}
-                      >
+                    {[{ v: "INTERNA", l: "Interna" }, { v: "EXTERNA", l: "Externa" }].map((o) => (
+                      <button key={o.v} type="button" onClick={() => setF({ ...f, mao_obra: f.mao_obra === o.v ? "" : o.v })} className={`py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${f.mao_obra === o.v ? "bg-gradient-to-br from-rose-600/90 to-rose-900/90 text-rose-50 border-rose-400/40" : "bg-black/30 text-rose-200/70 border-white/10 hover:bg-black/50"}`}>
                         {o.l}
                       </button>
                     ))}
@@ -811,26 +907,36 @@ function PtesPage() {
                 <div>
                   <Label className="text-[10px] font-black text-rose-200/70 uppercase mb-2 block">Área restrita</Label>
                   <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { v: "SIM", l: "Sim" },
-                      { v: "NAO", l: "Não" },
-                    ].map((o) => (
-                      <button
-                        key={o.v}
-                        type="button"
-                        onClick={() => setF({ ...f, area_restrita: f.area_restrita === o.v ? "" : o.v })}
-                        className={`py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${
-                          f.area_restrita === o.v
-                            ? "bg-gradient-to-br from-rose-600/90 to-rose-900/90 text-rose-50 border-rose-400/40"
-                            : "bg-black/30 text-rose-200/70 border-white/10 hover:bg-black/50"
-                        }`}
-                      >
+                    {[{ v: "SIM", l: "Sim" }, { v: "NAO", l: "Não" }].map((o) => (
+                      <button key={o.v} type="button" onClick={() => setF({ ...f, area_restrita: f.area_restrita === o.v ? "" : o.v })} className={`py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${f.area_restrita === o.v ? "bg-gradient-to-br from-rose-600/90 to-rose-900/90 text-rose-50 border-rose-400/40" : "bg-black/30 text-rose-200/70 border-white/10 hover:bg-black/50"}`}>
                         {o.l}
                       </button>
                     ))}
                   </div>
                 </div>
               </div>
+
+              <PdfCheckboxGroup title="Riscos potenciais" group="riscos_potenciais" items={PTE_RISCOS_POTENCIAIS} />
+              {f.riscos_potenciais?.outros && (
+                <Input value={f.outros_risco_texto} onChange={(e) => setF({ ...f, outros_risco_texto: e.target.value })} placeholder="Outros riscos" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-rose-200/30 text-xs font-bold uppercase" />
+              )}
+
+              <PdfAnswerGroup title="Preenchimento — S / N / NA" group="preenchimento_snna" items={PTE_PREENCIMENTO_SNNA} />
+              {f.preenchimento_snna?.outros && (
+                <Input value={f.outros_snna_texto} onChange={(e) => setF({ ...f, outros_snna_texto: e.target.value })} placeholder="Outros" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-rose-200/30 text-xs font-bold uppercase" />
+              )}
+
+              <PdfCheckboxGroup title="Precaução para trabalho a quente" group="precaucao_quente" items={PTE_PRECAUCOES_QUENTE} />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <Input value={f.teste_atmosfera_horario} onChange={(e) => setF({ ...f, teste_atmosfera_horario: e.target.value })} placeholder="Horário teste atmosfera" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-rose-200/30 text-xs font-bold uppercase" />
+                <Input value={f.teste_atmosfera_percentual} onChange={(e) => setF({ ...f, teste_atmosfera_percentual: e.target.value })} placeholder="Concentração %" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-rose-200/30 text-xs font-bold uppercase" />
+                <Input value={f.designado_liberacao} onChange={(e) => setF({ ...f, designado_liberacao: e.target.value })} placeholder="Designado pela liberação" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-rose-200/30 text-xs font-bold uppercase" />
+              </div>
+
+              <PdfCheckboxGroup title="Precauções para trabalho em altura" group="precaucao_altura" items={PTE_PRECAUCOES_ALTURA} />
+              <PdfCheckboxGroup title="Precauções para eletricidade / fonte de energia" group="precaucao_eletrica" items={PTE_PRECAUCOES_ELETRICA} />
+              <Input value={f.responsavel_bloqueio} onChange={(e) => setF({ ...f, responsavel_bloqueio: e.target.value })} placeholder="Responsável pelo bloqueio" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-rose-200/30 text-xs font-bold uppercase" />
+
               <p className="text-[9px] font-bold uppercase text-rose-200/40">
                 Fim de semana / feriado é preenchido automaticamente no PDF conforme a data selecionada.
               </p>
