@@ -57,7 +57,7 @@ export const OVERLAY_MAPS: Record<string, OverlayMap> = {
       hora_inicio:  { x: 169.61, top: 84.9, maxW: 54, size: 6.1, bold: true, baselineOffset: 1.5 },
       data_fim:     { x: 283.61, top: 84.9, maxW: 64, size: 6.1, bold: true, baselineOffset: 1.5 },
       hora_fim:     { x: 381.61, top: 84.9, maxW: 54, size: 6.1, bold: true, baselineOffset: 1.5 },
-      pt_numero:    { x: 496.61, top: 82.6, maxW: 60, size: 4.4, bold: true, baselineOffset: 1.4, clear: { x: 486.61, top: 77.6, width: 74, height: 14 } },
+      pt_numero:    { x: 500.61, top: 82.4, maxW: 58, size: 5.2, bold: true, baselineOffset: 1.5, clear: { x: 494.61, top: 76.4, width: 66, height: 15 } },
       // Identificação
       empresa:          { x: 87.61, top: 162.4, maxW: 206, size: 5.4, bold: true, baselineOffset: 1.5 },
       encarregado:      { x: 389.61, top: 162.4, maxW: 164, size: 5.4, bold: true, baselineOffset: 1.5 },
