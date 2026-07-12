@@ -18,6 +18,15 @@ import { PtPdfPreview } from "@/components/ptes/PtPdfPreview";
 import { PteAtmosferaTab } from "@/components/ptes/PteAtmosferaTab";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  PTE_PRECAUCOES_ALTURA,
+  PTE_PRECAUCOES_ELETRICA,
+  PTE_PRECAUCOES_QUENTE,
+  PTE_PREENCIMENTO_SNNA,
+  PTE_RISCOS_POTENCIAIS,
+  type PteOfficialItem,
+  type PteTriValue,
+} from "@/lib/pte-official-fields";
 
 export const Route = createFileRoute("/app/ptes")({
   component: PtesPage,
@@ -63,6 +72,18 @@ function PtesPage() {
     atv_trabalho_quente: false,
     atv_local_confinado: false,
     atv_outros: false,
+    outros_atividade_texto: "",
+    riscos_potenciais: {} as Record<string, boolean>,
+    outros_risco_texto: "",
+    preenchimento_snna: {} as Record<string, PteTriValue | "">,
+    outros_snna_texto: "",
+    precaucao_quente: {} as Record<string, boolean>,
+    teste_atmosfera_horario: "",
+    teste_atmosfera_percentual: "",
+    designado_liberacao: "",
+    precaucao_altura: {} as Record<string, boolean>,
+    precaucao_eletrica: {} as Record<string, boolean>,
+    responsavel_bloqueio: "",
   };
   const [f, setF] = useState<any>(emptyForm);
 
@@ -321,6 +342,18 @@ function PtesPage() {
           local_confinado: !!f.atv_local_confinado,
           outros: !!f.atv_outros,
         },
+        outros_atividade_texto: (f.outros_atividade_texto ?? "").trim() || null,
+        riscos_potenciais: f.riscos_potenciais ?? {},
+        outros_risco_texto: (f.outros_risco_texto ?? "").trim() || null,
+        preenchimento_snna: f.preenchimento_snna ?? {},
+        outros_snna_texto: (f.outros_snna_texto ?? "").trim() || null,
+        precaucao_quente: f.precaucao_quente ?? {},
+        teste_atmosfera_horario: (f.teste_atmosfera_horario ?? "").trim() || null,
+        teste_atmosfera_percentual: (f.teste_atmosfera_percentual ?? "").trim() || null,
+        designado_liberacao: (f.designado_liberacao ?? "").trim() || null,
+        precaucao_altura: f.precaucao_altura ?? {},
+        precaucao_eletrica: f.precaucao_eletrica ?? {},
+        responsavel_bloqueio: (f.responsavel_bloqueio ?? "").trim() || null,
       };
 
       if (editingId) {
@@ -418,12 +451,89 @@ function PtesPage() {
       atv_trabalho_quente: !!atv.trabalho_quente,
       atv_local_confinado: !!atv.local_confinado,
       atv_outros: !!atv.outros,
+      outros_atividade_texto: d.outros_atividade_texto ?? "",
+      riscos_potenciais: d.riscos_potenciais ?? {},
+      outros_risco_texto: d.outros_risco_texto ?? "",
+      preenchimento_snna: d.preenchimento_snna ?? {},
+      outros_snna_texto: d.outros_snna_texto ?? "",
+      precaucao_quente: d.precaucao_quente ?? {},
+      teste_atmosfera_horario: d.teste_atmosfera_horario ?? "",
+      teste_atmosfera_percentual: d.teste_atmosfera_percentual ?? "",
+      designado_liberacao: d.designado_liberacao ?? "",
+      precaucao_altura: d.precaucao_altura ?? {},
+      precaucao_eletrica: d.precaucao_eletrica ?? {},
+      responsavel_bloqueio: d.responsavel_bloqueio ?? "",
     });
   }
   function cancelEdit() {
     setEditingId(null);
     setLinkedAprId(null);
     setF(emptyForm);
+  }
+
+  function setPdfFlag(group: string, key: string, value: boolean) {
+    setF((cur: any) => ({ ...cur, [group]: { ...(cur[group] ?? {}), [key]: value } }));
+  }
+
+  function setPdfAnswer(group: string, key: string, value: PteTriValue) {
+    setF((cur: any) => ({
+      ...cur,
+      [group]: {
+        ...(cur[group] ?? {}),
+        [key]: cur[group]?.[key] === value ? "" : value,
+      },
+    }));
+  }
+
+  function PdfCheckboxGroup({ title, group, items }: { title: string; group: string; items: readonly PteOfficialItem[] }) {
+    return (
+      <div className="space-y-2">
+        <Label className="text-[10px] font-black text-rose-200/70 uppercase block">{title}</Label>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
+          {items.map((o) => (
+            <label key={o.key} className="flex items-start gap-2 text-[10px] leading-snug font-bold uppercase text-rose-100 bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 cursor-pointer hover:border-rose-500/40">
+              <Checkbox
+                checked={!!f[group]?.[o.key]}
+                onCheckedChange={(v) => setPdfFlag(group, o.key, !!v)}
+                className="mt-0.5"
+              />
+              <span>{o.label}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  function PdfAnswerGroup({ title, group, items }: { title: string; group: string; items: readonly PteOfficialItem[] }) {
+    return (
+      <div className="space-y-2">
+        <Label className="text-[10px] font-black text-rose-200/70 uppercase block">{title}</Label>
+        <div className="grid grid-cols-1 gap-1.5">
+          {items.map((o) => (
+            <div key={o.key} className="grid grid-cols-[1fr_auto] gap-2 items-center text-[10px] leading-snug font-bold uppercase text-rose-100 bg-black/40 border border-white/10 rounded-lg px-2 py-1.5">
+              <span>{o.label}</span>
+              <div className="flex gap-1">
+                {(["S", "N", "NA"] as const).map((v) => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => setPdfAnswer(group, o.key, v)}
+                    className={`h-7 w-8 rounded border text-[10px] font-black transition-all ${
+                      f[group]?.[o.key] === v
+                        ? "bg-rose-600/90 text-rose-50 border-rose-300/60"
+                        : "bg-black/30 text-rose-200/70 border-white/10 hover:bg-black/50"
+                    }`}
+                  >
+                    {v}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
