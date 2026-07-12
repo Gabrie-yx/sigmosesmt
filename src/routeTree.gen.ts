@@ -119,6 +119,7 @@ import { Route as AppModuloEletricaRequisicaoComprasRouteImport } from './routes
 import { Route as AppModuloModuloHoraExtraRouteImport } from './routes/app.modulo.$modulo.hora-extra'
 import { Route as AppEstoqueEpiFichasMensaisRouteImport } from './routes/app.estoque.epi.fichas-mensais'
 import { Route as AppAdministrativoGestaoPontoCicloIdRouteImport } from './routes/app.administrativo.gestao-ponto.$cicloId'
+import { Route as ApiPublicPsicoHashRouteImport } from './routes/api/public/psico.$hash'
 import { Route as AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRouteImport } from './routes/app.sesmt.equipamentos-moveis_.historico.$equipamentoId'
 import { Route as AppSesmtEquipamentosMoveisChecklistEquipamentoIdRouteImport } from './routes/app.sesmt.equipamentos-moveis_.checklist.$equipamentoId'
 
@@ -700,6 +701,11 @@ const AppAdministrativoGestaoPontoCicloIdRoute =
     path: '/$cicloId',
     getParentRoute: () => AppAdministrativoGestaoPontoRoute,
   } as any)
+const ApiPublicPsicoHashRoute = ApiPublicPsicoHashRouteImport.update({
+  id: '/api/public/psico/$hash',
+  path: '/api/public/psico/$hash',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute =
   AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRouteImport.update({
     id: '/sesmt/equipamentos-moveis_/historico/$equipamentoId',
@@ -809,6 +815,7 @@ export interface FileRoutesByFullPath {
   '/app/estoque/': typeof AppEstoqueIndexRoute
   '/app/oss/': typeof AppOssIndexRoute
   '/app/portaria/': typeof AppPortariaIndexRoute
+  '/api/public/psico/$hash': typeof ApiPublicPsicoHashRoute
   '/app/administrativo/gestao-ponto/$cicloId': typeof AppAdministrativoGestaoPontoCicloIdRoute
   '/app/estoque/epi/fichas-mensais': typeof AppEstoqueEpiFichasMensaisRoute
   '/app/modulo/$modulo/hora-extra': typeof AppModuloModuloHoraExtraRoute
@@ -919,6 +926,7 @@ export interface FileRoutesByTo {
   '/app/estoque': typeof AppEstoqueIndexRoute
   '/app/oss': typeof AppOssIndexRoute
   '/app/portaria': typeof AppPortariaIndexRoute
+  '/api/public/psico/$hash': typeof ApiPublicPsicoHashRoute
   '/app/administrativo/gestao-ponto/$cicloId': typeof AppAdministrativoGestaoPontoCicloIdRoute
   '/app/estoque/epi/fichas-mensais': typeof AppEstoqueEpiFichasMensaisRoute
   '/app/modulo/$modulo/hora-extra': typeof AppModuloModuloHoraExtraRoute
@@ -1034,6 +1042,7 @@ export interface FileRoutesById {
   '/app/estoque/': typeof AppEstoqueIndexRoute
   '/app/oss/': typeof AppOssIndexRoute
   '/app/portaria/': typeof AppPortariaIndexRoute
+  '/api/public/psico/$hash': typeof ApiPublicPsicoHashRoute
   '/app/administrativo/gestao-ponto/$cicloId': typeof AppAdministrativoGestaoPontoCicloIdRoute
   '/app/estoque/epi/fichas-mensais': typeof AppEstoqueEpiFichasMensaisRoute
   '/app/modulo/$modulo/hora-extra': typeof AppModuloModuloHoraExtraRoute
@@ -1150,6 +1159,7 @@ export interface FileRouteTypes {
     | '/app/estoque/'
     | '/app/oss/'
     | '/app/portaria/'
+    | '/api/public/psico/$hash'
     | '/app/administrativo/gestao-ponto/$cicloId'
     | '/app/estoque/epi/fichas-mensais'
     | '/app/modulo/$modulo/hora-extra'
@@ -1260,6 +1270,7 @@ export interface FileRouteTypes {
     | '/app/estoque'
     | '/app/oss'
     | '/app/portaria'
+    | '/api/public/psico/$hash'
     | '/app/administrativo/gestao-ponto/$cicloId'
     | '/app/estoque/epi/fichas-mensais'
     | '/app/modulo/$modulo/hora-extra'
@@ -1374,6 +1385,7 @@ export interface FileRouteTypes {
     | '/app/estoque/'
     | '/app/oss/'
     | '/app/portaria/'
+    | '/api/public/psico/$hash'
     | '/app/administrativo/gestao-ponto/$cicloId'
     | '/app/estoque/epi/fichas-mensais'
     | '/app/modulo/$modulo/hora-extra'
@@ -1404,6 +1416,7 @@ export interface RootRouteChildren {
   ApiPgrChatRoute: typeof ApiPgrChatRoute
   ApiSigmoChatRoute: typeof ApiSigmoChatRoute
   RcTokenRoute: typeof RcTokenRoute
+  ApiPublicPsicoHashRoute: typeof ApiPublicPsicoHashRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -2178,6 +2191,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdministrativoGestaoPontoCicloIdRouteImport
       parentRoute: typeof AppAdministrativoGestaoPontoRoute
     }
+    '/api/public/psico/$hash': {
+      id: '/api/public/psico/$hash'
+      path: '/api/public/psico/$hash'
+      fullPath: '/api/public/psico/$hash'
+      preLoaderRoute: typeof ApiPublicPsicoHashRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/sesmt/equipamentos-moveis_/historico/$equipamentoId': {
       id: '/app/sesmt/equipamentos-moveis_/historico/$equipamentoId'
       path: '/sesmt/equipamentos-moveis/historico/$equipamentoId'
@@ -2479,6 +2499,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPgrChatRoute: ApiPgrChatRoute,
   ApiSigmoChatRoute: ApiSigmoChatRoute,
   RcTokenRoute: RcTokenRoute,
+  ApiPublicPsicoHashRoute: ApiPublicPsicoHashRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
