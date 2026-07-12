@@ -124,3 +124,94 @@ export const PTE_PRECAUCOES_ELETRICA: readonly PteOfficialItem[] = [
   { key: "ferramentas_isolamento", label: "Ferramentas/equipamentos possuem isolamento elétrico?" },
   { key: "iluminacao_suficiente", label: "Existe iluminação suficiente no local?" },
 ] as const;
+
+export const PTE_PRECAUCOES_CARGA: readonly PteOfficialItem[] = [
+  { key: "isolamento_perimetro", label: "Foi realizado isolamento e sinalização no perímetro do içamento de carga?" },
+  { key: "nao_passar_sob_cargas", label: "Não ficar ou passar embaixo de cargas suspensas." },
+  { key: "piso_patolamento", label: "O piso está adequado para patolagem do guindaste ou munk?" },
+  { key: "check_list_equipamentos", label: "Foi aplicado o check list dos equipamentos a serem usados no içamento?" },
+  { key: "dispositivos_movimentacao", label: "Manter dispositivos de movimentação de material em condições adequadas." },
+  { key: "corda_guia", label: "Foi instalada corda-guia ou dispositivo para auxiliar na movimentação?" },
+  { key: "plano_rigging_5t", label: "Foi realizado plano de rigging e ART para içamento de carga acima de 5 toneladas?" },
+  { key: "operador_habilitado", label: "O operador possui habilidade e tem conhecimento para realizar o içamento?" },
+  { key: "operador_identificacao", label: "O operador possui identificação? Treinamentos obrigatórios?" },
+  { key: "comunicacao_sinaleiro_operador", label: "No momento do içamento existe comunicação adequada entre sinaleiro e operador?" },
+  { key: "velocidade_via", label: "Dirigir em velocidade adequada às condições da via." },
+  { key: "equipamentos_acessorios_icamento", label: "Foram inspecionados e aprovados todos os equipamentos e acessórios de içamento?" },
+] as const;
+
+export const PTE_PRECAUCOES_PINTURA: readonly PteOfficialItem[] = [
+  { key: "capacitado_pintura", label: "O colaborador está devidamente capacitado para trabalhar no processo de pintura?" },
+  { key: "fispq_disponivel", label: "A FISPQ está à disposição e há treinamento quanto ao manuseio dos produtos químicos?" },
+  { key: "ventilacao_lie", label: "Ao término do serviço, a ventilação foi mantida e a concentração de gases avaliada em conformidade com o LIE?" },
+  { key: "equipamentos_prova_explosao", label: "Está sendo utilizado equipamento e iluminação à prova de explosão em espaço confinado?" },
+  { key: "analisar_ambiente", label: "Analisar o ambiente antes de iniciar o trabalho." },
+  { key: "area_sinalizada", label: "A área foi devidamente sinalizada, demarcada e isolada?" },
+  { key: "bomba_aterrada", label: "A bomba utilizada no sistema de pistola pneumática está devidamente aterrada?" },
+  { key: "cabos_sem_emendas", label: "Os cabos de alimentação elétrica estão sem emendas no processo de pintura (Airless)?" },
+  { key: "sem_trabalho_quente", label: "Não existe nenhum trabalho a quente no local onde está sendo realizado o processo de pintura?" },
+  { key: "bomba_fora_confinado", label: "A bomba pneumática de pintura (Airless) está instalada fora do espaço confinado?" },
+  { key: "fogo_afastado", label: "Manter fogo e faíscas afastados de inflamáveis." },
+  { key: "sem_servico_incompativel", label: "No local de trabalho não há serviço incompatível nas adjacências?" },
+] as const;
+
+/** EPIs — coluna 1 do PDF (Óculos, Capacete, Respiradores, Botas). */
+export const PTE_EPIS_1: readonly PteOfficialItem[] = [
+  { key: "oculos_incolor", label: "Óculos de Segurança Incolor" },
+  { key: "oculos_escuro", label: "Óculos de segurança lente escura" },
+  { key: "oculos_ton5", label: "Óculos de segurança Ton. 5" },
+  { key: "capacete", label: "Capacete" },
+  { key: "capacete_eletricista", label: "Capacete para eletricista" },
+  { key: "capacete_jugular_altura", label: "Capacete com jugular — trabalho em altura" },
+  { key: "protetor_viseira_facial", label: "Protetor ou Viseira Facial" },
+  { key: "mascara_solda", label: "Máscara de solda" },
+  { key: "protetor_auricular_plug", label: "Protetor Auricular Plug" },
+  { key: "protetor_auricular_concha", label: "Protetor Auricular Concha" },
+  { key: "respirador_poeiras", label: "Respirador para poeiras, névoas e fumos" },
+  { key: "respirador_vapores", label: "Respirador para vapores químicos" },
+  { key: "respirador_gases_acidos", label: "Respiradores para gases ácidos" },
+  { key: "respirador_filtros_combinados", label: "Respirador com filtros combinados" },
+  { key: "uniforme_eletricista", label: "Uniforme para eletricista" },
+  { key: "bota_pvc", label: "Bota de PVC (7 léguas)" },
+  { key: "bota_seguranca", label: "Bota de segurança" },
+] as const;
+
+/** EPIs — coluna 2 do PDF (Botas específicas, Aventais, Mangotes, Macacões, Luvas). */
+export const PTE_EPIS_2: readonly PteOfficialItem[] = [
+  { key: "bota_eletricista", label: "Bota de eletricista" },
+  { key: "avental_raspa", label: "Avental de raspa" },
+  { key: "avental_pvc", label: "Avental de PVC" },
+  { key: "mangote_raspa", label: "Mangote raspa" },
+  { key: "macacao_tyvec", label: "Macacão de tyvec" },
+  { key: "macacao_pintor", label: "Macacão de pintor" },
+  { key: "luva_nitrilica", label: "Luva Nitrílica" },
+  { key: "luva_latex", label: "Luva Látex" },
+  { key: "luva_pvc", label: "Luva PVC" },
+  { key: "luva_malha", label: "Luva Malha" },
+  { key: "luva_vaqueta", label: "Luva Vaqueta" },
+  { key: "luva_raspa", label: "Luva Raspa" },
+  { key: "luva_isolante_cl2", label: "Luva Isolante Classe 2" },
+  { key: "cinto_paraquedista", label: "Cinto tipo Paraquedista" },
+  { key: "talabarte", label: "Talabarte Y ou 2 talabartes" },
+  { key: "perneira_raspa", label: "Perneira Raspa" },
+] as const;
+
+/** OUTROS — coluna 3 do PDF (Coletivos, isolamentos, sinalização). */
+export const PTE_OUTROS_EPI: readonly PteOfficialItem[] = [
+  { key: "guarda_corpo", label: "Guarda Corpo" },
+  { key: "linha_vida_movel", label: "Linha de Vida Móvel" },
+  { key: "linha_vida_fixa", label: "Linha de Vida Fixa" },
+  { key: "placas_sinalizacao", label: "Placas Sinalização" },
+  { key: "isolamento_area", label: "Isolamento de Área" },
+  { key: "tapume_solda", label: "Tapume para solda" },
+  { key: "tapete_isolante", label: "Tapete Isolante" },
+  { key: "coberturas_isolantes", label: "Coberturas Isolantes" },
+  { key: "conjunto_ferramentas_isoladas", label: "Conjunto Ferramentas Isoladas" },
+  { key: "cones_sinalizacao", label: "Cones Sinalização" },
+  { key: "fitas_sinalizacao", label: "Fitas Sinalização" },
+  { key: "escoramento", label: "Escoramento" },
+  { key: "tapumes", label: "Tapumes" },
+  { key: "sem_adornos", label: "Colaborador sem adornos (brincos, correntes, anéis, relógios etc.)" },
+  { key: "lanternas_seguras", label: "Lanternas intrinsecamente seguras" },
+  { key: "outros", label: "Outros" },
+] as const;
