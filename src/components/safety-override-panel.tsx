@@ -30,6 +30,8 @@ export function SafetyOverridePanel({ employeeId, employeeName, availableItemKey
   const [itemKey, setItemKey] = useState<string>("");
   const [justificativa, setJustificativa] = useState("");
   const [validade, setValidade] = useState<"7" | "15" | "30" | "INDEFINIDO">("15");
+  const [revokeTarget, setRevokeTarget] = useState<SafetyOverride | null>(null);
+  const [revokeMotivo, setRevokeMotivo] = useState("");
 
   const { data: overrides = [] } = useQuery({
     queryKey: ["safety-overrides", employeeId],
@@ -111,12 +113,21 @@ export function SafetyOverridePanel({ employeeId, employeeName, availableItemKey
   });
 
   function handleRevoke(id: string) {
-    const motivo = window.prompt("Motivo da revogação (obrigatório):") ?? "";
-    if (motivo.trim().length < 5) {
+    const o = active.find((a) => a.id === id) ?? null;
+    setRevokeTarget(o);
+    setRevokeMotivo("");
+  }
+
+  function confirmRevoke() {
+    if (!revokeTarget) return;
+    if (revokeMotivo.trim().length < 5) {
       toast.error("Motivo obrigatório (mín. 5 caracteres)");
       return;
     }
-    revoke.mutate({ id, motivo: motivo.trim() });
+    revoke.mutate(
+      { id: revokeTarget.id, motivo: revokeMotivo.trim() },
+      { onSuccess: () => setRevokeTarget(null) },
+    );
   }
 
   return (
@@ -283,6 +294,63 @@ export function SafetyOverridePanel({ employeeId, employeeName, availableItemKey
               Confirmar Liberação
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!revokeTarget} onOpenChange={(v) => !v && setRevokeTarget(null)}>
+        <DialogContent className="max-w-md p-0 border-0 bg-transparent shadow-none overflow-visible">
+          <div className="revoke-amber-flare rounded-2xl p-5">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-amber-100">
+                <Lock className="h-5 w-5 text-amber-300" />
+                Revogar liberação
+              </DialogTitle>
+            </DialogHeader>
+            <div className="mt-3 space-y-3">
+              {revokeTarget && (
+                <div className="text-[11px] text-amber-100/70 bg-white/5 border border-white/10 rounded-lg p-2.5">
+                  <div className="font-black uppercase tracking-widest text-[10px] text-amber-200/80">
+                    {revokeTarget.scope === "GLOBAL" ? "TODOS OS BLOQUEIOS" : revokeTarget.item_key}
+                  </div>
+                  <div className="text-[11px] text-white/70 mt-1 line-clamp-2">
+                    {revokeTarget.justificativa}
+                  </div>
+                </div>
+              )}
+              <div>
+                <Label className="text-[10px] font-black uppercase text-amber-100/80">
+                  Motivo da revogação (mín. 5 caracteres) *
+                </Label>
+                <Textarea
+                  value={revokeMotivo}
+                  onChange={(e) => setRevokeMotivo(e.target.value)}
+                  rows={3}
+                  autoFocus
+                  placeholder="Ex: exame periódico entregue; ASO regularizado."
+                  className="mt-1 bg-white/5 border-white/15 text-white placeholder:text-white/40 focus-visible:ring-amber-400/40"
+                />
+              </div>
+              <div className="text-[10px] text-amber-200/80 bg-amber-500/10 border border-amber-400/30 rounded-lg p-2">
+                ⚠ A revogação é registrada no log de auditoria com seu nome, data/hora e motivo.
+              </div>
+            </div>
+            <DialogFooter className="mt-4">
+              <Button
+                variant="outline"
+                onClick={() => setRevokeTarget(null)}
+                className="bg-white/5 border-white/15 text-white hover:bg-white/10"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={confirmRevoke}
+                disabled={revoke.isPending}
+                className="bg-amber-600 hover:bg-amber-500 text-white"
+              >
+                <Lock className="h-3.5 w-3.5 mr-1.5" /> Confirmar revogação
+              </Button>
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </Card>
