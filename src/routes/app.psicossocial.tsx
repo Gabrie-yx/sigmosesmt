@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,9 +11,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Brain, Plus, Copy, Loader2, AlertTriangle, ShieldCheck, Users, BarChart3, ListChecks, ClipboardList } from "lucide-react";
+import { Brain, Plus, Copy, Loader2, AlertTriangle, ShieldCheck, Users, BarChart3, ListChecks, ClipboardList, Pencil, Trash2, Check, ChevronDown, X } from "lucide-react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { DIMENSAO_LABEL, PSICO_ITEMS } from "@/lib/psico-instrument";
 
 export const Route = createFileRoute("/app/psicossocial")({
@@ -163,9 +169,11 @@ function CampanhasTab() {
     new Date(Date.now() + 21 * 86400_000).toISOString().slice(0, 10),
   );
   const [qtdTokens, setQtdTokens] = useState(20);
-  const [gheId, setGheId] = useState<string>("");
+  const [gheIds, setGheIds] = useState<string[]>([]);
   const [tokensGerados, setTokensGerados] = useState<{ token: string; url: string }[]>([]);
   const [tokensDialogOpen, setTokensDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<any | null>(null);
+  const [deleting, setDeleting] = useState<any | null>(null);
 
   const { data: ghes } = useQuery({
     queryKey: ["pgr-ghe-lite"],
@@ -196,7 +204,7 @@ function CampanhasTab() {
           descricao,
           data_inicio: dataInicio,
           data_fim: dataFim,
-          ghe_ids: gheId ? [gheId] : [],
+          ghe_ids: gheIds,
           status: "ATIVA",
           min_respondentes: 5,
         })
@@ -207,30 +215,71 @@ function CampanhasTab() {
     },
     onSuccess: async (c: any) => {
       toast.success("Campanha criada.");
-      // gera tokens
-      const tokens = Array.from({ length: qtdTokens }, () => randomToken());
+      // gera tokens — se múltiplos GHEs, qtdTokens por GHE; senão qtdTokens total
+      const alvos: (string | null)[] = gheIds.length > 0 ? gheIds : [null];
+      const pares: { raw: string; ghe: string | null }[] = [];
+      alvos.forEach((g) => {
+        for (let i = 0; i < qtdTokens; i++) pares.push({ raw: randomToken(), ghe: g });
+      });
       const rows = await Promise.all(
-        tokens.map(async (raw) => {
-          const hash = await sha256Hex(raw);
-          return {
-            campanha_id: c.id,
-            ghe_id: gheId || null,
-            token_hash: hash,
-            expira_em: new Date(dataFim + "T23:59:59").toISOString(),
-          };
-        }),
+        pares.map(async ({ raw, ghe }) => ({
+          campanha_id: c.id,
+          ghe_id: ghe,
+          token_hash: await sha256Hex(raw),
+          expira_em: new Date(dataFim + "T23:59:59").toISOString(),
+        })),
       );
       const { error } = await sb.from("psico_tokens").insert(rows);
       if (error) { toast.error("Erro ao gerar tokens: " + error.message); return; }
 
       const base = window.location.origin;
-      setTokensGerados(tokens.map((t) => ({ token: t, url: `${base}/psico/${t}` })));
+      setTokensGerados(pares.map((p) => ({ token: p.raw, url: `${base}/psico/${p.raw}` })));
       setTokensDialogOpen(true);
       setDialog(false);
-      setTitulo(""); setDescricao("");
+      setTitulo(""); setDescricao(""); setGheIds([]);
       qc.invalidateQueries({ queryKey: ["psico-campanhas"] });
     },
     onError: (e: Error) => toast.error("Erro: " + e.message),
+  });
+
+  const atualizar = useMutation({
+    mutationFn: async (payload: any) => {
+      const { error } = await sb
+        .from("psico_campanhas")
+        .update({
+          titulo: payload.titulo,
+          descricao: payload.descricao,
+          data_inicio: payload.data_inicio,
+          data_fim: payload.data_fim,
+          status: payload.status,
+          ghe_ids: payload.ghe_ids,
+        })
+        .eq("id", payload.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Campanha atualizada.");
+      setEditing(null);
+      qc.invalidateQueries({ queryKey: ["psico-campanhas"] });
+    },
+    onError: (e: any) => toast.error("Erro: " + (e?.message ?? "falha")),
+  });
+
+  const excluir = useMutation({
+    mutationFn: async (id: string) => {
+      // remove tokens/respostas primeiro (FK)
+      await sb.from("psico_respostas").delete().eq("campanha_id", id);
+      await sb.from("psico_consentimentos").delete().eq("campanha_id", id);
+      await sb.from("psico_tokens").delete().eq("campanha_id", id);
+      const { error } = await sb.from("psico_campanhas").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Campanha excluída.");
+      setDeleting(null);
+      qc.invalidateQueries({ queryKey: ["psico-campanhas"] });
+    },
+    onError: (e: any) => toast.error("Erro ao excluir: " + (e?.message ?? "falha")),
   });
 
   return (
@@ -259,9 +308,30 @@ function CampanhasTab() {
                     {new Date(c.data_inicio).toLocaleDateString("pt-BR")} → {new Date(c.data_fim).toLocaleDateString("pt-BR")}
                   </p>
                 </div>
-                <Badge className={statusColor(c.status)}>{c.status}</Badge>
+                <div className="flex items-center gap-1 shrink-0">
+                  <Badge className={statusColor(c.status)}>{c.status}</Badge>
+                  <Button size="icon" variant="ghost" className="h-7 w-7 text-rose-200 hover:bg-rose-500/20" onClick={() => setEditing(c)} title="Editar campanha">
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button size="icon" variant="ghost" className="h-7 w-7 text-rose-300 hover:bg-rose-500/20" onClick={() => setDeleting(c)} title="Excluir campanha">
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </div>
               {c.descricao && <p className="text-xs text-rose-100/70 line-clamp-2">{c.descricao}</p>}
+              {Array.isArray(c.ghe_ids) && c.ghe_ids.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {c.ghe_ids.slice(0, 4).map((gid: string) => {
+                    const g = (ghes ?? []).find((x: any) => x.id === gid);
+                    return (
+                      <Badge key={gid} variant="outline" className="text-[10px] bg-rose-500/10 text-rose-200 border-rose-500/30">
+                        {g ? `GHE ${g.numero}` : gid.slice(0, 6)}
+                      </Badge>
+                    );
+                  })}
+                  {c.ghe_ids.length > 4 && <Badge variant="outline" className="text-[10px]">+{c.ghe_ids.length - 4}</Badge>}
+                </div>
+              )}
               <div className="flex items-center justify-between text-xs pt-2 border-t border-rose-500/10">
                 <span className="text-rose-100/50">
                   <b className="text-slate-900">{c.total_respostas}</b> / {c.total_tokens} respostas
@@ -305,22 +375,18 @@ function CampanhasTab() {
               </div>
             </div>
             <div>
-              <Label>GHE alvo (opcional — deixe vazio para geral)</Label>
-              <Select value={gheId || "__none__"} onValueChange={(v) => setGheId(v === "__none__" ? "" : v)}>
-                <SelectTrigger><SelectValue placeholder="Todos os GHEs" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">— Sem GHE específico —</SelectItem>
-                  {(ghes ?? []).map((g: any) => (
-                    <SelectItem key={g.id} value={g.id}>GHE {g.numero} — {g.setor}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>GHEs alvo (selecione um, vários ou todos)</Label>
+              <MultiGheSelect ghes={ghes ?? []} value={gheIds} onChange={setGheIds} />
+              <p className="text-[10px] text-rose-100/50 mt-1">
+                Vazio = campanha geral (sem recorte por GHE). Com múltiplos GHEs, a quantidade abaixo é gerada <b>por GHE</b>.
+              </p>
             </div>
             <div>
               <Label>Quantidade de tokens (colaboradores esperados)</Label>
               <Input type="number" min={1} max={500} value={qtdTokens} onChange={(e) => setQtdTokens(Number(e.target.value))} />
               <p className="text-[10px] text-rose-100/50 mt-1">
                 Cada colaborador recebe 1 link único. Recomenda-se n ≥ 5 por GHE (LGPD).
+                {gheIds.length > 1 && <> Total: <b>{qtdTokens * gheIds.length}</b> links ({qtdTokens} × {gheIds.length} GHEs).</>}
               </p>
             </div>
           </div>
@@ -340,7 +406,7 @@ function CampanhasTab() {
 
       {/* Dialog tokens gerados */}
       <Dialog open={tokensDialogOpen} onOpenChange={setTokensDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Links gerados — copie e distribua</DialogTitle></DialogHeader>
           <div className="space-y-2">
             <Card className="p-3 bg-amber-500/10 border-amber-500/30">
@@ -361,10 +427,10 @@ function CampanhasTab() {
             </Button>
             <div className="space-y-1">
               {tokensGerados.map((t, i) => (
-                <div key={i} className="flex items-center gap-2 p-2 rounded bg-transparent text-xs">
-                  <span className="text-rose-100/40 w-8">#{i + 1}</span>
-                  <code className="flex-1 truncate text-rose-100/80">{t.url}</code>
-                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => { navigator.clipboard.writeText(t.url); toast.success("Copiado"); }}>
+                <div key={i} className="flex items-start gap-2 p-2 rounded bg-rose-950/30 border border-rose-500/10 text-xs">
+                  <span className="text-rose-100/40 w-8 shrink-0 pt-0.5">#{i + 1}</span>
+                  <code className="flex-1 min-w-0 break-all text-rose-100/80 leading-snug">{t.url}</code>
+                  <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => { navigator.clipboard.writeText(t.url); toast.success("Copiado"); }}>
                     <Copy className="h-3 w-3" />
                   </Button>
                 </div>
@@ -373,7 +439,181 @@ function CampanhasTab() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Editar campanha */}
+      <EditarCampanhaDialog
+        campanha={editing}
+        ghes={ghes ?? []}
+        onClose={() => setEditing(null)}
+        onSave={(p) => atualizar.mutate(p)}
+        saving={atualizar.isPending}
+      />
+
+      {/* Excluir campanha */}
+      <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir campanha?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação apaga permanentemente a campanha <b>{deleting?.titulo}</b>, seus tokens e todas as respostas
+              coletadas. Não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-rose-600 hover:bg-rose-700"
+              onClick={() => deleting && excluir.mutate(deleting.id)}
+            >
+              {excluir.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
+  );
+}
+
+function MultiGheSelect({
+  ghes, value, onChange,
+}: { ghes: any[]; value: string[]; onChange: (v: string[]) => void }) {
+  const [open, setOpen] = useState(false);
+  const all = ghes.map((g) => g.id);
+  const allSelected = value.length > 0 && value.length === all.length;
+  function toggle(id: string) {
+    onChange(value.includes(id) ? value.filter((x) => x !== id) : [...value, id]);
+  }
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" className="w-full justify-between font-normal">
+          <span className="truncate">
+            {value.length === 0
+              ? "— Sem GHE específico (campanha geral) —"
+              : allSelected
+                ? `Todos os ${value.length} GHEs`
+                : `${value.length} GHE${value.length > 1 ? "s" : ""} selecionado${value.length > 1 ? "s" : ""}`}
+          </span>
+          <ChevronDown className="h-4 w-4 opacity-50 shrink-0 ml-2" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-2" align="start">
+        <div className="flex gap-1 mb-2">
+          <Button size="sm" variant="outline" className="flex-1 h-7 text-xs" onClick={() => onChange(all)}>
+            <Check className="h-3 w-3 mr-1" />Todos
+          </Button>
+          <Button size="sm" variant="outline" className="flex-1 h-7 text-xs" onClick={() => onChange([])}>
+            <X className="h-3 w-3 mr-1" />Limpar
+          </Button>
+        </div>
+        <div className="max-h-64 overflow-y-auto space-y-1">
+          {ghes.map((g) => {
+            const checked = value.includes(g.id);
+            return (
+              <label
+                key={g.id}
+                className="flex items-center gap-2 p-2 rounded hover:bg-rose-500/10 cursor-pointer text-sm"
+              >
+                <Checkbox checked={checked} onCheckedChange={() => toggle(g.id)} />
+                <span>GHE {g.numero} — {g.setor}</span>
+              </label>
+            );
+          })}
+          {ghes.length === 0 && (
+            <p className="text-xs text-rose-100/50 p-2">Nenhum GHE cadastrado.</p>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function EditarCampanhaDialog({
+  campanha, ghes, onClose, onSave, saving,
+}: {
+  campanha: any | null; ghes: any[];
+  onClose: () => void;
+  onSave: (p: any) => void;
+  saving: boolean;
+}) {
+  const [titulo, setTitulo] = useState("");
+  const [descricao, setDescricao] = useState("");
+  const [dataInicio, setDataInicio] = useState("");
+  const [dataFim, setDataFim] = useState("");
+  const [status, setStatus] = useState("ATIVA");
+  const [gheIds, setGheIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (campanha) {
+      setTitulo(campanha.titulo ?? "");
+      setDescricao(campanha.descricao ?? "");
+      setDataInicio(campanha.data_inicio ?? "");
+      setDataFim(campanha.data_fim ?? "");
+      setStatus(campanha.status ?? "ATIVA");
+      setGheIds(Array.isArray(campanha.ghe_ids) ? campanha.ghe_ids : []);
+    }
+  }, [campanha]);
+
+  return (
+    <Dialog open={!!campanha} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader><DialogTitle>Editar campanha</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label>Título</Label>
+            <Input value={titulo} onChange={(e) => setTitulo(e.target.value)} />
+          </div>
+          <div>
+            <Label>Descrição</Label>
+            <Textarea rows={2} value={descricao} onChange={(e) => setDescricao(e.target.value)} />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label>Início</Label>
+              <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
+            </div>
+            <div>
+              <Label>Fim</Label>
+              <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
+            </div>
+          </div>
+          <div>
+            <Label>Status</Label>
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ATIVA">ATIVA</SelectItem>
+                <SelectItem value="ENCERRADA">ENCERRADA</SelectItem>
+                <SelectItem value="CANCELADA">CANCELADA</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>GHEs alvo</Label>
+            <MultiGheSelect ghes={ghes} value={gheIds} onChange={setGheIds} />
+            <p className="text-[10px] text-rose-100/50 mt-1">
+              Alterar GHEs aqui <b>não</b> gera novos tokens — só ajusta o rótulo da campanha.
+            </p>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button
+            className="bg-rose-600 hover:bg-rose-700 text-white"
+            disabled={!titulo || saving}
+            onClick={() => onSave({
+              id: campanha.id, titulo, descricao,
+              data_inicio: dataInicio, data_fim: dataFim,
+              status, ghe_ids: gheIds,
+            })}
+          >
+            {saving && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
+            Salvar alterações
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
