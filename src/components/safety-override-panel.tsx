@@ -30,6 +30,8 @@ export function SafetyOverridePanel({ employeeId, employeeName, availableItemKey
   const [itemKey, setItemKey] = useState<string>("");
   const [justificativa, setJustificativa] = useState("");
   const [validade, setValidade] = useState<"7" | "15" | "30" | "INDEFINIDO">("15");
+  const [revokeTarget, setRevokeTarget] = useState<SafetyOverride | null>(null);
+  const [revokeMotivo, setRevokeMotivo] = useState("");
 
   const { data: overrides = [] } = useQuery({
     queryKey: ["safety-overrides", employeeId],
@@ -111,12 +113,21 @@ export function SafetyOverridePanel({ employeeId, employeeName, availableItemKey
   });
 
   function handleRevoke(id: string) {
-    const motivo = window.prompt("Motivo da revogação (obrigatório):") ?? "";
-    if (motivo.trim().length < 5) {
+    const o = active.find((a) => a.id === id) ?? null;
+    setRevokeTarget(o);
+    setRevokeMotivo("");
+  }
+
+  function confirmRevoke() {
+    if (!revokeTarget) return;
+    if (revokeMotivo.trim().length < 5) {
       toast.error("Motivo obrigatório (mín. 5 caracteres)");
       return;
     }
-    revoke.mutate({ id, motivo: motivo.trim() });
+    revoke.mutate(
+      { id: revokeTarget.id, motivo: revokeMotivo.trim() },
+      { onSuccess: () => setRevokeTarget(null) },
+    );
   }
 
   return (
