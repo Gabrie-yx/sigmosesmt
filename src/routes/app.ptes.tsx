@@ -281,13 +281,18 @@ function PtesPage() {
 
       // Calcula validade_ate conforme tipo
       let validadeAte: string | null = null;
-      const baseDate = new Date(f.data + "T" + (f.hora_fim || "23:59") + ":00");
-      if (f.validade_tipo === "TURNO") {
+      const dataOnly = String(f.data || "").split("T")[0];
+      const hf = String(f.hora_fim || "23:59").slice(0, 5);
+      const hi = String(f.hora_inicio || "00:00").slice(0, 5);
+      const baseDate = new Date(`${dataOnly}T${hf}:00`);
+      if (f.validade_tipo === "TURNO" && !isNaN(+baseDate)) {
         validadeAte = baseDate.toISOString();
       } else if (f.validade_tipo === "24H") {
-        validadeAte = new Date(new Date(f.data + "T" + (f.hora_inicio || "00:00") + ":00").getTime() + 24 * 3600 * 1000).toISOString();
+        const ini = new Date(`${dataOnly}T${hi}:00`);
+        if (!isNaN(+ini)) validadeAte = new Date(ini.getTime() + 24 * 3600 * 1000).toISOString();
       } else if (f.validade_tipo === "CUSTOM" && f.validade_ate) {
-        validadeAte = new Date(f.validade_ate).toISOString();
+        const cust = new Date(f.validade_ate);
+        if (!isNaN(+cust)) validadeAte = cust.toISOString();
       }
 
       // Bloqueio específico para Limpeza de Tanque (Risco Biológico) — checa TODOS os executantes
@@ -451,8 +456,8 @@ function PtesPage() {
       company_id: p.company_id ?? "",
       casco_id: p.casco_id ?? "",
       tipo_pt: p.tipo_pt ?? "PTE",
-      hora_inicio: p.hora_inicio ?? "07:00",
-      hora_fim: p.hora_fim ?? "17:00",
+      hora_inicio: (p.hora_inicio ?? "07:00").slice(0, 5),
+      hora_fim: (p.hora_fim ?? "17:00").slice(0, 5),
       validade_tipo: p.validade_tipo ?? "TURNO",
       validade_ate: p.validade_ate ? new Date(p.validade_ate).toISOString().slice(0, 16) : "",
       emergencia_sem_apr: p.emergencia_sem_apr ?? false,
