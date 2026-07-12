@@ -555,52 +555,62 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
         </Card>
       )}
 
-      {!docsOk && (
-        <Card className="p-4 rounded-2xl border-2 border-amber-300 bg-amber-50 flex items-start gap-3">
-          <div className="h-9 w-9 shrink-0 rounded-full bg-amber-500 text-white flex items-center justify-center">
-            <AlertTriangle className="h-5 w-5" />
+      {(() => {
+        const showDocs = !docsOk;
+        const showPend = !!(status && status.msgs.length > 0);
+        const cols = 1 + (showDocs ? 1 : 0) + (showPend ? 1 : 0);
+        const gridCls =
+          cols === 3
+            ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-stretch"
+            : cols === 2
+              ? "grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch"
+              : "grid grid-cols-1 gap-4 items-stretch";
+        return (
+          <div className={gridCls}>
+            {showDocs && (
+              <Card className="p-4 rounded-2xl border-2 border-amber-300 bg-amber-50 flex items-start gap-3 h-full">
+                <div className="h-9 w-9 shrink-0 rounded-full bg-amber-500 text-white flex items-center justify-center">
+                  <AlertTriangle className="h-5 w-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-black uppercase tracking-widest text-amber-700">Documentação incompleta</div>
+                  <div className="text-xs text-amber-800 mt-0.5">
+                    Pendências: <strong>{missingDocs.join(", ")}</strong>. A geração de relatórios e fichas está bloqueada até que todos os 5 documentos obrigatórios sejam enviados.
+                  </div>
+                </div>
+                <Button size="sm" variant="outline" className="border-amber-400 text-amber-800 hover:bg-amber-100 shrink-0" onClick={() => setTab("docs")}>
+                  Ir para Docs
+                </Button>
+              </Card>
+            )}
+            {showPend && (
+              <Card className="glass-vinho p-4 rounded-2xl h-full flex flex-col gap-3">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-rose-300" />
+                  <span className="text-xs font-black uppercase tracking-widest text-rose-100/90">
+                    Pendências detectadas
+                  </span>
+                  <Badge className="bg-rose-500/20 text-rose-100 border border-rose-300/30 text-[10px]">
+                    {status!.msgs.length}
+                  </Badge>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {status!.msgs.map((m, i) => (
+                    <Badge
+                      key={i}
+                      variant="outline"
+                      className="border-rose-300/30 bg-white/5 text-rose-50 text-[11px]"
+                    >
+                      {m}
+                    </Badge>
+                  ))}
+                </div>
+              </Card>
+            )}
+            <SafetyOverridePanel employeeId={id} employeeName={emp.nome} availableItemKeys={availableItemKeys} />
           </div>
-          <div className="flex-1">
-            <div className="text-sm font-black uppercase tracking-widest text-amber-700">Documentação incompleta</div>
-            <div className="text-xs text-amber-800 mt-0.5">
-              Pendências: <strong>{missingDocs.join(", ")}</strong>. A geração de relatórios e fichas está bloqueada até que todos os 5 documentos obrigatórios sejam enviados.
-            </div>
-          </div>
-          <Button size="sm" variant="outline" className="border-amber-400 text-amber-800 hover:bg-amber-100" onClick={() => setTab("docs")}>
-            Ir para Docs
-          </Button>
-        </Card>
-      )}
-
-      {status && status.msgs.length > 0 ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
-          <Card className="glass-vinho p-4 rounded-2xl h-full flex flex-col gap-3">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-rose-300" />
-              <span className="text-xs font-black uppercase tracking-widest text-rose-100/90">
-                Pendências detectadas
-              </span>
-              <Badge className="bg-rose-500/20 text-rose-100 border border-rose-300/30 text-[10px]">
-                {status.msgs.length}
-              </Badge>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {status.msgs.map((m, i) => (
-                <Badge
-                  key={i}
-                  variant="outline"
-                  className="border-rose-300/30 bg-white/5 text-rose-50 text-[11px]"
-                >
-                  {m}
-                </Badge>
-              ))}
-            </div>
-          </Card>
-          <SafetyOverridePanel employeeId={id} employeeName={emp.nome} availableItemKeys={availableItemKeys} />
-        </div>
-      ) : (
-        <SafetyOverridePanel employeeId={id} employeeName={emp.nome} availableItemKeys={availableItemKeys} />
-      )}
+        );
+      })()}
 
       <Tabs value={tab} onValueChange={setTab}>
         <AnimatedTabsBar
