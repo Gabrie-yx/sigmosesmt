@@ -121,8 +121,34 @@ export function SmartBreadcrumb() {
       seen.add(p);
       out.push({ href: p, label: labelForPath(p) });
     }
-    return out;
+    // Colapsa itens consecutivos com o MESMO rótulo — mantém o href mais recente.
+    // Evita a fileira infinita de "Funcionários · Detalhe" ao abrir vários registros.
+    const collapsed: { href: string; label: string }[] = [];
+    for (const item of out) {
+      const last = collapsed[collapsed.length - 1];
+      if (last && last.label === item.label) {
+        last.href = item.href; // atualiza pro mais recente
+      } else {
+        collapsed.push({ ...item });
+      }
+    }
+    return collapsed;
   }, [stack]);
+
+  // Cap visual: mostra no máximo N itens com "…" no meio (primeiro + últimos).
+  const MAX_VISIBLE = 6;
+  const visibleTrail = useMemo(() => {
+    if (trail.length <= MAX_VISIBLE) {
+      return trail.map((c) => ({ kind: "item" as const, ...c }));
+    }
+    const first = trail[0];
+    const tail = trail.slice(-(MAX_VISIBLE - 2));
+    return [
+      { kind: "item" as const, ...first },
+      { kind: "ellipsis" as const, href: "__ellipsis__", label: "…" },
+      ...tail.map((c) => ({ kind: "item" as const, ...c })),
+    ];
+  }, [trail]);
 
   const canGoBack = stack.length > 1;
 
@@ -163,23 +189,33 @@ export function SmartBreadcrumb() {
       )}
       <div className="h-4 w-px bg-white/10 mx-1 hidden sm:block shrink-0" />
       <ol
-        className="smart-breadcrumb-scroll flex items-center gap-1 min-w-0 flex-1 overflow-x-auto pb-0.5"
+        className="flex items-center gap-1 min-w-0 flex-1 overflow-hidden"
       >
         <li className="flex items-center gap-1 shrink-0">
           <Home className="h-3.5 w-3.5 shrink-0" />
         </li>
-        {trail.length > 0 && <ChevronRight className="h-3 w-3 shrink-0 opacity-50" />}
-        {trail.map((c, i) => {
+        {visibleTrail.length > 0 && <ChevronRight className="h-3 w-3 shrink-0 opacity-50" />}
+        {visibleTrail.map((c, i) => {
+          const isLast = i === visibleTrail.length - 1;
+          if (c.kind === "ellipsis") {
+            return (
+              <li key={`ell-${i}`} className="flex items-center gap-1 shrink-0">
+                <span className="px-1.5 py-0.5 text-rose-100/50 select-none" title={`${trail.length} páginas no histórico`}>
+                  …
+                </span>
+                {!isLast && <ChevronRight className="h-3 w-3 shrink-0 opacity-50" />}
+              </li>
+            );
+          }
           const isActive = c.href === pathname;
-          const isLast = i === trail.length - 1;
           return (
-            <li key={c.href + i} className="flex items-center gap-1 shrink-0">
+            <li key={c.href + i} className="flex items-center gap-1 min-w-0">
               <Link
                 to={c.href}
                 className={
                   isActive
-                    ? "text-white font-semibold px-1.5 py-0.5 rounded-md bg-rose-500/15 ring-1 ring-rose-300/30 shadow-[0_0_12px_-2px_rgba(244,63,94,0.55)] animate-[crumb-pulse_2.2s_ease-in-out_infinite]"
-                    : "hover:text-white transition opacity-80"
+                    ? "truncate max-w-[220px] text-white font-semibold px-1.5 py-0.5 rounded-md bg-rose-500/15 ring-1 ring-rose-300/30 shadow-[0_0_12px_-2px_rgba(244,63,94,0.55)] animate-[crumb-pulse_2.2s_ease-in-out_infinite]"
+                    : "truncate max-w-[160px] hover:text-white transition opacity-80"
                 }
               >
                 {c.label}
