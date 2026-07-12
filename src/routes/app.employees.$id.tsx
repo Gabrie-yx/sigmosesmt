@@ -376,36 +376,34 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
         <div className="min-w-0">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-3">
             <h1 className="heading-display text-lg sm:text-2xl lg:text-[28px] leading-tight text-slate-100/95 break-words min-w-0 tracking-tight drop-shadow-[0_1px_0_rgba(0,0,0,0.45)]">{emp.nome}</h1>
-            <div className="shrink-0 flex flex-row flex-wrap sm:flex-col items-start sm:items-end gap-2">
-              <div className="flex items-center gap-2 flex-wrap">
-                {isEditor && !isDesligado && (tab === "profile" || tab === "nrs") && (
-                  <button
-                    type="button"
-                    onClick={() => window.dispatchEvent(new CustomEvent("employee:save-tab", { detail: { tab } }))}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-primary hover:bg-primary/90 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-primary-foreground shadow-sm hover:shadow-md transition-all"
-                    title="Salvar alterações desta aba"
-                  >
-                    <Save className="h-3.5 w-3.5" /> Salvar
-                  </button>
-                )}
-                {isDesligado ? (
-                  <div className="inline-flex items-center gap-1.5 rounded-full bg-slate-200 ring-1 ring-slate-300 pl-2 pr-2.5 py-1 opacity-70">
-                    <span className="h-2 w-2 rounded-full bg-slate-500" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">DESLIGADO</span>
-                  </div>
-                ) : status && (
-                  <div className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 ring-1 ring-slate-200 pl-2 pr-2.5 py-1">
-                    <span className={`h-2 w-2 rounded-full ${status.colorClass}`} />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">{status.label}</span>
-                  </div>
-                )}
-              </div>
+            <div className="shrink-0 flex flex-row flex-wrap items-center gap-2">
+              {isEditor && !isDesligado && (tab === "profile" || tab === "nrs") && (
+                <button
+                  type="button"
+                  onClick={() => window.dispatchEvent(new CustomEvent("employee:save-tab", { detail: { tab } }))}
+                  className="inline-flex h-8 items-center gap-1.5 rounded-full bg-primary hover:bg-primary/90 px-3 text-[10px] font-black uppercase tracking-widest text-primary-foreground shadow-sm hover:shadow-md transition-all"
+                  title="Salvar alterações desta aba"
+                >
+                  <Save className="h-3.5 w-3.5" /> Salvar
+                </button>
+              )}
+              {isDesligado ? (
+                <div className="inline-flex h-8 items-center gap-1.5 rounded-full bg-slate-200 ring-1 ring-slate-300 px-2.5 opacity-70">
+                  <span className="h-2 w-2 rounded-full bg-slate-500" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">DESLIGADO</span>
+                </div>
+              ) : status && (
+                <div className="inline-flex h-8 items-center gap-1.5 rounded-full bg-slate-50 ring-1 ring-slate-200 px-2.5">
+                  <span className={`h-2 w-2 rounded-full ${status.colorClass}`} />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">{status.label}</span>
+                </div>
+              )}
               {(isEditor || isAdmin || isModerator) && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button
                       type="button"
-                      className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 hover:bg-white/10 hover:border-white/25 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-slate-100 shadow-sm backdrop-blur-sm transition-all"
+                      className="inline-flex h-8 items-center gap-1.5 rounded-full border border-white/15 bg-white/5 hover:bg-white/10 hover:border-white/25 px-3 text-[10px] font-black uppercase tracking-widest text-slate-100 shadow-sm backdrop-blur-sm transition-all"
                       title="Ações do funcionário"
                     >
                       <MoreHorizontal className="h-3.5 w-3.5" /> Ações
