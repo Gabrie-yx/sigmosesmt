@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -544,7 +544,7 @@ function EditarCampanhaDialog({
   const [status, setStatus] = useState("ATIVA");
   const [gheIds, setGheIds] = useState<string[]>([]);
 
-  useMemo(() => {
+  useEffect(() => {
     if (campanha) {
       setTitulo(campanha.titulo ?? "");
       setDescricao(campanha.descricao ?? "");
