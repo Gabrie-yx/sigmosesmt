@@ -66,11 +66,11 @@ export function AppHeader() {
 
         <Link to="/app" className="flex items-center gap-2 hover:opacity-90 transition-opacity shrink-0 min-w-0">
           <img src={dmnLogo} alt="DMN Estaleiro" className="h-9 w-auto object-contain shrink-0" />
-          <div className="whitespace-nowrap leading-tight hidden sm:block">
+          <div className="flex items-baseline gap-2 whitespace-nowrap hidden sm:flex">
             <h1 className="text-[15px] font-black uppercase tracking-tight text-white">
               SIGMO
             </h1>
-            <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-white/70 mt-0.5">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/80">
               (Sistema Integrado de Gestão Modular)
             </p>
           </div>
