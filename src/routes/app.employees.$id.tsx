@@ -568,19 +568,30 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
         return (
           <div className={gridCls}>
             {showDocs && (
-              <Card className="p-4 rounded-2xl border-2 border-amber-300 bg-amber-50 flex items-start gap-3 h-full">
-                <div className="h-9 w-9 shrink-0 rounded-full bg-amber-500 text-white flex items-center justify-center">
-                  <AlertTriangle className="h-5 w-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-black uppercase tracking-widest text-amber-700">Documentação incompleta</div>
-                  <div className="text-xs text-amber-800 mt-0.5">
-                    Pendências: <strong>{missingDocs.join(", ")}</strong>. A geração de relatórios e fichas está bloqueada até que todos os 5 documentos obrigatórios sejam enviados.
+              <Card className="p-3 rounded-2xl border-2 border-amber-300 bg-amber-50 h-full flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <div className="h-7 w-7 shrink-0 rounded-full bg-amber-500 text-white flex items-center justify-center">
+                    <AlertTriangle className="h-3.5 w-3.5" />
                   </div>
+                  <span className="text-[11px] font-black uppercase tracking-widest text-amber-700 leading-tight flex-1 min-w-0">
+                    Documentação incompleta
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 px-2 text-[10px] border-amber-400 text-amber-800 hover:bg-amber-100 shrink-0"
+                    onClick={() => setTab("docs")}
+                  >
+                    Ir para Docs
+                  </Button>
                 </div>
-                <Button size="sm" variant="outline" className="border-amber-400 text-amber-800 hover:bg-amber-100 shrink-0" onClick={() => setTab("docs")}>
-                  Ir para Docs
-                </Button>
+                <div className="text-[11px] leading-snug text-amber-800">
+                  <span className="font-semibold">{missingDocs.length} pendência{missingDocs.length === 1 ? "" : "s"}:</span>{" "}
+                  {missingDocs.join(", ")}.
+                </div>
+                <div className="text-[10px] text-amber-700/80 leading-snug">
+                  Relatórios e fichas bloqueados até enviar os 5 documentos obrigatórios.
+                </div>
               </Card>
             )}
             {showPend && (
