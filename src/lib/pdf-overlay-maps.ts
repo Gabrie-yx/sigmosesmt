@@ -57,7 +57,7 @@ export const OVERLAY_MAPS: Record<string, OverlayMap> = {
       hora_inicio:  { x: 169.61, top: 84.9, maxW: 54, size: 6.1, bold: true, baselineOffset: 1.5 },
       data_fim:     { x: 283.61, top: 84.9, maxW: 64, size: 6.1, bold: true, baselineOffset: 1.5 },
       hora_fim:     { x: 381.61, top: 84.9, maxW: 54, size: 6.1, bold: true, baselineOffset: 1.5 },
-      pt_numero:    { x: 500.61, top: 82.4, maxW: 58, size: 5.2, bold: true, baselineOffset: 1.5, clear: { x: 494.61, top: 76.4, width: 66, height: 15 } },
+      pt_numero:    { x: 498.61, top: 80.4, maxW: 58, size: 5.2, bold: true, baselineOffset: 1.5, clear: { x: 492.61, top: 74.4, width: 66, height: 15 } },
       // Identificação
       empresa:          { x: 87.61, top: 162.4, maxW: 206, size: 5.4, bold: true, baselineOffset: 1.5 },
       encarregado:      { x: 389.61, top: 162.4, maxW: 164, size: 5.4, bold: true, baselineOffset: 1.5 },
@@ -71,8 +71,8 @@ export const OVERLAY_MAPS: Record<string, OverlayMap> = {
       responsavel_bloqueio: { x: 404.61, top: 732.7, maxW: 126, size: 5.4, baselineOffset: 1.6 },
       // ============ PÁGINA 2 — texto ============
       recomendacoes_adicionais: { page: 1, x: 32, top: 418.0, maxW: 520, size: 5.4, baselineOffset: 1.6 },
-      assinatura_encarregado_nome: { page: 1, x: 32,  top: 594.4, maxW: 200, size: 5.6, bold: true, baselineOffset: 1.6 },
-      assinatura_gerente_nome:     { page: 1, x: 238, top: 594.4, maxW: 118, size: 5.6, bold: true, baselineOffset: 1.6 },
+      assinatura_encarregado_nome: { page: 1, x: 32,  top: 610.4, maxW: 200, size: 5.6, bold: true, baselineOffset: 1.6 },
+      assinatura_gerente_nome:     { page: 1, x: 238, top: 610.4, maxW: 118, size: 5.6, bold: true, baselineOffset: 1.6 },
       equipe_nome_0:   { page: 1, x: 32,  top: 437.4, maxW: 200, size: 5.4, baselineOffset: 1.6 },
       equipe_funcao_0: { page: 1, x: 238, top: 437.4, maxW: 118, size: 5.4, baselineOffset: 1.6 },
       equipe_nome_1:   { page: 1, x: 32,  top: 450.2, maxW: 200, size: 5.4, baselineOffset: 1.6 },

@@ -49,6 +49,12 @@ export type PtePdfParams = {
   assinatura_gerente_nome?: string;
   /** Assinatura do TST (Segurança do Trabalho) em data URL PNG — carimba pg 2. */
   assinatura_tst_data_url?: string | null;
+  /** Assinatura do Encarregado em data URL PNG — carimba pg 2 (col 1). */
+  assinatura_encarregado_data_url?: string | null;
+  /** Assinatura do Gerente em data URL PNG — carimba pg 2 (col 2). */
+  assinatura_gerente_data_url?: string | null;
+  /** Assinatura de cada membro da equipe (mesma ordem de equipe_lista) — col 3. */
+  equipe_assinaturas_data_urls?: (string | null | undefined)[];
 };
 
 function prefixChecks(prefix: string, values?: Record<string, boolean>) {
@@ -130,23 +136,35 @@ export async function gerarPtePdf(p: PtePdfParams): Promise<Blob> {
       ...prefixChecks("outrosepi", p.outros_epi),
     },
   });
-  if (!p.assinatura_tst_data_url) return base;
-  // Estampa a assinatura do TST na célula "Assinatura da Segurança do Trabalho" (pg 2)
+  const equipeSigs = (p.equipe_assinaturas_data_urls ?? []).slice(0, 12);
+  const hasAnySig =
+    p.assinatura_tst_data_url ||
+    p.assinatura_encarregado_data_url ||
+    p.assinatura_gerente_data_url ||
+    equipeSigs.some(Boolean);
+  if (!hasAnySig) return base;
   const bytes = new Uint8Array(await base.arrayBuffer());
   const pdf = await PDFDocument.load(bytes);
-  const png = await pdf.embedPng(p.assinatura_tst_data_url);
   const page = pdf.getPage(1);
   const H = page.getHeight();
-  const maxW = 160, maxH = 32;
-  const r = Math.min(maxW / png.width, maxH / png.height);
-  const w = png.width * r, h = png.height * r;
-  const cx = 459, top = 605; // centro visual da célula na coluna TST, acima do rótulo
-  page.drawImage(png, {
-    x: cx - w / 2,
-    y: H - top - h / 2,
-    width: w,
-    height: h,
-  });
+  const stamp = async (dataUrl: string, cx: number, top: number, maxW = 160, maxH = 11) => {
+    const png = await pdf.embedPng(dataUrl);
+    const r = Math.min(maxW / png.width, maxH / png.height);
+    const w = png.width * r, h = png.height * r;
+    page.drawImage(png, { x: cx - w / 2, y: H - top - h / 2, width: w, height: h });
+  };
+  // Assinaturas por linha da equipe (col 3 — Assinatura) — tops iguais aos de equipe_nome_N
+  const equipeTops = [437.4, 450.2, 463.0, 475.8, 488.8, 502.0, 515.2, 528.4, 541.8, 555.2, 568.4, 581.2];
+  for (let i = 0; i < equipeSigs.length; i++) {
+    const url = equipeSigs[i];
+    if (!url) continue;
+    await stamp(url, 459, equipeTops[i], 160, 10);
+  }
+  // Encarregado (col 1) e Gerente (col 2) — mesma linha dos nomes (610.4)
+  if (p.assinatura_encarregado_data_url) await stamp(p.assinatura_encarregado_data_url, 130, 613.4, 180, 20);
+  if (p.assinatura_gerente_data_url)     await stamp(p.assinatura_gerente_data_url,     297, 613.4, 118, 20);
+  // TST (col 3, mesma linha)
+  if (p.assinatura_tst_data_url) await stamp(p.assinatura_tst_data_url, 459, 605, 160, 32);
   const out = await pdf.save();
   return new Blob([out as BlobPart], { type: "application/pdf" });
 }

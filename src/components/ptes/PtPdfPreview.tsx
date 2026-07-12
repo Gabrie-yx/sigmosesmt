@@ -6,6 +6,7 @@ import { formatDateBR } from "@/lib/utils-date";
 import { printPdf, renderPdfToImagePagesProgressive } from "@/lib/pdf-print";
 import { SignaturePadDialog } from "@/components/signature-pad-dialog";
 import { gerarPtePdf, type PtePdfParams } from "@/lib/pte-pdf";
+import { fetchSignatureAsCleanDataUrl } from "@/lib/signature-utils";
 
 interface Props {
   open: boolean;
@@ -31,11 +32,13 @@ export function PtPdfPreview({ open, onClose, pt, apr, casco, company, employees
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [blob, setBlob] = useState<Blob | null>(null);
+  const [empSigs, setEmpSigs] = useState<Record<string, string | null>>({});
   const tokenRef = useRef(0);
 
   const params = useMemo<PtePdfParams | null>(() => {
     if (!pt) return null;
     const employeeMap = new Map((employees ?? []).map((e: any) => [e.id, e]));
+    const byName = new Map((employees ?? []).map((e: any) => [String(e.nome ?? "").trim(), e]));
     const employeeName = (id?: string | null) => (id ? employeeMap.get(id)?.nome : "");
     const dados = (pt.dados ?? {}) as any;
     const atv = (dados.atividades ?? {}) as any;
@@ -43,6 +46,13 @@ export function PtPdfPreview({ open, onClose, pt, apr, casco, company, employees
       || employeeName(pt.requisitante_id)
       || pt.employee_name
       || "";
+    const equipeLista = Array.isArray(dados.equipe_lista) ? dados.equipe_lista : [];
+    const sigOf = (nome?: string) => {
+      if (!nome) return null;
+      const emp = byName.get(String(nome).trim());
+      const url = emp?.assinatura_url as string | undefined;
+      return url ? (empSigs[url] ?? null) : null;
+    };
     const localTexto = [pt.local, casco ? `CASCO ${casco.numero}${casco.nome ? ` — ${casco.nome}` : ""}` : null]
       .filter(Boolean).join(" · ");
     return {
@@ -87,12 +97,41 @@ export function PtPdfPreview({ open, onClose, pt, apr, casco, company, employees
       epis_col2: dados.epis_col2 ?? {},
       outros_epi: dados.outros_epi ?? {},
       recomendacoes_adicionais: dados.recomendacoes_adicionais ?? "",
-      equipe_lista: Array.isArray(dados.equipe_lista) ? dados.equipe_lista : [],
+      equipe_lista: equipeLista,
+      equipe_assinaturas_data_urls: equipeLista.map((r: any) => sigOf(r?.nome)),
       assinatura_encarregado_nome: dados.assinatura_encarregado_nome ?? "",
       assinatura_gerente_nome: dados.assinatura_gerente_nome ?? "",
       assinatura_tst_data_url: assinaturaTst,
+      assinatura_encarregado_data_url: sigOf(dados.assinatura_encarregado_nome),
+      assinatura_gerente_data_url: sigOf(dados.assinatura_gerente_nome),
     };
-  }, [pt, apr, casco, company, employees, assinaturaTst]);
+  }, [pt, apr, casco, company, employees, assinaturaTst, empSigs]);
+
+  // Pré-carrega assinaturas oficiais dos employees envolvidos (galeria/ficha)
+  useEffect(() => {
+    if (!open || !pt) return;
+    const dados = (pt.dados ?? {}) as any;
+    const nomes = new Set<string>();
+    for (const r of (dados.equipe_lista ?? [])) if (r?.nome) nomes.add(String(r.nome).trim());
+    if (dados.assinatura_encarregado_nome) nomes.add(String(dados.assinatura_encarregado_nome).trim());
+    if (dados.assinatura_gerente_nome) nomes.add(String(dados.assinatura_gerente_nome).trim());
+    const byName = new Map((employees ?? []).map((e: any) => [String(e.nome ?? "").trim(), e]));
+    const urls = Array.from(nomes)
+      .map((n) => byName.get(n)?.assinatura_url as string | undefined)
+      .filter((u): u is string => !!u && !(u in empSigs));
+    if (urls.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      const entries = await Promise.all(urls.map(async (u) => [u, await fetchSignatureAsCleanDataUrl(u)] as const));
+      if (cancelled) return;
+      setEmpSigs((prev) => {
+        const next = { ...prev };
+        for (const [u, d] of entries) next[u] = d;
+        return next;
+      });
+    })();
+    return () => { cancelled = true; };
+  }, [open, pt, employees, empSigs]);
 
   useEffect(() => {
     if (!open || !params) return;
