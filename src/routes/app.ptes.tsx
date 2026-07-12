@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Files, Printer, Pencil, Trash2, X, HardHat, Clock, Link2, AlertTriangle, FileSearch, Users, Eye, ShieldCheck, UserCheck } from "lucide-react";
+import { FileText, Files, Printer, Pencil, Trash2, X, HardHat, Clock, Link2, AlertTriangle, FileSearch, Users, Eye, ShieldCheck, UserCheck, Building2 } from "lucide-react";
 import { CheckCircle2, ClipboardList, Flame, Zap, Wind, Layers, IdCard, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { PTE_RISCOS, PT_TIPOS } from "@/lib/constants";
@@ -1557,14 +1557,14 @@ function PtesPage() {
           <h3 className="text-sm font-black text-rose-100 uppercase tracking-widest mb-6 border-b border-white/10 pb-4 flex items-center gap-2">
             <Files className="h-5 w-5" /> Histórico de Permissões
           </h3>
-          <div className="space-y-4 max-h-[600px] overflow-y-auto custom-scrollbar pr-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 max-h-[600px] overflow-y-auto custom-scrollbar pr-2">
             {ptes.length === 0 && (
-              <div className="text-center text-slate-300/60 py-10 font-bold uppercase text-xs border border-dashed border-white/10 rounded-2xl bg-black/20">
+              <div className="col-span-full text-center text-slate-300/60 py-10 font-bold uppercase text-xs border border-dashed border-white/10 rounded-2xl bg-black/20">
                 Nenhuma permissão foi emitida até o momento.
               </div>
             )}
             {ptes.map((p: any) => (
-              <div key={p.id} className={`glass-card p-5 rounded-2xl transition-all hover:-translate-y-0.5 ${p.status !== "ATIVA" ? "opacity-60" : ""}`}>
+              <div key={p.id} className={`glass-card p-4 rounded-2xl transition-all hover:-translate-y-0.5 flex flex-col ${p.status !== "ATIVA" ? "opacity-60" : ""}`}>
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex items-center gap-2">
                     <div className="text-[10px] font-black uppercase text-slate-200/90 tracking-widest">Nº <span className="text-rose-100">{p.numero}</span></div>
@@ -1610,8 +1610,21 @@ function PtesPage() {
                   const execNames = execIds.map((id) => emps.find((e: any) => e.id === id)?.nome).filter(Boolean);
                   const vigiaName = p.vigia_id ? emps.find((e: any) => e.id === p.vigia_id)?.nome : null;
                   const supName = p.supervisor_entrada_id ? emps.find((e: any) => e.id === p.supervisor_entrada_id)?.nome : null;
+                  const companyName = p.company_id ? (companies as any[]).find((c: any) => c.id === p.company_id)?.name : null;
+                  const maoObra = (p.dados as any)?.mao_obra as string | undefined;
                   return (
                     <>
+                      {(companyName || maoObra) && (
+                        <div className="text-[10px] font-bold text-slate-200/80 uppercase flex items-center gap-1 flex-wrap">
+                          <Building2 className="h-3 w-3" /> Empresa/Equipe:
+                          {companyName && <span className="font-black text-rose-100">{companyName}</span>}
+                          {maoObra && (
+                            <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-indigo-950/70 text-indigo-200 border border-indigo-500/30">
+                              {maoObra}
+                            </span>
+                          )}
+                        </div>
+                      )}
                       {reqName && (
                         <div className="text-[10px] font-bold text-slate-200/80 uppercase flex items-center gap-1">
                           <UserCheck className="h-3 w-3" /> Requisitante: <span className="font-black text-rose-100">{reqName}</span>
