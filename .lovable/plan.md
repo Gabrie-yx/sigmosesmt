@@ -1,53 +1,102 @@
-# Overlay universal para Templates Homologados
 
-## Situação atual (raio-x que você não vê)
+# Módulo Psicossocial NR-01 no SIGMO — Fase 1 (antecipar antes da Rev.06)
 
-No painel de Templates de Documentos hoje existem **17 códigos cadastrados**, mas só **2 têm PDF de fato subido**:
+## Por que agora (varredura confirmou)
 
-| Código | Nome cadastrado | PDF subido? | Overlay hoje |
-|---|---|---|---|
-| FORCP-GP-16 | Avaliação de Reação | ✅ | ✅ (já feito) |
-| FOR-SEG-02 | Ficha de Entrega de EPI *(arquivo subido chama "LISTA DE PRESENÇA.pdf" — divergência)* | ✅ | ❌ |
-| FOR-SEG-01, 03…15, FORCP-GP-12 | 15 outros | ❌ (sem arquivo) | ❌ |
+- **NR-01 (Portaria MTP 1.419/2024)** exige gestão de risco psicossocial no PGR desde 26/05/2025. Fiscalização **punitiva** começou em **26/05/2026** — o timing comercial é agora.
+- **Guia MTE 2025** e **FUNDACENTRO (mai/2026)** não travam matriz nem número de fatores — dá liberdade de design, mas exige defensibilidade metodológica (ISO 45003 + instrumento validado + evidência de coleta anônima + plano de ação + monitoramento contínuo).
+- Concorrentes já rodando: **PrismaNR, NR1.AI, COPSOQ-SaaS Magoweb, NR1 Riscos Psicossociais, AVALIA NR01**. Nenhum divulga preço público, nenhum entrega **benchmarking setorial por CNAE**, nenhum cruza com **acidentes/absenteísmo/CID mental** dentro do mesmo SGI. Aí mora nosso diferencial.
+- **Cuidado jurídico:** COPSOQ III tem zona cinza de licenciamento comercial. Vamos usar **HSE Indicator Tool (uso livre, HSE-UK)** como espinha dorsal + itens próprios inspirados em ISO 45003, evitando dor de PI. COPSOQ fica como opção "traga sua licença".
 
-Ou seja: **não dá pra "aplicar overlay em todos" hoje**, porque 15 templates não têm PDF-mãe pra sobrepor. Overlay exige o PDF homologado como base.
+## O que entra na Fase 1 (esta rodada)
 
-## O que eu vou fazer agora
+### 1. Categoria PSICOSSOCIAL na engine de risco existente
+- Adicionar `PSICOSSOCIAL` ao enum de categorias (`aiha.ts` já tem label, falta enum no banco/inventário).
+- Matriz 5×5 reaproveita `classifyAiha` — mesma régua de todos os outros riscos, coerência total.
 
-### 1. Motor genérico de overlay (uma vez só)
+### 2. Catálogo-mãe de perigos psicossociais (seed universal, qualquer CNAE)
+Baseado no Guia MTE + ISO 45003. **8 dimensões, ~35 perigos**, com agravo, fonte, controles sugeridos:
+1. Demandas do trabalho (sobrecarga, ritmo, pressão de prazo)
+2. Controle/autonomia (falta de decisão, microgerenciamento)
+3. Apoio social (liderança, pares)
+4. Reconhecimento e recompensa (ERI/Siegrist)
+5. Clareza de papel e mudança organizacional
+6. Relações interpessoais (conflito, assédio moral/sexual, discriminação)
+7. Violência no trabalho (interna e externa)
+8. Interface trabalho-vida (jornada, conectividade fora do expediente, insegurança)
 
-Extrair a lógica que já funciona no `reacao-treinamento-pdf.ts` pra um utilitário reutilizável `src/lib/pdf-overlay-engine.ts`:
+Vai virar tabela `catalogo_perigos_psicossociais` — base pro dropdown do inventário, e alimenta a taxonomia dos módulos futuros (auto-classificação de respostas do questionário).
 
-- `renderOverlay(codigoTemplate, campos, checkboxes, opts)` → baixa o PDF ativo do template pelo código, desenha campos nas coordenadas mapeadas, devolve `Uint8Array`.
-- Cache do PDF-base por sessão (já existe pra reação, generalizo).
-- Registro central de mapeamentos em `src/lib/pdf-overlay-maps.ts` — um objeto por código:
-  ```ts
-  export const OVERLAY_MAPS = {
-    "FORCP-GP-16": { fields: {...}, checkboxes: {...} },
-    "FOR-SEG-02":  { fields: {...}, rows: {...} },  // quando o PDF certo for subido
-  }
-  ```
-- Refatorar `reacao-treinamento-pdf.ts` pra consumir o motor (mantendo assinatura pública, zero regressão no dialog atual).
+### 3. Instrumento de coleta anônimo (o "questionário")
+- **O que é:** questionário autoaplicável, respondido pelo próprio colaborador com garantia técnica de anonimato (token descartável, sem vínculo user↔resposta, supressão de relatório se GHE < 5 respondentes).
+- **Base:** HSE Indicator Tool (35 itens, uso livre) + 5 itens de assédio/violência + 3 itens sociodemográficos não-identificantes (faixa etária, sexo, tempo de casa em faixas).
+- **Fluxo:** TST/RH cria campanha → escolhe GHEs → sistema gera link/QR com token único descartável → colaborador responde no celular → dashboard agrega por GHE e por dimensão, nunca por pessoa.
+- **Devolutiva:** só agregada. Zero identificação individual no dashboard.
 
-### 2. Migrar Lista de Presença (FOR-SEG-06) e Ficha EPI (FOR-SEG-02) *quando o PDF estiver subido corretamente*
+### 4. Cruzamento nativo (ninguém no mercado faz)
+Widget "Sinal de alerta psicossocial por GHE" que cruza:
+- score do questionário
+- taxa de absenteísmo do GHE (ponto)
+- afastamentos por CID F (mental) do PCMSO
+- acidentes/quase-acidentes do GHE (últimos 12m)
+- rotatividade
 
-Hoje o FOR-SEG-02 tem um arquivo com nome divergente do cadastro. Vou:
-- Deixar o motor pronto e o slot registrado.
-- Marcar no painel de templates um alerta visual "PDF ausente / divergente" nos códigos sem arquivo homologado, pra você saber exatamente o que subir.
+Se 3 dos 4 sinais estão altos → alerta laranja no PGR do GHE, com sugestão de plano de ação.
 
-### 3. Não vou tocar
+### 5. Plano de ação 5W2H específico psicossocial
+Reaproveita `pgr_plano_acao` já existente. Sugestões automáticas por perigo (ex.: "Sobrecarga" → revisão de dimensionamento, gestão de jornada, pausa programada).
 
-- Módulos com PDF gerado do zero (APR, OSS, PPP, NC, Rescisão, Hora Extra, etc.) — nenhum deles tem template homologado subido. Se você subir o PDF-mãe deles no painel, eu mapeio as coordenadas depois.
+### 6. Blindagem LGPD (obrigatório, sem atalho)
+- Base legal: cumprimento de obrigação regulatória (NR-01) + consentimento no primeiro acesso.
+- Dado individual **nunca** vai pra RH/gestor — só médico do trabalho, sob sigilo PCMSO. Dashboard executivo é 100% agregado.
+- Supressão automática se n<5 no recorte.
+- Log de acesso auditável na `audit`.
+- Termo de consentimento versionado, guardado com hash da resposta (sem identificar).
 
-## O que fica dependendo de você
+## Entregáveis desta rodada (o que codo agora)
 
-Pra eu realmente aplicar overlay em mais documentos, preciso que você suba o PDF-mãe homologado de cada código no painel de Templates. Assim que o arquivo estiver lá, eu adiciono o mapeamento de coordenadas no `OVERLAY_MAPS` — sem precisar mexer no motor.
+1. **Migration Supabase**
+   - enum `pgr_categoria_risco` += `PSICOSSOCIAL`
+   - `catalogo_perigos_psicossociais` (seed com as 8 dimensões e ~35 perigos)
+   - `psico_campanhas` (empresa, ghes[], instrumento, data_inicio, data_fim, status, min_respondentes=5)
+   - `psico_tokens` (campanha_id, hash_token, ghe_id, usado_em) — descartável, sem user_id
+   - `psico_respostas` (id, campanha_id, ghe_id, dimensao, item_codigo, valor 1-5, respondido_em) — sem FK pra usuário, nunca.
+   - `psico_consentimentos` (hash_token, versao_termo, aceito_em) — separado das respostas.
+   - RLS estrita + GRANTs corretos, tudo escopado por `company_id`.
 
-## Entrega desta rodada
+2. **Rota `/app/psicossocial`** com 4 abas:
+   - **Catálogo** (biblioteca de perigos, editável por admin)
+   - **Campanhas** (criar/enviar/monitorar coleta, ver taxa de participação)
+   - **Diagnóstico** (dashboard agregado por GHE × dimensão, matriz 5×5 visual, sinais de alerta cruzados)
+   - **Plano de ação** (5W2H, já integrado ao PGR)
 
-1. `pdf-overlay-engine.ts` (motor genérico).
-2. `pdf-overlay-maps.ts` (registro central, começando com FORCP-GP-16).
-3. `reacao-treinamento-pdf.ts` refatorado pra usar o motor (comportamento idêntico).
-4. Painel de Templates: badge "sem PDF" / "overlay ativo" por linha, pra você enxergar o status de cada um.
+3. **Rota pública `/psico/:token`** (SSR, sem auth) — colaborador responde no celular, sem login. Token single-use, invalidado após envio.
 
-Assim que aprovar, eu executo.
+4. **Server functions**
+   - `criarCampanhaPsico`, `gerarTokens` (admin, protegida)
+   - `submitRespostaPsico` (pública, valida token + rate-limit + grava sem user_id)
+   - `dashboardAgregado` (protegida, retorna só agregado com supressão n<5)
+
+5. **Integração PGR**
+   - Aba PSICOSSOCIAL no `/app/pgr` puxando direto do diagnóstico.
+   - Score entra no inventário automático como P×S por GHE.
+
+6. **Central de Ajuda** — 1 tópico novo explicando NR-01 psicossocial + como usar o módulo, alimenta o SIGMO Chat.
+
+## O que NÃO entra agora (fica pra fase 2)
+
+- IA para análise de respostas abertas (texto livre) — só campos fechados nesta rodada.
+- Benchmarking por CNAE — precisa de massa de dados primeiro; roadmap.
+- COPSOQ III como instrumento adicional — depende de análise jurídica de licença.
+- Integração automática com CID F do PCMSO — depende da Rev.06 do PCMSO chegar.
+
+## Ordem de execução
+
+1. Migration + seed catálogo (1 passo)
+2. Server functions + RLS + testes de anonimato
+3. Rota `/app/psicossocial` (4 abas)
+4. Rota pública `/psico/:token` mobile-first
+5. Integração com `/app/pgr` (aba nova)
+6. Update Central de Ajuda + memória do projeto
+
+Confirma que sigo por esse desenho? Se quiser, ajusto: (a) trocar HSE-IT por outro instrumento base, (b) mudar o mínimo de n=5 pra supressão, (c) incluir/excluir alguma dimensão.
