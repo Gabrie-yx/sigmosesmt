@@ -585,9 +585,15 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
                     Ir para Docs
                   </Button>
                 </div>
-                <div className="text-[11px] leading-snug text-amber-800">
-                  <span className="font-semibold">{missingDocs.length} pendência{missingDocs.length === 1 ? "" : "s"}:</span>{" "}
-                  {missingDocs.join(", ")}.
+                <div className="flex flex-wrap gap-1.5">
+                  {missingDocs.map((d, i) => (
+                    <span
+                      key={i}
+                      className="inline-flex items-center rounded-full border border-amber-400/60 bg-amber-100 text-amber-900 text-[10px] font-semibold px-2 py-0.5"
+                    >
+                      {d}
+                    </span>
+                  ))}
                 </div>
                 <div className="text-[10px] text-amber-700/80 leading-snug">
                   Relatórios e fichas bloqueados até enviar os 5 documentos obrigatórios.
@@ -605,16 +611,32 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
                     {status!.msgs.length}
                   </Badge>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {status!.msgs.map((m, i) => (
-                    <Badge
-                      key={i}
-                      variant="outline"
-                      className="border-rose-300/30 bg-white/5 text-rose-50 text-[11px]"
-                    >
-                      {m}
-                    </Badge>
-                  ))}
+                <div className="flex flex-col gap-2">
+                  {status!.msgs.map((m, i) => {
+                    const [prefixRaw, tailRaw] = m.split(/\s+—\s+|\s+-\s+/);
+                    const prefix = tailRaw ? prefixRaw : "";
+                    const items = (tailRaw ?? prefixRaw)
+                      .split(/,\s*/)
+                      .map((s) => s.trim())
+                      .filter(Boolean);
+                    return (
+                      <div key={i} className="flex flex-wrap items-center gap-1.5">
+                        {prefix && (
+                          <span className="text-[10px] font-black uppercase tracking-wider text-rose-100/85">
+                            {prefix}
+                          </span>
+                        )}
+                        {items.map((it, j) => (
+                          <span
+                            key={j}
+                            className="inline-flex items-center rounded-full border border-rose-300/40 bg-white/8 text-rose-50 text-[10px] font-semibold px-2 py-0.5"
+                          >
+                            {it}
+                          </span>
+                        ))}
+                      </div>
+                    );
+                  })}
                 </div>
               </Card>
             )}
