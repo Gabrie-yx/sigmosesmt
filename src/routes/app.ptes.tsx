@@ -626,18 +626,18 @@ function PtesPage() {
       </div>
 
       <div className="flex flex-col gap-6 md:gap-8">
-        {/* FORM — WIZARD HORIZONTAL */}
-        <div className="glass-card glass-shine rounded-2xl p-4 sm:p-6 md:p-8">
-          <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-white/10 mb-5">
+        {/* FORM — WIZARD COM RAIL */}
+        <div className="glass-card glass-shine rounded-2xl p-3 sm:p-4 md:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-white/10 mb-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-rose-600/80 to-amber-500/70 flex items-center justify-center shadow-[0_0_18px_-2px_rgba(245,158,11,0.55)]">
-                <FileText className="h-5 w-5 text-white" />
+              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-rose-600/80 to-amber-500/70 flex items-center justify-center shadow-[0_0_14px_-4px_rgba(245,158,11,0.55)]">
+                <FileText className="h-4 w-4 text-white" />
               </div>
               <div>
-                <div className="text-sm font-black text-rose-100 uppercase tracking-widest">
+                <div className="text-xs sm:text-sm font-black text-rose-100 uppercase tracking-wider">
                   {editingId ? "Editar Permissão" : "Nova Permissão de Trabalho"}
                 </div>
-                <div className="text-[9px] font-bold uppercase tracking-widest text-slate-300/70">
+                <div className="text-[9px] font-bold uppercase tracking-wider text-slate-300/70">
                   Passo {stepIndex + 1} de {STEPS.length} · {STEPS[stepIndex]?.label}
                 </div>
               </div>
@@ -664,41 +664,76 @@ function PtesPage() {
             </div>
           </div>
 
-          {/* Pills horizontais */}
-          <div className="mb-6 -mx-1 overflow-x-auto custom-scrollbar">
-            <div className="flex items-center gap-2 px-1 min-w-max pb-1">
-              {STEPS.map((s, i) => {
-                const active = s.id === activeStep;
-                const done = (stepChecks as any)[s.id] === true;
-                const Icon = s.icon;
-                return (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() => setActiveStep(s.id)}
-                    className={`group flex items-center gap-2 rounded-full px-3.5 py-2 text-[10px] font-black uppercase tracking-widest border transition-all whitespace-nowrap ${
-                      active
-                        ? "bg-gradient-to-r from-amber-300 via-amber-400 to-lime-400 text-slate-900 border-white/50 shadow-[0_0_20px_-4px_rgba(245,158,11,0.9)]"
-                        : done
-                          ? "bg-lime-500/20 text-lime-100 border-lime-300/60 hover:bg-lime-500/30"
-                          : "bg-white/[0.06] text-slate-100 border-white/15 hover:bg-white/10 hover:border-amber-300/40"
-                    }`}
-                  >
-                    <span className={`h-5 w-5 rounded-full flex items-center justify-center text-[9px] ${
-                      active ? "bg-slate-900/20" : done ? "bg-lime-400/30" : "bg-white/10"
-                    }`}>
-                      {done && !active ? <CheckCircle2 className="h-3 w-3" /> : i + 1}
-                    </span>
-                    <Icon className="h-3.5 w-3.5" />
-                    {s.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-[210px_minmax(0,1fr)] gap-4 lg:gap-6">
+            {/* RAIL VERTICAL DE PASSOS */}
+            <aside className="lg:sticky lg:top-4 lg:self-start">
+              {/* Mobile: seletor compacto horizontal com scroll */}
+              <div className="lg:hidden -mx-1 overflow-x-auto custom-scrollbar mb-2">
+                <div className="flex items-center gap-1.5 px-1 min-w-max">
+                  {STEPS.map((s, i) => {
+                    const active = s.id === activeStep;
+                    const done = (stepChecks as any)[s.id] === true;
+                    return (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => setActiveStep(s.id)}
+                        className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wider border transition-all whitespace-nowrap ${
+                          active
+                            ? "bg-amber-300 text-slate-900 border-amber-200"
+                            : done
+                              ? "bg-lime-500/15 text-lime-100 border-lime-400/40"
+                              : "bg-white/[0.05] text-slate-200 border-white/10"
+                        }`}
+                      >
+                        <span className="h-4 w-4 rounded-full bg-black/20 flex items-center justify-center text-[9px]">
+                          {done && !active ? <CheckCircle2 className="h-2.5 w-2.5" /> : i + 1}
+                        </span>
+                        {s.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              {/* Desktop: rail vertical */}
+              <ol className="hidden lg:flex flex-col gap-1 bg-white/[0.03] border border-white/10 rounded-xl p-2">
+                {STEPS.map((s, i) => {
+                  const active = s.id === activeStep;
+                  const done = (stepChecks as any)[s.id] === true;
+                  const Icon = s.icon;
+                  return (
+                    <li key={s.id}>
+                      <button
+                        type="button"
+                        onClick={() => setActiveStep(s.id)}
+                        className={`w-full flex items-center gap-2 rounded-lg pl-2 pr-3 py-2 text-[11px] font-bold tracking-wide transition-all border ${
+                          active
+                            ? "bg-gradient-to-r from-amber-300/95 to-lime-400/95 text-slate-900 border-amber-200 shadow-[0_0_16px_-6px_rgba(245,158,11,0.9)]"
+                            : done
+                              ? "bg-lime-500/10 text-lime-100 border-lime-400/25 hover:bg-lime-500/20"
+                              : "bg-transparent text-slate-200 border-transparent hover:bg-white/[0.05] hover:text-white"
+                        }`}
+                      >
+                        <span className={`h-5 w-5 shrink-0 rounded-full flex items-center justify-center text-[10px] font-black ${
+                          active ? "bg-slate-900/25 text-slate-900" : done ? "bg-lime-400/30 text-lime-50" : "bg-white/10 text-slate-100"
+                        }`}>
+                          {done && !active ? <CheckCircle2 className="h-3 w-3" /> : i + 1}
+                        </span>
+                        <Icon className="h-3.5 w-3.5 opacity-80" />
+                        <span className="truncate">{s.label}</span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ol>
+              <div className="hidden lg:flex mt-2 items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-300/70 px-1">
+                <span>Progresso</span>
+                <span className="text-lime-200">{Object.values(stepChecks).filter(Boolean).length}/{STEPS.length - 1}</span>
+              </div>
+            </aside>
 
-          <form onSubmit={(e) => { e.preventDefault(); save.mutate(); }} className="space-y-6">
-          <div hidden={activeStep !== "ident"} className="space-y-6">
+            <form onSubmit={(e) => { e.preventDefault(); save.mutate(); }} className="space-y-5 min-w-0">
+          <div hidden={activeStep !== "ident"} className="space-y-4">
 
             {/* TIPO DA PT */}
             <div>
@@ -774,6 +809,7 @@ function PtesPage() {
               </div>
             )}
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <Label className="text-xs font-black text-amber-200/90 uppercase tracking-wider">Local do Trabalho / Instalação</Label>
               <Input required value={f.local} onChange={(e) => setF({ ...f, local: e.target.value })} placeholder="Ex: Dique Seco, Navio XYZ..." className="bg-black/30 border-white/10 text-rose-50 placeholder:text-slate-400/70 mt-2 text-xs font-bold uppercase" />
@@ -805,6 +841,7 @@ function PtesPage() {
                 <SelectTrigger className="bg-black/30 border-white/10 text-rose-50 mt-2 text-xs font-bold uppercase"><SelectValue /></SelectTrigger>
                 <SelectContent>{PTE_RISCOS.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
               </Select>
+            </div>
             </div>
 
             {/* DATA + HORÁRIOS */}
@@ -857,8 +894,8 @@ function PtesPage() {
             </div>
           </div>
 
-          <div hidden={activeStep !== "equipe"} className="space-y-6">
-            <div className="p-6 rounded-2xl bg-gradient-to-br from-black/40 to-rose-950/30 border border-white/10 shadow-[inset_0_1px_0_rgba(255,230,235,0.05)] space-y-5">
+          <div hidden={activeStep !== "equipe"} className="space-y-4">
+            <div className="p-6 rounded-xl bg-gradient-to-br from-black/40 to-rose-950/30 border border-white/10 space-y-3.5">
               <div>
                 <Label className="text-[10px] font-black text-rose-100 uppercase flex items-center gap-2 mb-3">
                   <HardHat className="h-4 w-4" /> Empresa (filtro)
@@ -889,7 +926,7 @@ function PtesPage() {
                   required
                   value={f.requisitante_id}
                   onChange={(e) => setF({ ...f, requisitante_id: e.target.value })}
-                  className="w-full bg-black/40 border border-white/10 text-rose-50 rounded-xl px-4 py-3 text-xs font-bold uppercase outline-none focus:ring-2 focus:ring-rose-500/40 focus:border-rose-400/40"
+                  className="w-full bg-black/40 border border-white/10 text-rose-50 rounded-xl px-4 py-2 text-xs font-bold uppercase outline-none focus:ring-2 focus:ring-rose-500/40 focus:border-rose-400/40"
                 >
                   <option value="">-- SELECIONE O REQUISITANTE --</option>
                   {empOptions.map(({ e, st, compName }) => {
@@ -936,7 +973,7 @@ function PtesPage() {
                     if (f.executantes_ids.includes(e.target.value)) return;
                     setF({ ...f, executantes_ids: [...f.executantes_ids, e.target.value] });
                   }}
-                  className="w-full bg-black/40 border border-white/10 text-rose-50 rounded-xl px-4 py-2.5 text-xs font-bold uppercase outline-none focus:ring-2 focus:ring-rose-500/40 focus:border-rose-400/40"
+                  className="w-full bg-black/40 border border-white/10 text-rose-50 rounded-xl px-4 py-2 text-xs font-bold uppercase outline-none focus:ring-2 focus:ring-rose-500/40 focus:border-rose-400/40"
                 >
                   <option value="">+ ADICIONAR EXECUTANTE</option>
                   {empOptions
@@ -965,7 +1002,7 @@ function PtesPage() {
                       required
                       value={f.vigia_id}
                       onChange={(e) => setF({ ...f, vigia_id: e.target.value })}
-                      className="w-full bg-black/40 border border-amber-500/30 text-rose-50 rounded-xl px-4 py-2.5 text-xs font-bold uppercase outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-400/50"
+                      className="w-full bg-black/40 border border-amber-500/30 text-rose-50 rounded-xl px-4 py-2 text-xs font-bold uppercase outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-400/50"
                     >
                       <option value="">-- SELECIONE O VIGIA --</option>
                       {empOptions.map(({ e, compName }) => (
@@ -981,7 +1018,7 @@ function PtesPage() {
                       required
                       value={f.supervisor_entrada_id}
                       onChange={(e) => setF({ ...f, supervisor_entrada_id: e.target.value })}
-                      className="w-full bg-black/40 border border-amber-500/30 text-rose-50 rounded-xl px-4 py-2.5 text-xs font-bold uppercase outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-400/50"
+                      className="w-full bg-black/40 border border-amber-500/30 text-rose-50 rounded-xl px-4 py-2 text-xs font-bold uppercase outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-400/50"
                     >
                       <option value="">-- SELECIONE O SUPERVISOR --</option>
                       {empOptions.map(({ e, compName }) => (
@@ -999,8 +1036,8 @@ function PtesPage() {
           </div>
 
           {/* ATIVIDADES */}
-          <div hidden={activeStep !== "atividades"} className="space-y-6">
-            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-5 space-y-5">
+          <div hidden={activeStep !== "atividades"} className="space-y-4">
+            <div className="rounded-xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-3.5 space-y-5">
               <h3 className="text-xs font-black uppercase tracking-widest text-rose-100 border-b border-white/10 pb-2 flex items-center gap-2">
                 <ClipboardList className="h-4 w-4 text-amber-300" /> Descrição das atividades (FOR-SEG-04)
               </h3>
@@ -1055,8 +1092,8 @@ function PtesPage() {
           </div>
 
           {/* RISCOS */}
-          <div hidden={activeStep !== "riscos"} className="space-y-6">
-            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-5 space-y-4">
+          <div hidden={activeStep !== "riscos"} className="space-y-4">
+            <div className="rounded-xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-3.5 space-y-4">
               <h3 className="text-xs font-black uppercase tracking-widest text-rose-100 border-b border-white/10 pb-2 flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 text-amber-300" /> Riscos potenciais
               </h3>
@@ -1068,8 +1105,8 @@ function PtesPage() {
           </div>
 
           {/* S/N/NA */}
-          <div hidden={activeStep !== "snna"} className="space-y-6">
-            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-5 space-y-4">
+          <div hidden={activeStep !== "snna"} className="space-y-4">
+            <div className="rounded-xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-3.5 space-y-4">
               <h3 className="text-xs font-black uppercase tracking-widest text-rose-100 border-b border-white/10 pb-2 flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-lime-300" /> Preenchimento — S / N / NA
               </h3>
@@ -1081,8 +1118,8 @@ function PtesPage() {
           </div>
 
           {/* PRECAUÇÕES */}
-          <div hidden={activeStep !== "precaucoes"} className="space-y-6">
-            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-5 space-y-4">
+          <div hidden={activeStep !== "precaucoes"} className="space-y-4">
+            <div className="rounded-xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-3.5 space-y-4">
               <h3 className="text-xs font-black uppercase tracking-widest text-rose-100 border-b border-white/10 pb-2 flex items-center gap-2">
                 <Flame className="h-4 w-4 text-amber-300" /> Trabalho a Quente
               </h3>
@@ -1093,13 +1130,13 @@ function PtesPage() {
                 <Input value={f.designado_liberacao} onChange={(e) => setF({ ...f, designado_liberacao: e.target.value })} placeholder="Designado pela liberação" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-slate-400/70 text-xs font-bold uppercase" />
               </div>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-5 space-y-3">
+            <div className="rounded-xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-3.5 space-y-3">
               <h3 className="text-xs font-black uppercase tracking-widest text-rose-100 border-b border-white/10 pb-2 flex items-center gap-2">
                 <Layers className="h-4 w-4 text-lime-300" /> Trabalho em Altura
               </h3>
               <PdfCheckboxGroup title="Precauções" group="precaucao_altura" items={PTE_PRECAUCOES_ALTURA} />
             </div>
-            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-5 space-y-3">
+            <div className="rounded-xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-3.5 space-y-3">
               <h3 className="text-xs font-black uppercase tracking-widest text-rose-100 border-b border-white/10 pb-2 flex items-center gap-2">
                 <Zap className="h-4 w-4 text-amber-300" /> Eletricidade / Fonte de Energia
               </h3>
@@ -1112,14 +1149,14 @@ function PtesPage() {
           </div>
 
           {/* CARGAS & PINTURA */}
-          <div hidden={activeStep !== "cargas_pintura"} className="space-y-6">
-            <div className="rounded-2xl border border-amber-300/25 bg-gradient-to-br from-amber-500/5 via-black/40 to-black/40 p-5 space-y-4">
+          <div hidden={activeStep !== "cargas_pintura"} className="space-y-4">
+            <div className="rounded-xl border border-amber-300/25 bg-gradient-to-br from-amber-500/5 via-black/40 to-black/40 p-3.5 space-y-4">
               <h3 className="text-sm font-black uppercase tracking-wider text-amber-100 border-b border-amber-300/20 pb-2 flex items-center gap-2">
                 <HardHat className="h-4 w-4 text-amber-300" /> Movimentação e Içamento de Carga
               </h3>
               <PdfCheckboxGroup title="Precauções" group="precaucao_carga" items={PTE_PRECAUCOES_CARGA} />
             </div>
-            <div className="rounded-2xl border border-lime-300/25 bg-gradient-to-br from-lime-500/5 via-black/40 to-black/40 p-5 space-y-4">
+            <div className="rounded-xl border border-lime-300/25 bg-gradient-to-br from-lime-500/5 via-black/40 to-black/40 p-3.5 space-y-4">
               <h3 className="text-sm font-black uppercase tracking-wider text-lime-100 border-b border-lime-300/20 pb-2 flex items-center gap-2">
                 <Wind className="h-4 w-4 text-lime-300" /> Trabalho com Pintura
               </h3>
@@ -1128,8 +1165,8 @@ function PtesPage() {
           </div>
 
           {/* EPIs */}
-          <div hidden={activeStep !== "epis"} className="space-y-6">
-            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.03] to-black/40 p-5 space-y-5">
+          <div hidden={activeStep !== "epis"} className="space-y-4">
+            <div className="rounded-xl border border-white/10 bg-gradient-to-br from-white/[0.03] to-black/40 p-3.5 space-y-5">
               <h3 className="text-sm font-black uppercase tracking-wider text-slate-50 border-b border-white/10 pb-2 flex items-center gap-2">
                 <ShieldCheck className="h-4 w-4 text-amber-300" /> Equipamentos de Proteção Individual Obrigatórios
               </h3>
@@ -1168,8 +1205,8 @@ function PtesPage() {
           </div>
 
           {/* EQUIPE & ASSINATURAS */}
-          <div hidden={activeStep !== "assinaturas"} className="space-y-6">
-            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.03] to-black/40 p-5 space-y-4">
+          <div hidden={activeStep !== "assinaturas"} className="space-y-4">
+            <div className="rounded-xl border border-white/10 bg-gradient-to-br from-white/[0.03] to-black/40 p-3.5 space-y-4">
               <div className="flex items-center justify-between border-b border-white/10 pb-2">
                 <h3 className="text-sm font-black uppercase tracking-wider text-slate-50 flex items-center gap-2">
                   <Users className="h-4 w-4 text-lime-300" /> Equipe — Nome, Função e Assinatura
@@ -1254,7 +1291,7 @@ function PtesPage() {
           </div>
 
           {/* PET / RESGATE */}
-          <div hidden={activeStep !== "pet"} className="space-y-6">
+          <div hidden={activeStep !== "pet"} className="space-y-4">
             {f.tipo_pt === "PET" && (
               <PteAtmosferaTab petId={editingId} employees={emps as any[]} />
             )}
@@ -1373,7 +1410,7 @@ function PtesPage() {
               <Button
                 type="submit"
                 disabled={save.isPending}
-                className={`w-full text-xs font-black uppercase tracking-widest h-auto px-8 py-4 rounded-xl flex items-center justify-center gap-2 text-white border transition-all ${
+                className={`w-full text-xs font-black uppercase tracking-widest h-auto px-6 py-3 rounded-xl flex items-center justify-center gap-2 text-white border transition-all ${
                   editingId
                     ? "bg-gradient-to-br from-blue-600/90 to-blue-900/90 border-blue-400/40 shadow-[0_0_24px_-4px_rgba(59,130,246,0.6)] hover:shadow-[0_0_32px_-2px_rgba(59,130,246,0.9)]"
                     : "bg-gradient-to-r from-lime-500 via-amber-500 to-rose-600 border-amber-300/50 shadow-[0_0_28px_-4px_rgba(245,158,11,0.9)] hover:shadow-[0_0_40px_-2px_rgba(220,38,70,0.9)]"
@@ -1412,6 +1449,7 @@ function PtesPage() {
             )}
           </div>
           </form>
+          </div>
         </div>
 
         {/* HISTORY */}
