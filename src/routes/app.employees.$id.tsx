@@ -488,60 +488,50 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
           </div>
 
           {/* Ações documentais */}
-          <div className="flex min-w-0 flex-1 items-center gap-2 ml-auto justify-end">
-            <div className="inline-flex max-w-full items-center gap-1 rounded-2xl border border-rose-200/15 bg-gradient-to-b from-rose-950/40 to-rose-950/10 px-2 py-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_6px_18px_-8px_rgba(0,0,0,0.6)] overflow-x-auto whitespace-nowrap [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-              <Link
-                to="/app/audit"
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-xl px-2.5 py-2 text-[10px] font-black uppercase tracking-wider text-rose-50/95 hover:bg-rose-100/10 hover:text-white transition-colors"
-                title="Auditar"
-              >
-                <ClipboardCheck className="h-4 w-4" /> Auditar
-              </Link>
-              <span className="h-4 w-px shrink-0 bg-rose-200/20" />
-              <button
-                type="button"
-                onClick={gerarFichaPdf}
-                disabled={gerandoFicha}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-xl px-2.5 py-2 text-[10px] font-black uppercase tracking-wider text-rose-50/95 hover:bg-rose-100/10 hover:text-white transition-colors disabled:opacity-60 disabled:cursor-wait"
-                title="Gerar ficha em PDF"
-              >
-                <FileText className="h-4 w-4" /> {gerandoFicha ? "Gerando…" : "Ficha"}
-              </button>
-              <span className="h-4 w-px shrink-0 bg-rose-200/20" />
-              <button
-                type="button"
-                onClick={() => setPppOpen(true)}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-xl px-2.5 py-2 text-[10px] font-black uppercase tracking-wider text-rose-50/95 hover:bg-rose-100/10 hover:text-white transition-colors"
-                title="Emitir PPP (Perfil Profissiográfico Previdenciário)"
-              >
-                <FileSignature className="h-4 w-4" /> PPP
-              </button>
-              <span className="h-4 w-px shrink-0 bg-rose-200/20" />
-              <button
-                type="button"
-                onClick={() => setIntegOpen(true)}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-xl px-2.5 py-2 text-[10px] font-black uppercase tracking-wider text-emerald-50/95 hover:bg-emerald-400/15 hover:text-white transition-colors"
-                title="Registrar Integração NR-01"
-              >
-                <FileText className="h-4 w-4" /> Integração
-              </button>
-              <span className="h-4 w-px shrink-0 bg-rose-200/20" />
-              <button
-                type="button"
-                onClick={() => setTermoOpen(true)}
-                className={`inline-flex shrink-0 items-center gap-1.5 rounded-xl px-2.5 py-2 text-[10px] font-black uppercase tracking-wider transition-colors ${
-                  (emp as any)?.termo_consentimento_id
-                    ? "text-emerald-50/95 hover:bg-emerald-400/15 hover:text-white"
-                    : (emp as any)?.assinatura_url
-                      ? "text-amber-100 hover:bg-amber-400/15 hover:text-white animate-pulse"
-                      : "text-rose-200/70 hover:bg-rose-400/10 hover:text-white"
-                }`}
-                title="Termo de Consentimento — Assinatura Eletrônica (Lei 14.063/2020)"
-              >
-                <FileSignature className="h-4 w-4" />
-                {(emp as any)?.termo_consentimento_id ? "Termo ✓" : "Termo"}
-              </button>
-            </div>
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 ml-auto justify-end">
+            <Link to="/app/audit" title="Auditar" className="glass-pill">
+              <ClipboardCheck className="h-4 w-4" /> Auditar
+            </Link>
+            <button
+              type="button"
+              onClick={gerarFichaPdf}
+              disabled={gerandoFicha}
+              title="Gerar ficha em PDF"
+              className="glass-pill disabled:opacity-60 disabled:cursor-wait"
+            >
+              <FileText className="h-4 w-4" /> {gerandoFicha ? "Gerando…" : "Ficha"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setPppOpen(true)}
+              title="Emitir PPP (Perfil Profissiográfico Previdenciário)"
+              className="glass-pill"
+            >
+              <FileSignature className="h-4 w-4" /> PPP
+            </button>
+            <button
+              type="button"
+              onClick={() => setIntegOpen(true)}
+              title="Registrar Integração NR-01"
+              className="glass-pill glass-pill--emerald"
+            >
+              <FileText className="h-4 w-4" /> Integração
+            </button>
+            <button
+              type="button"
+              onClick={() => setTermoOpen(true)}
+              title="Termo de Consentimento — Assinatura Eletrônica (Lei 14.063/2020)"
+              className={`glass-pill ${
+                (emp as any)?.termo_consentimento_id
+                  ? "glass-pill--emerald"
+                  : (emp as any)?.assinatura_url
+                    ? "glass-pill--amber animate-pulse"
+                    : ""
+              }`}
+            >
+              <FileSignature className="h-4 w-4" />
+              {(emp as any)?.termo_consentimento_id ? "Termo ✓" : "Termo"}
+            </button>
           </div>
         </div>
       </Card>
@@ -582,8 +572,8 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
         </Card>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
-        {status && status.msgs.length > 0 ? (
+      {status && status.msgs.length > 0 ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
           <Card className="glass-vinho p-4 rounded-2xl h-full flex flex-col gap-3">
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-rose-300" />
@@ -606,11 +596,11 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
               ))}
             </div>
           </Card>
-        ) : (
-          <div className="hidden lg:block" />
-        )}
+          <SafetyOverridePanel employeeId={id} employeeName={emp.nome} availableItemKeys={availableItemKeys} />
+        </div>
+      ) : (
         <SafetyOverridePanel employeeId={id} employeeName={emp.nome} availableItemKeys={availableItemKeys} />
-      </div>
+      )}
 
       <Tabs value={tab} onValueChange={setTab}>
         <AnimatedTabsBar
