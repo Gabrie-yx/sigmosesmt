@@ -958,7 +958,16 @@ function PtesPage() {
                       return (
                         <span key={eid} className="inline-flex items-center gap-1 bg-rose-950/70 text-rose-100 border border-rose-500/30 text-[10px] font-black uppercase px-2 py-1 rounded">
                           {emp?.nome ?? "?"}
-                          <button type="button" onClick={() => setF({ ...f, executantes_ids: f.executantes_ids.filter((x: string) => x !== eid) })} className="hover:text-red-400">
+                          <button type="button" onClick={() => {
+                            const nomeRemovido = emp?.nome;
+                            setF({
+                              ...f,
+                              executantes_ids: f.executantes_ids.filter((x: string) => x !== eid),
+                              equipe_lista: nomeRemovido
+                                ? (f.equipe_lista ?? []).filter((r: any) => r?.nome !== nomeRemovido)
+                                : f.equipe_lista,
+                            });
+                          }} className="hover:text-red-400">
                             <X className="h-3 w-3" />
                           </button>
                         </span>
@@ -971,7 +980,18 @@ function PtesPage() {
                   onChange={(e) => {
                     if (!e.target.value) return;
                     if (f.executantes_ids.includes(e.target.value)) return;
-                    setF({ ...f, executantes_ids: [...f.executantes_ids, e.target.value] });
+                    const emp = emps.find((x: any) => x.id === e.target.value);
+                    const role = emp ? roles.find((r: any) => r.id === emp.role_id) : null;
+                    const nome = emp?.nome ?? "";
+                    const funcao = (role as any)?.name ?? "";
+                    const alreadyInList = (f.equipe_lista ?? []).some((r: any) => r?.nome === nome);
+                    setF({
+                      ...f,
+                      executantes_ids: [...f.executantes_ids, e.target.value],
+                      equipe_lista: alreadyInList || !nome
+                        ? f.equipe_lista
+                        : [...(f.equipe_lista ?? []), { nome, funcao }],
+                    });
                   }}
                   className="w-full bg-black/40 border border-white/10 text-rose-50 rounded-xl px-4 py-2 text-xs font-bold uppercase outline-none focus:ring-2 focus:ring-rose-500/40 focus:border-rose-400/40"
                 >
