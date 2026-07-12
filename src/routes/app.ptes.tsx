@@ -1111,6 +1111,148 @@ function PtesPage() {
             </div>
           </div>
 
+          {/* CARGAS & PINTURA */}
+          <div hidden={activeStep !== "cargas_pintura"} className="space-y-6">
+            <div className="rounded-2xl border border-amber-300/25 bg-gradient-to-br from-amber-500/5 via-black/40 to-black/40 p-5 space-y-4">
+              <h3 className="text-sm font-black uppercase tracking-wider text-amber-100 border-b border-amber-300/20 pb-2 flex items-center gap-2">
+                <HardHat className="h-4 w-4 text-amber-300" /> Movimentação e Içamento de Carga
+              </h3>
+              <PdfCheckboxGroup title="Precauções" group="precaucao_carga" items={PTE_PRECAUCOES_CARGA} />
+            </div>
+            <div className="rounded-2xl border border-lime-300/25 bg-gradient-to-br from-lime-500/5 via-black/40 to-black/40 p-5 space-y-4">
+              <h3 className="text-sm font-black uppercase tracking-wider text-lime-100 border-b border-lime-300/20 pb-2 flex items-center gap-2">
+                <Wind className="h-4 w-4 text-lime-300" /> Trabalho com Pintura
+              </h3>
+              <PdfCheckboxGroup title="Precauções" group="precaucao_pintura" items={PTE_PRECAUCOES_PINTURA} />
+            </div>
+          </div>
+
+          {/* EPIs */}
+          <div hidden={activeStep !== "epis"} className="space-y-6">
+            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.03] to-black/40 p-5 space-y-5">
+              <h3 className="text-sm font-black uppercase tracking-wider text-slate-50 border-b border-white/10 pb-2 flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-amber-300" /> Equipamentos de Proteção Individual Obrigatórios
+              </h3>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                <div className="space-y-2">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-amber-200 bg-amber-400/10 border border-amber-300/30 rounded-full px-3 py-1 inline-block">EPI · Coluna 1</div>
+                  <PdfCheckboxGroup title="Óculos · Capacetes · Respiradores · Botas" group="epis_col1" items={PTE_EPIS_1} />
+                </div>
+                <div className="space-y-2">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-lime-200 bg-lime-400/10 border border-lime-300/30 rounded-full px-3 py-1 inline-block">EPI · Coluna 2</div>
+                  <PdfCheckboxGroup title="Aventais · Mangotes · Macacões · Luvas" group="epis_col2" items={PTE_EPIS_2} />
+                </div>
+                <div className="space-y-2">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-100 bg-white/10 border border-white/20 rounded-full px-3 py-1 inline-block">Outros / Coletivos</div>
+                  <PdfCheckboxGroup title="Sinalização · Isolamentos · Coletivos" group="outros_epi" items={PTE_OUTROS_EPI} />
+                  {f.outros_epi?.outros && (
+                    <Input
+                      value={f.outros_epi_texto}
+                      onChange={(e) => setF({ ...f, outros_epi_texto: e.target.value })}
+                      placeholder="Descreva outros EPIs"
+                      className="bg-white/[0.05] border-white/15 text-slate-50 placeholder:text-slate-400 text-xs font-bold"
+                    />
+                  )}
+                </div>
+              </div>
+              <div className="mt-3 space-y-2">
+                <Label className="text-xs font-black text-amber-200/90 uppercase tracking-wider">Recomendações adicionais de segurança</Label>
+                <Textarea
+                  value={f.recomendacoes_adicionais}
+                  onChange={(e) => setF({ ...f, recomendacoes_adicionais: e.target.value })}
+                  placeholder="Ex.: manter a área ventilada, comunicar mudanças ao TST, reavaliar a cada 2h..."
+                  className="bg-white/[0.05] border-white/15 text-slate-50 placeholder:text-slate-400 text-sm min-h-[90px]"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* EQUIPE & ASSINATURAS */}
+          <div hidden={activeStep !== "assinaturas"} className="space-y-6">
+            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.03] to-black/40 p-5 space-y-4">
+              <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                <h3 className="text-sm font-black uppercase tracking-wider text-slate-50 flex items-center gap-2">
+                  <Users className="h-4 w-4 text-lime-300" /> Equipe — Nome, Função e Assinatura
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setF({ ...f, equipe_lista: [...(f.equipe_lista ?? []), { nome: "", funcao: "" }] })}
+                  className="text-[11px] font-black uppercase tracking-wider rounded-full px-3 py-1.5 bg-lime-400 text-slate-900 hover:bg-lime-300 border border-lime-200 shadow-[0_0_14px_-4px_rgba(163,230,53,0.9)]"
+                >
+                  + Adicionar linha
+                </button>
+              </div>
+              <p className="text-[11px] text-slate-300/80 font-medium">
+                Adicione cada colaborador que assinará a permissão. As assinaturas físicas serão coletadas na impressão.
+              </p>
+              <div className="space-y-2">
+                {(f.equipe_lista ?? []).length === 0 && (
+                  <div className="text-center text-slate-300/70 text-xs font-bold uppercase tracking-wider py-6 border border-dashed border-white/15 rounded-xl bg-black/20">
+                    Nenhum colaborador adicionado ainda.
+                  </div>
+                )}
+                {(f.equipe_lista ?? []).map((row: any, idx: number) => (
+                  <div key={idx} className="grid grid-cols-[1fr_1fr_auto] gap-2 items-center bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2">
+                    <Input
+                      value={row.nome}
+                      onChange={(e) => {
+                        const next = [...f.equipe_lista];
+                        next[idx] = { ...next[idx], nome: e.target.value };
+                        setF({ ...f, equipe_lista: next });
+                      }}
+                      placeholder="Nome"
+                      className="bg-white/[0.05] border-white/15 text-slate-50 placeholder:text-slate-400 text-sm"
+                    />
+                    <Input
+                      value={row.funcao}
+                      onChange={(e) => {
+                        const next = [...f.equipe_lista];
+                        next[idx] = { ...next[idx], funcao: e.target.value };
+                        setF({ ...f, equipe_lista: next });
+                      }}
+                      placeholder="Função"
+                      className="bg-white/[0.05] border-white/15 text-slate-50 placeholder:text-slate-400 text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setF({ ...f, equipe_lista: f.equipe_lista.filter((_: any, i: number) => i !== idx) })}
+                      className="h-9 w-9 rounded-lg bg-rose-500/15 text-rose-200 border border-rose-400/30 hover:bg-rose-500/30 flex items-center justify-center"
+                      title="Remover"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-3 border-t border-white/10">
+                <div>
+                  <Label className="text-xs font-black text-amber-200/90 uppercase tracking-wider">Encarregado</Label>
+                  <Input
+                    value={f.assinatura_encarregado_nome}
+                    onChange={(e) => setF({ ...f, assinatura_encarregado_nome: e.target.value })}
+                    placeholder="Nome do encarregado"
+                    className="bg-white/[0.05] border-white/15 text-slate-50 placeholder:text-slate-400 text-sm mt-2"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs font-black text-amber-200/90 uppercase tracking-wider">Gerente da Empresa</Label>
+                  <Input
+                    value={f.assinatura_gerente_nome}
+                    onChange={(e) => setF({ ...f, assinatura_gerente_nome: e.target.value })}
+                    placeholder="Nome do gerente"
+                    className="bg-white/[0.05] border-white/15 text-slate-50 placeholder:text-slate-400 text-sm mt-2"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs font-black text-lime-200/90 uppercase tracking-wider">Segurança do Trabalho</Label>
+                  <div className="mt-2 rounded-lg bg-lime-400/10 border border-lime-300/30 text-lime-100 text-[11px] font-bold uppercase tracking-wider px-3 py-2.5">
+                    Assinatura do TST é aplicada no PDF (botão “Assinar TST” na pré-visualização).
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* PET / RESGATE */}
           <div hidden={activeStep !== "pet"} className="space-y-6">
             {f.tipo_pt === "PET" && (
