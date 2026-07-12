@@ -923,6 +923,7 @@ function PtesPage() {
         apr={previewPt?.apr_id ? aprsMap.get(previewPt.apr_id) : undefined}
         casco={previewPt?.casco_id ? cascosMap.get(previewPt.casco_id) : undefined}
         company={previewPt?.company_id ? (companies as any[]).find((c: any) => c.id === previewPt.company_id) : undefined}
+        employees={emps as any[]}
       />
     </div>
   );
