@@ -371,6 +371,16 @@ function PtesPage() {
         precaucao_altura: f.precaucao_altura ?? {},
         precaucao_eletrica: f.precaucao_eletrica ?? {},
         responsavel_bloqueio: (f.responsavel_bloqueio ?? "").trim() || null,
+        precaucao_carga: f.precaucao_carga ?? {},
+        precaucao_pintura: f.precaucao_pintura ?? {},
+        epis_col1: f.epis_col1 ?? {},
+        epis_col2: f.epis_col2 ?? {},
+        outros_epi: f.outros_epi ?? {},
+        outros_epi_texto: (f.outros_epi_texto ?? "").trim() || null,
+        recomendacoes_adicionais: (f.recomendacoes_adicionais ?? "").trim() || null,
+        equipe_lista: (f.equipe_lista ?? []).filter((r: any) => r && (r.nome?.trim() || r.funcao?.trim())),
+        assinatura_encarregado_nome: (f.assinatura_encarregado_nome ?? "").trim() || null,
+        assinatura_gerente_nome: (f.assinatura_gerente_nome ?? "").trim() || null,
       };
 
       if (editingId) {
