@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Printer, X, Download, PenLine } from "lucide-react";
 import { formatDateBR } from "@/lib/utils-date";
 import { PT_TIPOS } from "@/lib/constants";
-import { printHtmlContent } from "@/lib/pdf-print";
+import { printHtmlContent, printPdf, renderPdfToImagePagesProgressive } from "@/lib/pdf-print";
 import { hasOverlay } from "@/lib/pdf-overlay-maps";
 import { gerarPtePdf } from "@/lib/pte-pdf";
 import { SignaturePadDialog } from "@/components/signature-pad-dialog";
@@ -22,10 +22,13 @@ export function PtPdfPreview({ open, onClose, pt, apr, casco, company }: Props) 
   const overlayCodigo = pt?.tipo_pt === "PET" ? "FOR-SEG-05" : "FOR-SEG-04";
   const useOverlay = pt ? hasOverlay(overlayCodigo) : false;
   const [assinaturaTst, setAssinaturaTst] = useState<string | null>(null);
+  const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [pdfPages, setPdfPages] = useState<string[]>([]);
   const [padOpen, setPadOpen] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const renderTokenRef = useRef(0);
 
   const overlayParams = useMemo(() => {
     if (!pt) return null;
@@ -49,20 +52,37 @@ export function PtPdfPreview({ open, onClose, pt, apr, casco, company }: Props) 
 
   useEffect(() => {
     if (!open || !useOverlay || !overlayParams) return;
+    const token = ++renderTokenRef.current;
     let revoked: string | null = null;
     let cancelled = false;
     setPdfLoading(true);
     setPdfError(null);
+    setPdfBlob(null);
+    setPdfUrl(null);
+    setPdfPages([]);
     gerarPtePdf(overlayParams)
       .then((blob) => {
         if (cancelled) return;
         const url = URL.createObjectURL(blob);
         revoked = url;
+        setPdfBlob(blob);
         setPdfUrl(url);
+        return renderPdfToImagePagesProgressive(
+          blob,
+          (pageDataUrl) => {
+            if (cancelled || renderTokenRef.current !== token) return;
+            setPdfPages((prev) => [...prev, pageDataUrl]);
+          },
+          2,
+        );
       })
       .catch((e) => !cancelled && setPdfError(String(e?.message ?? e)))
       .finally(() => !cancelled && setPdfLoading(false));
-    return () => { cancelled = true; if (revoked) URL.revokeObjectURL(revoked); };
+    return () => {
+      cancelled = true;
+      renderTokenRef.current++;
+      if (revoked) URL.revokeObjectURL(revoked);
+    };
   }, [open, useOverlay, overlayParams]);
 
   useEffect(() => {
@@ -83,9 +103,8 @@ export function PtPdfPreview({ open, onClose, pt, apr, casco, company }: Props) 
     a.click();
   };
   const handlePrintOverlay = () => {
-    if (!pdfUrl) return;
-    const w = window.open(pdfUrl, "_blank");
-    if (w) setTimeout(() => { try { w.focus(); w.print(); } catch {} }, 500);
+    if (!pdfBlob) return;
+    void printPdf(pdfBlob, `${pt.numero || "PTE"}.pdf`);
   };
 
   const handlePrint = async () => {
@@ -110,6 +129,10 @@ export function PtPdfPreview({ open, onClose, pt, apr, casco, company }: Props) 
     <>
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto p-0">
+        <DialogHeader className="sr-only">
+          <DialogTitle>{useOverlay ? "PDF Homologado" : "Pré-visualização"} — {pt.numero}</DialogTitle>
+          <DialogDescription>Visualização da permissão de trabalho no SIGMO.</DialogDescription>
+        </DialogHeader>
         <div className="sticky top-0 z-10 bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between">
           <div className="text-xs font-black uppercase tracking-widest text-slate-700">
             {useOverlay ? "PDF Homologado — " : "Pré-visualização — "}{pt.numero}
@@ -124,7 +147,7 @@ export function PtPdfPreview({ open, onClose, pt, apr, casco, company }: Props) 
                 <Button onClick={handleDownloadOverlay} size="sm" variant="outline" disabled={!pdfUrl}>
                   <Download className="h-4 w-4 mr-1" /> Baixar
                 </Button>
-                <Button onClick={handlePrintOverlay} size="sm" disabled={!pdfUrl} className="bg-[#991b1b] hover:bg-[#7f1d1d] text-white">
+                <Button onClick={handlePrintOverlay} size="sm" disabled={!pdfBlob} className="bg-[#991b1b] hover:bg-[#7f1d1d] text-white">
                   <Printer className="h-4 w-4 mr-1" /> Imprimir
                 </Button>
               </>
@@ -141,7 +164,7 @@ export function PtPdfPreview({ open, onClose, pt, apr, casco, company }: Props) 
 
         {useOverlay ? (
           <div className="bg-slate-100 p-4" style={{ minHeight: "70vh" }}>
-            {pdfLoading && !pdfUrl && (
+            {pdfLoading && !pdfPages.length && !pdfError && (
               <div className="text-center text-sm text-slate-500 py-20">Carregando PDF homologado…</div>
             )}
             {pdfError && (
@@ -152,13 +175,17 @@ export function PtPdfPreview({ open, onClose, pt, apr, casco, company }: Props) 
                 </div>
               </div>
             )}
-            {pdfUrl && (
-              <iframe
-                title={`PDF ${pt.numero}`}
-                src={pdfUrl}
-                className="w-full rounded shadow border border-slate-300"
-                style={{ height: "78vh", background: "white" }}
-              />
+            {pdfPages.length > 0 && (
+              <div className="flex flex-col items-center gap-4">
+                {pdfPages.map((page, index) => (
+                  <img
+                    key={`${pt.numero}-page-${index}`}
+                    src={page}
+                    alt={`Página ${index + 1} do PDF ${pt.numero}`}
+                    className="w-full max-w-[860px] rounded bg-white shadow border border-slate-300"
+                  />
+                ))}
+              </div>
             )}
             {assinaturaTst && (
               <div className="mt-2 text-[10px] text-emerald-700 font-bold uppercase tracking-wider text-center">
