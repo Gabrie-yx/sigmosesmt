@@ -680,7 +680,7 @@ function PtesPage() {
                         onClick={() => setActiveStep(s.id)}
                         className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wider border transition-all whitespace-nowrap ${
                           active
-                            ? "bg-amber-200/80 text-slate-900 border-amber-100/60"
+                            ? "bg-amber-200/80 text-[#120307] border-amber-100/60"
                             : done
                               ? "bg-lime-500/15 text-lime-100 border-lime-400/40"
                               : "bg-white/[0.05] text-slate-200 border-white/10"
