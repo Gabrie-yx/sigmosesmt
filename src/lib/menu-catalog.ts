@@ -40,6 +40,7 @@ export const MENU_CATALOG: MenuEntry[] = [
   { key: "/app/roles", label: "Cargos & Matriz de Riscos", module: "sesmt" },
   { key: "/app/matriz-riscos", label: "Matriz de Riscos (PGR/LTCAT)", module: "sesmt" },
   { key: "/app/pgr", label: "PGR — Programa de Riscos (NR-01)", module: "sesmt" },
+  { key: "/app/psicossocial", label: "Psicossocial (NR-01 / ISO 45003)", module: "sesmt" },
 
   // ----- ESTOQUE -----
   { key: "/app/estoque", label: "Estoque de EPIs", module: "estoque" },

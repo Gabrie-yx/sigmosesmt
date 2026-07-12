@@ -18,10 +18,12 @@ import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as RcTokenRouteImport } from './routes/rc.$token'
+import { Route as PsicoTokenRouteImport } from './routes/psico.$token'
 import { Route as AppUsersRouteImport } from './routes/app.users'
 import { Route as AppTrainingsRouteImport } from './routes/app.trainings'
 import { Route as AppRolesRouteImport } from './routes/app.roles'
 import { Route as AppPtesRouteImport } from './routes/app.ptes'
+import { Route as AppPsicossocialRouteImport } from './routes/app.psicossocial'
 import { Route as AppPgrRouteImport } from './routes/app.pgr'
 import { Route as AppPainelRouteImport } from './routes/app.painel'
 import { Route as AppOssRouteImport } from './routes/app.oss'
@@ -119,6 +121,8 @@ import { Route as AppModuloEletricaRequisicaoComprasRouteImport } from './routes
 import { Route as AppModuloModuloHoraExtraRouteImport } from './routes/app.modulo.$modulo.hora-extra'
 import { Route as AppEstoqueEpiFichasMensaisRouteImport } from './routes/app.estoque.epi.fichas-mensais'
 import { Route as AppAdministrativoGestaoPontoCicloIdRouteImport } from './routes/app.administrativo.gestao-ponto.$cicloId'
+import { Route as ApiPublicPsicoSubmitRouteImport } from './routes/api/public/psico.submit'
+import { Route as ApiPublicPsicoHashRouteImport } from './routes/api/public/psico.$hash'
 import { Route as AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRouteImport } from './routes/app.sesmt.equipamentos-moveis_.historico.$equipamentoId'
 import { Route as AppSesmtEquipamentosMoveisChecklistEquipamentoIdRouteImport } from './routes/app.sesmt.equipamentos-moveis_.checklist.$equipamentoId'
 
@@ -167,6 +171,11 @@ const RcTokenRoute = RcTokenRouteImport.update({
   path: '/rc/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PsicoTokenRoute = PsicoTokenRouteImport.update({
+  id: '/psico/$token',
+  path: '/psico/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppUsersRoute = AppUsersRouteImport.update({
   id: '/users',
   path: '/users',
@@ -185,6 +194,11 @@ const AppRolesRoute = AppRolesRouteImport.update({
 const AppPtesRoute = AppPtesRouteImport.update({
   id: '/ptes',
   path: '/ptes',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPsicossocialRoute = AppPsicossocialRouteImport.update({
+  id: '/psicossocial',
+  path: '/psicossocial',
   getParentRoute: () => AppRoute,
 } as any)
 const AppPgrRoute = AppPgrRouteImport.update({
@@ -700,6 +714,16 @@ const AppAdministrativoGestaoPontoCicloIdRoute =
     path: '/$cicloId',
     getParentRoute: () => AppAdministrativoGestaoPontoRoute,
   } as any)
+const ApiPublicPsicoSubmitRoute = ApiPublicPsicoSubmitRouteImport.update({
+  id: '/api/public/psico/submit',
+  path: '/api/public/psico/submit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicPsicoHashRoute = ApiPublicPsicoHashRouteImport.update({
+  id: '/api/public/psico/$hash',
+  path: '/api/public/psico/$hash',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute =
   AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRouteImport.update({
     id: '/sesmt/equipamentos-moveis_/historico/$equipamentoId',
@@ -747,10 +771,12 @@ export interface FileRoutesByFullPath {
   '/app/oss': typeof AppOssRouteWithChildren
   '/app/painel': typeof AppPainelRoute
   '/app/pgr': typeof AppPgrRoute
+  '/app/psicossocial': typeof AppPsicossocialRoute
   '/app/ptes': typeof AppPtesRoute
   '/app/roles': typeof AppRolesRoute
   '/app/trainings': typeof AppTrainingsRoute
   '/app/users': typeof AppUsersRoute
+  '/psico/$token': typeof PsicoTokenRoute
   '/rc/$token': typeof RcTokenRoute
   '/app/': typeof AppIndexRoute
   '/app/administrativo/gestao-ponto': typeof AppAdministrativoGestaoPontoRouteWithChildren
@@ -809,6 +835,8 @@ export interface FileRoutesByFullPath {
   '/app/estoque/': typeof AppEstoqueIndexRoute
   '/app/oss/': typeof AppOssIndexRoute
   '/app/portaria/': typeof AppPortariaIndexRoute
+  '/api/public/psico/$hash': typeof ApiPublicPsicoHashRoute
+  '/api/public/psico/submit': typeof ApiPublicPsicoSubmitRoute
   '/app/administrativo/gestao-ponto/$cicloId': typeof AppAdministrativoGestaoPontoCicloIdRoute
   '/app/estoque/epi/fichas-mensais': typeof AppEstoqueEpiFichasMensaisRoute
   '/app/modulo/$modulo/hora-extra': typeof AppModuloModuloHoraExtraRoute
@@ -858,10 +886,12 @@ export interface FileRoutesByTo {
   '/app/ncs': typeof AppNcsRoute
   '/app/painel': typeof AppPainelRoute
   '/app/pgr': typeof AppPgrRoute
+  '/app/psicossocial': typeof AppPsicossocialRoute
   '/app/ptes': typeof AppPtesRoute
   '/app/roles': typeof AppRolesRoute
   '/app/trainings': typeof AppTrainingsRoute
   '/app/users': typeof AppUsersRoute
+  '/psico/$token': typeof PsicoTokenRoute
   '/rc/$token': typeof RcTokenRoute
   '/app': typeof AppIndexRoute
   '/app/administrativo/hora-extra-recebida': typeof AppAdministrativoHoraExtraRecebidaRoute
@@ -919,6 +949,8 @@ export interface FileRoutesByTo {
   '/app/estoque': typeof AppEstoqueIndexRoute
   '/app/oss': typeof AppOssIndexRoute
   '/app/portaria': typeof AppPortariaIndexRoute
+  '/api/public/psico/$hash': typeof ApiPublicPsicoHashRoute
+  '/api/public/psico/submit': typeof ApiPublicPsicoSubmitRoute
   '/app/administrativo/gestao-ponto/$cicloId': typeof AppAdministrativoGestaoPontoCicloIdRoute
   '/app/estoque/epi/fichas-mensais': typeof AppEstoqueEpiFichasMensaisRoute
   '/app/modulo/$modulo/hora-extra': typeof AppModuloModuloHoraExtraRoute
@@ -972,10 +1004,12 @@ export interface FileRoutesById {
   '/app/oss': typeof AppOssRouteWithChildren
   '/app/painel': typeof AppPainelRoute
   '/app/pgr': typeof AppPgrRoute
+  '/app/psicossocial': typeof AppPsicossocialRoute
   '/app/ptes': typeof AppPtesRoute
   '/app/roles': typeof AppRolesRoute
   '/app/trainings': typeof AppTrainingsRoute
   '/app/users': typeof AppUsersRoute
+  '/psico/$token': typeof PsicoTokenRoute
   '/rc/$token': typeof RcTokenRoute
   '/app/': typeof AppIndexRoute
   '/app/administrativo/gestao-ponto': typeof AppAdministrativoGestaoPontoRouteWithChildren
@@ -1034,6 +1068,8 @@ export interface FileRoutesById {
   '/app/estoque/': typeof AppEstoqueIndexRoute
   '/app/oss/': typeof AppOssIndexRoute
   '/app/portaria/': typeof AppPortariaIndexRoute
+  '/api/public/psico/$hash': typeof ApiPublicPsicoHashRoute
+  '/api/public/psico/submit': typeof ApiPublicPsicoSubmitRoute
   '/app/administrativo/gestao-ponto/$cicloId': typeof AppAdministrativoGestaoPontoCicloIdRoute
   '/app/estoque/epi/fichas-mensais': typeof AppEstoqueEpiFichasMensaisRoute
   '/app/modulo/$modulo/hora-extra': typeof AppModuloModuloHoraExtraRoute
@@ -1088,10 +1124,12 @@ export interface FileRouteTypes {
     | '/app/oss'
     | '/app/painel'
     | '/app/pgr'
+    | '/app/psicossocial'
     | '/app/ptes'
     | '/app/roles'
     | '/app/trainings'
     | '/app/users'
+    | '/psico/$token'
     | '/rc/$token'
     | '/app/'
     | '/app/administrativo/gestao-ponto'
@@ -1150,6 +1188,8 @@ export interface FileRouteTypes {
     | '/app/estoque/'
     | '/app/oss/'
     | '/app/portaria/'
+    | '/api/public/psico/$hash'
+    | '/api/public/psico/submit'
     | '/app/administrativo/gestao-ponto/$cicloId'
     | '/app/estoque/epi/fichas-mensais'
     | '/app/modulo/$modulo/hora-extra'
@@ -1199,10 +1239,12 @@ export interface FileRouteTypes {
     | '/app/ncs'
     | '/app/painel'
     | '/app/pgr'
+    | '/app/psicossocial'
     | '/app/ptes'
     | '/app/roles'
     | '/app/trainings'
     | '/app/users'
+    | '/psico/$token'
     | '/rc/$token'
     | '/app'
     | '/app/administrativo/hora-extra-recebida'
@@ -1260,6 +1302,8 @@ export interface FileRouteTypes {
     | '/app/estoque'
     | '/app/oss'
     | '/app/portaria'
+    | '/api/public/psico/$hash'
+    | '/api/public/psico/submit'
     | '/app/administrativo/gestao-ponto/$cicloId'
     | '/app/estoque/epi/fichas-mensais'
     | '/app/modulo/$modulo/hora-extra'
@@ -1312,10 +1356,12 @@ export interface FileRouteTypes {
     | '/app/oss'
     | '/app/painel'
     | '/app/pgr'
+    | '/app/psicossocial'
     | '/app/ptes'
     | '/app/roles'
     | '/app/trainings'
     | '/app/users'
+    | '/psico/$token'
     | '/rc/$token'
     | '/app/'
     | '/app/administrativo/gestao-ponto'
@@ -1374,6 +1420,8 @@ export interface FileRouteTypes {
     | '/app/estoque/'
     | '/app/oss/'
     | '/app/portaria/'
+    | '/api/public/psico/$hash'
+    | '/api/public/psico/submit'
     | '/app/administrativo/gestao-ponto/$cicloId'
     | '/app/estoque/epi/fichas-mensais'
     | '/app/modulo/$modulo/hora-extra'
@@ -1403,7 +1451,10 @@ export interface RootRouteChildren {
   TermosRoute: typeof TermosRoute
   ApiPgrChatRoute: typeof ApiPgrChatRoute
   ApiSigmoChatRoute: typeof ApiSigmoChatRoute
+  PsicoTokenRoute: typeof PsicoTokenRoute
   RcTokenRoute: typeof RcTokenRoute
+  ApiPublicPsicoHashRoute: typeof ApiPublicPsicoHashRoute
+  ApiPublicPsicoSubmitRoute: typeof ApiPublicPsicoSubmitRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1471,6 +1522,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RcTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/psico/$token': {
+      id: '/psico/$token'
+      path: '/psico/$token'
+      fullPath: '/psico/$token'
+      preLoaderRoute: typeof PsicoTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/users': {
       id: '/app/users'
       path: '/users'
@@ -1497,6 +1555,13 @@ declare module '@tanstack/react-router' {
       path: '/ptes'
       fullPath: '/app/ptes'
       preLoaderRoute: typeof AppPtesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/psicossocial': {
+      id: '/app/psicossocial'
+      path: '/psicossocial'
+      fullPath: '/app/psicossocial'
+      preLoaderRoute: typeof AppPsicossocialRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/pgr': {
@@ -2178,6 +2243,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdministrativoGestaoPontoCicloIdRouteImport
       parentRoute: typeof AppAdministrativoGestaoPontoRoute
     }
+    '/api/public/psico/submit': {
+      id: '/api/public/psico/submit'
+      path: '/api/public/psico/submit'
+      fullPath: '/api/public/psico/submit'
+      preLoaderRoute: typeof ApiPublicPsicoSubmitRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/psico/$hash': {
+      id: '/api/public/psico/$hash'
+      path: '/api/public/psico/$hash'
+      fullPath: '/api/public/psico/$hash'
+      preLoaderRoute: typeof ApiPublicPsicoHashRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/sesmt/equipamentos-moveis_/historico/$equipamentoId': {
       id: '/app/sesmt/equipamentos-moveis_/historico/$equipamentoId'
       path: '/sesmt/equipamentos-moveis/historico/$equipamentoId'
@@ -2308,6 +2387,7 @@ interface AppRouteChildren {
   AppOssRoute: typeof AppOssRouteWithChildren
   AppPainelRoute: typeof AppPainelRoute
   AppPgrRoute: typeof AppPgrRoute
+  AppPsicossocialRoute: typeof AppPsicossocialRoute
   AppPtesRoute: typeof AppPtesRoute
   AppRolesRoute: typeof AppRolesRoute
   AppTrainingsRoute: typeof AppTrainingsRoute
@@ -2397,6 +2477,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppOssRoute: AppOssRouteWithChildren,
   AppPainelRoute: AppPainelRoute,
   AppPgrRoute: AppPgrRoute,
+  AppPsicossocialRoute: AppPsicossocialRoute,
   AppPtesRoute: AppPtesRoute,
   AppRolesRoute: AppRolesRoute,
   AppTrainingsRoute: AppTrainingsRoute,
@@ -2478,7 +2559,10 @@ const rootRouteChildren: RootRouteChildren = {
   TermosRoute: TermosRoute,
   ApiPgrChatRoute: ApiPgrChatRoute,
   ApiSigmoChatRoute: ApiSigmoChatRoute,
+  PsicoTokenRoute: PsicoTokenRoute,
   RcTokenRoute: RcTokenRoute,
+  ApiPublicPsicoHashRoute: ApiPublicPsicoHashRoute,
+  ApiPublicPsicoSubmitRoute: ApiPublicPsicoSubmitRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
