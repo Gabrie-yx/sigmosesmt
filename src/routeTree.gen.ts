@@ -18,6 +18,7 @@ import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as RcTokenRouteImport } from './routes/rc.$token'
+import { Route as PsicoTokenRouteImport } from './routes/psico.$token'
 import { Route as AppUsersRouteImport } from './routes/app.users'
 import { Route as AppTrainingsRouteImport } from './routes/app.trainings'
 import { Route as AppRolesRouteImport } from './routes/app.roles'
@@ -167,6 +168,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
 const RcTokenRoute = RcTokenRouteImport.update({
   id: '/rc/$token',
   path: '/rc/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PsicoTokenRoute = PsicoTokenRouteImport.update({
+  id: '/psico/$token',
+  path: '/psico/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppUsersRoute = AppUsersRouteImport.update({
@@ -763,6 +769,7 @@ export interface FileRoutesByFullPath {
   '/app/roles': typeof AppRolesRoute
   '/app/trainings': typeof AppTrainingsRoute
   '/app/users': typeof AppUsersRoute
+  '/psico/$token': typeof PsicoTokenRoute
   '/rc/$token': typeof RcTokenRoute
   '/app/': typeof AppIndexRoute
   '/app/administrativo/gestao-ponto': typeof AppAdministrativoGestaoPontoRouteWithChildren
@@ -876,6 +883,7 @@ export interface FileRoutesByTo {
   '/app/roles': typeof AppRolesRoute
   '/app/trainings': typeof AppTrainingsRoute
   '/app/users': typeof AppUsersRoute
+  '/psico/$token': typeof PsicoTokenRoute
   '/rc/$token': typeof RcTokenRoute
   '/app': typeof AppIndexRoute
   '/app/administrativo/hora-extra-recebida': typeof AppAdministrativoHoraExtraRecebidaRoute
@@ -992,6 +1000,7 @@ export interface FileRoutesById {
   '/app/roles': typeof AppRolesRoute
   '/app/trainings': typeof AppTrainingsRoute
   '/app/users': typeof AppUsersRoute
+  '/psico/$token': typeof PsicoTokenRoute
   '/rc/$token': typeof RcTokenRoute
   '/app/': typeof AppIndexRoute
   '/app/administrativo/gestao-ponto': typeof AppAdministrativoGestaoPontoRouteWithChildren
@@ -1110,6 +1119,7 @@ export interface FileRouteTypes {
     | '/app/roles'
     | '/app/trainings'
     | '/app/users'
+    | '/psico/$token'
     | '/rc/$token'
     | '/app/'
     | '/app/administrativo/gestao-ponto'
@@ -1223,6 +1233,7 @@ export interface FileRouteTypes {
     | '/app/roles'
     | '/app/trainings'
     | '/app/users'
+    | '/psico/$token'
     | '/rc/$token'
     | '/app'
     | '/app/administrativo/hora-extra-recebida'
@@ -1338,6 +1349,7 @@ export interface FileRouteTypes {
     | '/app/roles'
     | '/app/trainings'
     | '/app/users'
+    | '/psico/$token'
     | '/rc/$token'
     | '/app/'
     | '/app/administrativo/gestao-ponto'
@@ -1427,6 +1439,7 @@ export interface RootRouteChildren {
   TermosRoute: typeof TermosRoute
   ApiPgrChatRoute: typeof ApiPgrChatRoute
   ApiSigmoChatRoute: typeof ApiSigmoChatRoute
+  PsicoTokenRoute: typeof PsicoTokenRoute
   RcTokenRoute: typeof RcTokenRoute
   ApiPublicPsicoHashRoute: typeof ApiPublicPsicoHashRoute
   ApiPublicPsicoSubmitRoute: typeof ApiPublicPsicoSubmitRoute
@@ -1495,6 +1508,13 @@ declare module '@tanstack/react-router' {
       path: '/rc/$token'
       fullPath: '/rc/$token'
       preLoaderRoute: typeof RcTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/psico/$token': {
+      id: '/psico/$token'
+      path: '/psico/$token'
+      fullPath: '/psico/$token'
+      preLoaderRoute: typeof PsicoTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/users': {
@@ -2518,6 +2538,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermosRoute: TermosRoute,
   ApiPgrChatRoute: ApiPgrChatRoute,
   ApiSigmoChatRoute: ApiSigmoChatRoute,
+  PsicoTokenRoute: PsicoTokenRoute,
   RcTokenRoute: RcTokenRoute,
   ApiPublicPsicoHashRoute: ApiPublicPsicoHashRoute,
   ApiPublicPsicoSubmitRoute: ApiPublicPsicoSubmitRoute,

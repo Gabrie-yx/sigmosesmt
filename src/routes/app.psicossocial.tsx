@@ -1,0 +1,509 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Brain, Plus, Copy, QrCode, Loader2, AlertTriangle, ShieldCheck, Users, BarChart3, ListChecks, ClipboardList } from "lucide-react";
+import { toast } from "sonner";
+import { DIMENSAO_LABEL, PSICO_ITEMS } from "@/lib/psico-instrument";
+
+export const Route = createFileRoute("/app/psicossocial")({
+  component: PsicossocialPage,
+});
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+const sb: any = supabase;
+
+function PsicossocialPage() {
+  const [tab, setTab] = useState("catalogo");
+
+  return (
+    <div className="h-full flex flex-col bg-slate-50">
+      <header className="px-6 pt-5 pb-3 border-b border-emerald-100 bg-gradient-to-r from-emerald-50 via-white to-teal-50 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-gradient-to-br from-emerald-600 to-teal-700 text-white shadow">
+            <Brain className="h-5 w-5" />
+          </div>
+          <div>
+            <h1 className="text-xl font-black text-slate-900 tracking-tight">Risco Psicossocial (NR-01)</h1>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Portaria MTP 1.419/2024 · ISO 45003 · Instrumento anônimo com blindagem LGPD (n≥5)
+            </p>
+          </div>
+        </div>
+      </header>
+
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        <Tabs value={tab} onValueChange={setTab} className="p-4">
+          <TabsList className="bg-white border border-slate-200 shadow-sm">
+            <TabsTrigger value="catalogo"><ListChecks className="h-4 w-4 mr-1" />Catálogo</TabsTrigger>
+            <TabsTrigger value="campanhas"><Users className="h-4 w-4 mr-1" />Campanhas</TabsTrigger>
+            <TabsTrigger value="diagnostico"><BarChart3 className="h-4 w-4 mr-1" />Diagnóstico</TabsTrigger>
+            <TabsTrigger value="instrumento"><ClipboardList className="h-4 w-4 mr-1" />Instrumento</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="catalogo" className="mt-4"><CatalogoTab /></TabsContent>
+          <TabsContent value="campanhas" className="mt-4"><CampanhasTab /></TabsContent>
+          <TabsContent value="diagnostico" className="mt-4"><DiagnosticoTab /></TabsContent>
+          <TabsContent value="instrumento" className="mt-4"><InstrumentoTab /></TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+}
+
+/* ============ 1. CATÁLOGO ============ */
+function CatalogoTab() {
+  const { data: itens, isLoading } = useQuery({
+    queryKey: ["catalogo-psico"],
+    queryFn: async () => {
+      const { data, error } = await sb
+        .from("catalogo_perigos_psicossociais")
+        .select("*")
+        .eq("ativo", true)
+        .order("dimensao").order("ordem");
+      if (error) throw error;
+      return data as any[];
+    },
+  });
+
+  const grupos = useMemo(() => {
+    const g: Record<string, any[]> = {};
+    (itens ?? []).forEach((i) => { (g[i.dimensao] ||= []).push(i); });
+    return g;
+  }, [itens]);
+
+  if (isLoading) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-emerald-500" /></div>;
+
+  return (
+    <div className="space-y-3">
+      <Card className="p-4 bg-emerald-50 border-emerald-200">
+        <p className="text-sm text-slate-700">
+          Biblioteca-mãe de <b>{itens?.length ?? 0} perigos psicossociais</b> em 8 dimensões (ISO 45003 + Guia MTE 2025). Serve
+          como base para o inventário do PGR de qualquer empresa/CNAE.
+        </p>
+      </Card>
+      {Object.entries(grupos).map(([dim, lista]) => (
+        <Card key={dim} className="p-4">
+          <h3 className="font-bold text-slate-900 mb-3 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            {DIMENSAO_LABEL[dim as keyof typeof DIMENSAO_LABEL] ?? dim}
+            <Badge variant="outline" className="ml-auto">{lista.length} perigos</Badge>
+          </h3>
+          <div className="grid gap-2 md:grid-cols-2">
+            {lista.map((p) => (
+              <div key={p.id} className="rounded-lg border border-slate-200 p-3 bg-slate-50/50">
+                <div className="flex items-start justify-between gap-2 mb-1">
+                  <p className="text-sm font-semibold text-slate-800">{p.perigo}</p>
+                  <Badge variant="secondary" className="shrink-0 text-[10px]">{p.codigo}</Badge>
+                </div>
+                {p.agravo && <p className="text-xs text-rose-600"><b>Agravo:</b> {p.agravo}</p>}
+                {p.controles_sugeridos && <p className="text-xs text-emerald-700 mt-1"><b>Controles:</b> {p.controles_sugeridos}</p>}
+              </div>
+            ))}
+          </div>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+/* ============ 2. CAMPANHAS ============ */
+function CampanhasTab() {
+  const qc = useQueryClient();
+  const [dialog, setDialog] = useState(false);
+  const [titulo, setTitulo] = useState("");
+  const [descricao, setDescricao] = useState("");
+  const [dataInicio, setDataInicio] = useState(new Date().toISOString().slice(0, 10));
+  const [dataFim, setDataFim] = useState(
+    new Date(Date.now() + 21 * 86400_000).toISOString().slice(0, 10),
+  );
+  const [qtdTokens, setQtdTokens] = useState(20);
+  const [gheId, setGheId] = useState<string>("");
+  const [tokensGerados, setTokensGerados] = useState<{ token: string; url: string }[]>([]);
+  const [tokensDialogOpen, setTokensDialogOpen] = useState(false);
+
+  const { data: ghes } = useQuery({
+    queryKey: ["pgr-ghe-lite"],
+    queryFn: async () => {
+      const { data } = await sb.from("pgr_ghe").select("id, numero, setor").eq("ativo", true).order("numero");
+      return (data ?? []) as any[];
+    },
+  });
+
+  const { data: campanhas, isLoading } = useQuery({
+    queryKey: ["psico-campanhas"],
+    queryFn: async () => {
+      const { data, error } = await sb
+        .from("psico_campanhas")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as any[];
+    },
+  });
+
+  const criar = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await sb
+        .from("psico_campanhas")
+        .insert({
+          titulo,
+          descricao,
+          data_inicio: dataInicio,
+          data_fim: dataFim,
+          ghe_ids: gheId ? [gheId] : [],
+          status: "ATIVA",
+          min_respondentes: 5,
+        })
+        .select("id")
+        .single();
+      if (error) throw error;
+      return data as any;
+    },
+    onSuccess: async (c: any) => {
+      toast.success("Campanha criada.");
+      // gera tokens
+      const tokens = Array.from({ length: qtdTokens }, () => randomToken());
+      const rows = await Promise.all(
+        tokens.map(async (raw) => {
+          const hash = await sha256Hex(raw);
+          return {
+            campanha_id: c.id,
+            ghe_id: gheId || null,
+            token_hash: hash,
+            expira_em: new Date(dataFim + "T23:59:59").toISOString(),
+          };
+        }),
+      );
+      const { error } = await sb.from("psico_tokens").insert(rows);
+      if (error) { toast.error("Erro ao gerar tokens: " + error.message); return; }
+
+      const base = window.location.origin;
+      setTokensGerados(tokens.map((t) => ({ token: t, url: `${base}/psico/${t}` })));
+      setTokensDialogOpen(true);
+      setDialog(false);
+      setTitulo(""); setDescricao("");
+      qc.invalidateQueries({ queryKey: ["psico-campanhas"] });
+    },
+    onError: (e: Error) => toast.error("Erro: " + e.message),
+  });
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-bold text-slate-900">Campanhas de coleta</h2>
+          <p className="text-xs text-slate-500">Cada campanha gera links descartáveis (single-use) para os colaboradores.</p>
+        </div>
+        <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={() => setDialog(true)}>
+          <Plus className="h-4 w-4 mr-1" />Nova campanha
+        </Button>
+      </div>
+
+      {isLoading && <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-emerald-500" /></div>}
+
+      <div className="grid gap-3 md:grid-cols-2">
+        {(campanhas ?? []).map((c: any) => {
+          const pct = c.total_tokens > 0 ? Math.round((c.total_respostas / c.total_tokens) * 100) : 0;
+          return (
+            <Card key={c.id} className="p-4 space-y-2">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <h3 className="font-bold text-slate-900">{c.titulo}</h3>
+                  <p className="text-xs text-slate-500">
+                    {new Date(c.data_inicio).toLocaleDateString("pt-BR")} → {new Date(c.data_fim).toLocaleDateString("pt-BR")}
+                  </p>
+                </div>
+                <Badge className={statusColor(c.status)}>{c.status}</Badge>
+              </div>
+              {c.descricao && <p className="text-xs text-slate-600 line-clamp-2">{c.descricao}</p>}
+              <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-100">
+                <span className="text-slate-500">
+                  <b className="text-slate-900">{c.total_respostas}</b> / {c.total_tokens} respostas
+                </span>
+                <span className="font-bold text-emerald-600">{pct}%</span>
+              </div>
+              <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-full bg-emerald-500" style={{ width: `${pct}%` }} />
+              </div>
+            </Card>
+          );
+        })}
+        {campanhas?.length === 0 && (
+          <Card className="p-6 text-center col-span-full">
+            <p className="text-sm text-slate-500">Nenhuma campanha ainda. Crie a primeira.</p>
+          </Card>
+        )}
+      </div>
+
+      {/* Dialog nova campanha */}
+      <Dialog open={dialog} onOpenChange={setDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Nova campanha de avaliação psicossocial</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>Título</Label>
+              <Input value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Ex: Diagnóstico Psicossocial 2026 — GHE 04 (Solda)" />
+            </div>
+            <div>
+              <Label>Descrição (opcional)</Label>
+              <Textarea rows={2} value={descricao} onChange={(e) => setDescricao(e.target.value)} />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label>Início</Label>
+                <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
+              </div>
+              <div>
+                <Label>Fim</Label>
+                <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
+              </div>
+            </div>
+            <div>
+              <Label>GHE alvo (opcional — deixe vazio para geral)</Label>
+              <Select value={gheId} onValueChange={setGheId}>
+                <SelectTrigger><SelectValue placeholder="Todos os GHEs" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">— Sem GHE específico —</SelectItem>
+                  {(ghes ?? []).map((g: any) => (
+                    <SelectItem key={g.id} value={g.id}>GHE {g.numero} — {g.setor}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Quantidade de tokens (colaboradores esperados)</Label>
+              <Input type="number" min={1} max={500} value={qtdTokens} onChange={(e) => setQtdTokens(Number(e.target.value))} />
+              <p className="text-[10px] text-slate-500 mt-1">
+                Cada colaborador recebe 1 link único. Recomenda-se n ≥ 5 por GHE (LGPD).
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialog(false)}>Cancelar</Button>
+            <Button
+              className="bg-emerald-600 hover:bg-emerald-700"
+              disabled={!titulo || criar.isPending}
+              onClick={() => criar.mutate()}
+            >
+              {criar.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
+              Criar e gerar links
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog tokens gerados */}
+      <Dialog open={tokensDialogOpen} onOpenChange={setTokensDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Links gerados — copie e distribua</DialogTitle></DialogHeader>
+          <div className="space-y-2">
+            <Card className="p-3 bg-amber-50 border-amber-200">
+              <p className="text-xs text-slate-700 flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                <span>Esta lista aparece <b>uma única vez</b>. Copie agora — depois do fechamento do modal, os tokens em claro somem (por design de segurança).</span>
+              </p>
+            </Card>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                navigator.clipboard.writeText(tokensGerados.map((t) => t.url).join("\n"));
+                toast.success("Todos os links copiados!");
+              }}
+            >
+              <Copy className="h-4 w-4 mr-1" /> Copiar TODOS os links
+            </Button>
+            <div className="space-y-1">
+              {tokensGerados.map((t, i) => (
+                <div key={i} className="flex items-center gap-2 p-2 rounded bg-slate-50 text-xs">
+                  <span className="text-slate-400 w-8">#{i + 1}</span>
+                  <code className="flex-1 truncate text-slate-700">{t.url}</code>
+                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => { navigator.clipboard.writeText(t.url); toast.success("Copiado"); }}>
+                    <Copy className="h-3 w-3" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+/* ============ 3. DIAGNÓSTICO ============ */
+function DiagnosticoTab() {
+  const [campanhaId, setCampanhaId] = useState<string>("");
+
+  const { data: campanhas } = useQuery({
+    queryKey: ["psico-campanhas-diag"],
+    queryFn: async () => {
+      const { data } = await sb.from("psico_campanhas").select("id, titulo, min_respondentes").order("created_at", { ascending: false });
+      return (data ?? []) as any[];
+    },
+  });
+
+  const { data: agregado } = useQuery({
+    queryKey: ["psico-agregado", campanhaId],
+    queryFn: async () => {
+      if (!campanhaId) return [];
+      const { data } = await sb
+        .from("v_psico_agregado_ghe_dim")
+        .select("*")
+        .eq("campanha_id", campanhaId);
+      return (data ?? []) as any[];
+    },
+    enabled: !!campanhaId,
+  });
+
+  return (
+    <div className="space-y-3">
+      <Card className="p-4 flex items-center gap-3">
+        <ShieldCheck className="h-5 w-5 text-emerald-600 shrink-0" />
+        <p className="text-xs text-slate-600">
+          Todos os recortes com <b>menos de 5 respondentes</b> são <b>automaticamente suprimidos</b> (mostrados como "🔒") para
+          preservar o anonimato — conforme LGPD e ISO 45003.
+        </p>
+      </Card>
+
+      <div className="max-w-md">
+        <Label>Selecione a campanha</Label>
+        <Select value={campanhaId} onValueChange={setCampanhaId}>
+          <SelectTrigger><SelectValue placeholder="Escolha uma campanha…" /></SelectTrigger>
+          <SelectContent>
+            {(campanhas ?? []).map((c: any) => (
+              <SelectItem key={c.id} value={c.id}>{c.titulo}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {campanhaId && agregado && agregado.length === 0 && (
+        <Card className="p-6 text-center">
+          <p className="text-sm text-slate-500">Ainda não há respostas suficientes para gerar diagnóstico.</p>
+        </Card>
+      )}
+
+      {campanhaId && (agregado ?? []).length > 0 && (
+        <MatrizDiagnostico linhas={agregado ?? []} />
+      )}
+    </div>
+  );
+}
+
+function MatrizDiagnostico({ linhas }: { linhas: any[] }) {
+  // agrupa por GHE × dimensão
+  const dimensoes = Object.keys(DIMENSAO_LABEL);
+  const ghes = Array.from(new Set(linhas.map((l) => l.ghe_id))).filter(Boolean);
+
+  return (
+    <Card className="p-4 overflow-x-auto">
+      <h3 className="font-bold text-slate-900 mb-3">Matriz agregada por GHE × Dimensão</h3>
+      <table className="w-full text-xs">
+        <thead>
+          <tr>
+            <th className="text-left p-2 border-b">GHE</th>
+            {dimensoes.map((d) => (
+              <th key={d} className="text-center p-2 border-b text-[10px]">{DIMENSAO_LABEL[d as keyof typeof DIMENSAO_LABEL]}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {ghes.map((ghe) => (
+            <tr key={ghe as string}>
+              <td className="p-2 border-b text-slate-700 font-semibold">{(ghe as string).slice(0, 8)}…</td>
+              {dimensoes.map((d) => {
+                const cell = linhas.find((l) => l.ghe_id === ghe && l.dimensao === d);
+                if (!cell) return <td key={d} className="p-2 border-b text-center text-slate-300">—</td>;
+                if (cell.suprimido)
+                  return <td key={d} className="p-2 border-b text-center text-slate-400" title="Menos de 5 respondentes (LGPD)">🔒</td>;
+                const cor = corPorMedia(Number(cell.media));
+                return (
+                  <td key={d} className={`p-2 border-b text-center font-bold text-white ${cor}`}>
+                    {Number(cell.media).toFixed(1)}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </Card>
+  );
+}
+
+/* ============ 4. INSTRUMENTO (preview do questionário) ============ */
+function InstrumentoTab() {
+  const grupos = useMemo(() => {
+    const g: Record<string, typeof PSICO_ITEMS> = {};
+    PSICO_ITEMS.forEach((i) => { (g[i.dimensao] ||= []).push(i); });
+    return g;
+  }, []);
+
+  return (
+    <div className="space-y-3">
+      <Card className="p-4 bg-slate-50">
+        <h2 className="font-bold text-slate-900 mb-2">Instrumento HSE-IT BR ({PSICO_ITEMS.length} itens)</h2>
+        <p className="text-xs text-slate-600">
+          Adaptação brasileira do HSE Indicator Tool (Health &amp; Safety Executive/UK, uso livre) + itens ISO 45003
+          para assédio, violência e interface trabalho-vida. Escala Likert 1-5.
+        </p>
+      </Card>
+      {Object.entries(grupos).map(([dim, itens]) => (
+        <Card key={dim} className="p-4">
+          <h3 className="font-bold text-slate-900 mb-2">{DIMENSAO_LABEL[dim as keyof typeof DIMENSAO_LABEL]}</h3>
+          <ul className="space-y-2 text-sm text-slate-700">
+            {itens.map((it) => (
+              <li key={it.codigo} className="flex items-start gap-2">
+                <Badge variant="outline" className="text-[10px] shrink-0">{it.codigo}</Badge>
+                <span>{it.texto}</span>
+                {it.invertido && <span className="text-[9px] text-slate-400 shrink-0">(inv.)</span>}
+              </li>
+            ))}
+          </ul>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+/* ============ Helpers ============ */
+
+function statusColor(s: string) {
+  switch (s) {
+    case "ATIVA": return "bg-emerald-100 text-emerald-800 border-emerald-200";
+    case "ENCERRADA": return "bg-slate-100 text-slate-700 border-slate-200";
+    case "CANCELADA": return "bg-rose-100 text-rose-700 border-rose-200";
+    default: return "bg-amber-100 text-amber-800 border-amber-200";
+  }
+}
+
+function corPorMedia(m: number) {
+  if (m < 2) return "bg-emerald-500";
+  if (m < 2.75) return "bg-lime-500";
+  if (m < 3.5) return "bg-amber-500";
+  if (m < 4.25) return "bg-orange-500";
+  return "bg-rose-600";
+}
+
+function randomToken() {
+  const arr = new Uint8Array(24);
+  crypto.getRandomValues(arr);
+  return Array.from(arr).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function sha256Hex(s: string) {
+  const buf = new TextEncoder().encode(s);
+  const hash = await crypto.subtle.digest("SHA-256", buf);
+  return Array.from(new Uint8Array(hash)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
