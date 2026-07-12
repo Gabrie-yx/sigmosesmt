@@ -69,13 +69,12 @@ export async function renderOverlay(input: RenderOverlayInput): Promise<Blob> {
   const drawField = (value: string | undefined, f: OverlayField) => {
     if (!value) return;
     const page = pdf.getPage(f.page ?? 0);
-    const mediaX = page.getMediaBox().x ?? 0;
     const size = f.size ?? 9;
     const chosen = f.bold ? fontBold : font;
     const t = truncateToWidth(String(value), chosen, size, f.maxW);
     if (f.clear) {
       page.drawRectangle({
-        x: (f.clear.x ?? f.x) + mediaX,
+        x: (f.clear.x ?? f.x),
         y: H - (f.clear.top ?? f.top) - f.clear.height + 2,
         width: f.clear.width,
         height: f.clear.height,
@@ -83,7 +82,7 @@ export async function renderOverlay(input: RenderOverlayInput): Promise<Blob> {
       });
     }
     page.drawText(t, {
-      x: f.x + mediaX,
+      x: f.x,
       y: H - f.top + (f.baselineOffset ?? 4.2),
       size,
       font: chosen,
@@ -99,14 +98,13 @@ export async function renderOverlay(input: RenderOverlayInput): Promise<Blob> {
     const raw = input.checkboxes?.[key];
     if (!raw) continue;
     const page = pdf.getPage(cfg.page ?? 0);
-    const mediaX = page.getMediaBox().x ?? 0;
     const mark = raw === true ? "X" : String(raw).toUpperCase();
     const size = cfg.size ?? (input.codigo === "FOR-SEG-04" ? (mark.length > 1 ? 3.1 : 5.8) : (mark.length > 1 ? 4.2 : 5.2));
     const w = fontBold.widthOfTextAtSize(mark, size);
-    const cy = input.codigo === "FOR-SEG-04" ? cfg.cy - 8.4 : cfg.cy;
+    const cy = cfg.cy;
     page.drawText(mark, {
-      x: cfg.cx + mediaX - w / 2,
-      y: H - cy - size / 2 + 0.1,
+      x: cfg.cx - w / 2,
+      y: H - cy - size / 2 + size * 0.3,
       size,
       font: fontBold,
       color: black,
