@@ -222,6 +222,9 @@ function PsicoPublicPage() {
               Base legal (LGPD): cumprimento de obrigação regulatória (NR-01, Portaria MTP 1.419/2024) e seu consentimento.
               Dados individuais nunca serão vistos por RH ou liderança.
             </p>
+            <p className="text-xs text-[#7f1d3a] font-semibold pt-1">
+              São {totalItens} perguntas rápidas · leva ~8 a 12 minutos. Se fechar a aba, suas respostas ficam salvas nesse celular até você enviar.
+            </p>
           </div>
           <div className="flex items-start gap-2 rounded-lg bg-[#fdf2f8] border border-rose-100 p-3 mt-4">
             <Checkbox
