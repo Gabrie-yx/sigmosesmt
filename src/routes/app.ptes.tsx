@@ -808,7 +808,9 @@ function PtesPage() {
                 />
               )}
             </div>
+          </div>
 
+          <div hidden={activeStep !== "equipe"} className="space-y-6">
             <div className="p-6 rounded-2xl bg-gradient-to-br from-black/40 to-rose-950/30 border border-white/10 shadow-[inset_0_1px_0_rgba(255,230,235,0.05)] space-y-5">
               <div>
                 <Label className="text-[10px] font-black text-rose-100 uppercase flex items-center gap-2 mb-3">
