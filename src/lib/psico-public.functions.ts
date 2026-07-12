@@ -1,9 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createHash } from "crypto";
-
-function sha256(s: string) {
-  return createHash("sha256").update(s).digest("hex");
-}
 
 export type PsicoValidateResult =
   | {
@@ -25,6 +20,8 @@ export const validatePsicoToken = createServerFn({ method: "POST" })
     return { token: input.token };
   })
   .handler(async ({ data }): Promise<PsicoValidateResult> => {
+    const { createHash } = await import("crypto");
+    const sha256 = (s: string) => createHash("sha256").update(s).digest("hex");
     const hash = sha256(data.token);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 

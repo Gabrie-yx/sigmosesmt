@@ -131,6 +131,11 @@ function PsicoPublicPage() {
   const respondidos = Object.keys(respostas).length;
   const podeEnviar = respondidos === totalItens;
 
+  function iniciarQuestionario() {
+    setAceitou(true);
+    setStep("form");
+  }
+
   async function enviar() {
     setState("sending");
     const body = {
@@ -229,7 +234,9 @@ function PsicoPublicPage() {
               da checkbox em telas de celular. */}
           <button
             type="button"
-            onClick={() => setAceitou((v) => !v)}
+            role="checkbox"
+            aria-checked={aceitou}
+            onClick={() => setAceitou(true)}
             className="w-full flex items-start gap-3 rounded-lg bg-[#fdf2f8] border border-rose-200 p-3 mt-4 text-left hover:bg-[#fce7ef] transition"
           >
             <span
@@ -246,11 +253,10 @@ function PsicoPublicPage() {
           </button>
           <button
             type="button"
-            disabled={!aceitou}
-            onClick={() => setStep("form")}
-            className="mt-4 w-full h-11 rounded-lg font-semibold text-white bg-gradient-to-r from-[#7f1d3a] to-[#e11d48] shadow-sm hover:opacity-95 transition disabled:opacity-40 disabled:cursor-not-allowed"
+            onClick={iniciarQuestionario}
+            className="mt-4 w-full h-11 rounded-lg font-semibold text-white bg-gradient-to-r from-[#7f1d3a] to-[#e11d48] shadow-sm hover:opacity-95 transition"
           >
-            Começar
+            Concordo e começar
           </button>
         </Panel>
       </FullScreen>
