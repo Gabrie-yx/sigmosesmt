@@ -190,7 +190,7 @@ function PtesPage() {
       (
         await supabase
           .from("employees")
-          .select("id,nome,matricula,company_id,role_id,nrs,status,data_aso")
+          .select("id,nome,matricula,company_id,role_id,nrs,status,data_aso,assinatura_url")
           .eq("status", "ATIVO")
           .order("nome")
       ).data ?? [],

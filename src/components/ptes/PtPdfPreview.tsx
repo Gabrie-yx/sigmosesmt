@@ -27,7 +27,9 @@ function isWeekend(date?: string | null) {
 
 export function PtPdfPreview({ open, onClose, pt, apr, casco, company, employees = [] }: Props) {
   const [assinaturaTst, setAssinaturaTst] = useState<string | null>(null);
-  const [padOpen, setPadOpen] = useState(false);
+  const [padOpen, setPadOpen] = useState<null | "tst" | "encarregado" | "gerente">(null);
+  const [assinaturaEnc, setAssinaturaEnc] = useState<string | null>(null);
+  const [assinaturaGer, setAssinaturaGer] = useState<string | null>(null);
   const [pages, setPages] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -102,10 +104,10 @@ export function PtPdfPreview({ open, onClose, pt, apr, casco, company, employees
       assinatura_encarregado_nome: dados.assinatura_encarregado_nome ?? "",
       assinatura_gerente_nome: dados.assinatura_gerente_nome ?? "",
       assinatura_tst_data_url: assinaturaTst,
-      assinatura_encarregado_data_url: sigOf(dados.assinatura_encarregado_nome),
-      assinatura_gerente_data_url: sigOf(dados.assinatura_gerente_nome),
+      assinatura_encarregado_data_url: assinaturaEnc ?? sigOf(dados.assinatura_encarregado_nome),
+      assinatura_gerente_data_url: assinaturaGer ?? sigOf(dados.assinatura_gerente_nome),
     };
-  }, [pt, apr, casco, company, employees, assinaturaTst, empSigs]);
+  }, [pt, apr, casco, company, employees, assinaturaTst, assinaturaEnc, assinaturaGer, empSigs]);
 
   // Pré-carrega assinaturas oficiais dos employees envolvidos (galeria/ficha)
   useEffect(() => {
@@ -190,7 +192,13 @@ export function PtPdfPreview({ open, onClose, pt, apr, casco, company, employees
               <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">PDF homologado preenchido com dados da PT</div>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Button onClick={() => setPadOpen(true)} size="sm" variant="outline">
+              <Button onClick={() => setPadOpen("encarregado")} size="sm" variant="outline">
+                <PenLine className="h-4 w-4 mr-1" /> {assinaturaEnc ? "Refazer Encarregado" : "Assinar Encarregado"}
+              </Button>
+              <Button onClick={() => setPadOpen("gerente")} size="sm" variant="outline">
+                <PenLine className="h-4 w-4 mr-1" /> {assinaturaGer ? "Refazer Gerente" : "Assinar Gerente"}
+              </Button>
+              <Button onClick={() => setPadOpen("tst")} size="sm" variant="outline">
                 <PenLine className="h-4 w-4 mr-1" /> {assinaturaTst ? "Refazer assinatura" : "Assinar (TST)"}
               </Button>
               <Button onClick={handleDownload} size="sm" variant="outline" disabled={loading || !blob}>
@@ -223,10 +231,15 @@ export function PtPdfPreview({ open, onClose, pt, apr, casco, company, employees
         </DialogContent>
       </Dialog>
       <SignaturePadDialog
-        open={padOpen}
-        onClose={() => setPadOpen(false)}
-        onConfirm={(r) => { setAssinaturaTst(r.dataUrl); setPadOpen(false); }}
-        title="Assinatura do TST"
+        open={!!padOpen}
+        onClose={() => setPadOpen(null)}
+        onConfirm={(r) => {
+          if (padOpen === "tst") setAssinaturaTst(r.dataUrl);
+          else if (padOpen === "encarregado") setAssinaturaEnc(r.dataUrl);
+          else if (padOpen === "gerente") setAssinaturaGer(r.dataUrl);
+          setPadOpen(null);
+        }}
+        title={padOpen === "encarregado" ? "Assinatura do Encarregado" : padOpen === "gerente" ? "Assinatura do Gerente" : "Assinatura do TST"}
       />
     </>
   );
