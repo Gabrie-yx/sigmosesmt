@@ -476,17 +476,20 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
           </div>
         </div>
         </div>
-        <div className="mt-6 pt-5 border-t border-rose-100/10 flex flex-wrap items-center justify-between gap-3">
-          {/* Navegação de seções */}
-          <div className="inline-flex shrink-0 items-center gap-3 rounded-2xl border border-rose-200/15 bg-gradient-to-b from-rose-950/40 to-rose-950/10 px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_6px_18px_-8px_rgba(0,0,0,0.6)]">
+        <div className="mt-6 pt-5 border-t border-rose-100/10 flex flex-wrap items-center gap-x-4 gap-y-2 justify-between">
+          {/* Navegação de seções (mesmo idioma das pills) */}
+          <div className="inline-flex shrink-0 items-center gap-2">
             <QuickTabBtn icon={HeartPulse} label="ASO" tone={asoTone} active={tab === "health"} onClick={() => { setTab("health"); setHealthSub("exams"); }} />
             <QuickTabBtn icon={Award} label="NR" tone={nrTone} active={tab === "nrs"} onClick={() => setTab("nrs")} />
             <QuickTabBtn icon={FolderOpen} label="Docs" tone={docsTone} active={tab === "docs"} onClick={() => setTab("docs")} />
             <QuickTabBtn icon={HardHat} label="EPI" tone="slate" active={tab === "epi"} onClick={() => setTab("epi")} />
           </div>
 
+          {/* Divisor sutil quando cabem na mesma linha */}
+          <div className="hidden lg:block h-6 w-px bg-white/10" aria-hidden />
+
           {/* Ações documentais */}
-          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 ml-auto justify-end">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 justify-end">
             <Link to="/app/audit" title="Auditar" className="glass-pill">
               <ClipboardCheck className="h-4 w-4" /> Auditar
             </Link>
