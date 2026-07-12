@@ -1,6 +1,7 @@
 import { PDFDocument, StandardFonts, rgb, type PDFFont } from "pdf-lib";
 import { baixarTemplateAtivoPorCodigo } from "@/lib/templates-documentos.functions";
 import { OVERLAY_MAPS, type OverlayField } from "@/lib/pdf-overlay-maps";
+import pteOfficialAsset from "@/assets/permissao-trabalho-especial-pte.pdf.asset.json";
 
 /**
  * Motor genérico de overlay para templates homologados.
@@ -20,6 +21,14 @@ const _cache = new Map<string, Uint8Array>();
 export async function loadTemplateBytes(codigo: string): Promise<Uint8Array> {
   const hit = _cache.get(codigo);
   if (hit) return hit;
+  if (codigo === "FOR-SEG-04") {
+    const assetRes = await fetch(pteOfficialAsset.url);
+    if (assetRes.ok) {
+      const bytes = new Uint8Array(await assetRes.arrayBuffer());
+      _cache.set(codigo, bytes);
+      return bytes;
+    }
+  }
   const res = await baixarTemplateAtivoPorCodigo({ data: { codigo } });
   const bin = atob(res.base64);
   const bytes = new Uint8Array(bin.length);
