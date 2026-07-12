@@ -35,7 +35,7 @@ export function PtPdfPreview({ open, onClose, pt, apr, casco, company, employees
   const [pages, setPages] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const blobRef = useRef<Blob | null>(null);
+  const [blob, setBlob] = useState<Blob | null>(null);
   const tokenRef = useRef(0);
 
   const params = useMemo<PtePdfParams | null>(() => {
@@ -81,13 +81,13 @@ export function PtPdfPreview({ open, onClose, pt, apr, casco, company, employees
     setLoading(true);
     setError(null);
     setPages([]);
-    blobRef.current = null;
+    setBlob(null);
     (async () => {
       try {
-        const blob = await gerarPtePdf(params);
+        const b = await gerarPtePdf(params);
         if (tokenRef.current !== token) return;
-        blobRef.current = blob;
-        const buf = await blob.arrayBuffer();
+        setBlob(b);
+        const buf = await b.arrayBuffer();
         await renderPdfToImagePagesProgressive(buf, (page) => {
           if (tokenRef.current !== token) return;
           setPages((prev) => [...prev, page]);
@@ -104,7 +104,7 @@ export function PtPdfPreview({ open, onClose, pt, apr, casco, company, employees
   if (!pt) return null;
 
   const handleDownload = () => {
-    const blob = blobRef.current; if (!blob) return;
+    if (!blob) return;
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url; a.download = `${pt.numero || "PTE"}.pdf`;
@@ -113,7 +113,7 @@ export function PtPdfPreview({ open, onClose, pt, apr, casco, company, employees
   };
 
   const handlePrint = async () => {
-    const blob = blobRef.current; if (!blob) return;
+    if (!blob) return;
     await printPdf(blob, `${pt.numero || "PTE"}.pdf`);
   };
 
@@ -129,16 +129,16 @@ export function PtPdfPreview({ open, onClose, pt, apr, casco, company, employees
           <div className="border-b border-border px-4 py-3 flex flex-wrap items-center justify-between gap-3 bg-card">
             <div>
               <div className="text-xs font-black uppercase tracking-widest text-foreground">FOR-SEG-04 — {pt.numero}</div>
-              <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">PDF homologado com campos preenchidos</div>
+              <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">PDF homologado preenchido com dados da PT</div>
             </div>
             <div className="flex flex-wrap gap-2">
               <Button onClick={() => setPadOpen(true)} size="sm" variant="outline">
                 <PenLine className="h-4 w-4 mr-1" /> {assinaturaTst ? "Refazer assinatura" : "Assinar (TST)"}
               </Button>
-              <Button onClick={handleDownload} size="sm" variant="outline" disabled={loading || !blobRef.current}>
+              <Button onClick={handleDownload} size="sm" variant="outline" disabled={loading || !blob}>
                 <Download className="h-4 w-4 mr-1" /> Baixar PDF
               </Button>
-              <Button onClick={handlePrint} size="sm" disabled={loading || !blobRef.current}>
+              <Button onClick={handlePrint} size="sm" disabled={loading || !blob}>
                 <Printer className="h-4 w-4 mr-1" /> Imprimir
               </Button>
               <Button onClick={onClose} size="sm" variant="outline" aria-label="Fechar">
@@ -173,55 +173,3 @@ export function PtPdfPreview({ open, onClose, pt, apr, casco, company, employees
     </>
   );
 }
-
-const EMPTY = "\u00a0";
-
-const pteDocumentCss = `
-  .pte-document-root { width: 210mm; margin: 0 auto; background: #e7e5e4; color: #111827; font-family: Arial, Helvetica, sans-serif; }
-  .pte-sheet { width: 210mm; min-height: 297mm; margin: 0 auto 16px; padding: 7mm; background: #fff; box-shadow: 0 18px 45px rgba(0,0,0,.18); box-sizing: border-box; }
-  .pte-sheet * { box-sizing: border-box; }
-  .pte-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-  .pte-table td, .pte-table th { border: 1px solid #111827; padding: 2.2mm 2.4mm; vertical-align: middle; font-size: 8.2pt; line-height: 1.18; color: #111827; }
-  .pte-table th { font-weight: 700; text-transform: uppercase; background: #f3f4f6; }
-  .pte-title { font-size: 12.8pt; font-weight: 800; text-align: center; letter-spacing: .02em; }
-  .pte-subtitle { font-size: 7.2pt; text-align: center; font-weight: 700; text-transform: uppercase; }
-  .pte-logo { font-size: 14pt; font-weight: 900; text-align: center; letter-spacing: .08em; }
-  .pte-label { display: block; margin-bottom: 1.2mm; font-size: 6.5pt; font-weight: 800; text-transform: uppercase; color: #374151; }
-  .pte-value { display: block; min-height: 11pt; font-size: 8.4pt; font-weight: 700; text-transform: uppercase; overflow-wrap: anywhere; }
-  .pte-value.normal { text-transform: none; font-weight: 600; }
-  .pte-small { font-size: 6.8pt; line-height: 1.12; }
-  .pte-section { margin-top: 2.5mm; }
-  .pte-section-title { padding: 1.6mm 2.2mm; border: 1px solid #111827; border-bottom: 0; background: #e5e7eb; font-size: 7.4pt; font-weight: 900; text-transform: uppercase; letter-spacing: .03em; }
-  .pte-check-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.1mm 3mm; }
-  .pte-check { display: inline-flex; align-items: center; gap: 1.4mm; min-height: 12pt; font-size: 7.4pt; font-weight: 700; text-transform: uppercase; }
-  .pte-box { width: 11pt; height: 11pt; border: 1.3px solid #111827; display: inline-flex; align-items: center; justify-content: center; font-size: 9pt; font-weight: 900; line-height: 1; flex: 0 0 auto; }
-  .pte-line { min-height: 18pt; border-bottom: 1px solid #111827; padding-top: 2mm; font-size: 8pt; font-weight: 700; overflow-wrap: anywhere; }
-  .pte-signature-cell { height: 24mm; vertical-align: bottom !important; text-align: center; }
-  .pte-signature-img { max-width: 46mm; max-height: 14mm; display: block; margin: 0 auto 1mm; object-fit: contain; }
-  .pte-signature-line { border-top: 1px solid #111827; padding-top: 1mm; font-size: 6.8pt; font-weight: 800; text-transform: uppercase; }
-  .pte-muted { color: #4b5563; font-weight: 600; }
-  .pte-page-break { break-before: page; page-break-before: always; }
-  @media print {
-    .pte-document-root { background: #fff !important; }
-    .pte-sheet { margin: 0 !important; box-shadow: none !important; break-after: page; page-break-after: always; }
-    .pte-sheet:last-child { break-after: auto; page-break-after: auto; }
-  }
-`;
-
-const printCss = `
-  @page { size: A4; margin: 0; }
-  .sigmo-print-html-root { width: 210mm !important; padding: 0 !important; }
-  .pte-document-root { background: #fff !important; }
-  .pte-sheet { margin: 0 !important; box-shadow: none !important; break-after: page; page-break-after: always; }
-  .pte-sheet:last-child { break-after: auto; page-break-after: auto; }
-`;
-
-function mark(checked: boolean) {
-  return checked ? "X" : "";
-}
-
-function valueOrBlank(value: unknown) {
-  const text = value == null ? "" : String(value).trim();
-  return text || EMPTY;
-}
-
