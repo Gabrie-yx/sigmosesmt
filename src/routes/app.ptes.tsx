@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Files, Printer, Pencil, Trash2, X, HardHat, Clock, Link2, AlertTriangle, FileSearch, Users, Eye, ShieldCheck, UserCheck } from "lucide-react";
+import { FileText, Files, Printer, Pencil, Trash2, X, HardHat, Clock, Link2, AlertTriangle, FileSearch, Users, Eye, ShieldCheck, UserCheck, Building2 } from "lucide-react";
 import { CheckCircle2, ClipboardList, Flame, Zap, Wind, Layers, IdCard, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { PTE_RISCOS, PT_TIPOS } from "@/lib/constants";
