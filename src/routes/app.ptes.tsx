@@ -539,6 +539,12 @@ function PtesPage() {
     precaucoes: Object.values(f.precaucao_quente ?? {}).some(Boolean) ||
       Object.values(f.precaucao_altura ?? {}).some(Boolean) ||
       Object.values(f.precaucao_eletrica ?? {}).some(Boolean),
+    cargas_pintura: Object.values(f.precaucao_carga ?? {}).some(Boolean) ||
+      Object.values(f.precaucao_pintura ?? {}).some(Boolean),
+    epis: Object.values(f.epis_col1 ?? {}).some(Boolean) ||
+      Object.values(f.epis_col2 ?? {}).some(Boolean) ||
+      Object.values(f.outros_epi ?? {}).some(Boolean),
+    assinaturas: !!(f.assinatura_encarregado_nome?.trim() && f.assinatura_gerente_nome?.trim()),
     pet: f.tipo_pt !== "PET" || !!(f.plano_equipe_resgate && f.plano_equipamentos && f.plano_hospital_referencia && f.plano_tempo_resposta_min),
   }), [f, linkedAprId]);
   const STEPS = [
