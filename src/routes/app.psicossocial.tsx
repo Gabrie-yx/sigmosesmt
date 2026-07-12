@@ -270,10 +270,10 @@ function CampanhasTab() {
             </div>
             <div>
               <Label>GHE alvo (opcional — deixe vazio para geral)</Label>
-              <Select value={gheId} onValueChange={setGheId}>
+              <Select value={gheId || "__none__"} onValueChange={(v) => setGheId(v === "__none__" ? "" : v)}>
                 <SelectTrigger><SelectValue placeholder="Todos os GHEs" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">— Sem GHE específico —</SelectItem>
+                  <SelectItem value="__none__">— Sem GHE específico —</SelectItem>
                   {(ghes ?? []).map((g: any) => (
                     <SelectItem key={g.id} value={g.id}>GHE {g.numero} — {g.setor}</SelectItem>
                   ))}
