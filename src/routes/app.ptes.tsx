@@ -558,10 +558,14 @@ function PtesPage() {
   function PdfCheckboxGroup({ title, group, items }: { title: string; group: string; items: readonly PteOfficialItem[] }) {
     return (
       <div className="space-y-2">
-        <Label className="text-[10px] font-black text-rose-200/70 uppercase block">{title}</Label>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
+        <Label className="text-xs font-black text-amber-200/90 uppercase tracking-wider block">{title}</Label>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           {items.map((o) => (
-            <label key={o.key} className="flex items-start gap-2 text-[10px] leading-snug font-bold uppercase text-rose-100 bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 cursor-pointer hover:border-rose-500/40">
+            <label key={o.key} className={`flex items-start gap-2 text-[11px] leading-snug font-bold normal-case rounded-xl px-3 py-2 cursor-pointer transition-all border ${
+              f[group]?.[o.key]
+                ? "bg-lime-500/15 text-lime-50 border-lime-400/50 shadow-[0_0_12px_-6px_rgba(163,230,53,0.6)]"
+                : "bg-white/[0.04] text-slate-100 border-white/10 hover:border-amber-400/40 hover:bg-white/[0.07]"
+            }`}>
               <Checkbox
                 checked={!!f[group]?.[o.key]}
                 onCheckedChange={(v) => setPdfFlag(group, o.key, !!v)}
@@ -578,10 +582,10 @@ function PtesPage() {
   function PdfAnswerGroup({ title, group, items }: { title: string; group: string; items: readonly PteOfficialItem[] }) {
     return (
       <div className="space-y-2">
-        <Label className="text-[10px] font-black text-rose-200/70 uppercase block">{title}</Label>
-        <div className="grid grid-cols-1 gap-1.5">
+        <Label className="text-xs font-black text-amber-200/90 uppercase tracking-wider block">{title}</Label>
+        <div className="grid grid-cols-1 gap-2">
           {items.map((o) => (
-            <div key={o.key} className="grid grid-cols-[1fr_auto] gap-2 items-center text-[10px] leading-snug font-bold uppercase text-rose-100 bg-black/40 border border-white/10 rounded-lg px-2 py-1.5">
+            <div key={o.key} className="grid grid-cols-[1fr_auto] gap-3 items-center text-[11px] leading-snug font-bold normal-case text-slate-100 bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2">
               <span>{o.label}</span>
               <div className="flex gap-1">
                 {(["S", "N", "NA"] as const).map((v) => (
@@ -589,10 +593,14 @@ function PtesPage() {
                     key={v}
                     type="button"
                     onClick={() => setPdfAnswer(group, o.key, v)}
-                    className={`h-7 w-8 rounded border text-[10px] font-black transition-all ${
+                    className={`h-8 min-w-[36px] px-2 rounded-lg border text-[11px] font-black tracking-wider transition-all ${
                       f[group]?.[o.key] === v
-                        ? "bg-rose-600/90 text-rose-50 border-rose-300/60"
-                        : "bg-black/30 text-rose-200/70 border-white/10 hover:bg-black/50"
+                        ? v === "S"
+                          ? "bg-lime-500 text-slate-900 border-lime-300 shadow-[0_0_12px_-4px_rgba(163,230,53,0.9)]"
+                          : v === "N"
+                            ? "bg-rose-500 text-white border-rose-300 shadow-[0_0_12px_-4px_rgba(244,63,94,0.8)]"
+                            : "bg-amber-400 text-slate-900 border-amber-200 shadow-[0_0_12px_-4px_rgba(251,191,36,0.8)]"
+                        : "bg-white/5 text-slate-300 border-white/10 hover:bg-white/10 hover:text-slate-100"
                     }`}
                   >
                     {v}
