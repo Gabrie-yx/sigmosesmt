@@ -558,13 +558,13 @@ function PtesPage() {
   function PdfCheckboxGroup({ title, group, items }: { title: string; group: string; items: readonly PteOfficialItem[] }) {
     return (
       <div className="space-y-2">
-        <Label className="text-xs font-black text-amber-200/90 uppercase tracking-wider block">{title}</Label>
+        <Label className="text-xs font-black text-amber-50/85/70 uppercase tracking-wider block">{title}</Label>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           {items.map((o) => (
             <label key={o.key} className={`flex items-start gap-2 text-[11px] leading-snug font-bold normal-case rounded-xl px-3 py-2 cursor-pointer transition-all border ${
               f[group]?.[o.key]
                 ? "bg-lime-500/15 text-lime-50 border-lime-400/50 shadow-[0_0_12px_-6px_rgba(163,230,53,0.6)]"
-                : "bg-white/[0.04] text-slate-100 border-white/10 hover:border-amber-400/40 hover:bg-white/[0.07]"
+                : "bg-white/[0.04] text-slate-100 border-white/10 hover:border-amber-100/60/20 hover:bg-white/[0.07]"
             }`}>
               <Checkbox
                 checked={!!f[group]?.[o.key]}
@@ -582,7 +582,7 @@ function PtesPage() {
   function PdfAnswerGroup({ title, group, items }: { title: string; group: string; items: readonly PteOfficialItem[] }) {
     return (
       <div className="space-y-2">
-        <Label className="text-xs font-black text-amber-200/90 uppercase tracking-wider block">{title}</Label>
+        <Label className="text-xs font-black text-amber-50/85/70 uppercase tracking-wider block">{title}</Label>
         <div className="grid grid-cols-1 gap-2">
           {items.map((o) => (
             <div key={o.key} className="grid grid-cols-[1fr_auto] gap-3 items-center text-[11px] leading-snug font-bold normal-case text-slate-100 bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2">
@@ -599,7 +599,7 @@ function PtesPage() {
                           ? "bg-lime-500 text-slate-900 border-lime-300 shadow-[0_0_12px_-4px_rgba(163,230,53,0.9)]"
                           : v === "N"
                             ? "bg-rose-500 text-white border-rose-300 shadow-[0_0_12px_-4px_rgba(244,63,94,0.8)]"
-                            : "bg-amber-400 text-slate-900 border-amber-200 shadow-[0_0_12px_-4px_rgba(251,191,36,0.8)]"
+                            : "bg-amber-300/80 text-slate-900 border-amber-100/60 shadow-[0_0_12px_-4px_rgba(251,191,36,0.8)]"
                         : "bg-white/5 text-slate-300 border-white/10 hover:bg-white/10 hover:text-slate-100"
                     }`}
                   >
@@ -652,7 +652,7 @@ function PtesPage() {
                 </span>
               )}
               {f.emergencia_sem_apr && (
-                <span className="text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-lg bg-amber-500/20 text-amber-200 border border-amber-400/40 flex items-center gap-1">
+                <span className="text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-lg bg-amber-200/80/8 text-amber-100/80 border border-amber-100/60/20 flex items-center gap-1">
                   <AlertTriangle className="h-3 w-3" /> Emergência
                 </span>
               )}
@@ -680,7 +680,7 @@ function PtesPage() {
                         onClick={() => setActiveStep(s.id)}
                         className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wider border transition-all whitespace-nowrap ${
                           active
-                            ? "bg-amber-300 text-slate-900 border-amber-200"
+                            ? "bg-amber-200/80 text-slate-900 border-amber-100/60"
                             : done
                               ? "bg-lime-500/15 text-lime-100 border-lime-400/40"
                               : "bg-white/[0.05] text-slate-200 border-white/10"
@@ -708,7 +708,7 @@ function PtesPage() {
                         onClick={() => setActiveStep(s.id)}
                         className={`w-full flex items-center gap-2 rounded-lg pl-2 pr-3 py-2 text-[11px] font-bold tracking-wide transition-all border ${
                           active
-                            ? "bg-gradient-to-r from-amber-300/95 to-lime-400/95 text-slate-900 border-amber-200 shadow-[0_0_16px_-6px_rgba(245,158,11,0.9)]"
+                            ? "bg-gradient-to-r from-amber-300/95 to-lime-400/95 text-slate-900 border-amber-100/60 shadow-[0_0_16px_-6px_rgba(245,158,11,0.9)]"
                             : done
                               ? "bg-lime-500/10 text-lime-100 border-lime-400/25 hover:bg-lime-500/20"
                               : "bg-transparent text-slate-200 border-transparent hover:bg-white/[0.05] hover:text-white"
@@ -737,7 +737,7 @@ function PtesPage() {
 
             {/* TIPO DA PT */}
             <div>
-              <Label className="text-xs font-black text-amber-200/90 uppercase tracking-wider">Tipo de Permissão</Label>
+              <Label className="text-xs font-black text-amber-50/85/70 uppercase tracking-wider">Tipo de Permissão</Label>
               <Select value={f.tipo_pt} onValueChange={(v) => setF({ ...f, tipo_pt: v })}>
                 <SelectTrigger className="bg-black/30 border-white/10 text-rose-50 mt-2 text-xs font-bold uppercase"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -781,7 +781,7 @@ function PtesPage() {
                     onCheckedChange={(v) => setF({ ...f, emergencia_sem_apr: !!v })}
                   />
                   <div className="flex-1">
-                    <label htmlFor="emerg" className="text-[10px] font-black text-amber-300 uppercase cursor-pointer flex items-center gap-1">
+                    <label htmlFor="emerg" className="text-[10px] font-black text-amber-100/80/75 uppercase cursor-pointer flex items-center gap-1">
                       <AlertTriangle className="h-3 w-3" /> Emergência — emitir sem APR (apenas Admin)
                     </label>
                     {f.emergencia_sem_apr && (
@@ -800,27 +800,27 @@ function PtesPage() {
             </div>
 
             {linkedAprId && !f.emergencia_sem_apr && (
-              <div className="bg-amber-950/40 border border-amber-500/30 rounded-xl p-3 flex items-start gap-2">
-                <Link2 className="h-4 w-4 text-amber-300 mt-0.5 shrink-0" />
-                <div className="flex-1 text-[10px] font-bold uppercase text-amber-100">
+              <div className="bg-amber-950/25 border border-amber-400/20 rounded-xl p-3 flex items-start gap-2">
+                <Link2 className="h-4 w-4 text-amber-100/80/75 mt-0.5 shrink-0" />
+                <div className="flex-1 text-[10px] font-bold uppercase text-amber-50/85">
                   Vinculando à APR {(aprsMap.get(linkedAprId) as any)?.numero ?? linkedAprId.slice(0, 8)}
-                  <button type="button" onClick={() => setLinkedAprId(null)} className="ml-2 text-amber-300 underline">remover vínculo</button>
+                  <button type="button" onClick={() => setLinkedAprId(null)} className="ml-2 text-amber-100/80/75 underline">remover vínculo</button>
                 </div>
               </div>
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs font-black text-amber-200/90 uppercase tracking-wider">Local do Trabalho / Instalação</Label>
+              <Label className="text-xs font-black text-amber-50/85/70 uppercase tracking-wider">Local do Trabalho / Instalação</Label>
               <Input required value={f.local} onChange={(e) => setF({ ...f, local: e.target.value })} placeholder="Ex: Dique Seco, Navio XYZ..." className="bg-black/30 border-white/10 text-rose-50 placeholder:text-slate-400/70 mt-2 text-xs font-bold uppercase" />
             </div>
             <div>
-              <Label className="text-xs font-black text-amber-200/90 uppercase tracking-wider">Encarregado (PDF FOR-SEG-04)</Label>
+              <Label className="text-xs font-black text-amber-50/85/70 uppercase tracking-wider">Encarregado (PDF FOR-SEG-04)</Label>
               <Input value={f.encarregado_nome} onChange={(e) => setF({ ...f, encarregado_nome: e.target.value })} placeholder="Nome do encarregado responsável" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-slate-400/70 mt-2 text-xs font-bold uppercase" />
               <p className="text-[9px] text-slate-300/60 mt-1 uppercase">Se vazio, usa o requisitante no PDF.</p>
             </div>
             <div>
-              <Label className="text-xs font-black text-amber-200/90 uppercase tracking-wider">Frente de Trabalho (Casco)</Label>
+              <Label className="text-xs font-black text-amber-50/85/70 uppercase tracking-wider">Frente de Trabalho (Casco)</Label>
               <Select value={f.casco_id || "none"} onValueChange={(v) => setF({ ...f, casco_id: v === "none" ? "" : v })}>
                 <SelectTrigger className="bg-black/30 border-white/10 text-rose-50 mt-2 text-xs font-bold uppercase">
                   <SelectValue placeholder="-- SELECIONE O CASCO --" />
@@ -836,7 +836,7 @@ function PtesPage() {
               </Select>
             </div>
             <div>
-              <Label className="text-xs font-black text-amber-200/90 uppercase tracking-wider">Classificação de Risco (GSI)</Label>
+              <Label className="text-xs font-black text-amber-50/85/70 uppercase tracking-wider">Classificação de Risco (GSI)</Label>
               <Select value={f.risco} onValueChange={(v) => setF({ ...f, risco: v })}>
                 <SelectTrigger className="bg-black/30 border-white/10 text-rose-50 mt-2 text-xs font-bold uppercase"><SelectValue /></SelectTrigger>
                 <SelectContent>{PTE_RISCOS.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
@@ -847,22 +847,22 @@ function PtesPage() {
             {/* DATA + HORÁRIOS */}
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <Label className="text-xs font-black text-amber-200/90 uppercase tracking-wider">Data</Label>
+                <Label className="text-xs font-black text-amber-50/85/70 uppercase tracking-wider">Data</Label>
                 <Input type="date" required value={f.data} onChange={(e) => setF({ ...f, data: e.target.value })} className="bg-black/30 border-white/10 text-rose-50 mt-2" />
               </div>
               <div>
-                <Label className="text-xs font-black text-amber-200/90 uppercase tracking-wider">Início</Label>
+                <Label className="text-xs font-black text-amber-50/85/70 uppercase tracking-wider">Início</Label>
                 <Input type="time" value={f.hora_inicio} onChange={(e) => setF({ ...f, hora_inicio: e.target.value })} className="bg-black/30 border-white/10 text-rose-50 mt-2" />
               </div>
               <div>
-                <Label className="text-xs font-black text-amber-200/90 uppercase tracking-wider">Fim</Label>
+                <Label className="text-xs font-black text-amber-50/85/70 uppercase tracking-wider">Fim</Label>
                 <Input type="time" value={f.hora_fim} onChange={(e) => setF({ ...f, hora_fim: e.target.value })} className="bg-black/30 border-white/10 text-rose-50 mt-2" />
               </div>
             </div>
 
             {/* VALIDADE */}
             <div>
-              <Label className="text-xs font-black text-amber-200/90 uppercase tracking-wider mb-2 block">Validade</Label>
+              <Label className="text-xs font-black text-amber-50/85/70 uppercase tracking-wider mb-2 block">Validade</Label>
               <div className="grid grid-cols-3 gap-2">
                 {[
                   { v: "TURNO", l: "Turno" },
@@ -995,14 +995,14 @@ function PtesPage() {
               {f.tipo_pt === "PET" && (
                 <>
                   <div>
-                    <Label className="text-[10px] font-black text-amber-300 uppercase flex items-center gap-2 mb-2">
+                    <Label className="text-[10px] font-black text-amber-100/80/75 uppercase flex items-center gap-2 mb-2">
                       <Eye className="h-4 w-4" /> Vigia (NR-33) <span className="text-red-600">*</span>
                     </Label>
                     <select
                       required
                       value={f.vigia_id}
                       onChange={(e) => setF({ ...f, vigia_id: e.target.value })}
-                      className="w-full bg-black/40 border border-amber-500/30 text-rose-50 rounded-xl px-4 py-2 text-xs font-bold uppercase outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-400/50"
+                      className="w-full bg-black/40 border border-amber-400/20 text-rose-50 rounded-xl px-4 py-2 text-xs font-bold uppercase outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-100/60/20"
                     >
                       <option value="">-- SELECIONE O VIGIA --</option>
                       {empOptions.map(({ e, compName }) => (
@@ -1011,14 +1011,14 @@ function PtesPage() {
                     </select>
                   </div>
                   <div>
-                    <Label className="text-[10px] font-black text-amber-300 uppercase flex items-center gap-2 mb-2">
+                    <Label className="text-[10px] font-black text-amber-100/80/75 uppercase flex items-center gap-2 mb-2">
                       <ShieldCheck className="h-4 w-4" /> Supervisor de Entrada (NR-33) <span className="text-red-600">*</span>
                     </Label>
                     <select
                       required
                       value={f.supervisor_entrada_id}
                       onChange={(e) => setF({ ...f, supervisor_entrada_id: e.target.value })}
-                      className="w-full bg-black/40 border border-amber-500/30 text-rose-50 rounded-xl px-4 py-2 text-xs font-bold uppercase outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-400/50"
+                      className="w-full bg-black/40 border border-amber-400/20 text-rose-50 rounded-xl px-4 py-2 text-xs font-bold uppercase outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-100/60/20"
                     >
                       <option value="">-- SELECIONE O SUPERVISOR --</option>
                       {empOptions.map(({ e, compName }) => (
@@ -1039,10 +1039,10 @@ function PtesPage() {
           <div hidden={activeStep !== "atividades"} className="space-y-4">
             <div className="rounded-xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-3.5 space-y-5">
               <h3 className="text-xs font-black uppercase tracking-widest text-rose-100 border-b border-white/10 pb-2 flex items-center gap-2">
-                <ClipboardList className="h-4 w-4 text-amber-300" /> Descrição das atividades (FOR-SEG-04)
+                <ClipboardList className="h-4 w-4 text-amber-100/80/75" /> Descrição das atividades (FOR-SEG-04)
               </h3>
               <div className="space-y-2">
-                <Label className="text-xs font-black text-amber-200/90 uppercase tracking-wider block">Descrição das atividades a serem executadas</Label>
+                <Label className="text-xs font-black text-amber-50/85/70 uppercase tracking-wider block">Descrição das atividades a serem executadas</Label>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                   {[
                     { k: "atv_movimentacao_cargas", l: "Movimentação de cargas" },
@@ -1068,7 +1068,7 @@ function PtesPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-xs font-black text-amber-200/90 uppercase tracking-wider mb-2 block">Mão de obra</Label>
+                  <Label className="text-xs font-black text-amber-50/85/70 uppercase tracking-wider mb-2 block">Mão de obra</Label>
                   <div className="grid grid-cols-2 gap-2">
                     {[{ v: "INTERNA", l: "Interna" }, { v: "EXTERNA", l: "Externa" }].map((o) => (
                       <button key={o.v} type="button" onClick={() => setF({ ...f, mao_obra: f.mao_obra === o.v ? "" : o.v })} className={`py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${f.mao_obra === o.v ? "bg-gradient-to-br from-rose-600/90 to-rose-900/90 text-rose-50 border-rose-400/40" : "bg-black/30 text-slate-200/90 border-white/10 hover:bg-black/50"}`}>
@@ -1078,7 +1078,7 @@ function PtesPage() {
                   </div>
                 </div>
                 <div>
-                  <Label className="text-xs font-black text-amber-200/90 uppercase tracking-wider mb-2 block">Área restrita</Label>
+                  <Label className="text-xs font-black text-amber-50/85/70 uppercase tracking-wider mb-2 block">Área restrita</Label>
                   <div className="grid grid-cols-2 gap-2">
                     {[{ v: "SIM", l: "Sim" }, { v: "NAO", l: "Não" }].map((o) => (
                       <button key={o.v} type="button" onClick={() => setF({ ...f, area_restrita: f.area_restrita === o.v ? "" : o.v })} className={`py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${f.area_restrita === o.v ? "bg-gradient-to-br from-rose-600/90 to-rose-900/90 text-rose-50 border-rose-400/40" : "bg-black/30 text-slate-200/90 border-white/10 hover:bg-black/50"}`}>
@@ -1095,7 +1095,7 @@ function PtesPage() {
           <div hidden={activeStep !== "riscos"} className="space-y-4">
             <div className="rounded-xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-3.5 space-y-4">
               <h3 className="text-xs font-black uppercase tracking-widest text-rose-100 border-b border-white/10 pb-2 flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-amber-300" /> Riscos potenciais
+                <AlertTriangle className="h-4 w-4 text-amber-100/80/75" /> Riscos potenciais
               </h3>
               <PdfCheckboxGroup title="Marque os que se aplicam" group="riscos_potenciais" items={PTE_RISCOS_POTENCIAIS} />
               {f.riscos_potenciais?.outros && (
@@ -1121,7 +1121,7 @@ function PtesPage() {
           <div hidden={activeStep !== "precaucoes"} className="space-y-4">
             <div className="rounded-xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-3.5 space-y-4">
               <h3 className="text-xs font-black uppercase tracking-widest text-rose-100 border-b border-white/10 pb-2 flex items-center gap-2">
-                <Flame className="h-4 w-4 text-amber-300" /> Trabalho a Quente
+                <Flame className="h-4 w-4 text-amber-100/80/75" /> Trabalho a Quente
               </h3>
               <PdfCheckboxGroup title="Precauções" group="precaucao_quente" items={PTE_PRECAUCOES_QUENTE} />
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -1138,7 +1138,7 @@ function PtesPage() {
             </div>
             <div className="rounded-xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-3.5 space-y-3">
               <h3 className="text-xs font-black uppercase tracking-widest text-rose-100 border-b border-white/10 pb-2 flex items-center gap-2">
-                <Zap className="h-4 w-4 text-amber-300" /> Eletricidade / Fonte de Energia
+                <Zap className="h-4 w-4 text-amber-100/80/75" /> Eletricidade / Fonte de Energia
               </h3>
               <PdfCheckboxGroup title="Precauções" group="precaucao_eletrica" items={PTE_PRECAUCOES_ELETRICA} />
               <Input value={f.responsavel_bloqueio} onChange={(e) => setF({ ...f, responsavel_bloqueio: e.target.value })} placeholder="Responsável pelo bloqueio" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-slate-400/70 text-xs font-bold uppercase" />
@@ -1150,9 +1150,9 @@ function PtesPage() {
 
           {/* CARGAS & PINTURA */}
           <div hidden={activeStep !== "cargas_pintura"} className="space-y-4">
-            <div className="rounded-xl border border-amber-300/25 bg-gradient-to-br from-amber-500/5 via-black/40 to-black/40 p-3.5 space-y-4">
-              <h3 className="text-sm font-black uppercase tracking-wider text-amber-100 border-b border-amber-300/20 pb-2 flex items-center gap-2">
-                <HardHat className="h-4 w-4 text-amber-300" /> Movimentação e Içamento de Carga
+            <div className="rounded-xl border border-amber-100/60/20 bg-gradient-to-br from-amber-500/5 via-black/40 to-black/40 p-3.5 space-y-4">
+              <h3 className="text-sm font-black uppercase tracking-wider text-amber-50/85 border-b border-amber-100/60/15 pb-2 flex items-center gap-2">
+                <HardHat className="h-4 w-4 text-amber-100/80/75" /> Movimentação e Içamento de Carga
               </h3>
               <PdfCheckboxGroup title="Precauções" group="precaucao_carga" items={PTE_PRECAUCOES_CARGA} />
             </div>
@@ -1168,11 +1168,11 @@ function PtesPage() {
           <div hidden={activeStep !== "epis"} className="space-y-4">
             <div className="rounded-xl border border-white/10 bg-gradient-to-br from-white/[0.03] to-black/40 p-3.5 space-y-5">
               <h3 className="text-sm font-black uppercase tracking-wider text-slate-50 border-b border-white/10 pb-2 flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-amber-300" /> Equipamentos de Proteção Individual Obrigatórios
+                <ShieldCheck className="h-4 w-4 text-amber-100/80/75" /> Equipamentos de Proteção Individual Obrigatórios
               </h3>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
                 <div className="space-y-2">
-                  <div className="text-[10px] font-black uppercase tracking-widest text-amber-200 bg-amber-400/10 border border-amber-300/30 rounded-full px-3 py-1 inline-block">EPI · Coluna 1</div>
+                  <div className="text-[10px] font-black uppercase tracking-widest text-amber-100/80 bg-amber-200/80/8 border border-amber-100/60/20 rounded-full px-3 py-1 inline-block">EPI · Coluna 1</div>
                   <PdfCheckboxGroup title="Óculos · Capacetes · Respiradores · Botas" group="epis_col1" items={PTE_EPIS_1} />
                 </div>
                 <div className="space-y-2">
@@ -1193,7 +1193,7 @@ function PtesPage() {
                 </div>
               </div>
               <div className="mt-3 space-y-2">
-                <Label className="text-xs font-black text-amber-200/90 uppercase tracking-wider">Recomendações adicionais de segurança</Label>
+                <Label className="text-xs font-black text-amber-50/85/70 uppercase tracking-wider">Recomendações adicionais de segurança</Label>
                 <Textarea
                   value={f.recomendacoes_adicionais}
                   onChange={(e) => setF({ ...f, recomendacoes_adicionais: e.target.value })}
@@ -1263,7 +1263,7 @@ function PtesPage() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-3 border-t border-white/10">
                 <div>
-                  <Label className="text-xs font-black text-amber-200/90 uppercase tracking-wider">Encarregado</Label>
+                  <Label className="text-xs font-black text-amber-50/85/70 uppercase tracking-wider">Encarregado</Label>
                   <Input
                     value={f.assinatura_encarregado_nome}
                     onChange={(e) => setF({ ...f, assinatura_encarregado_nome: e.target.value })}
@@ -1272,7 +1272,7 @@ function PtesPage() {
                   />
                 </div>
                 <div>
-                  <Label className="text-xs font-black text-amber-200/90 uppercase tracking-wider">Gerente da Empresa</Label>
+                  <Label className="text-xs font-black text-amber-50/85/70 uppercase tracking-wider">Gerente da Empresa</Label>
                   <Input
                     value={f.assinatura_gerente_nome}
                     onChange={(e) => setF({ ...f, assinatura_gerente_nome: e.target.value })}
@@ -1296,10 +1296,10 @@ function PtesPage() {
               <PteAtmosferaTab petId={editingId} employees={emps as any[]} />
             )}
             {f.tipo_pt === "PET" && (
-              <div className="mt-6 rounded-2xl border-2 border-amber-500/40 bg-gradient-to-br from-amber-950/40 to-black/40 p-5 space-y-3">
+              <div className="mt-6 rounded-2xl border-2 border-amber-400/25 bg-gradient-to-br from-amber-950/40 to-black/40 p-5 space-y-3">
                 <div className="flex items-center gap-2">
-                  <ShieldCheck className="h-5 w-5 text-amber-300" />
-                  <h3 className="text-xs font-black uppercase tracking-widest text-amber-200">
+                  <ShieldCheck className="h-5 w-5 text-amber-100/80/75" />
+                  <h3 className="text-xs font-black uppercase tracking-widest text-amber-100/80">
                     Plano de Resgate (NR-33 33.3.2.h)
                   </h3>
                   {petModoStrict && (
@@ -1308,64 +1308,64 @@ function PtesPage() {
                     </span>
                   )}
                 </div>
-                <p className="text-[10px] font-bold text-amber-200/60 uppercase">
+                <p className="text-[10px] font-bold text-amber-50/85/50 uppercase">
                   Sem plano de resgate documentado, o TST responde criminalmente em caso de óbito.
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-[10px] font-black text-amber-200/80 uppercase">Equipe de Resgate *</Label>
+                    <Label className="text-[10px] font-black text-amber-50/85/65 uppercase">Equipe de Resgate *</Label>
                     <Input
                       value={f.plano_equipe_resgate}
                       onChange={(e) => setF({ ...f, plano_equipe_resgate: e.target.value })}
                       placeholder="Nomes/funções (ex: Brigada + Bombeiro Civil João)"
-                      className="bg-black/40 border-amber-500/30 text-amber-50 text-xs h-9"
+                      className="bg-black/40 border-amber-400/20 text-amber-50 text-xs h-9"
                     />
                   </div>
                   <div>
-                    <Label className="text-[10px] font-black text-amber-200/80 uppercase">Equipamentos *</Label>
+                    <Label className="text-[10px] font-black text-amber-50/85/65 uppercase">Equipamentos *</Label>
                     <Input
                       value={f.plano_equipamentos}
                       onChange={(e) => setF({ ...f, plano_equipamentos: e.target.value })}
                       placeholder="Tripé, maca, cinto paraquedista, EPR autônomo..."
-                      className="bg-black/40 border-amber-500/30 text-amber-50 text-xs h-9"
+                      className="bg-black/40 border-amber-400/20 text-amber-50 text-xs h-9"
                     />
                   </div>
                   <div>
-                    <Label className="text-[10px] font-black text-amber-200/80 uppercase">Hospital de Referência *</Label>
+                    <Label className="text-[10px] font-black text-amber-50/85/65 uppercase">Hospital de Referência *</Label>
                     <Input
                       value={f.plano_hospital_referencia}
                       onChange={(e) => setF({ ...f, plano_hospital_referencia: e.target.value })}
                       placeholder="Hospital + telefone (ex: HGCA — 22 2733-0000)"
-                      className="bg-black/40 border-amber-500/30 text-amber-50 text-xs h-9"
+                      className="bg-black/40 border-amber-400/20 text-amber-50 text-xs h-9"
                     />
                   </div>
                   <div>
-                    <Label className="text-[10px] font-black text-amber-200/80 uppercase">Tempo Resposta (min) *</Label>
+                    <Label className="text-[10px] font-black text-amber-50/85/65 uppercase">Tempo Resposta (min) *</Label>
                     <Input
                       type="number"
                       min="1"
                       value={f.plano_tempo_resposta_min}
                       onChange={(e) => setF({ ...f, plano_tempo_resposta_min: e.target.value })}
                       placeholder="5"
-                      className="bg-black/40 border-amber-500/30 text-amber-50 text-xs h-9"
+                      className="bg-black/40 border-amber-400/20 text-amber-50 text-xs h-9"
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <Label className="text-[10px] font-black text-amber-200/80 uppercase">Meio de Comunicação</Label>
+                    <Label className="text-[10px] font-black text-amber-50/85/65 uppercase">Meio de Comunicação</Label>
                     <Input
                       value={f.plano_meio_comunicacao}
                       onChange={(e) => setF({ ...f, plano_meio_comunicacao: e.target.value })}
                       placeholder="Rádio canal 5 + celular 22 99999-0000"
-                      className="bg-black/40 border-amber-500/30 text-amber-50 text-xs h-9"
+                      className="bg-black/40 border-amber-400/20 text-amber-50 text-xs h-9"
                     />
                   </div>
                 </div>
               </div>
             )}
             {f.tipo_pt === "PET" && !petModoStrict && (
-              <div className="rounded-xl border-2 border-amber-500/40 bg-amber-950/30 px-4 py-3 flex items-start gap-2">
-                <AlertTriangle className="h-4 w-4 text-amber-300 shrink-0 mt-0.5" />
-                <div className="text-[10px] font-bold text-amber-100 uppercase leading-relaxed">
+              <div className="rounded-xl border-2 border-amber-400/25 bg-amber-950/20 px-4 py-3 flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-100/80/75 shrink-0 mt-0.5" />
+                <div className="text-[10px] font-bold text-amber-50/85 uppercase leading-relaxed">
                   Modo Relax ativo. A PET vai ser emitida mesmo sem medição/plano de resgate — mas o sistema vai gritar no histórico. Ligue o Modo Strict em Configurações para bloquear PETs incompletas automaticamente.
                 </div>
               </div>
@@ -1389,7 +1389,7 @@ function PtesPage() {
                       className={`text-left rounded-xl border px-3 py-2.5 transition-all ${
                         ok
                           ? "bg-lime-500/10 border-lime-400/40 text-lime-100 hover:bg-lime-500/20"
-                          : "bg-amber-500/10 border-amber-400/40 text-amber-100 hover:bg-amber-500/20"
+                          : "bg-amber-300/80/8 border-amber-100/60/20 text-amber-50/85 hover:bg-amber-200/80/8"
                       }`}
                     >
                       <div className="text-[9px] font-black uppercase tracking-widest opacity-70">{s.label}</div>
@@ -1413,7 +1413,7 @@ function PtesPage() {
                 className={`w-full text-xs font-black uppercase tracking-widest h-auto px-6 py-3 rounded-xl flex items-center justify-center gap-2 text-white border transition-all ${
                   editingId
                     ? "bg-gradient-to-br from-blue-600/90 to-blue-900/90 border-blue-400/40 shadow-[0_0_24px_-4px_rgba(59,130,246,0.6)] hover:shadow-[0_0_32px_-2px_rgba(59,130,246,0.9)]"
-                    : "bg-gradient-to-r from-lime-500 via-amber-500 to-rose-600 border-amber-300/50 shadow-[0_0_28px_-4px_rgba(245,158,11,0.9)] hover:shadow-[0_0_40px_-2px_rgba(220,38,70,0.9)]"
+                    : "bg-gradient-to-r from-lime-500 via-amber-500 to-rose-600 border-amber-100/60/30 shadow-[0_0_28px_-4px_rgba(245,158,11,0.9)] hover:shadow-[0_0_40px_-2px_rgba(220,38,70,0.9)]"
                 }`}
               >
                 <Printer className="h-4 w-4" /> {editingId ? "Salvar Alterações" : "Emitir Permissão"}
@@ -1438,7 +1438,7 @@ function PtesPage() {
               <button
                 type="button"
                 onClick={goNext}
-                className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest bg-gradient-to-r from-amber-500 to-rose-600 text-white border border-amber-300/50 px-4 py-2.5 rounded-xl hover:shadow-[0_0_20px_-4px_rgba(245,158,11,0.9)]"
+                className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest bg-gradient-to-r from-amber-500 to-rose-600 text-white border border-amber-100/60/30 px-4 py-2.5 rounded-xl hover:shadow-[0_0_20px_-4px_rgba(245,158,11,0.9)]"
               >
                 Avançar <ChevronRight className="h-3.5 w-3.5" />
               </button>
@@ -1488,7 +1488,7 @@ function PtesPage() {
                     )}
                   </div>
                   <div className="flex gap-2 items-center">
-                    <div className={`text-[9px] font-black uppercase px-2 py-0.5 rounded tracking-widest border ${p.status === "ATIVA" ? "bg-gradient-to-br from-amber-600/80 to-amber-900/80 text-amber-50 border-amber-400/40 shadow-[0_0_12px_-2px_rgba(245,158,11,0.5)]" : "bg-black/40 text-slate-300/70 border-white/10"}`}>{p.status}</div>
+                    <div className={`text-[9px] font-black uppercase px-2 py-0.5 rounded tracking-widest border ${p.status === "ATIVA" ? "bg-gradient-to-br from-amber-600/80 to-amber-900/80 text-amber-50 border-amber-100/60/20 shadow-[0_0_12px_-2px_rgba(245,158,11,0.5)]" : "bg-black/40 text-slate-300/70 border-white/10"}`}>{p.status}</div>
                     <button onClick={() => setPreviewPt(p)} className="w-6 h-6 rounded bg-emerald-950/60 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-600 hover:text-white flex items-center justify-center transition-colors" title="Visualizar / Imprimir PDF">
                       <FileSearch className="h-3 w-3" />
                     </button>
@@ -1523,12 +1523,12 @@ function PtesPage() {
                         </div>
                       )}
                       {vigiaName && (
-                        <div className="text-[10px] font-bold text-amber-300 uppercase flex items-center gap-1 mt-0.5">
+                        <div className="text-[10px] font-bold text-amber-100/80/75 uppercase flex items-center gap-1 mt-0.5">
                           <Eye className="h-3 w-3" /> Vigia: <span className="font-black">{vigiaName}</span>
                         </div>
                       )}
                       {supName && (
-                        <div className="text-[10px] font-bold text-amber-300 uppercase flex items-center gap-1 mt-0.5">
+                        <div className="text-[10px] font-bold text-amber-100/80/75 uppercase flex items-center gap-1 mt-0.5">
                           <ShieldCheck className="h-3 w-3" /> Supervisor: <span className="font-black">{supName}</span>
                         </div>
                       )}
@@ -1554,7 +1554,7 @@ function PtesPage() {
                   </div>
                 )}
                 {p.emergencia_sem_apr && (
-                  <div className="text-[10px] font-black text-amber-200 uppercase mt-1 flex items-center gap-1 bg-amber-950/40 border border-amber-500/30 px-2 py-1 rounded">
+                  <div className="text-[10px] font-black text-amber-100/80 uppercase mt-1 flex items-center gap-1 bg-amber-950/25 border border-amber-400/20 px-2 py-1 rounded">
                     <AlertTriangle className="h-3 w-3" /> Emergência — sem APR
                   </div>
                 )}
