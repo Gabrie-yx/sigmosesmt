@@ -40,6 +40,8 @@ export async function cleanSignatureDataUrl(
     const data = ctx.getImageData(0, 0, w, h);
     const d = data.data;
     for (let i = 0; i < d.length; i += 4) {
+      // Pixel já transparente (ex.: PNG do pad de assinatura) — não mexer.
+      if (d[i + 3] === 0) continue;
       const minC = Math.min(d[i], d[i + 1], d[i + 2]);
       if (minC >= hard) {
         d[i + 3] = 0;
@@ -47,12 +49,11 @@ export async function cleanSignatureDataUrl(
         const t = (minC - soft) / (hard - soft);
         d[i + 3] = Math.round(d[i + 3] * (1 - t));
       } else {
-        // Traço propriamente dito: escurece um pouco cada canal para dar mais "tinta",
-        // preservando o matiz (azul continua azul, preto continua preto).
+        // Traço: escurece cada canal para dar mais "tinta", preservando o matiz
+        // e o alpha original (não força opaco, senão as bordas viram um retângulo).
         d[i] = Math.round(d[i] * (1 - boost));
         d[i + 1] = Math.round(d[i + 1] * (1 - boost));
         d[i + 2] = Math.round(d[i + 2] * (1 - boost));
-        d[i + 3] = 255;
       }
     }
     ctx.putImageData(data, 0, 0);
