@@ -863,15 +863,13 @@ function PtesPage() {
             )}
 
             {/* FOR-SEG-04 — CAMPOS DO PDF HOMOLOGADO */}
-            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-5 space-y-4">
+            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-5 space-y-5">
               <h3 className="text-xs font-black uppercase tracking-widest text-rose-100 border-b border-white/10 pb-2">
-                Campos do PDF FOR-SEG-04
+                Formulário oficial PTE — FOR-SEG-04
               </h3>
 
-              <div>
-                <Label className="text-[10px] font-black text-rose-200/70 uppercase mb-2 block">
-                  Descrição das atividades a serem executadas
-                </Label>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black text-rose-200/70 uppercase block">Descrição das atividades a serem executadas</Label>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                   {[
                     { k: "atv_movimentacao_cargas", l: "Movimentação de cargas" },
@@ -884,35 +882,23 @@ function PtesPage() {
                     { k: "atv_local_confinado", l: "Local confinado" },
                     { k: "atv_outros", l: "Outros" },
                   ].map((o) => (
-                    <label key={o.k} className="flex items-center gap-2 text-[11px] font-bold uppercase text-rose-100 bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 cursor-pointer hover:border-rose-500/40">
-                      <Checkbox
-                        checked={!!(f as any)[o.k]}
-                        onCheckedChange={(v) => setF({ ...f, [o.k]: !!v })}
-                      />
+                    <label key={o.k} className="flex items-center gap-2 text-[10px] font-bold uppercase text-rose-100 bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 cursor-pointer hover:border-rose-500/40">
+                      <Checkbox checked={!!(f as any)[o.k]} onCheckedChange={(v) => setF({ ...f, [o.k]: !!v })} />
                       {o.l}
                     </label>
                   ))}
                 </div>
+                {f.atv_outros && (
+                  <Input value={f.outros_atividade_texto} onChange={(e) => setF({ ...f, outros_atividade_texto: e.target.value })} placeholder="Descreva outros" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-rose-200/30 text-xs font-bold uppercase" />
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label className="text-[10px] font-black text-rose-200/70 uppercase mb-2 block">Mão de obra</Label>
                   <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { v: "INTERNA", l: "Interna" },
-                      { v: "EXTERNA", l: "Externa" },
-                    ].map((o) => (
-                      <button
-                        key={o.v}
-                        type="button"
-                        onClick={() => setF({ ...f, mao_obra: f.mao_obra === o.v ? "" : o.v })}
-                        className={`py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${
-                          f.mao_obra === o.v
-                            ? "bg-gradient-to-br from-rose-600/90 to-rose-900/90 text-rose-50 border-rose-400/40"
-                            : "bg-black/30 text-rose-200/70 border-white/10 hover:bg-black/50"
-                        }`}
-                      >
+                    {[{ v: "INTERNA", l: "Interna" }, { v: "EXTERNA", l: "Externa" }].map((o) => (
+                      <button key={o.v} type="button" onClick={() => setF({ ...f, mao_obra: f.mao_obra === o.v ? "" : o.v })} className={`py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${f.mao_obra === o.v ? "bg-gradient-to-br from-rose-600/90 to-rose-900/90 text-rose-50 border-rose-400/40" : "bg-black/30 text-rose-200/70 border-white/10 hover:bg-black/50"}`}>
                         {o.l}
                       </button>
                     ))}
@@ -921,26 +907,36 @@ function PtesPage() {
                 <div>
                   <Label className="text-[10px] font-black text-rose-200/70 uppercase mb-2 block">Área restrita</Label>
                   <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { v: "SIM", l: "Sim" },
-                      { v: "NAO", l: "Não" },
-                    ].map((o) => (
-                      <button
-                        key={o.v}
-                        type="button"
-                        onClick={() => setF({ ...f, area_restrita: f.area_restrita === o.v ? "" : o.v })}
-                        className={`py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${
-                          f.area_restrita === o.v
-                            ? "bg-gradient-to-br from-rose-600/90 to-rose-900/90 text-rose-50 border-rose-400/40"
-                            : "bg-black/30 text-rose-200/70 border-white/10 hover:bg-black/50"
-                        }`}
-                      >
+                    {[{ v: "SIM", l: "Sim" }, { v: "NAO", l: "Não" }].map((o) => (
+                      <button key={o.v} type="button" onClick={() => setF({ ...f, area_restrita: f.area_restrita === o.v ? "" : o.v })} className={`py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${f.area_restrita === o.v ? "bg-gradient-to-br from-rose-600/90 to-rose-900/90 text-rose-50 border-rose-400/40" : "bg-black/30 text-rose-200/70 border-white/10 hover:bg-black/50"}`}>
                         {o.l}
                       </button>
                     ))}
                   </div>
                 </div>
               </div>
+
+              <PdfCheckboxGroup title="Riscos potenciais" group="riscos_potenciais" items={PTE_RISCOS_POTENCIAIS} />
+              {f.riscos_potenciais?.outros && (
+                <Input value={f.outros_risco_texto} onChange={(e) => setF({ ...f, outros_risco_texto: e.target.value })} placeholder="Outros riscos" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-rose-200/30 text-xs font-bold uppercase" />
+              )}
+
+              <PdfAnswerGroup title="Preenchimento — S / N / NA" group="preenchimento_snna" items={PTE_PREENCIMENTO_SNNA} />
+              {f.preenchimento_snna?.outros && (
+                <Input value={f.outros_snna_texto} onChange={(e) => setF({ ...f, outros_snna_texto: e.target.value })} placeholder="Outros" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-rose-200/30 text-xs font-bold uppercase" />
+              )}
+
+              <PdfCheckboxGroup title="Precaução para trabalho a quente" group="precaucao_quente" items={PTE_PRECAUCOES_QUENTE} />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <Input value={f.teste_atmosfera_horario} onChange={(e) => setF({ ...f, teste_atmosfera_horario: e.target.value })} placeholder="Horário teste atmosfera" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-rose-200/30 text-xs font-bold uppercase" />
+                <Input value={f.teste_atmosfera_percentual} onChange={(e) => setF({ ...f, teste_atmosfera_percentual: e.target.value })} placeholder="Concentração %" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-rose-200/30 text-xs font-bold uppercase" />
+                <Input value={f.designado_liberacao} onChange={(e) => setF({ ...f, designado_liberacao: e.target.value })} placeholder="Designado pela liberação" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-rose-200/30 text-xs font-bold uppercase" />
+              </div>
+
+              <PdfCheckboxGroup title="Precauções para trabalho em altura" group="precaucao_altura" items={PTE_PRECAUCOES_ALTURA} />
+              <PdfCheckboxGroup title="Precauções para eletricidade / fonte de energia" group="precaucao_eletrica" items={PTE_PRECAUCOES_ELETRICA} />
+              <Input value={f.responsavel_bloqueio} onChange={(e) => setF({ ...f, responsavel_bloqueio: e.target.value })} placeholder="Responsável pelo bloqueio" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-rose-200/30 text-xs font-bold uppercase" />
+
               <p className="text-[9px] font-bold uppercase text-rose-200/40">
                 Fim de semana / feriado é preenchido automaticamente no PDF conforme a data selecionada.
               </p>
