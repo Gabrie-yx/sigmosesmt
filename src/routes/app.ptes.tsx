@@ -1610,8 +1610,21 @@ function PtesPage() {
                   const execNames = execIds.map((id) => emps.find((e: any) => e.id === id)?.nome).filter(Boolean);
                   const vigiaName = p.vigia_id ? emps.find((e: any) => e.id === p.vigia_id)?.nome : null;
                   const supName = p.supervisor_entrada_id ? emps.find((e: any) => e.id === p.supervisor_entrada_id)?.nome : null;
+                  const companyName = p.company_id ? (companies as any[]).find((c: any) => c.id === p.company_id)?.name : null;
+                  const maoObra = (p.dados as any)?.mao_obra as string | undefined;
                   return (
                     <>
+                      {(companyName || maoObra) && (
+                        <div className="text-[10px] font-bold text-slate-200/80 uppercase flex items-center gap-1 flex-wrap">
+                          <Building2 className="h-3 w-3" /> Empresa/Equipe:
+                          {companyName && <span className="font-black text-rose-100">{companyName}</span>}
+                          {maoObra && (
+                            <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-indigo-950/70 text-indigo-200 border border-indigo-500/30">
+                              {maoObra}
+                            </span>
+                          )}
+                        </div>
+                      )}
                       {reqName && (
                         <div className="text-[10px] font-bold text-slate-200/80 uppercase flex items-center gap-1">
                           <UserCheck className="h-3 w-3" /> Requisitante: <span className="font-black text-rose-100">{reqName}</span>
