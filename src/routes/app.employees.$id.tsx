@@ -24,7 +24,7 @@ import { toast } from "sonner";
 import { calculateSafetyStatus } from "@/lib/safety-engine";
 import { SafetyOverridePanel } from "@/components/safety-override-panel";
 import { AnimatedTabsBar } from "@/components/animated-tabs-bar";
-import type { SafetyOverride } from "@/lib/safety-overrides";
+import { filterActiveOverrides, type SafetyOverride } from "@/lib/safety-overrides";
 import { formatDateBR, addMonthsToDate } from "@/lib/utils-date";
 import { NRS_LIST, TIPOS_EXAME, NATUREZAS_EXAME, NATUREZA_KEY_MAP, UFS, VACINAS_LIST, BAIRROS_MANAUS } from "@/lib/constants";
 import { maskCPF, maskCNPJ, maskPhone, maskCEP, maskRG } from "@/lib/masks";
@@ -558,93 +558,125 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
       {(() => {
         const showDocs = !docsOk;
         const showPend = !!(status && status.msgs.length > 0);
-        const cols = 1 + (showDocs ? 1 : 0) + (showPend ? 1 : 0);
-        const gridCls =
-          cols === 3
+        // Se houver liberação ativa, o card de Liberações fica alto — jogamos ele
+        // para uma linha própria (largura total) abaixo, mantendo Docs+Pendências
+        // no topo. Sem liberação ativa, os 3 cabem em uma linha só.
+        const hasActiveOverride = filterActiveOverrides(overrides ?? []).length > 0;
+        const topCount = (showDocs ? 1 : 0) + (showPend ? 1 : 0);
+        const twoRows = hasActiveOverride && topCount > 0;
+        const topGridCls =
+          topCount === 2
+            ? "grid grid-cols-1 md:grid-cols-2 gap-4 items-start"
+            : topCount === 1
+              ? "grid grid-cols-1 gap-4 items-start"
+              : "";
+        const singleRowGridCls =
+          topCount === 2
             ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-start"
-            : cols === 2
+            : topCount === 1
               ? "grid grid-cols-1 lg:grid-cols-2 gap-4 items-start"
               : "grid grid-cols-1 gap-4 items-start";
-        return (
-          <div className={gridCls}>
-            {showDocs && (
-              <Card className="p-3 rounded-2xl border-2 border-amber-300 bg-amber-50 flex flex-col gap-2">
-                <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <AlertTriangle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
-                    <span className="text-[11px] font-black uppercase tracking-widest text-amber-700 truncate">
-                      Docs Incompletos
-                    </span>
-                    <Badge className="bg-amber-500/20 text-amber-800 border border-amber-400/40 text-[10px] px-1.5 py-0 h-4 shrink-0">
-                      {missingDocs.length}
-                    </Badge>
+
+        const docsCard = showDocs && (
+          <Card className="p-3 rounded-2xl border-2 border-amber-300 bg-amber-50 flex flex-col gap-2">
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <AlertTriangle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                <span className="text-[11px] font-black uppercase tracking-widest text-amber-700 truncate">
+                  Docs Incompletos
+                </span>
+                <Badge className="bg-amber-500/20 text-amber-800 border border-amber-400/40 text-[10px] px-1.5 py-0 h-4 shrink-0">
+                  {missingDocs.length}
+                </Badge>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                title="Ir para Docs"
+                aria-label="Ir para Docs"
+                className="h-7 w-7 p-0 border-amber-400 text-amber-800 hover:bg-amber-100 shrink-0"
+                onClick={() => setTab("docs")}
+              >
+                <FileIcon className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {missingDocs.map((d, i) => (
+                <span
+                  key={i}
+                  className="inline-flex items-center rounded-full border border-amber-400/60 bg-amber-100 text-amber-900 text-[10px] font-semibold px-2 py-0.5"
+                >
+                  {d}
+                </span>
+              ))}
+            </div>
+          </Card>
+        );
+
+        const pendCard = showPend && (
+          <Card className="glass-vinho p-3 rounded-2xl flex flex-col gap-2">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <AlertTriangle className="h-3.5 w-3.5 text-rose-300 shrink-0" />
+              <span className="text-[11px] font-black uppercase tracking-widest text-rose-100/90 truncate">
+                Pendências SST
+              </span>
+              <Badge className="bg-rose-500/20 text-rose-100 border border-rose-300/30 text-[10px] px-1.5 py-0 h-4 shrink-0">
+                {status!.msgs.length}
+              </Badge>
+            </div>
+            <div className="flex flex-col gap-2">
+              {status!.msgs.map((m, i) => {
+                const [prefixRaw, tailRaw] = m.split(/\s+—\s+|\s+-\s+/);
+                const prefix = tailRaw ? prefixRaw : "";
+                const items = (tailRaw ?? prefixRaw)
+                  .split(/,\s*/)
+                  .map((s) => s.trim())
+                  .filter(Boolean);
+                return (
+                  <div key={i} className="flex flex-col gap-1.5">
+                    {prefix && (
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-rose-100/55">
+                        {prefix}
+                      </span>
+                    )}
+                    <div className="flex flex-wrap gap-1.5">
+                      {items.map((it, j) => (
+                        <span
+                          key={j}
+                          className="inline-flex items-center rounded-full border border-rose-300/40 bg-white/10 text-rose-50 text-[10px] font-semibold px-2 py-0.5"
+                        >
+                          {it}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    title="Ir para Docs"
-                    aria-label="Ir para Docs"
-                    className="h-7 w-7 p-0 border-amber-400 text-amber-800 hover:bg-amber-100 shrink-0"
-                    onClick={() => setTab("docs")}
-                  >
-                    <FileIcon className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {missingDocs.map((d, i) => (
-                    <span
-                      key={i}
-                      className="inline-flex items-center rounded-full border border-amber-400/60 bg-amber-100 text-amber-900 text-[10px] font-semibold px-2 py-0.5"
-                    >
-                      {d}
-                    </span>
-                  ))}
-                </div>
-              </Card>
-            )}
-            {showPend && (
-              <Card className="glass-vinho p-3 rounded-2xl flex flex-col gap-2">
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <AlertTriangle className="h-3.5 w-3.5 text-rose-300 shrink-0" />
-                  <span className="text-[11px] font-black uppercase tracking-widest text-rose-100/90 truncate">
-                    Pendências SST
-                  </span>
-                  <Badge className="bg-rose-500/20 text-rose-100 border border-rose-300/30 text-[10px] px-1.5 py-0 h-4 shrink-0">
-                    {status!.msgs.length}
-                  </Badge>
-                </div>
-                <div className="flex flex-col gap-2">
-                  {status!.msgs.map((m, i) => {
-                    const [prefixRaw, tailRaw] = m.split(/\s+—\s+|\s+-\s+/);
-                    const prefix = tailRaw ? prefixRaw : "";
-                    const items = (tailRaw ?? prefixRaw)
-                      .split(/,\s*/)
-                      .map((s) => s.trim())
-                      .filter(Boolean);
-                    return (
-                      <div key={i} className="flex flex-col gap-1.5">
-                        {prefix && (
-                          <span className="text-[9px] font-bold uppercase tracking-wider text-rose-100/55">
-                            {prefix}
-                          </span>
-                        )}
-                        <div className="flex flex-wrap gap-1.5">
-                          {items.map((it, j) => (
-                            <span
-                              key={j}
-                              className="inline-flex items-center rounded-full border border-rose-300/40 bg-white/10 text-rose-50 text-[10px] font-semibold px-2 py-0.5"
-                            >
-                              {it}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </Card>
-            )}
-            <SafetyOverridePanel employeeId={id} employeeName={emp.nome} availableItemKeys={availableItemKeys} />
+                );
+              })}
+            </div>
+          </Card>
+        );
+
+        const liberacoesCard = (
+          <SafetyOverridePanel
+            employeeId={id}
+            employeeName={emp.nome}
+            availableItemKeys={availableItemKeys}
+          />
+        );
+
+        if (twoRows) {
+          return (
+            <div className="flex flex-col gap-4">
+              {topCount > 0 && <div className={topGridCls}>{docsCard}{pendCard}</div>}
+              <div>{liberacoesCard}</div>
+            </div>
+          );
+        }
+        return (
+          <div className={singleRowGridCls}>
+            {docsCard}
+            {pendCard}
+            {liberacoesCard}
           </div>
         );
       })()}
