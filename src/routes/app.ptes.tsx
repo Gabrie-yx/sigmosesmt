@@ -305,17 +305,34 @@ function PtesPage() {
           meio_comunicacao: (f.plano_meio_comunicacao ?? "").trim() || null,
         } : null,
       };
+      // FOR-SEG-04 — campos do PDF homologado (não têm coluna própria, ficam em `dados`)
+      const dadosPdf = {
+        encarregado_nome: (f.encarregado_nome ?? "").trim() || null,
+        mao_obra: f.mao_obra || null,
+        area_restrita: f.area_restrita === "SIM" ? true : f.area_restrita === "NAO" ? false : null,
+        atividades: {
+          movimentacao_cargas: !!f.atv_movimentacao_cargas,
+          manutencao_civil: !!f.atv_manutencao_civil,
+          gases_inflamaveis: !!f.atv_gases_inflamaveis,
+          altura_telhados: !!f.atv_altura_telhados,
+          demolicao_escavacao: !!f.atv_demolicao_escavacao,
+          eletricidade: !!f.atv_eletricidade,
+          trabalho_quente: !!f.atv_trabalho_quente,
+          local_confinado: !!f.atv_local_confinado,
+          outros: !!f.atv_outros,
+        },
+      };
 
       if (editingId) {
         // Reemissão: ao atualizar, considera como nova emissão (zera o "envelhecimento" de 7 dias)
         const { error } = await supabase
           .from("ptes")
-          .update({ ...commonPayload, data_emissao: new Date().toISOString() })
+          .update({ ...commonPayload, data_emissao: new Date().toISOString(), dados: dadosPdf })
           .eq("id", editingId);
         if (error) throw error;
       } else {
         const numero = `${f.tipo_pt}-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000 + 1000)}`;
-        const { error } = await supabase.from("ptes").insert({ ...commonPayload, numero, status: "ATIVA", dados: {} });
+        const { error } = await supabase.from("ptes").insert({ ...commonPayload, numero, status: "ATIVA", dados: dadosPdf });
         if (error) throw error;
       }
     },
