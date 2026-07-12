@@ -68,7 +68,7 @@ export function AppHeader() {
           <img src={dmnLogo} alt="DMN Estaleiro" className="h-9 w-auto object-contain shrink-0" />
           <div className="whitespace-nowrap leading-tight hidden sm:block">
             <h1 className="text-[15px] font-black uppercase tracking-tight text-white">
-              ESTALEIRO DMN — SIGMO
+              SIGMO
             </h1>
             <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-white/70 mt-0.5">
               (Sistema Integrado de Gestão Modular)
