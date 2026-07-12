@@ -9,3 +9,5 @@ type: feature
 - ASO/vacinas/atestados não mexem (do funcionário). GHE segue (pgr_ghe é global, sem company_id).
 - Motivo obrigatório (>=5). Grava em employee_company_history (contadores + alerta GHE).
 - Botão roxo "Transferir" no header da ficha (app.employees.$id.tsx), admin/moderador, quando não desligado.
+
+Status: **IMPLEMENTADO E EM PRODUÇÃO** (wizard 3 passos + server fn + histórico). Não listar como pendente.
