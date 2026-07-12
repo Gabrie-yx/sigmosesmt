@@ -13,6 +13,8 @@ export type CleanOptions = {
   hard?: number;
   /** Entre soft e hard o pixel vira semi-transparente (anti-aliasing das bordas). */
   soft?: number;
+  /** Intensidade extra do traço (0 = original, 1 = bem mais forte). Default 0.55. */
+  boost?: number;
 };
 
 /** Aplica a limpeza de fundo claro em uma data URL existente. */
@@ -23,6 +25,7 @@ export async function cleanSignatureDataUrl(
   if (typeof window === "undefined") return dataUrl;
   const hard = opts.hard ?? 235;
   const soft = opts.soft ?? 200;
+  const boost = Math.max(0, Math.min(1, opts.boost ?? 0.55));
   try {
     const img = await loadImage(dataUrl);
     const MAX = 1200;
@@ -43,8 +46,14 @@ export async function cleanSignatureDataUrl(
       } else if (minC >= soft) {
         const t = (minC - soft) / (hard - soft);
         d[i + 3] = Math.round(d[i + 3] * (1 - t));
+      } else {
+        // Traço propriamente dito: escurece um pouco cada canal para dar mais "tinta",
+        // preservando o matiz (azul continua azul, preto continua preto).
+        d[i] = Math.round(d[i] * (1 - boost));
+        d[i + 1] = Math.round(d[i + 1] * (1 - boost));
+        d[i + 2] = Math.round(d[i + 2] * (1 - boost));
+        d[i + 3] = 255;
       }
-      // RGB nunca é alterado — cor da caneta preservada.
     }
     ctx.putImageData(data, 0, 0);
     return c.toDataURL("image/png");
