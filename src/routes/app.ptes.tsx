@@ -620,7 +620,7 @@ function PtesPage() {
         <h2 className="heading-display text-2xl md:text-4xl text-rose-100 drop-shadow-[0_2px_12px_rgba(220,38,70,0.45)]">
           Permissões de Trabalho
         </h2>
-        <p className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-rose-200/60 mt-1">
+        <p className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-slate-200/80 mt-1">
           PT • PTE • PET • emissão, validade e impressão
         </p>
       </div>
@@ -637,7 +637,7 @@ function PtesPage() {
                 <div className="text-sm font-black text-rose-100 uppercase tracking-widest">
                   {editingId ? "Editar Permissão" : "Nova Permissão de Trabalho"}
                 </div>
-                <div className="text-[9px] font-bold uppercase tracking-widest text-rose-200/50">
+                <div className="text-[9px] font-bold uppercase tracking-widest text-slate-300/70">
                   Passo {stepIndex + 1} de {STEPS.length} · {STEPS[stepIndex]?.label}
                 </div>
               </div>
@@ -702,7 +702,7 @@ function PtesPage() {
 
             {/* TIPO DA PT */}
             <div>
-              <Label className="text-[10px] font-black text-rose-200/70 uppercase">Tipo de Permissão</Label>
+              <Label className="text-xs font-black text-amber-200/90 uppercase tracking-wider">Tipo de Permissão</Label>
               <Select value={f.tipo_pt} onValueChange={(v) => setF({ ...f, tipo_pt: v })}>
                 <SelectTrigger className="bg-black/30 border-white/10 text-rose-50 mt-2 text-xs font-bold uppercase"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -755,7 +755,7 @@ function PtesPage() {
                         value={f.emergencia_justificativa}
                         onChange={(e) => setF({ ...f, emergencia_justificativa: e.target.value })}
                         placeholder="Justificativa obrigatória (mínimo 10 caracteres) — será registrada em auditoria"
-                        className="mt-2 bg-black/40 border-white/10 text-rose-50 placeholder:text-rose-200/30 text-xs"
+                        className="mt-2 bg-black/40 border-white/10 text-rose-50 placeholder:text-slate-400/70 text-xs"
                         rows={2}
                       />
                     )}
@@ -775,16 +775,16 @@ function PtesPage() {
             )}
 
             <div>
-              <Label className="text-[10px] font-black text-rose-200/70 uppercase">Local do Trabalho / Instalação</Label>
-              <Input required value={f.local} onChange={(e) => setF({ ...f, local: e.target.value })} placeholder="Ex: Dique Seco, Navio XYZ..." className="bg-black/30 border-white/10 text-rose-50 placeholder:text-rose-200/30 mt-2 text-xs font-bold uppercase" />
+              <Label className="text-xs font-black text-amber-200/90 uppercase tracking-wider">Local do Trabalho / Instalação</Label>
+              <Input required value={f.local} onChange={(e) => setF({ ...f, local: e.target.value })} placeholder="Ex: Dique Seco, Navio XYZ..." className="bg-black/30 border-white/10 text-rose-50 placeholder:text-slate-400/70 mt-2 text-xs font-bold uppercase" />
             </div>
             <div>
-              <Label className="text-[10px] font-black text-rose-200/70 uppercase">Encarregado (PDF FOR-SEG-04)</Label>
-              <Input value={f.encarregado_nome} onChange={(e) => setF({ ...f, encarregado_nome: e.target.value })} placeholder="Nome do encarregado responsável" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-rose-200/30 mt-2 text-xs font-bold uppercase" />
-              <p className="text-[9px] text-rose-200/40 mt-1 uppercase">Se vazio, usa o requisitante no PDF.</p>
+              <Label className="text-xs font-black text-amber-200/90 uppercase tracking-wider">Encarregado (PDF FOR-SEG-04)</Label>
+              <Input value={f.encarregado_nome} onChange={(e) => setF({ ...f, encarregado_nome: e.target.value })} placeholder="Nome do encarregado responsável" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-slate-400/70 mt-2 text-xs font-bold uppercase" />
+              <p className="text-[9px] text-slate-300/60 mt-1 uppercase">Se vazio, usa o requisitante no PDF.</p>
             </div>
             <div>
-              <Label className="text-[10px] font-black text-rose-200/70 uppercase">Frente de Trabalho (Casco)</Label>
+              <Label className="text-xs font-black text-amber-200/90 uppercase tracking-wider">Frente de Trabalho (Casco)</Label>
               <Select value={f.casco_id || "none"} onValueChange={(v) => setF({ ...f, casco_id: v === "none" ? "" : v })}>
                 <SelectTrigger className="bg-black/30 border-white/10 text-rose-50 mt-2 text-xs font-bold uppercase">
                   <SelectValue placeholder="-- SELECIONE O CASCO --" />
@@ -800,7 +800,7 @@ function PtesPage() {
               </Select>
             </div>
             <div>
-              <Label className="text-[10px] font-black text-rose-200/70 uppercase">Classificação de Risco (GSI)</Label>
+              <Label className="text-xs font-black text-amber-200/90 uppercase tracking-wider">Classificação de Risco (GSI)</Label>
               <Select value={f.risco} onValueChange={(v) => setF({ ...f, risco: v })}>
                 <SelectTrigger className="bg-black/30 border-white/10 text-rose-50 mt-2 text-xs font-bold uppercase"><SelectValue /></SelectTrigger>
                 <SelectContent>{PTE_RISCOS.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
@@ -810,22 +810,22 @@ function PtesPage() {
             {/* DATA + HORÁRIOS */}
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <Label className="text-[10px] font-black text-rose-200/70 uppercase">Data</Label>
+                <Label className="text-xs font-black text-amber-200/90 uppercase tracking-wider">Data</Label>
                 <Input type="date" required value={f.data} onChange={(e) => setF({ ...f, data: e.target.value })} className="bg-black/30 border-white/10 text-rose-50 mt-2" />
               </div>
               <div>
-                <Label className="text-[10px] font-black text-rose-200/70 uppercase">Início</Label>
+                <Label className="text-xs font-black text-amber-200/90 uppercase tracking-wider">Início</Label>
                 <Input type="time" value={f.hora_inicio} onChange={(e) => setF({ ...f, hora_inicio: e.target.value })} className="bg-black/30 border-white/10 text-rose-50 mt-2" />
               </div>
               <div>
-                <Label className="text-[10px] font-black text-rose-200/70 uppercase">Fim</Label>
+                <Label className="text-xs font-black text-amber-200/90 uppercase tracking-wider">Fim</Label>
                 <Input type="time" value={f.hora_fim} onChange={(e) => setF({ ...f, hora_fim: e.target.value })} className="bg-black/30 border-white/10 text-rose-50 mt-2" />
               </div>
             </div>
 
             {/* VALIDADE */}
             <div>
-              <Label className="text-[10px] font-black text-rose-200/70 uppercase mb-2 block">Validade</Label>
+              <Label className="text-xs font-black text-amber-200/90 uppercase tracking-wider mb-2 block">Validade</Label>
               <div className="grid grid-cols-3 gap-2">
                 {[
                   { v: "TURNO", l: "Turno" },
@@ -839,7 +839,7 @@ function PtesPage() {
                     className={`py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${
                       f.validade_tipo === opt.v
                         ? "bg-gradient-to-br from-rose-600/90 to-rose-900/90 text-rose-50 border-rose-400/40 shadow-[0_0_20px_-4px_rgba(220,38,70,0.7)]"
-                        : "bg-black/30 text-rose-200/70 border-white/10 hover:bg-black/50 hover:text-rose-100"
+                        : "bg-black/30 text-slate-200/90 border-white/10 hover:bg-black/50 hover:text-rose-100"
                     }`}
                   >
                     {opt.l}
@@ -883,7 +883,7 @@ function PtesPage() {
               <div>
                 <Label className="text-[10px] font-black text-rose-100 uppercase flex items-center gap-2 mb-2">
                   <UserCheck className="h-4 w-4" /> Requisitante <span className="text-red-600">*</span>
-                  <span className="text-[9px] font-bold text-rose-200/50 normal-case">(líder/encarregado do serviço)</span>
+                  <span className="text-[9px] font-bold text-slate-300/70 normal-case">(líder/encarregado do serviço)</span>
                 </Label>
                 <select
                   required
@@ -912,7 +912,7 @@ function PtesPage() {
               <div>
                 <Label className="text-[10px] font-black text-rose-100 uppercase flex items-center gap-2 mb-2">
                   <Users className="h-4 w-4" /> Executantes <span className="text-red-600">*</span>
-                  <span className="text-[9px] font-bold text-rose-200/50 normal-case">(equipe que executa)</span>
+                  <span className="text-[9px] font-bold text-slate-300/70 normal-case">(equipe que executa)</span>
                 </Label>
                 {f.executantes_ids.length > 0 && (
                   <div className="flex flex-wrap gap-1 mb-2">
@@ -992,7 +992,7 @@ function PtesPage() {
                 </>
               )}
 
-              <div className="text-[9px] font-bold uppercase text-rose-200/60 bg-black/30 border border-dashed border-white/10 rounded-lg px-3 py-2">
+              <div className="text-[9px] font-bold uppercase text-slate-200/80 bg-black/30 border border-dashed border-white/10 rounded-lg px-3 py-2">
                 Emitente: <span className="text-rose-100 font-black">{user?.email ?? "—"}</span> (usuário logado)
               </div>
             </div>
@@ -1005,7 +1005,7 @@ function PtesPage() {
                 <ClipboardList className="h-4 w-4 text-amber-300" /> Descrição das atividades (FOR-SEG-04)
               </h3>
               <div className="space-y-2">
-                <Label className="text-[10px] font-black text-rose-200/70 uppercase block">Descrição das atividades a serem executadas</Label>
+                <Label className="text-xs font-black text-amber-200/90 uppercase tracking-wider block">Descrição das atividades a serem executadas</Label>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                   {[
                     { k: "atv_movimentacao_cargas", l: "Movimentação de cargas" },
@@ -1025,26 +1025,26 @@ function PtesPage() {
                   ))}
                 </div>
                 {f.atv_outros && (
-                  <Input value={f.outros_atividade_texto} onChange={(e) => setF({ ...f, outros_atividade_texto: e.target.value })} placeholder="Descreva outros" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-rose-200/30 text-xs font-bold uppercase" />
+                  <Input value={f.outros_atividade_texto} onChange={(e) => setF({ ...f, outros_atividade_texto: e.target.value })} placeholder="Descreva outros" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-slate-400/70 text-xs font-bold uppercase" />
                 )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-[10px] font-black text-rose-200/70 uppercase mb-2 block">Mão de obra</Label>
+                  <Label className="text-xs font-black text-amber-200/90 uppercase tracking-wider mb-2 block">Mão de obra</Label>
                   <div className="grid grid-cols-2 gap-2">
                     {[{ v: "INTERNA", l: "Interna" }, { v: "EXTERNA", l: "Externa" }].map((o) => (
-                      <button key={o.v} type="button" onClick={() => setF({ ...f, mao_obra: f.mao_obra === o.v ? "" : o.v })} className={`py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${f.mao_obra === o.v ? "bg-gradient-to-br from-rose-600/90 to-rose-900/90 text-rose-50 border-rose-400/40" : "bg-black/30 text-rose-200/70 border-white/10 hover:bg-black/50"}`}>
+                      <button key={o.v} type="button" onClick={() => setF({ ...f, mao_obra: f.mao_obra === o.v ? "" : o.v })} className={`py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${f.mao_obra === o.v ? "bg-gradient-to-br from-rose-600/90 to-rose-900/90 text-rose-50 border-rose-400/40" : "bg-black/30 text-slate-200/90 border-white/10 hover:bg-black/50"}`}>
                         {o.l}
                       </button>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <Label className="text-[10px] font-black text-rose-200/70 uppercase mb-2 block">Área restrita</Label>
+                  <Label className="text-xs font-black text-amber-200/90 uppercase tracking-wider mb-2 block">Área restrita</Label>
                   <div className="grid grid-cols-2 gap-2">
                     {[{ v: "SIM", l: "Sim" }, { v: "NAO", l: "Não" }].map((o) => (
-                      <button key={o.v} type="button" onClick={() => setF({ ...f, area_restrita: f.area_restrita === o.v ? "" : o.v })} className={`py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${f.area_restrita === o.v ? "bg-gradient-to-br from-rose-600/90 to-rose-900/90 text-rose-50 border-rose-400/40" : "bg-black/30 text-rose-200/70 border-white/10 hover:bg-black/50"}`}>
+                      <button key={o.v} type="button" onClick={() => setF({ ...f, area_restrita: f.area_restrita === o.v ? "" : o.v })} className={`py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${f.area_restrita === o.v ? "bg-gradient-to-br from-rose-600/90 to-rose-900/90 text-rose-50 border-rose-400/40" : "bg-black/30 text-slate-200/90 border-white/10 hover:bg-black/50"}`}>
                         {o.l}
                       </button>
                     ))}
@@ -1062,7 +1062,7 @@ function PtesPage() {
               </h3>
               <PdfCheckboxGroup title="Marque os que se aplicam" group="riscos_potenciais" items={PTE_RISCOS_POTENCIAIS} />
               {f.riscos_potenciais?.outros && (
-                <Input value={f.outros_risco_texto} onChange={(e) => setF({ ...f, outros_risco_texto: e.target.value })} placeholder="Outros riscos" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-rose-200/30 text-xs font-bold uppercase" />
+                <Input value={f.outros_risco_texto} onChange={(e) => setF({ ...f, outros_risco_texto: e.target.value })} placeholder="Outros riscos" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-slate-400/70 text-xs font-bold uppercase" />
               )}
             </div>
           </div>
@@ -1075,7 +1075,7 @@ function PtesPage() {
               </h3>
               <PdfAnswerGroup title="(S) Sim · (N) Não · (NA) Não Aplicável" group="preenchimento_snna" items={PTE_PREENCIMENTO_SNNA} />
               {f.preenchimento_snna?.outros && (
-                <Input value={f.outros_snna_texto} onChange={(e) => setF({ ...f, outros_snna_texto: e.target.value })} placeholder="Outros" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-rose-200/30 text-xs font-bold uppercase" />
+                <Input value={f.outros_snna_texto} onChange={(e) => setF({ ...f, outros_snna_texto: e.target.value })} placeholder="Outros" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-slate-400/70 text-xs font-bold uppercase" />
               )}
             </div>
           </div>
@@ -1088,9 +1088,9 @@ function PtesPage() {
               </h3>
               <PdfCheckboxGroup title="Precauções" group="precaucao_quente" items={PTE_PRECAUCOES_QUENTE} />
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <Input value={f.teste_atmosfera_horario} onChange={(e) => setF({ ...f, teste_atmosfera_horario: e.target.value })} placeholder="Horário teste atmosfera" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-rose-200/30 text-xs font-bold uppercase" />
-                <Input value={f.teste_atmosfera_percentual} onChange={(e) => setF({ ...f, teste_atmosfera_percentual: e.target.value })} placeholder="Concentração %" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-rose-200/30 text-xs font-bold uppercase" />
-                <Input value={f.designado_liberacao} onChange={(e) => setF({ ...f, designado_liberacao: e.target.value })} placeholder="Designado pela liberação" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-rose-200/30 text-xs font-bold uppercase" />
+                <Input value={f.teste_atmosfera_horario} onChange={(e) => setF({ ...f, teste_atmosfera_horario: e.target.value })} placeholder="Horário teste atmosfera" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-slate-400/70 text-xs font-bold uppercase" />
+                <Input value={f.teste_atmosfera_percentual} onChange={(e) => setF({ ...f, teste_atmosfera_percentual: e.target.value })} placeholder="Concentração %" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-slate-400/70 text-xs font-bold uppercase" />
+                <Input value={f.designado_liberacao} onChange={(e) => setF({ ...f, designado_liberacao: e.target.value })} placeholder="Designado pela liberação" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-slate-400/70 text-xs font-bold uppercase" />
               </div>
             </div>
             <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-5 space-y-3">
@@ -1104,8 +1104,8 @@ function PtesPage() {
                 <Zap className="h-4 w-4 text-amber-300" /> Eletricidade / Fonte de Energia
               </h3>
               <PdfCheckboxGroup title="Precauções" group="precaucao_eletrica" items={PTE_PRECAUCOES_ELETRICA} />
-              <Input value={f.responsavel_bloqueio} onChange={(e) => setF({ ...f, responsavel_bloqueio: e.target.value })} placeholder="Responsável pelo bloqueio" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-rose-200/30 text-xs font-bold uppercase" />
-              <p className="text-[9px] font-bold uppercase text-rose-200/40">
+              <Input value={f.responsavel_bloqueio} onChange={(e) => setF({ ...f, responsavel_bloqueio: e.target.value })} placeholder="Responsável pelo bloqueio" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-slate-400/70 text-xs font-bold uppercase" />
+              <p className="text-[9px] font-bold uppercase text-slate-300/60">
                 Fim de semana / feriado é preenchido automaticamente no PDF conforme a data selecionada.
               </p>
             </div>
@@ -1363,7 +1363,7 @@ function PtesPage() {
                   );
                 })}
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-[10px] font-bold uppercase text-rose-200/70">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-[10px] font-bold uppercase text-slate-200/90">
                 <div className="bg-black/40 border border-white/10 rounded-lg px-3 py-2">Tipo: <span className="text-rose-50 font-black">{f.tipo_pt}</span></div>
                 <div className="bg-black/40 border border-white/10 rounded-lg px-3 py-2">Data: <span className="text-rose-50 font-black">{formatDateBR(f.data)}</span></div>
                 <div className="bg-black/40 border border-white/10 rounded-lg px-3 py-2">Horário: <span className="text-rose-50 font-black">{f.hora_inicio} → {f.hora_fim}</span></div>
@@ -1394,7 +1394,7 @@ function PtesPage() {
             >
               <ChevronLeft className="h-3.5 w-3.5" /> Voltar
             </button>
-            <div className="text-[9px] font-black uppercase tracking-widest text-rose-200/50">
+            <div className="text-[9px] font-black uppercase tracking-widest text-slate-300/70">
               {stepIndex + 1} / {STEPS.length}
             </div>
             {!isLast ? (
@@ -1421,7 +1421,7 @@ function PtesPage() {
           </h3>
           <div className="space-y-4 max-h-[600px] overflow-y-auto custom-scrollbar pr-2">
             {ptes.length === 0 && (
-              <div className="text-center text-rose-200/40 py-10 font-bold uppercase text-xs border border-dashed border-white/10 rounded-2xl bg-black/20">
+              <div className="text-center text-slate-300/60 py-10 font-bold uppercase text-xs border border-dashed border-white/10 rounded-2xl bg-black/20">
                 Nenhuma permissão foi emitida até o momento.
               </div>
             )}
@@ -1429,7 +1429,7 @@ function PtesPage() {
               <div key={p.id} className={`glass-card p-5 rounded-2xl transition-all hover:-translate-y-0.5 ${p.status !== "ATIVA" ? "opacity-60" : ""}`}>
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex items-center gap-2">
-                    <div className="text-[10px] font-black uppercase text-rose-200/70 tracking-widest">Nº <span className="text-rose-100">{p.numero}</span></div>
+                    <div className="text-[10px] font-black uppercase text-slate-200/90 tracking-widest">Nº <span className="text-rose-100">{p.numero}</span></div>
                     {p.tipo_pt && p.tipo_pt !== "PTE" && (
                       <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-indigo-950/70 text-indigo-200 border border-indigo-500/30">{p.tipo_pt}</span>
                     )}
@@ -1450,7 +1450,7 @@ function PtesPage() {
                     )}
                   </div>
                   <div className="flex gap-2 items-center">
-                    <div className={`text-[9px] font-black uppercase px-2 py-0.5 rounded tracking-widest border ${p.status === "ATIVA" ? "bg-gradient-to-br from-amber-600/80 to-amber-900/80 text-amber-50 border-amber-400/40 shadow-[0_0_12px_-2px_rgba(245,158,11,0.5)]" : "bg-black/40 text-rose-200/50 border-white/10"}`}>{p.status}</div>
+                    <div className={`text-[9px] font-black uppercase px-2 py-0.5 rounded tracking-widest border ${p.status === "ATIVA" ? "bg-gradient-to-br from-amber-600/80 to-amber-900/80 text-amber-50 border-amber-400/40 shadow-[0_0_12px_-2px_rgba(245,158,11,0.5)]" : "bg-black/40 text-slate-300/70 border-white/10"}`}>{p.status}</div>
                     <button onClick={() => setPreviewPt(p)} className="w-6 h-6 rounded bg-emerald-950/60 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-600 hover:text-white flex items-center justify-center transition-colors" title="Visualizar / Imprimir PDF">
                       <FileSearch className="h-3 w-3" />
                     </button>
@@ -1475,12 +1475,12 @@ function PtesPage() {
                   return (
                     <>
                       {reqName && (
-                        <div className="text-[10px] font-bold text-rose-200/60 uppercase flex items-center gap-1">
+                        <div className="text-[10px] font-bold text-slate-200/80 uppercase flex items-center gap-1">
                           <UserCheck className="h-3 w-3" /> Requisitante: <span className="font-black text-rose-100">{reqName}</span>
                         </div>
                       )}
                       {execNames.length > 0 && (
-                        <div className="text-[10px] font-bold text-rose-200/60 uppercase flex items-start gap-1 mt-0.5">
+                        <div className="text-[10px] font-bold text-slate-200/80 uppercase flex items-start gap-1 mt-0.5">
                           <Users className="h-3 w-3 mt-0.5 shrink-0" /> Executantes: <span className="font-black text-rose-50">{execNames.join(", ")}</span>
                         </div>
                       )}
@@ -1497,10 +1497,10 @@ function PtesPage() {
                     </>
                   );
                 })()}
-                <div className="text-[10px] font-bold text-rose-200/60 uppercase mt-2">Risco: <span className="font-black text-rose-50">{p.risco}</span></div>
-                <div className="text-[10px] font-bold text-rose-200/60 uppercase">Local: <span className="text-rose-100">{p.local ?? "—"}</span></div>
+                <div className="text-[10px] font-bold text-slate-200/80 uppercase mt-2">Risco: <span className="font-black text-rose-50">{p.risco}</span></div>
+                <div className="text-[10px] font-bold text-slate-200/80 uppercase">Local: <span className="text-rose-100">{p.local ?? "—"}</span></div>
                 {(p.hora_inicio || p.hora_fim) && (
-                  <div className="text-[10px] font-bold text-rose-200/60 uppercase">
+                  <div className="text-[10px] font-bold text-slate-200/80 uppercase">
                     Horário: <span className="font-black text-rose-50">{p.hora_inicio ?? "—"} → {p.hora_fim ?? "—"}</span>
                   </div>
                 )}
@@ -1520,7 +1520,7 @@ function PtesPage() {
                     <AlertTriangle className="h-3 w-3" /> Emergência — sem APR
                   </div>
                 )}
-                <div className="text-[9px] font-black text-rose-200/40 uppercase mt-3 tracking-widest flex items-center gap-1">
+                <div className="text-[9px] font-black text-slate-300/60 uppercase mt-3 tracking-widest flex items-center gap-1">
                   <Clock className="h-3 w-3" /> Emitida em: {formatDateBR(p.data_emissao || p.data)}
                 </div>
                 {p.status === "ATIVA" && isEditor && (
