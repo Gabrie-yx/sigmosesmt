@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ShieldCheck, Loader2, CheckCircle2, XCircle } from "lucide-react";
@@ -226,17 +225,25 @@ function PsicoPublicPage() {
               São {totalItens} perguntas rápidas · leva ~8 a 12 minutos. Se fechar a aba, suas respostas ficam salvas nesse celular até você enviar.
             </p>
           </div>
-          <div className="flex items-start gap-2 rounded-lg bg-[#fdf2f8] border border-rose-100 p-3 mt-4">
-            <Checkbox
-              id="c"
-              checked={aceitou}
-              onCheckedChange={(v) => setAceitou(!!v)}
-              className="mt-0.5 border-rose-400 data-[state=checked]:bg-rose-600 data-[state=checked]:border-rose-600"
-            />
-            <Label htmlFor="c" className="text-sm text-slate-800 leading-relaxed cursor-pointer">
+          {/* Bloco todo clicável — evita depender só do hit-target minúsculo
+              da checkbox em telas de celular. */}
+          <button
+            type="button"
+            onClick={() => setAceitou((v) => !v)}
+            className="w-full flex items-start gap-3 rounded-lg bg-[#fdf2f8] border border-rose-200 p-3 mt-4 text-left hover:bg-[#fce7ef] transition"
+          >
+            <span
+              aria-hidden
+              className={`mt-0.5 h-5 w-5 shrink-0 rounded border-2 flex items-center justify-center transition ${
+                aceitou ? "bg-rose-600 border-rose-600" : "bg-white border-rose-400"
+              }`}
+            >
+              {aceitou && <CheckCircle2 className="h-4 w-4 text-white" strokeWidth={3} />}
+            </span>
+            <span className="text-sm text-slate-800 leading-relaxed">
               Li, entendi e concordo em participar de forma anônima e voluntária.
-            </Label>
-          </div>
+            </span>
+          </button>
           <button
             type="button"
             disabled={!aceitou}
