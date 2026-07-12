@@ -73,6 +73,7 @@ import {
   Sparkles,
   Syringe,
   ChefHat,
+  Brain,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
