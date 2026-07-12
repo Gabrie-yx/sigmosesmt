@@ -81,6 +81,15 @@ export function PtPdfPreview({ open, onClose, pt, apr, casco, company, employees
       precaucao_altura: dados.precaucao_altura ?? {},
       precaucao_eletrica: dados.precaucao_eletrica ?? {},
       responsavel_bloqueio: dados.responsavel_bloqueio ?? "",
+      precaucao_carga: dados.precaucao_carga ?? {},
+      precaucao_pintura: dados.precaucao_pintura ?? {},
+      epis_col1: dados.epis_col1 ?? {},
+      epis_col2: dados.epis_col2 ?? {},
+      outros_epi: dados.outros_epi ?? {},
+      recomendacoes_adicionais: dados.recomendacoes_adicionais ?? "",
+      equipe_lista: Array.isArray(dados.equipe_lista) ? dados.equipe_lista : [],
+      assinatura_encarregado_nome: dados.assinatura_encarregado_nome ?? "",
+      assinatura_gerente_nome: dados.assinatura_gerente_nome ?? "",
       assinatura_tst_data_url: assinaturaTst,
     };
   }, [pt, apr, casco, company, employees, assinaturaTst]);
