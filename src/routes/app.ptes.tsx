@@ -733,7 +733,7 @@ function PtesPage() {
             </aside>
 
             <form onSubmit={(e) => { e.preventDefault(); save.mutate(); }} className="space-y-5 min-w-0">
-          <div hidden={activeStep !== "ident"} className="space-y-6">
+          <div hidden={activeStep !== "ident"} className="space-y-4">
 
             {/* TIPO DA PT */}
             <div>
@@ -892,8 +892,8 @@ function PtesPage() {
             </div>
           </div>
 
-          <div hidden={activeStep !== "equipe"} className="space-y-6">
-            <div className="p-6 rounded-2xl bg-gradient-to-br from-black/40 to-rose-950/30 border border-white/10 shadow-[inset_0_1px_0_rgba(255,230,235,0.05)] space-y-5">
+          <div hidden={activeStep !== "equipe"} className="space-y-4">
+            <div className="p-6 rounded-xl bg-gradient-to-br from-black/40 to-rose-950/30 border border-white/10 space-y-3.5">
               <div>
                 <Label className="text-[10px] font-black text-rose-100 uppercase flex items-center gap-2 mb-3">
                   <HardHat className="h-4 w-4" /> Empresa (filtro)
@@ -924,7 +924,7 @@ function PtesPage() {
                   required
                   value={f.requisitante_id}
                   onChange={(e) => setF({ ...f, requisitante_id: e.target.value })}
-                  className="w-full bg-black/40 border border-white/10 text-rose-50 rounded-xl px-4 py-3 text-xs font-bold uppercase outline-none focus:ring-2 focus:ring-rose-500/40 focus:border-rose-400/40"
+                  className="w-full bg-black/40 border border-white/10 text-rose-50 rounded-xl px-4 py-2 text-xs font-bold uppercase outline-none focus:ring-2 focus:ring-rose-500/40 focus:border-rose-400/40"
                 >
                   <option value="">-- SELECIONE O REQUISITANTE --</option>
                   {empOptions.map(({ e, st, compName }) => {
@@ -971,7 +971,7 @@ function PtesPage() {
                     if (f.executantes_ids.includes(e.target.value)) return;
                     setF({ ...f, executantes_ids: [...f.executantes_ids, e.target.value] });
                   }}
-                  className="w-full bg-black/40 border border-white/10 text-rose-50 rounded-xl px-4 py-2.5 text-xs font-bold uppercase outline-none focus:ring-2 focus:ring-rose-500/40 focus:border-rose-400/40"
+                  className="w-full bg-black/40 border border-white/10 text-rose-50 rounded-xl px-4 py-2 text-xs font-bold uppercase outline-none focus:ring-2 focus:ring-rose-500/40 focus:border-rose-400/40"
                 >
                   <option value="">+ ADICIONAR EXECUTANTE</option>
                   {empOptions
@@ -1000,7 +1000,7 @@ function PtesPage() {
                       required
                       value={f.vigia_id}
                       onChange={(e) => setF({ ...f, vigia_id: e.target.value })}
-                      className="w-full bg-black/40 border border-amber-500/30 text-rose-50 rounded-xl px-4 py-2.5 text-xs font-bold uppercase outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-400/50"
+                      className="w-full bg-black/40 border border-amber-500/30 text-rose-50 rounded-xl px-4 py-2 text-xs font-bold uppercase outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-400/50"
                     >
                       <option value="">-- SELECIONE O VIGIA --</option>
                       {empOptions.map(({ e, compName }) => (
@@ -1016,7 +1016,7 @@ function PtesPage() {
                       required
                       value={f.supervisor_entrada_id}
                       onChange={(e) => setF({ ...f, supervisor_entrada_id: e.target.value })}
-                      className="w-full bg-black/40 border border-amber-500/30 text-rose-50 rounded-xl px-4 py-2.5 text-xs font-bold uppercase outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-400/50"
+                      className="w-full bg-black/40 border border-amber-500/30 text-rose-50 rounded-xl px-4 py-2 text-xs font-bold uppercase outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-400/50"
                     >
                       <option value="">-- SELECIONE O SUPERVISOR --</option>
                       {empOptions.map(({ e, compName }) => (
@@ -1034,8 +1034,8 @@ function PtesPage() {
           </div>
 
           {/* ATIVIDADES */}
-          <div hidden={activeStep !== "atividades"} className="space-y-6">
-            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-5 space-y-5">
+          <div hidden={activeStep !== "atividades"} className="space-y-4">
+            <div className="rounded-xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-3.5 space-y-5">
               <h3 className="text-xs font-black uppercase tracking-widest text-rose-100 border-b border-white/10 pb-2 flex items-center gap-2">
                 <ClipboardList className="h-4 w-4 text-amber-300" /> Descrição das atividades (FOR-SEG-04)
               </h3>
@@ -1090,8 +1090,8 @@ function PtesPage() {
           </div>
 
           {/* RISCOS */}
-          <div hidden={activeStep !== "riscos"} className="space-y-6">
-            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-5 space-y-4">
+          <div hidden={activeStep !== "riscos"} className="space-y-4">
+            <div className="rounded-xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-3.5 space-y-4">
               <h3 className="text-xs font-black uppercase tracking-widest text-rose-100 border-b border-white/10 pb-2 flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 text-amber-300" /> Riscos potenciais
               </h3>
@@ -1103,8 +1103,8 @@ function PtesPage() {
           </div>
 
           {/* S/N/NA */}
-          <div hidden={activeStep !== "snna"} className="space-y-6">
-            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-5 space-y-4">
+          <div hidden={activeStep !== "snna"} className="space-y-4">
+            <div className="rounded-xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-3.5 space-y-4">
               <h3 className="text-xs font-black uppercase tracking-widest text-rose-100 border-b border-white/10 pb-2 flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-lime-300" /> Preenchimento — S / N / NA
               </h3>
@@ -1116,8 +1116,8 @@ function PtesPage() {
           </div>
 
           {/* PRECAUÇÕES */}
-          <div hidden={activeStep !== "precaucoes"} className="space-y-6">
-            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-5 space-y-4">
+          <div hidden={activeStep !== "precaucoes"} className="space-y-4">
+            <div className="rounded-xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-3.5 space-y-4">
               <h3 className="text-xs font-black uppercase tracking-widest text-rose-100 border-b border-white/10 pb-2 flex items-center gap-2">
                 <Flame className="h-4 w-4 text-amber-300" /> Trabalho a Quente
               </h3>
@@ -1128,13 +1128,13 @@ function PtesPage() {
                 <Input value={f.designado_liberacao} onChange={(e) => setF({ ...f, designado_liberacao: e.target.value })} placeholder="Designado pela liberação" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-slate-400/70 text-xs font-bold uppercase" />
               </div>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-5 space-y-3">
+            <div className="rounded-xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-3.5 space-y-3">
               <h3 className="text-xs font-black uppercase tracking-widest text-rose-100 border-b border-white/10 pb-2 flex items-center gap-2">
                 <Layers className="h-4 w-4 text-lime-300" /> Trabalho em Altura
               </h3>
               <PdfCheckboxGroup title="Precauções" group="precaucao_altura" items={PTE_PRECAUCOES_ALTURA} />
             </div>
-            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-5 space-y-3">
+            <div className="rounded-xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-3.5 space-y-3">
               <h3 className="text-xs font-black uppercase tracking-widest text-rose-100 border-b border-white/10 pb-2 flex items-center gap-2">
                 <Zap className="h-4 w-4 text-amber-300" /> Eletricidade / Fonte de Energia
               </h3>
@@ -1147,14 +1147,14 @@ function PtesPage() {
           </div>
 
           {/* CARGAS & PINTURA */}
-          <div hidden={activeStep !== "cargas_pintura"} className="space-y-6">
-            <div className="rounded-2xl border border-amber-300/25 bg-gradient-to-br from-amber-500/5 via-black/40 to-black/40 p-5 space-y-4">
+          <div hidden={activeStep !== "cargas_pintura"} className="space-y-4">
+            <div className="rounded-xl border border-amber-300/25 bg-gradient-to-br from-amber-500/5 via-black/40 to-black/40 p-3.5 space-y-4">
               <h3 className="text-sm font-black uppercase tracking-wider text-amber-100 border-b border-amber-300/20 pb-2 flex items-center gap-2">
                 <HardHat className="h-4 w-4 text-amber-300" /> Movimentação e Içamento de Carga
               </h3>
               <PdfCheckboxGroup title="Precauções" group="precaucao_carga" items={PTE_PRECAUCOES_CARGA} />
             </div>
-            <div className="rounded-2xl border border-lime-300/25 bg-gradient-to-br from-lime-500/5 via-black/40 to-black/40 p-5 space-y-4">
+            <div className="rounded-xl border border-lime-300/25 bg-gradient-to-br from-lime-500/5 via-black/40 to-black/40 p-3.5 space-y-4">
               <h3 className="text-sm font-black uppercase tracking-wider text-lime-100 border-b border-lime-300/20 pb-2 flex items-center gap-2">
                 <Wind className="h-4 w-4 text-lime-300" /> Trabalho com Pintura
               </h3>
@@ -1163,8 +1163,8 @@ function PtesPage() {
           </div>
 
           {/* EPIs */}
-          <div hidden={activeStep !== "epis"} className="space-y-6">
-            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.03] to-black/40 p-5 space-y-5">
+          <div hidden={activeStep !== "epis"} className="space-y-4">
+            <div className="rounded-xl border border-white/10 bg-gradient-to-br from-white/[0.03] to-black/40 p-3.5 space-y-5">
               <h3 className="text-sm font-black uppercase tracking-wider text-slate-50 border-b border-white/10 pb-2 flex items-center gap-2">
                 <ShieldCheck className="h-4 w-4 text-amber-300" /> Equipamentos de Proteção Individual Obrigatórios
               </h3>
@@ -1203,8 +1203,8 @@ function PtesPage() {
           </div>
 
           {/* EQUIPE & ASSINATURAS */}
-          <div hidden={activeStep !== "assinaturas"} className="space-y-6">
-            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.03] to-black/40 p-5 space-y-4">
+          <div hidden={activeStep !== "assinaturas"} className="space-y-4">
+            <div className="rounded-xl border border-white/10 bg-gradient-to-br from-white/[0.03] to-black/40 p-3.5 space-y-4">
               <div className="flex items-center justify-between border-b border-white/10 pb-2">
                 <h3 className="text-sm font-black uppercase tracking-wider text-slate-50 flex items-center gap-2">
                   <Users className="h-4 w-4 text-lime-300" /> Equipe — Nome, Função e Assinatura
@@ -1289,7 +1289,7 @@ function PtesPage() {
           </div>
 
           {/* PET / RESGATE */}
-          <div hidden={activeStep !== "pet"} className="space-y-6">
+          <div hidden={activeStep !== "pet"} className="space-y-4">
             {f.tipo_pt === "PET" && (
               <PteAtmosferaTab petId={editingId} employees={emps as any[]} />
             )}
@@ -1408,7 +1408,7 @@ function PtesPage() {
               <Button
                 type="submit"
                 disabled={save.isPending}
-                className={`w-full text-xs font-black uppercase tracking-widest h-auto px-8 py-4 rounded-xl flex items-center justify-center gap-2 text-white border transition-all ${
+                className={`w-full text-xs font-black uppercase tracking-widest h-auto px-6 py-3 rounded-xl flex items-center justify-center gap-2 text-white border transition-all ${
                   editingId
                     ? "bg-gradient-to-br from-blue-600/90 to-blue-900/90 border-blue-400/40 shadow-[0_0_24px_-4px_rgba(59,130,246,0.6)] hover:shadow-[0_0_32px_-2px_rgba(59,130,246,0.9)]"
                     : "bg-gradient-to-r from-lime-500 via-amber-500 to-rose-600 border-amber-300/50 shadow-[0_0_28px_-4px_rgba(245,158,11,0.9)] hover:shadow-[0_0_40px_-2px_rgba(220,38,70,0.9)]"
