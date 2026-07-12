@@ -561,7 +561,7 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
         // Se houver liberação ativa, o card de Liberações fica alto — jogamos ele
         // para uma linha própria (largura total) abaixo, mantendo Docs+Pendências
         // no topo. Sem liberação ativa, os 3 cabem em uma linha só.
-        const hasActiveOverride = filterActiveOverrides(safetyOverridesForLayout ?? []).length > 0;
+        const hasActiveOverride = filterActiveOverrides(overrides ?? []).length > 0;
         const topCount = (showDocs ? 1 : 0) + (showPend ? 1 : 0);
         const twoRows = hasActiveOverride && topCount > 0;
         const topGridCls =
