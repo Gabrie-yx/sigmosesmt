@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Brain, Plus, Copy, Loader2, AlertTriangle, ShieldCheck, Users, BarChart3, ListChecks, ClipboardList } from "lucide-react";
 import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
 import { DIMENSAO_LABEL, PSICO_ITEMS } from "@/lib/psico-instrument";
 
 export const Route = createFileRoute("/app/psicossocial")({
@@ -62,17 +63,32 @@ function PsicossocialPage() {
 
 /* ============ 1. CATÁLOGO ============ */
 function CatalogoTab() {
+  const qc = useQueryClient();
   const { data: itens, isLoading } = useQuery({
     queryKey: ["catalogo-psico"],
     queryFn: async () => {
       const { data, error } = await sb
         .from("catalogo_perigos_psicossociais")
         .select("*")
-        .eq("ativo", true)
         .order("dimensao").order("ordem");
       if (error) throw error;
       return data as any[];
     },
+  });
+
+  const toggleAtivo = useMutation({
+    mutationFn: async ({ id, ativo }: { id: string; ativo: boolean }) => {
+      const { error } = await sb
+        .from("catalogo_perigos_psicossociais")
+        .update({ ativo })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["catalogo-psico"] });
+      toast.success(vars.ativo ? "Perigo reativado" : "Perigo desativado");
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Falha ao atualizar"),
   });
 
   const grupos = useMemo(() => {
@@ -88,7 +104,8 @@ function CatalogoTab() {
       <Card className="p-4 bg-rose-950/30 border-rose-500/20">
         <p className="text-sm text-rose-100/80">
           Biblioteca-mãe de <b>{itens?.length ?? 0} perigos psicossociais</b> em 8 dimensões (ISO 45003 + Guia MTE 2025). Serve
-          como base para o inventário do PGR de qualquer empresa/CNAE.
+          como base para o inventário do PGR de qualquer empresa/CNAE. Use o <b>toggle</b> em cada card para ativar/desativar
+          perigos que não se aplicam à sua operação — o histórico é preservado.
         </p>
       </Card>
       {Object.entries(grupos).map(([dim, lista]) => (
@@ -96,14 +113,33 @@ function CatalogoTab() {
           <h3 className="font-bold text-slate-900 mb-3 flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-rose-500" />
             {DIMENSAO_LABEL[dim as keyof typeof DIMENSAO_LABEL] ?? dim}
-            <Badge variant="outline" className="ml-auto">{lista.length} perigos</Badge>
+            <Badge variant="outline" className="ml-auto">
+              {lista.filter((x) => x.ativo).length}/{lista.length} ativos
+            </Badge>
           </h3>
           <div className="grid gap-2 md:grid-cols-2">
             {lista.map((p) => (
-              <div key={p.id} className="rounded-lg border border-rose-500/20 p-3 bg-transparent/50">
+              <div
+                key={p.id}
+                className={`rounded-lg border p-3 transition ${
+                  p.ativo
+                    ? "border-rose-500/20 bg-transparent/50"
+                    : "border-slate-700/40 bg-slate-900/40 opacity-60"
+                }`}
+              >
                 <div className="flex items-start justify-between gap-2 mb-1">
-                  <p className="text-sm font-semibold text-rose-50">{p.perigo}</p>
-                  <Badge variant="secondary" className="shrink-0 text-[10px]">{p.codigo}</Badge>
+                  <p className={`text-sm font-semibold ${p.ativo ? "text-rose-50" : "text-slate-400 line-through"}`}>
+                    {p.perigo}
+                  </p>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Badge variant="secondary" className="text-[10px]">{p.codigo}</Badge>
+                    <Switch
+                      checked={!!p.ativo}
+                      disabled={toggleAtivo.isPending}
+                      onCheckedChange={(v) => toggleAtivo.mutate({ id: p.id, ativo: v })}
+                      aria-label={p.ativo ? "Desativar perigo" : "Ativar perigo"}
+                    />
+                  </div>
                 </div>
                 {p.agravo && <p className="text-xs text-rose-300"><b>Agravo:</b> {p.agravo}</p>}
                 {p.controles_sugeridos && <p className="text-xs text-rose-200 mt-1"><b>Controles:</b> {p.controles_sugeridos}</p>}
