@@ -72,6 +72,15 @@ export async function renderOverlay(input: RenderOverlayInput): Promise<Blob> {
     const size = f.size ?? 9;
     const chosen = f.bold ? fontBold : font;
     const t = truncateToWidth(String(value), chosen, size, f.maxW);
+    if (f.clear) {
+      page.drawRectangle({
+        x: f.clear.x ?? f.x,
+        y: H - (f.clear.top ?? f.top) - f.clear.height + 2,
+        width: f.clear.width,
+        height: f.clear.height,
+        color: rgb(1, 1, 1),
+      });
+    }
     page.drawText(t, {
       x: f.x,
       y: H - f.top + (f.baselineOffset ?? 4.2),
