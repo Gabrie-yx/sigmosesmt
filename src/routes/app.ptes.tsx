@@ -626,18 +626,18 @@ function PtesPage() {
       </div>
 
       <div className="flex flex-col gap-6 md:gap-8">
-        {/* FORM — WIZARD HORIZONTAL */}
-        <div className="glass-card glass-shine rounded-2xl p-4 sm:p-6 md:p-8">
-          <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-white/10 mb-5">
+        {/* FORM — WIZARD COM RAIL */}
+        <div className="glass-card glass-shine rounded-2xl p-3 sm:p-4 md:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-white/10 mb-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-rose-600/80 to-amber-500/70 flex items-center justify-center shadow-[0_0_18px_-2px_rgba(245,158,11,0.55)]">
-                <FileText className="h-5 w-5 text-white" />
+              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-rose-600/80 to-amber-500/70 flex items-center justify-center shadow-[0_0_14px_-4px_rgba(245,158,11,0.55)]">
+                <FileText className="h-4 w-4 text-white" />
               </div>
               <div>
-                <div className="text-sm font-black text-rose-100 uppercase tracking-widest">
+                <div className="text-xs sm:text-sm font-black text-rose-100 uppercase tracking-wider">
                   {editingId ? "Editar Permissão" : "Nova Permissão de Trabalho"}
                 </div>
-                <div className="text-[9px] font-bold uppercase tracking-widest text-slate-300/70">
+                <div className="text-[9px] font-bold uppercase tracking-wider text-slate-300/70">
                   Passo {stepIndex + 1} de {STEPS.length} · {STEPS[stepIndex]?.label}
                 </div>
               </div>
