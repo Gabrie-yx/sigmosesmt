@@ -752,6 +752,90 @@ function PtesPage() {
               <PteAtmosferaTab petId={editingId} employees={emps as any[]} />
             )}
 
+            {/* FOR-SEG-04 — CAMPOS DO PDF HOMOLOGADO */}
+            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-black/40 to-rose-950/30 p-5 space-y-4">
+              <h3 className="text-xs font-black uppercase tracking-widest text-rose-100 border-b border-white/10 pb-2">
+                Campos do PDF FOR-SEG-04
+              </h3>
+
+              <div>
+                <Label className="text-[10px] font-black text-rose-200/70 uppercase mb-2 block">
+                  Descrição das atividades a serem executadas
+                </Label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {[
+                    { k: "atv_movimentacao_cargas", l: "Movimentação de cargas" },
+                    { k: "atv_manutencao_civil", l: "Manutenção civil" },
+                    { k: "atv_gases_inflamaveis", l: "Gases inflamáveis" },
+                    { k: "atv_altura_telhados", l: "Altura / telhados" },
+                    { k: "atv_demolicao_escavacao", l: "Demolição / escavação" },
+                    { k: "atv_eletricidade", l: "Eletricidade" },
+                    { k: "atv_trabalho_quente", l: "Trabalho a quente" },
+                    { k: "atv_local_confinado", l: "Local confinado" },
+                    { k: "atv_outros", l: "Outros" },
+                  ].map((o) => (
+                    <label key={o.k} className="flex items-center gap-2 text-[11px] font-bold uppercase text-rose-100 bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 cursor-pointer hover:border-rose-500/40">
+                      <Checkbox
+                        checked={!!(f as any)[o.k]}
+                        onCheckedChange={(v) => setF({ ...f, [o.k]: !!v })}
+                      />
+                      {o.l}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-[10px] font-black text-rose-200/70 uppercase mb-2 block">Mão de obra</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { v: "INTERNA", l: "Interna" },
+                      { v: "EXTERNA", l: "Externa" },
+                    ].map((o) => (
+                      <button
+                        key={o.v}
+                        type="button"
+                        onClick={() => setF({ ...f, mao_obra: f.mao_obra === o.v ? "" : o.v })}
+                        className={`py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${
+                          f.mao_obra === o.v
+                            ? "bg-gradient-to-br from-rose-600/90 to-rose-900/90 text-rose-50 border-rose-400/40"
+                            : "bg-black/30 text-rose-200/70 border-white/10 hover:bg-black/50"
+                        }`}
+                      >
+                        {o.l}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-[10px] font-black text-rose-200/70 uppercase mb-2 block">Área restrita</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { v: "SIM", l: "Sim" },
+                      { v: "NAO", l: "Não" },
+                    ].map((o) => (
+                      <button
+                        key={o.v}
+                        type="button"
+                        onClick={() => setF({ ...f, area_restrita: f.area_restrita === o.v ? "" : o.v })}
+                        className={`py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${
+                          f.area_restrita === o.v
+                            ? "bg-gradient-to-br from-rose-600/90 to-rose-900/90 text-rose-50 border-rose-400/40"
+                            : "bg-black/30 text-rose-200/70 border-white/10 hover:bg-black/50"
+                        }`}
+                      >
+                        {o.l}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <p className="text-[9px] font-bold uppercase text-rose-200/40">
+                Fim de semana / feriado é preenchido automaticamente no PDF conforme a data selecionada.
+              </p>
+            </div>
+
             {/* NR-33 33.3.2.h — Plano de Resgate (apenas PET) */}
             {f.tipo_pt === "PET" && (
               <div className="mt-6 rounded-2xl border-2 border-amber-500/40 bg-gradient-to-br from-amber-950/40 to-black/40 p-5 space-y-3">
