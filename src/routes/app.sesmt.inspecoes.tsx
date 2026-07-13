@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Target, Plus, ChevronRight, ChevronLeft, ClipboardList } from "lucide-react";
+import { Target, Plus, ChevronRight, ChevronLeft, ClipboardList, Trash2, Info, Camera, ShieldAlert, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -27,10 +27,12 @@ const STATUS_LABEL: Record<string, { label: string; cls: string }> = {
 };
 
 function InspecoesList() {
-  const { user } = useAuth();
+  const { user, roles } = useAuth();
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [excluir, setExcluir] = useState<{ id: string; local: string } | null>(null);
+  const canDelete = roles?.some((r) => r === "admin" || r === "tst");
 
   const { data: inspecoes = [], isLoading } = useQuery({
     queryKey: ["inspecoes"],
@@ -93,6 +95,19 @@ function InspecoesList() {
     onError: (e: any) => toast.error(e.message ?? "Erro ao criar"),
   });
 
+  const remover = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("inspecoes").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Inspeção excluída");
+      qc.invalidateQueries({ queryKey: ["inspecoes"] });
+      setExcluir(null);
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro ao excluir"),
+  });
+
   return (
     <div className="p-4 md:p-6 max-w-6xl mx-auto space-y-4">
       <Link to="/app" className="text-[10px] font-black uppercase tracking-wider text-slate-500 hover:text-slate-800 flex items-center gap-1">
@@ -114,6 +129,14 @@ function InspecoesList() {
             <DialogHeader>
               <DialogTitle>Nova inspeção (rascunho)</DialogTitle>
             </DialogHeader>
+            <div className="rounded border border-emerald-200 bg-emerald-50 text-emerald-900 text-[11px] p-2 flex gap-2">
+              <Info className="h-4 w-4 shrink-0 mt-0.5" />
+              <div>
+                Isto cria um <b>rascunho</b>. No próximo passo você vai <b>anexar fotos</b> (celular ou CFTV),
+                <b> registrar não conformidades</b> (NR + matriz 5x5) e montar o <b>plano de ação (PDCA)</b>.
+                Nada é publicado até você clicar em <b>Publicar</b>. Fotos e dados podem ser editados/excluídos enquanto estiver em rascunho.
+              </div>
+            </div>
             <div className="grid gap-3">
               <div>
                 <Label>Empresa</Label>
@@ -172,25 +195,66 @@ function InspecoesList() {
             <div className="divide-y">
               {inspecoes.map((it: any) => {
                 const st = STATUS_LABEL[it.status] ?? STATUS_LABEL.rascunho;
+                const podeExcluir = canDelete && (it.status === "rascunho" || it.status === "em_revisao");
                 return (
-                  <Link key={it.id} to="/app/sesmt/inspecoes/$id" params={{ id: it.id }} className="flex items-center gap-3 py-3 hover:bg-slate-50 -mx-2 px-2 rounded">
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-semibold text-slate-800 truncate">{it.local_descricao}</div>
-                      <div className="text-[11px] text-slate-500 flex gap-2 flex-wrap">
-                        <span>{format(new Date(it.data_inspecao + "T00:00:00"), "dd/MM/yyyy")}</span>
-                        {it.companies && <span>· {it.companies.nome_fantasia ?? it.companies.name}</span>}
-                        {it.tipo_local && <span>· {it.tipo_local}</span>}
+                  <div key={it.id} className="flex items-center gap-2 py-3 hover:bg-slate-50 -mx-2 px-2 rounded">
+                    <Link to="/app/sesmt/inspecoes/$id" params={{ id: it.id }} className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-semibold text-slate-800 truncate">{it.local_descricao}</div>
+                        <div className="text-[11px] text-slate-500 flex gap-2 flex-wrap">
+                          <span>{format(new Date(it.data_inspecao + "T00:00:00"), "dd/MM/yyyy")}</span>
+                          {it.companies && <span>· {it.companies.nome_fantasia ?? it.companies.name}</span>}
+                          {it.tipo_local && <span>· {it.tipo_local}</span>}
+                        </div>
                       </div>
-                    </div>
-                    <Badge className={st.cls + " text-[10px]"}>{st.label}</Badge>
-                    <ChevronRight className="h-4 w-4 text-slate-400" />
-                  </Link>
+                      <Badge className={st.cls + " text-[10px]"}>{st.label}</Badge>
+                      <ChevronRight className="h-4 w-4 text-slate-400" />
+                    </Link>
+                    {podeExcluir && (
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 text-red-600 hover:bg-red-50"
+                        title="Excluir inspeção"
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setExcluir({ id: it.id, local: it.local_descricao }); }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 );
               })}
             </div>
           )}
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-[11px] font-black uppercase tracking-wide text-slate-600 flex items-center gap-2">
+            <Info className="h-3.5 w-3.5" /> Como funciona
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="grid md:grid-cols-3 gap-3 text-[11px] text-slate-600">
+          <div className="flex gap-2"><Camera className="h-4 w-4 text-emerald-700 shrink-0" /><div><b>1. Rascunho + evidências.</b> Crie a inspeção e anexe fotos (celular/CFTV). Cada foto guarda hash, timestamp e GPS.</div></div>
+          <div className="flex gap-2"><ShieldAlert className="h-4 w-4 text-orange-600 shrink-0" /><div><b>2. NCs + PDCA.</b> Registre não conformidades por NR, classifique risco (matriz 5x5) e crie plano de ação.</div></div>
+          <div className="flex gap-2"><FileText className="h-4 w-4 text-slate-700 shrink-0" /><div><b>3. Publicar.</b> Em rascunho, tudo é editável/excluível. Após publicar, vira registro rastreável.</div></div>
+        </CardContent>
+      </Card>
+
+      <Dialog open={!!excluir} onOpenChange={(v) => !v && setExcluir(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Excluir inspeção?</DialogTitle></DialogHeader>
+          <div className="text-sm text-slate-700">
+            Vai remover permanentemente a inspeção <b>{excluir?.local}</b> junto com todas as fotos, NCs e planos vinculados.
+            Essa ação não pode ser desfeita.
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setExcluir(null)}>Cancelar</Button>
+            <Button variant="destructive" onClick={() => excluir && remover.mutate(excluir.id)} disabled={remover.isPending}>Excluir</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
