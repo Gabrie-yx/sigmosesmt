@@ -746,6 +746,21 @@ function DiagnosticoTab() {
           minRespondentes={(campanhas ?? []).find((c: any) => c.id === campanhaId)?.min_respondentes ?? 5}
         />
       )}
+
+      <PDFPreviewDialog
+        open={!!pdfDoc}
+        onClose={() => { setPdfDoc(null); setTstSig(null); setSupSig(null); }}
+        doc={pdfDoc}
+        fileName={pdfName}
+        title="Parecer Técnico Psicossocial"
+        signable
+        useSignatureGallery
+        signatureLabels={{ enc: "Téc. Segurança Trabalho", sesmt: "Supervisor Geral" }}
+        encSig={tstSig}
+        sesmtSig={supSig}
+        onChangeEncSig={(v) => { setTstSig(v); const d = buildParecer(v, supSig); if (d) setPdfDoc(d); }}
+        onChangeSesmtSig={(v) => { setSupSig(v); const d = buildParecer(tstSig, v); if (d) setPdfDoc(d); }}
+      />
     </div>
   );
 }
