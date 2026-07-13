@@ -350,7 +350,8 @@ function InspecaoDetail() {
 
   const ncsComPlano = new Set((planosResumo ?? []).map((p: any) => p.nc_id));
   const faltaPlano = ncs.length > 0 && (planosResumoLoading || ncs.some((n: any) => !ncsComPlano.has(n.id)));
-  const publicadoIncompleto = insp.status === "publicada" && (fotos.length === 0 || ncs.length === 0 || faltaPlano);
+  // NC é opcional: publicada sem NC = inspeção conforme. Só é "incompleta" se falta foto ou se tem NC sem plano.
+  const publicadoIncompleto = insp.status === "publicada" && (fotos.length === 0 || faltaPlano);
   const editable = insp.status === "rascunho" || insp.status === "em_revisao" || (publicadoIncompleto && canManage);
 
   return (
