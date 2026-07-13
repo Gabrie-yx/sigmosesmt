@@ -132,7 +132,7 @@ export function CommandPalette() {
     queryFn: async () => {
       let q = supabase
         .from("employees")
-        .select("id, nome, funcao, status, matricula, cpf, foto_url, company_id, companies(name)")
+        .select("id, nome, status, matricula, cpf, foto_url, company_id, companies(name), roles(name)")
         .order("nome")
         .limit(800);
       if (!includeInactive) q = q.neq("status", "DESLIGADO");
@@ -195,7 +195,8 @@ export function CommandPalette() {
     return employees
       .filter((e: any) => {
         const empresa = (e.companies?.name ?? "").toLowerCase();
-        const haystack = `${e.nome ?? ""} ${e.funcao ?? ""} ${e.matricula ?? ""} ${empresa}`.toLowerCase();
+        const cargo = (e.roles?.name ?? "").toLowerCase();
+        const haystack = `${e.nome ?? ""} ${cargo} ${e.matricula ?? ""} ${empresa}`.toLowerCase();
         if (haystack.includes(q)) return true;
         if (qDigits.length >= 3) {
           const cpfDigits = String(e.cpf ?? "").replace(/\D/g, "");
