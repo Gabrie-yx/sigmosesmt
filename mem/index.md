@@ -44,3 +44,5 @@ Aline Farias saiu; TST atual é Francisco Bandeira Almeida. Todo import (CAL/PGR
 - [PAUSADO · Bloqueios OS x PET](mem://features/pausado-oss-pet-bloqueios) — Chamar de "bloqueios OS x PET" ou "os 44 da PET". 42 de 44 travados por ASO/NR faltando, não pela OS. Pendências: migração ASO legado, cargos elétrica sem NRs, tooltip do dropdown.
 - [Usuário só vê frontend](mem://preferences/user-so-ve-frontend.md) — Não perguntar ao usuário sobre banco/storage/coordenadas/estado técnico; descobrir sozinho com as tools antes de perguntar.
 - [Módulo Psicossocial NR-01](mem://features/modulo-psicossocial-nr01) — Fase 1 entregue 12/07/2026: catálogo 8 dimensões, campanhas com tokens anônimos, questionário mobile /psico/:token, dashboard agregado com supressão n<5 (LGPD). Rota /app/psicossocial. Base HSE-IT BR + ISO 45003 (COPSOQ fica pra fase 2).
+
+- [TST não controla ponto](mem://features/tst-nao-controla-ponto.md) — Base legal (CLT 74, Port. MTP 671/2021, NR-04, CBO 3516-05): controle de entrada/saída é do empregador/RH/DP/Portaria, NÃO do TST. Desvio de função quando exigido.
