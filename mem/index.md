@@ -46,3 +46,4 @@ Aline Farias saiu; TST atual é Francisco Bandeira Almeida. Todo import (CAL/PGR
 - [Módulo Psicossocial NR-01](mem://features/modulo-psicossocial-nr01) — Fase 1 entregue 12/07/2026: catálogo 8 dimensões, campanhas com tokens anônimos, questionário mobile /psico/:token, dashboard agregado com supressão n<5 (LGPD). Rota /app/psicossocial. Base HSE-IT BR + ISO 45003 (COPSOQ fica pra fase 2).
 
 - [TST não controla ponto](mem://features/tst-nao-controla-ponto.md) — Base legal (CLT 74, Port. MTP 671/2021, NR-04, CBO 3516-05): controle de entrada/saída é do empregador/RH/DP/Portaria, NÃO do TST. Desvio de função quando exigido.
+- [Plano de Ações — lapidação pendente](mem://features/plano-acoes-lapidacao-pendente.md) — NC-inspeção↔5W2H entregue (trigger+backfill+cards compactos/clicáveis). Falta chip "Origem: Inspeção" com link, validar em prod, revisar cores da tela da inspeção, decidir edição bidirecional.
