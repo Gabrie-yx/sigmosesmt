@@ -68,46 +68,45 @@ export function drawPdfHeader(doc: jsPDF, opts: PdfHeaderOpts): number {
   doc.text(EMPRESA_INFO.endereco, infoX, 15);
   doc.text(`${EMPRESA_INFO.cidade_uf_cep}   ·   ${EMPRESA_INFO.contato}`, infoX, 18.5);
 
-  // ============== KPI cards (lado direito da faixa institucional) ==============
-  if (opts.kpis && opts.kpis.length) {
-    const kpis = opts.kpis.slice(0, 4);
-    const cardH = 16;
-    const gap = 3;
-    const cardW = 34;
-    const totalW = kpis.length * cardW + (kpis.length - 1) * gap;
-    let cx = W - M - totalW;
-    const cy = (instH - cardH) / 2;
-    for (const k of kpis) {
-      const tone = TONE_COLORS[k.tone ?? "neutral"];
-      // fundo claro
-      doc.setFillColor(248, 250, 252);
-      doc.setDrawColor(226, 232, 240);
-      doc.setLineWidth(0.2);
-      doc.roundedRect(cx, cy, cardW, cardH, 1.5, 1.5, "FD");
-      // barra lateral colorida
-      doc.setFillColor(tone[0], tone[1], tone[2]);
-      doc.rect(cx, cy, 1.6, cardH, "F");
-      // valor
-      doc.setTextColor(tone[0], tone[1], tone[2]);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(14);
-      doc.text(String(k.value), cx + 4, cy + 8);
-      // label
-      doc.setTextColor(71, 85, 105);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(7);
-      doc.text(k.label.toUpperCase(), cx + 4, cy + 13);
-      cx += cardW + gap;
-    }
-  }
-
   // Linha divisória fina
   doc.setDrawColor(203, 213, 225);
   doc.setLineWidth(0.2);
   doc.line(M, instH, W - M, instH);
 
+  // ============== KPI cards (faixa dedicada abaixo da institucional) ==============
+  let kpiBottom = instH;
+  if (opts.kpis && opts.kpis.length) {
+    const kpis = opts.kpis.slice(0, 4);
+    const gap = 4;
+    const cardH = 14;
+    const cardW = (W - M * 2 - gap * (kpis.length - 1)) / kpis.length;
+    const cy = instH + 3;
+    let cx = M;
+    for (const k of kpis) {
+      const tone = TONE_COLORS[k.tone ?? "neutral"];
+      doc.setFillColor(248, 250, 252);
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.2);
+      doc.roundedRect(cx, cy, cardW, cardH, 1.5, 1.5, "FD");
+      doc.setFillColor(tone[0], tone[1], tone[2]);
+      doc.rect(cx, cy, 1.6, cardH, "F");
+      // label acima
+      doc.setTextColor(71, 85, 105);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7);
+      doc.text(k.label.toUpperCase(), cx + 4, cy + 5);
+      // valor
+      doc.setTextColor(tone[0], tone[1], tone[2]);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      doc.text(String(k.value), cx + 4, cy + 11.5);
+      cx += cardW + gap;
+    }
+    kpiBottom = cy + cardH + 2;
+  }
+
   // ============== Faixa de título do relatório ==============
-  const titleY = instH + 1;
+  const titleY = kpiBottom + 1;
   const titleH = opts.subtitulo ? 12 : 9;
   doc.setFillColor(15, 23, 42);
   doc.rect(0, titleY, W, titleH, "F");
