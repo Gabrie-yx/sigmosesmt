@@ -358,7 +358,7 @@ function InspecaoDetail() {
           <CardTitle className="text-sm font-black uppercase tracking-wide text-slate-800 flex items-center gap-2">
             <ShieldAlert className="h-4 w-4" /> Não conformidades ({ncs.length})
           </CardTitle>
-          {editable && <NcDialog inspecaoId={id} fotos={fotos} nrs={nrs} rubrica={rubrica} grauRisco={insp.companies?.grau_risco ?? 3} />}
+          {editable && <NcDialog inspecaoId={id} fotos={fotos} nrs={nrs} rubrica={rubrica} grauRisco={insp.companies?.grau_risco ?? 3} empresaId={insp.empresa_id ?? null} />}
         </CardHeader>
         <CardContent>
           {ncs.length === 0 ? (
