@@ -253,14 +253,17 @@ function InspecaoDetail() {
   const alterarStatus = useMutation({
     mutationFn: async (novo: string) => {
       if (novo === "publicada") {
-        if (fotos.length === 0) throw new Error("Antes de publicar, anexe ao menos uma evidência fotográfica.");
-        if (ncs.length === 0) throw new Error("Antes de publicar, registre ao menos uma não conformidade vinculada à inspeção.");
-        const ids = ncs.map((n: any) => n.id);
-        const { data: planos, error: planosErr } = await supabase.from("inspecao_ncs_planos").select("nc_id").in("nc_id", ids);
-        if (planosErr) throw planosErr;
-        const comPlano = new Set((planos ?? []).map((p: any) => p.nc_id));
-        if (ids.some((ncId: string) => !comPlano.has(ncId))) {
-          throw new Error("Antes de publicar, cada NC precisa ter pelo menos uma ação PDCA com responsável/prazo quando aplicável.");
+        if (fotos.length === 0) throw new Error("Antes de publicar, anexe ao menos uma foto como evidência da inspeção.");
+        // NCs são OPCIONAIS: uma inspeção sem achados é publicada como "conforme".
+        // Se houver NCs registradas, cada uma precisa de plano de ação (PDCA).
+        if (ncs.length > 0) {
+          const ids = ncs.map((n: any) => n.id);
+          const { data: planos, error: planosErr } = await supabase.from("inspecao_ncs_planos").select("nc_id").in("nc_id", ids);
+          if (planosErr) throw planosErr;
+          const comPlano = new Set((planos ?? []).map((p: any) => p.nc_id));
+          if (ids.some((ncId: string) => !comPlano.has(ncId))) {
+            throw new Error("Cada NC registrada precisa de pelo menos uma ação PDCA (responsável/prazo). Adicione o plano ou remova a NC.");
+          }
         }
       }
       const patch: any = { status: novo };
