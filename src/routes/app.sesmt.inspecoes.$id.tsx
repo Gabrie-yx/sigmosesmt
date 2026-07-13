@@ -792,6 +792,7 @@ function NcPlanos({ ncId, editable, empresaId, prazoSugerido }: { ncId: string; 
       toast.success(respId ? "Plano criado — responsável notificado" : "Plano criado");
       setAcao(""); setRespId(""); setPrazo(prazoInicial());
       qc.invalidateQueries({ queryKey: ["inspecao-nc-planos", ncId] });
+      qc.invalidateQueries({ queryKey: ["inspecao-planos-resumo"] });
     },
     onError: (e: any) => toast.error(e.message ?? "Erro"),
   });
