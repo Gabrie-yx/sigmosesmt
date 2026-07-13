@@ -545,8 +545,13 @@ function PainelListaTecnicaPage() {
         estimativa: null,
       };
     }
-    const planTot = CATEGORIAS.reduce((s, c) => s + compPorCategoria[c].planKg, 0);
-    const aplTot = CATEGORIAS.reduce((s, c) => s + compPorCategoria[c].aplKg, 0);
+    // Total honesto: soma apenas categorias que TÊM plano em kg. SOLDA/GÁS
+    // aparecem em KG na MB51 (arame em rolo, cilindro), mas o plano B51
+    // vem em outras unidades — misturar quebraria a comparação plan × real
+    // e faria o "Total" divergir do card "Consumo Ferro/Aço" no topo.
+    const catsComPlano = CATEGORIAS.filter((c) => compPorCategoria[c].planKg > 0);
+    const planTot = catsComPlano.reduce((s, c) => s + compPorCategoria[c].planKg, 0);
+    const aplTot = catsComPlano.reduce((s, c) => s + compPorCategoria[c].aplKg, 0);
     return { planejado: planTot, aplicado: aplTot, unit: "kg", escopo: "Total", semPlano: planTot === 0, estimativa: null };
   }, [catSel, compPorCategoria, cascoAtivo, previstoPorCategoria, fatoresConsumo]);
 
