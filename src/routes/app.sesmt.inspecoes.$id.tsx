@@ -378,7 +378,12 @@ function InspecaoDetail() {
                   </div>
                   <div className="text-sm text-slate-800">{nc.descricao}</div>
                   {nc.recomendacao && <div className="text-xs text-slate-600"><b>Recomendação:</b> {nc.recomendacao}</div>}
-                  <NcPlanos ncId={nc.id} editable={editable} />
+                  <NcPlanos
+                    ncId={nc.id}
+                    editable={editable}
+                    empresaId={insp.empresa_id ?? null}
+                    prazoSugerido={nc.catalogo_nrs_itens?.prazo_dias_sugerido ?? null}
+                  />
                 </div>
               ))}
             </div>
