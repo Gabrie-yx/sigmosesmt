@@ -680,30 +680,65 @@ function NcDialog({ inspecaoId, fotos, nrs, rubrica, grauRisco, empresaId }: { i
   );
 }
 
-function NcPlanos({ ncId, editable }: { ncId: string; editable: boolean }) {
+function NcPlanos({ ncId, editable, empresaId, prazoSugerido }: { ncId: string; editable: boolean; empresaId: string | null; prazoSugerido: number | null }) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const { data: planos = [] } = useQuery({
     queryKey: ["inspecao-nc-planos", ncId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("inspecao_ncs_planos").select("*").eq("nc_id", ncId).order("created_at");
+      const { data, error } = await supabase
+        .from("inspecao_ncs_planos")
+        .select("*, employees:responsavel_id(nome)")
+        .eq("nc_id", ncId)
+        .order("created_at");
       if (error) throw error;
       return data ?? [];
     },
   });
+  const { data: empregados = [] } = useQuery({
+    queryKey: ["empresa-employees-plano", empresaId],
+    enabled: !!empresaId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("employees")
+        .select("id, nome")
+        .eq("company_id", empresaId!)
+        .eq("status", "ativo")
+        .order("nome");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const prazoInicial = () => {
+    if (!prazoSugerido) return "";
+    const d = new Date();
+    d.setDate(d.getDate() + prazoSugerido);
+    return d.toISOString().slice(0, 10);
+  };
   const [acao, setAcao] = useState("");
-  const [resp, setResp] = useState("");
-  const [prazo, setPrazo] = useState("");
+  const [respId, setRespId] = useState<string>("");
+  const [prazo, setPrazo] = useState<string>(prazoInicial);
   const add = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Sessão expirada");
       if (!acao.trim()) throw new Error("Ação obrigatória");
+      const emp = empregados.find((e: any) => e.id === respId);
       const { error } = await supabase.from("inspecao_ncs_planos").insert({
-        nc_id: ncId, acao: acao.trim(), responsavel_nome: resp || null, prazo: prazo || null, criada_por: user.id,
+        nc_id: ncId,
+        acao: acao.trim(),
+        responsavel_id: respId || null,
+        responsavel_nome: emp?.nome ?? null,
+        prazo: prazo || null,
+        prazo_dias_sugerido: prazoSugerido ?? null,
+        criada_por: user.id,
       });
       if (error) throw error;
     },
-    onSuccess: () => { setAcao(""); setResp(""); setPrazo(""); qc.invalidateQueries({ queryKey: ["inspecao-nc-planos", ncId] }); },
+    onSuccess: () => {
+      toast.success(respId ? "Plano criado — responsável notificado" : "Plano criado");
+      setAcao(""); setRespId(""); setPrazo(prazoInicial());
+      qc.invalidateQueries({ queryKey: ["inspecao-nc-planos", ncId] });
+    },
     onError: (e: any) => toast.error(e.message ?? "Erro"),
   });
   const avancar = useMutation({
@@ -721,20 +756,28 @@ function NcPlanos({ ncId, editable }: { ncId: string; editable: boolean }) {
   return (
     <div className="mt-2 border-t pt-2 space-y-1">
       <div className="text-[10px] font-black uppercase tracking-wide text-slate-500">Plano de ação (PDCA)</div>
+      {prazoSugerido && (
+        <div className="text-[10px] text-emerald-700">Prazo sugerido pela norma: <b>{prazoSugerido} dias</b> a partir de hoje.</div>
+      )}
       {planos.map((p: any) => (
         <div key={p.id} className="flex items-center gap-2 text-xs">
           <Badge variant="outline" className="text-[9px]">{p.fase_pdca}</Badge>
           <span className="flex-1">{p.acao}</span>
-          {p.responsavel_nome && <span className="text-slate-500">{p.responsavel_nome}</span>}
+          {(p.employees?.nome || p.responsavel_nome) && <span className="text-slate-500">{p.employees?.nome ?? p.responsavel_nome}</span>}
           {p.prazo && <span className="text-slate-500">{format(new Date(p.prazo + "T00:00:00"), "dd/MM/yy")}</span>}
           {editable && p.fase_pdca !== "ENCERRADO" && <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]" onClick={() => avancar.mutate(p)}>avançar</Button>}
         </div>
       ))}
       {editable && (
-        <div className="flex gap-2 items-end pt-1">
-          <Input placeholder="Nova ação..." value={acao} onChange={(e) => setAcao(e.target.value)} className="h-7 text-xs" />
-          <Input placeholder="Responsável" value={resp} onChange={(e) => setResp(e.target.value)} className="h-7 text-xs w-32" />
-          <Input type="date" value={prazo} onChange={(e) => setPrazo(e.target.value)} className="h-7 text-xs w-32" />
+        <div className="flex gap-2 items-end pt-1 flex-wrap">
+          <Input placeholder="Nova ação..." value={acao} onChange={(e) => setAcao(e.target.value)} className="h-7 text-xs flex-1 min-w-[160px]" />
+          <Select value={respId} onValueChange={setRespId}>
+            <SelectTrigger className="h-7 text-xs w-40"><SelectValue placeholder="Responsável" /></SelectTrigger>
+            <SelectContent className="max-h-72">
+              {empregados.map((e: any) => (<SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>))}
+            </SelectContent>
+          </Select>
+          <Input type="date" value={prazo} onChange={(e) => setPrazo(e.target.value)} className="h-7 text-xs w-36" />
           <Button size="sm" variant="outline" className="h-7" onClick={() => add.mutate()}><Plus className="h-3 w-3" /></Button>
         </div>
       )}
