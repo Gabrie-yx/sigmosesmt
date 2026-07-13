@@ -303,37 +303,6 @@ function PainelListaTecnicaPage() {
     });
   }, [itensFiltrados, codigoSel, unidadeSel, catSel]);
 
-  // KPIs: realizado (MB51 consumo líquido) × planejado (Lista Técnica)
-  const kpi = useMemo(() => {
-    // Realizado (kg estimado): somente movimentos com UM = KG, para comparar
-    // de forma honesta com o Planejado (B51), que também é em kg.
-    const consumo = itensVisiveis
-      .filter((it) => String(it.unidade ?? "").toUpperCase() === "KG")
-      .reduce((s, it) => s + (it.consumo ?? 0), 0);
-    const linhas = itensVisiveis.length;
-    const distintos = new Set(itensVisiveis.map((it) => String(it.codigo_sap))).size;
-    // Consumo Ferro/Aço da Ordem: usa a categoria resolvida (Base MP +
-    // Classificação MB51 + descrição), pois nem toda MB51 vem com a coluna
-    // "Classificação" preenchida. Restrito a UM = KG e LÍQUIDO
-    // (consumo − estornos), clampado ≥ 0 para casar com "Realizado vs. Orçado FERRO"
-    // do painel abaixo (mesma fórmula, mesma unidade, mesma base).
-    const consumoOrdem = Math.max(
-      0,
-      itensEnriq
-        .filter((it) =>
-          it.categoria === "FERRO" &&
-          String(it.unidade ?? "").toUpperCase() === "KG",
-        )
-        .reduce((s, it) => s + Number(it.consumo ?? 0), 0),
-    );
-    // Planejado Lista Técnica: soma categorizada item-a-item (mesma base do
-    // card "Material Planejado · Total" abaixo), não o total bruto do
-    // cabeçalho. Assim os cards de cima e de baixo batem por definição.
-    const pesoEst = CATEGORIAS.reduce((s, c) => s + (previstoPorCategoria[c] || 0), 0);
-    const desvio = pesoEst > 0 ? ((consumo - pesoEst) / pesoEst) * 100 : 0;
-    return { pesoReal: consumo, pesoEst, pecas: linhas, distintos, desvio, consumoOrdem };
-  }, [itensVisiveis, itensEnriq, previstoPorCategoria]);
-
   const dadosPorCategoria = useMemo(() => {
     const empty = () => ({
       barras: [] as any[],
@@ -421,6 +390,33 @@ function PainelListaTecnicaPage() {
     });
     return r;
   }, [listaItens, baseMpMap]);
+
+  // KPIs: realizado (MB51 consumo líquido) × planejado (Lista Técnica)
+  // Declarado APÓS previstoPorCategoria porque depende dele para unificar
+  // a base do card do topo com a do painel de baixo.
+  const kpi = useMemo(() => {
+    const consumo = itensVisiveis
+      .filter((it) => String(it.unidade ?? "").toUpperCase() === "KG")
+      .reduce((s, it) => s + (it.consumo ?? 0), 0);
+    const linhas = itensVisiveis.length;
+    const distintos = new Set(itensVisiveis.map((it) => String(it.codigo_sap))).size;
+    // Consumo Ferro/Aço: FERRO + UM=KG + líquido (consumo − estornos), clampado ≥ 0
+    // — mesma base do card "Realizado vs. Orçado FERRO" abaixo.
+    const consumoOrdem = Math.max(
+      0,
+      itensEnriq
+        .filter((it) =>
+          it.categoria === "FERRO" &&
+          String(it.unidade ?? "").toUpperCase() === "KG",
+        )
+        .reduce((s, it) => s + Number(it.consumo ?? 0), 0),
+    );
+    // Planejado Lista Técnica: soma categorizada item-a-item (mesma base do
+    // card "Material Planejado · Total" abaixo).
+    const pesoEst = CATEGORIAS.reduce((s, c) => s + (previstoPorCategoria[c] || 0), 0);
+    const desvio = pesoEst > 0 ? ((consumo - pesoEst) / pesoEst) * 100 : 0;
+    return { pesoReal: consumo, pesoEst, pecas: linhas, distintos, desvio, consumoOrdem };
+  }, [itensVisiveis, itensEnriq, previstoPorCategoria]);
 
   // Alertas: por categoria, comparar realizado (MB51) × previsto (B51)
   const alertasCategoria = useMemo(() => {
