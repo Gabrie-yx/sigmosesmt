@@ -65,6 +65,7 @@ import { Route as AppSesmtPrestadoresRouteImport } from './routes/app.sesmt.pres
 import { Route as AppSesmtOrganogramaRouteImport } from './routes/app.sesmt.organograma'
 import { Route as AppSesmtOcrTesteRouteImport } from './routes/app.sesmt.ocr-teste'
 import { Route as AppSesmtIntegracoesRouteImport } from './routes/app.sesmt.integracoes'
+import { Route as AppSesmtInspecoesRouteImport } from './routes/app.sesmt.inspecoes'
 import { Route as AppSesmtGuiaDocumentosRouteImport } from './routes/app.sesmt.guia-documentos'
 import { Route as AppSesmtEquipamentosMoveisRouteImport } from './routes/app.sesmt.equipamentos-moveis'
 import { Route as AppSesmtDocsRouteImport } from './routes/app.sesmt.docs'
@@ -414,6 +415,11 @@ const AppSesmtIntegracoesRoute = AppSesmtIntegracoesRouteImport.update({
   path: '/sesmt/integracoes',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSesmtInspecoesRoute = AppSesmtInspecoesRouteImport.update({
+  id: '/sesmt/inspecoes',
+  path: '/sesmt/inspecoes',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSesmtGuiaDocumentosRoute = AppSesmtGuiaDocumentosRouteImport.update({
   id: '/sesmt/guia-documentos',
   path: '/sesmt/guia-documentos',
@@ -640,9 +646,9 @@ const AppAdministrativoGestaoPontoRoute =
     getParentRoute: () => AppAdministrativoRoute,
   } as any)
 const AppSesmtInspecoesIndexRoute = AppSesmtInspecoesIndexRouteImport.update({
-  id: '/sesmt/inspecoes/',
-  path: '/sesmt/inspecoes/',
-  getParentRoute: () => AppRoute,
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppSesmtInspecoesRoute,
 } as any)
 const AppSesmtCatalogosIndexRoute = AppSesmtCatalogosIndexRouteImport.update({
   id: '/sesmt/catalogos/',
@@ -656,9 +662,9 @@ const AppAdministrativoGestaoPontoIndexRoute =
     getParentRoute: () => AppAdministrativoGestaoPontoRoute,
   } as any)
 const AppSesmtInspecoesIdRoute = AppSesmtInspecoesIdRouteImport.update({
-  id: '/sesmt/inspecoes/$id',
-  path: '/sesmt/inspecoes/$id',
-  getParentRoute: () => AppRoute,
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AppSesmtInspecoesRoute,
 } as any)
 const AppSesmtEquipamentosMoveisArquivosMensaisRoute =
   AppSesmtEquipamentosMoveisArquivosMensaisRouteImport.update({
@@ -840,6 +846,7 @@ export interface FileRoutesByFullPath {
   '/app/sesmt/docs': typeof AppSesmtDocsRoute
   '/app/sesmt/equipamentos-moveis': typeof AppSesmtEquipamentosMoveisRoute
   '/app/sesmt/guia-documentos': typeof AppSesmtGuiaDocumentosRoute
+  '/app/sesmt/inspecoes': typeof AppSesmtInspecoesRouteWithChildren
   '/app/sesmt/integracoes': typeof AppSesmtIntegracoesRoute
   '/app/sesmt/ocr-teste': typeof AppSesmtOcrTesteRoute
   '/app/sesmt/organograma': typeof AppSesmtOrganogramaRoute
@@ -1079,6 +1086,7 @@ export interface FileRoutesById {
   '/app/sesmt/docs': typeof AppSesmtDocsRoute
   '/app/sesmt/equipamentos-moveis': typeof AppSesmtEquipamentosMoveisRoute
   '/app/sesmt/guia-documentos': typeof AppSesmtGuiaDocumentosRoute
+  '/app/sesmt/inspecoes': typeof AppSesmtInspecoesRouteWithChildren
   '/app/sesmt/integracoes': typeof AppSesmtIntegracoesRoute
   '/app/sesmt/ocr-teste': typeof AppSesmtOcrTesteRoute
   '/app/sesmt/organograma': typeof AppSesmtOrganogramaRoute
@@ -1202,6 +1210,7 @@ export interface FileRouteTypes {
     | '/app/sesmt/docs'
     | '/app/sesmt/equipamentos-moveis'
     | '/app/sesmt/guia-documentos'
+    | '/app/sesmt/inspecoes'
     | '/app/sesmt/integracoes'
     | '/app/sesmt/ocr-teste'
     | '/app/sesmt/organograma'
@@ -1440,6 +1449,7 @@ export interface FileRouteTypes {
     | '/app/sesmt/docs'
     | '/app/sesmt/equipamentos-moveis'
     | '/app/sesmt/guia-documentos'
+    | '/app/sesmt/inspecoes'
     | '/app/sesmt/integracoes'
     | '/app/sesmt/ocr-teste'
     | '/app/sesmt/organograma'
@@ -1888,6 +1898,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSesmtIntegracoesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/sesmt/inspecoes': {
+      id: '/app/sesmt/inspecoes'
+      path: '/sesmt/inspecoes'
+      fullPath: '/app/sesmt/inspecoes'
+      preLoaderRoute: typeof AppSesmtInspecoesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/sesmt/guia-documentos': {
       id: '/app/sesmt/guia-documentos'
       path: '/sesmt/guia-documentos'
@@ -2184,10 +2201,10 @@ declare module '@tanstack/react-router' {
     }
     '/app/sesmt/inspecoes/': {
       id: '/app/sesmt/inspecoes/'
-      path: '/sesmt/inspecoes'
+      path: '/'
       fullPath: '/app/sesmt/inspecoes/'
       preLoaderRoute: typeof AppSesmtInspecoesIndexRouteImport
-      parentRoute: typeof AppRoute
+      parentRoute: typeof AppSesmtInspecoesRoute
     }
     '/app/sesmt/catalogos/': {
       id: '/app/sesmt/catalogos/'
@@ -2205,10 +2222,10 @@ declare module '@tanstack/react-router' {
     }
     '/app/sesmt/inspecoes/$id': {
       id: '/app/sesmt/inspecoes/$id'
-      path: '/sesmt/inspecoes/$id'
+      path: '/$id'
       fullPath: '/app/sesmt/inspecoes/$id'
       preLoaderRoute: typeof AppSesmtInspecoesIdRouteImport
-      parentRoute: typeof AppRoute
+      parentRoute: typeof AppSesmtInspecoesRoute
     }
     '/app/sesmt/equipamentos-moveis_/arquivos-mensais': {
       id: '/app/sesmt/equipamentos-moveis_/arquivos-mensais'
@@ -2420,6 +2437,19 @@ const AppEstoqueEpiRouteWithChildren = AppEstoqueEpiRoute._addFileChildren(
   AppEstoqueEpiRouteChildren,
 )
 
+interface AppSesmtInspecoesRouteChildren {
+  AppSesmtInspecoesIdRoute: typeof AppSesmtInspecoesIdRoute
+  AppSesmtInspecoesIndexRoute: typeof AppSesmtInspecoesIndexRoute
+}
+
+const AppSesmtInspecoesRouteChildren: AppSesmtInspecoesRouteChildren = {
+  AppSesmtInspecoesIdRoute: AppSesmtInspecoesIdRoute,
+  AppSesmtInspecoesIndexRoute: AppSesmtInspecoesIndexRoute,
+}
+
+const AppSesmtInspecoesRouteWithChildren =
+  AppSesmtInspecoesRoute._addFileChildren(AppSesmtInspecoesRouteChildren)
+
 interface AppRouteChildren {
   AppAcidentesRoute: typeof AppAcidentesRoute
   AppAcoesRoute: typeof AppAcoesRoute
@@ -2482,6 +2512,7 @@ interface AppRouteChildren {
   AppSesmtDocsRoute: typeof AppSesmtDocsRoute
   AppSesmtEquipamentosMoveisRoute: typeof AppSesmtEquipamentosMoveisRoute
   AppSesmtGuiaDocumentosRoute: typeof AppSesmtGuiaDocumentosRoute
+  AppSesmtInspecoesRoute: typeof AppSesmtInspecoesRouteWithChildren
   AppSesmtIntegracoesRoute: typeof AppSesmtIntegracoesRoute
   AppSesmtOcrTesteRoute: typeof AppSesmtOcrTesteRoute
   AppSesmtOrganogramaRoute: typeof AppSesmtOrganogramaRoute
@@ -2506,9 +2537,7 @@ interface AppRouteChildren {
   AppSesmtCatalogosRiscosRoute: typeof AppSesmtCatalogosRiscosRoute
   AppSesmtCatalogosVacinasRoute: typeof AppSesmtCatalogosVacinasRoute
   AppSesmtEquipamentosMoveisArquivosMensaisRoute: typeof AppSesmtEquipamentosMoveisArquivosMensaisRoute
-  AppSesmtInspecoesIdRoute: typeof AppSesmtInspecoesIdRoute
   AppSesmtCatalogosIndexRoute: typeof AppSesmtCatalogosIndexRoute
-  AppSesmtInspecoesIndexRoute: typeof AppSesmtInspecoesIndexRoute
   AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute: typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute
   AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute: typeof AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute
 }
@@ -2575,6 +2604,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSesmtDocsRoute: AppSesmtDocsRoute,
   AppSesmtEquipamentosMoveisRoute: AppSesmtEquipamentosMoveisRoute,
   AppSesmtGuiaDocumentosRoute: AppSesmtGuiaDocumentosRoute,
+  AppSesmtInspecoesRoute: AppSesmtInspecoesRouteWithChildren,
   AppSesmtIntegracoesRoute: AppSesmtIntegracoesRoute,
   AppSesmtOcrTesteRoute: AppSesmtOcrTesteRoute,
   AppSesmtOrganogramaRoute: AppSesmtOrganogramaRoute,
@@ -2602,9 +2632,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSesmtCatalogosVacinasRoute: AppSesmtCatalogosVacinasRoute,
   AppSesmtEquipamentosMoveisArquivosMensaisRoute:
     AppSesmtEquipamentosMoveisArquivosMensaisRoute,
-  AppSesmtInspecoesIdRoute: AppSesmtInspecoesIdRoute,
   AppSesmtCatalogosIndexRoute: AppSesmtCatalogosIndexRoute,
-  AppSesmtInspecoesIndexRoute: AppSesmtInspecoesIndexRoute,
   AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute:
     AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute,
   AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute:
