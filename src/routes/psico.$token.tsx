@@ -107,6 +107,7 @@ function PsicoPublicPage() {
   const [faixaTempo, setFaixaTempo] = useState<string>("");
   const [respostas, setRespostas] = useState<Record<string, number>>({});
   const [hidratou, setHidratou] = useState(false);
+  const consentId = `psico-consent-${token.slice(0, 8)}`;
 
   // Hidrata do sessionStorage 1x, no cliente (nunca no SSR).
   useEffect(() => {
@@ -132,7 +133,7 @@ function PsicoPublicPage() {
   const podeEnviar = respondidos === totalItens;
 
   function iniciarQuestionario() {
-    setAceitou(true);
+    if (!aceitou) return;
     setStep("form");
   }
 
@@ -230,15 +231,17 @@ function PsicoPublicPage() {
               São {totalItens} perguntas rápidas · leva ~8 a 12 minutos. Se fechar a aba, suas respostas ficam salvas nesse celular até você enviar.
             </p>
           </div>
-          {/* Bloco todo clicável — evita depender só do hit-target minúsculo
-              da checkbox em telas de celular. */}
-          <button
-            type="button"
-            role="checkbox"
-            aria-checked={aceitou}
-            onClick={() => setAceitou(true)}
-            className="w-full flex items-start gap-3 rounded-lg bg-[#fdf2f8] border border-rose-200 p-3 mt-4 text-left hover:bg-[#fce7ef] transition"
+          <label
+            htmlFor={consentId}
+            className="w-full flex items-start gap-3 rounded-lg bg-[#fdf2f8] border border-rose-200 p-3 mt-4 text-left hover:bg-[#fce7ef] transition cursor-pointer select-none"
           >
+            <input
+              id={consentId}
+              type="checkbox"
+              checked={aceitou}
+              onChange={(event) => setAceitou(event.currentTarget.checked)}
+              className="sr-only"
+            />
             <span
               aria-hidden
               className={`mt-0.5 h-5 w-5 shrink-0 rounded border-2 flex items-center justify-center transition ${
@@ -250,11 +253,12 @@ function PsicoPublicPage() {
             <span className="text-sm text-slate-800 leading-relaxed">
               Li, entendi e concordo em participar de forma anônima e voluntária.
             </span>
-          </button>
+          </label>
           <button
             type="button"
+            disabled={!aceitou}
             onClick={iniciarQuestionario}
-            className="mt-4 w-full h-11 rounded-lg font-semibold text-white bg-gradient-to-r from-[#7f1d3a] to-[#e11d48] shadow-sm hover:opacity-95 transition"
+            className="mt-4 w-full h-11 rounded-lg font-semibold text-white bg-gradient-to-r from-[#7f1d3a] to-[#e11d48] shadow-sm hover:opacity-95 transition disabled:opacity-45 disabled:cursor-not-allowed"
           >
             Concordo e começar
           </button>
