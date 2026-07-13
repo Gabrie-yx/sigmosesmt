@@ -88,6 +88,19 @@ function InspecaoDetail() {
     },
   });
 
+  const { data: planosResumo = [], isLoading: planosResumoLoading } = useQuery({
+    queryKey: ["inspecao-planos-resumo", ncs.map((n: any) => n.id).join(",")],
+    enabled: ncs.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("inspecao_ncs_planos")
+        .select("nc_id")
+        .in("nc_id", ncs.map((n: any) => n.id));
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const { data: nrs = [] } = useQuery({
     queryKey: ["catalogo-nrs"],
     queryFn: async () => {
@@ -268,6 +281,9 @@ function InspecaoDetail() {
         (data ?? []).forEach((p: any) => {
           (planosPorNc[p.nc_id] = planosPorNc[p.nc_id] ?? []).push(p);
         });
+        if (ids.some((ncId: string) => !planosPorNc[ncId]?.length)) {
+          throw new Error("O relatório final exige plano de ação PDCA para cada NC.");
+        }
       }
       await gerarInspecaoPdf({
         inspecao: insp,
@@ -283,7 +299,9 @@ function InspecaoDetail() {
 
   if (isLoading || !insp) return <div className="p-6 text-slate-500 text-sm">Carregando...</div>;
 
-  const publicadoIncompleto = insp.status === "publicada" && (fotos.length === 0 || ncs.length === 0);
+  const ncsComPlano = new Set((planosResumo ?? []).map((p: any) => p.nc_id));
+  const faltaPlano = ncs.length > 0 && (planosResumoLoading || ncs.some((n: any) => !ncsComPlano.has(n.id)));
+  const publicadoIncompleto = insp.status === "publicada" && (fotos.length === 0 || ncs.length === 0 || faltaPlano);
   const editable = insp.status === "rascunho" || insp.status === "em_revisao" || (publicadoIncompleto && canManage);
 
   return (
