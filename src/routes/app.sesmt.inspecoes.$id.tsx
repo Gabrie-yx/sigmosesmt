@@ -78,7 +78,11 @@ function InspecaoDetail() {
   const { data: ncs = [] } = useQuery({
     queryKey: ["inspecao-ncs", id],
     queryFn: async () => {
-      const { data, error } = await supabase.from("inspecao_ncs").select("*").eq("inspecao_id", id).order("created_at");
+      const { data, error } = await supabase
+        .from("inspecao_ncs")
+        .select("*, catalogo_nrs_itens(prazo_dias_sugerido, gravidade_sugerida, texto_oficial)")
+        .eq("inspecao_id", id)
+        .order("created_at");
       if (error) throw error;
       return data ?? [];
     },
