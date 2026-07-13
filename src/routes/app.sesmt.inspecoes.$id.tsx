@@ -189,7 +189,7 @@ function InspecaoDetail() {
       if (error) throw error;
 
       // Ao publicar: espelha cada NC da inspeção em nao_conformidades (alimenta indicadores).
-      if (novo === "publicada" && ncs.length > 0) {
+      if (novo === "publicada" && ncs.length > 0 && insp) {
         const origens = ncs.map((n: any) => `inspecao_nc:${n.id}`);
         const { data: jaExistem } = await supabase
           .from("nao_conformidades")
