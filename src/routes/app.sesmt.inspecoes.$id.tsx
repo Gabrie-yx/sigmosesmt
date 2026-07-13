@@ -417,12 +417,12 @@ function InspecaoDetail() {
         <CardContent className="space-y-3">
           {editable && (
             <div className="flex gap-2 flex-wrap">
-              <label className={`inline-flex items-center gap-2 text-xs bg-primary text-white px-3 py-2 rounded cursor-pointer hover:bg-primary/90 ${uploadFoto.isPending ? "opacity-70 pointer-events-none" : ""}`}>
+              <label className={`inline-flex items-center gap-2 text-xs bg-primary text-primary-foreground px-3 py-2 rounded cursor-pointer hover:bg-primary/90 ${uploadFoto.isPending ? "opacity-70 pointer-events-none" : ""}`}>
                 <Upload className="h-3.5 w-3.5" /> {uploadFoto.isPending ? "Enviando..." : "Enviar foto"}
                 <input type="file" multiple accept="image/*,.heic,.heif" className="hidden" disabled={uploadFoto.isPending}
                   onChange={(e) => { selecionarFotos(e.currentTarget.files); e.currentTarget.value = ""; }} />
               </label>
-              <label className={`inline-flex items-center gap-2 text-xs border border-border bg-white text-foreground px-3 py-2 rounded cursor-pointer hover:bg-accent ${uploadFoto.isPending ? "opacity-70 pointer-events-none" : ""}`}>
+              <label className={`inline-flex items-center gap-2 text-xs border border-border bg-card text-foreground px-3 py-2 rounded cursor-pointer hover:bg-accent ${uploadFoto.isPending ? "opacity-70 pointer-events-none" : ""}`}>
                 <Camera className="h-3.5 w-3.5" /> Tirar foto
                 <input type="file" accept="image/*,.heic,.heif" capture="environment" className="hidden" disabled={uploadFoto.isPending}
                   onChange={(e) => { selecionarFotos(e.currentTarget.files); e.currentTarget.value = ""; }} />
