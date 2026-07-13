@@ -253,14 +253,17 @@ function InspecaoDetail() {
   const alterarStatus = useMutation({
     mutationFn: async (novo: string) => {
       if (novo === "publicada") {
-        if (fotos.length === 0) throw new Error("Antes de publicar, anexe ao menos uma evidência fotográfica.");
-        if (ncs.length === 0) throw new Error("Antes de publicar, registre ao menos uma não conformidade vinculada à inspeção.");
-        const ids = ncs.map((n: any) => n.id);
-        const { data: planos, error: planosErr } = await supabase.from("inspecao_ncs_planos").select("nc_id").in("nc_id", ids);
-        if (planosErr) throw planosErr;
-        const comPlano = new Set((planos ?? []).map((p: any) => p.nc_id));
-        if (ids.some((ncId: string) => !comPlano.has(ncId))) {
-          throw new Error("Antes de publicar, cada NC precisa ter pelo menos uma ação PDCA com responsável/prazo quando aplicável.");
+        if (fotos.length === 0) throw new Error("Antes de publicar, anexe ao menos uma foto como evidência da inspeção.");
+        // NCs são OPCIONAIS: uma inspeção sem achados é publicada como "conforme".
+        // Se houver NCs registradas, cada uma precisa de plano de ação (PDCA).
+        if (ncs.length > 0) {
+          const ids = ncs.map((n: any) => n.id);
+          const { data: planos, error: planosErr } = await supabase.from("inspecao_ncs_planos").select("nc_id").in("nc_id", ids);
+          if (planosErr) throw planosErr;
+          const comPlano = new Set((planos ?? []).map((p: any) => p.nc_id));
+          if (ids.some((ncId: string) => !comPlano.has(ncId))) {
+            throw new Error("Cada NC registrada precisa de pelo menos uma ação PDCA (responsável/prazo). Adicione o plano ou remova a NC.");
+          }
         }
       }
       const patch: any = { status: novo };
@@ -347,7 +350,8 @@ function InspecaoDetail() {
 
   const ncsComPlano = new Set((planosResumo ?? []).map((p: any) => p.nc_id));
   const faltaPlano = ncs.length > 0 && (planosResumoLoading || ncs.some((n: any) => !ncsComPlano.has(n.id)));
-  const publicadoIncompleto = insp.status === "publicada" && (fotos.length === 0 || ncs.length === 0 || faltaPlano);
+  // NC é opcional: publicada sem NC = inspeção conforme. Só é "incompleta" se falta foto ou se tem NC sem plano.
+  const publicadoIncompleto = insp.status === "publicada" && (fotos.length === 0 || faltaPlano);
   const editable = insp.status === "rascunho" || insp.status === "em_revisao" || (publicadoIncompleto && canManage);
 
   return (
@@ -398,6 +402,21 @@ function InspecaoDetail() {
           {insp.participantes && <div><b>Participantes:</b> {insp.participantes}</div>}
         </CardContent>
       </Card>
+
+      {/* TUTORIAL — como usar */}
+      <details className="rounded-lg border border-emerald-200 bg-emerald-50/60 group">
+        <summary className="cursor-pointer list-none px-3 py-2 flex items-center gap-2 text-xs font-black uppercase tracking-wide text-emerald-900">
+          <Info className="h-4 w-4" /> Como usar esta inspeção (passo a passo)
+          <span className="ml-auto text-[10px] font-normal text-emerald-700 group-open:hidden">clique para abrir</span>
+        </summary>
+        <div className="px-4 pb-3 text-[12px] text-slate-700 space-y-2 leading-relaxed">
+          <div><b>1. Anexe fotos (obrigatório).</b> Use <b>Enviar foto</b> pelo laptop ou <b>Tirar foto</b> pelo celular. Cada foto guarda hash, data/hora e GPS quando o navegador permitir — evidência rastreável.</div>
+          <div><b>2. Registrar NC é opcional.</b> Se a área está conforme, você pode publicar direto após as fotos — vai virar um relatório de inspeção <i>sem não conformidades</i>. Só registre NC se realmente encontrou algo fora do padrão (NR + item + matriz 5x5).</div>
+          <div><b>3. Se houver NC, monte o PDCA.</b> Cada NC precisa de pelo menos uma ação com responsável e prazo antes de publicar. O sistema sugere o prazo pela norma.</div>
+          <div><b>4. Publicar.</b> Trava a edição, gera o PDF e alimenta os indicadores. Pode ser reaberta pelo SESMT se precisar corrigir.</div>
+          <div className="text-[11px] text-slate-500 pt-1 border-t border-emerald-200">Regra mínima para publicar: <b>pelo menos 1 foto</b>. Se houver NCs, todas precisam de plano de ação.</div>
+        </div>
+      </details>
 
       {/* FOTOS */}
       <Card>
@@ -879,7 +898,7 @@ function NcPlanos({ ncId, editable, empresaId, prazoSugerido }: { ncId: string; 
           <Input placeholder="Nova ação..." value={acao} onChange={(e) => setAcao(e.target.value)} className="h-7 text-xs flex-1 min-w-[160px]" />
           <Select value={respId} onValueChange={setRespId}>
             <SelectTrigger className="h-7 text-xs w-40"><SelectValue placeholder="Responsável" /></SelectTrigger>
-            <SelectContent position="popper" side="top" align="end" sideOffset={4} className="max-h-72 z-[100]">
+            <SelectContent position="popper" side="top" align="end" sideOffset={4} avoidCollisions={false} className="max-h-60 z-[100]">
               {empregados.length === 0 ? (
                 <div className="px-2 py-1.5 text-xs text-slate-500">Sem funcionários ativos nesta empresa.</div>
               ) : (
