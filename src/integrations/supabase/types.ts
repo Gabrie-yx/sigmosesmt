@@ -6040,6 +6040,335 @@ export type Database = {
           },
         ]
       }
+      inspecao_fotos: {
+        Row: {
+          camera_ref: string | null
+          created_at: string
+          fonte: string
+          gps_accuracy: number | null
+          gps_lat: number | null
+          gps_lng: number | null
+          hash_sha256: string
+          id: string
+          inspecao_id: string
+          legenda: string | null
+          storage_path: string
+          timestamp_captura: string | null
+          tirada_por: string | null
+        }
+        Insert: {
+          camera_ref?: string | null
+          created_at?: string
+          fonte: string
+          gps_accuracy?: number | null
+          gps_lat?: number | null
+          gps_lng?: number | null
+          hash_sha256: string
+          id?: string
+          inspecao_id: string
+          legenda?: string | null
+          storage_path: string
+          timestamp_captura?: string | null
+          tirada_por?: string | null
+        }
+        Update: {
+          camera_ref?: string | null
+          created_at?: string
+          fonte?: string
+          gps_accuracy?: number | null
+          gps_lat?: number | null
+          gps_lng?: number | null
+          hash_sha256?: string
+          id?: string
+          inspecao_id?: string
+          legenda?: string | null
+          storage_path?: string
+          timestamp_captura?: string | null
+          tirada_por?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inspecao_fotos_inspecao_id_fkey"
+            columns: ["inspecao_id"]
+            isOneToOne: false
+            referencedRelation: "inspecoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inspecao_matriz_rubrica: {
+        Row: {
+          created_at: string
+          definicao: string
+          eixo: string
+          exemplo: string | null
+          id: string
+          nivel: number
+          rotulo: string
+        }
+        Insert: {
+          created_at?: string
+          definicao: string
+          eixo: string
+          exemplo?: string | null
+          id?: string
+          nivel: number
+          rotulo: string
+        }
+        Update: {
+          created_at?: string
+          definicao?: string
+          eixo?: string
+          exemplo?: string | null
+          id?: string
+          nivel?: number
+          rotulo?: string
+        }
+        Relationships: []
+      }
+      inspecao_ncs: {
+        Row: {
+          classe_risco: string | null
+          created_at: string
+          criada_por: string
+          descricao: string
+          foto_id: string | null
+          gradacao_nr28: string | null
+          id: string
+          inspecao_id: string
+          multa_estimada: number | null
+          nr_codigo: string
+          nr_item: string | null
+          probabilidade: number
+          recomendacao: string | null
+          risco_calculado: number | null
+          severidade: number
+          updated_at: string
+        }
+        Insert: {
+          classe_risco?: string | null
+          created_at?: string
+          criada_por: string
+          descricao: string
+          foto_id?: string | null
+          gradacao_nr28?: string | null
+          id?: string
+          inspecao_id: string
+          multa_estimada?: number | null
+          nr_codigo: string
+          nr_item?: string | null
+          probabilidade: number
+          recomendacao?: string | null
+          risco_calculado?: number | null
+          severidade: number
+          updated_at?: string
+        }
+        Update: {
+          classe_risco?: string | null
+          created_at?: string
+          criada_por?: string
+          descricao?: string
+          foto_id?: string | null
+          gradacao_nr28?: string | null
+          id?: string
+          inspecao_id?: string
+          multa_estimada?: number | null
+          nr_codigo?: string
+          nr_item?: string | null
+          probabilidade?: number
+          recomendacao?: string | null
+          risco_calculado?: number | null
+          severidade?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inspecao_ncs_foto_id_fkey"
+            columns: ["foto_id"]
+            isOneToOne: false
+            referencedRelation: "inspecao_fotos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inspecao_ncs_inspecao_id_fkey"
+            columns: ["inspecao_id"]
+            isOneToOne: false
+            referencedRelation: "inspecoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inspecao_ncs_planos: {
+        Row: {
+          acao: string
+          created_at: string
+          criada_por: string
+          encerrada_em: string | null
+          evidencia_path: string | null
+          fase_pdca: string
+          id: string
+          nc_id: string
+          observacoes: string | null
+          prazo: string | null
+          responsavel_id: string | null
+          responsavel_nome: string | null
+          updated_at: string
+        }
+        Insert: {
+          acao: string
+          created_at?: string
+          criada_por: string
+          encerrada_em?: string | null
+          evidencia_path?: string | null
+          fase_pdca?: string
+          id?: string
+          nc_id: string
+          observacoes?: string | null
+          prazo?: string | null
+          responsavel_id?: string | null
+          responsavel_nome?: string | null
+          updated_at?: string
+        }
+        Update: {
+          acao?: string
+          created_at?: string
+          criada_por?: string
+          encerrada_em?: string | null
+          evidencia_path?: string | null
+          fase_pdca?: string
+          id?: string
+          nc_id?: string
+          observacoes?: string | null
+          prazo?: string | null
+          responsavel_id?: string | null
+          responsavel_nome?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inspecao_ncs_planos_nc_id_fkey"
+            columns: ["nc_id"]
+            isOneToOne: false
+            referencedRelation: "inspecao_ncs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inspecao_nr28_valores: {
+        Row: {
+          created_at: string
+          faixa_max_empregados: number | null
+          faixa_min_empregados: number
+          gradacao: string
+          grau_risco: number
+          id: string
+          portaria_ref: string
+          valor_reais: number
+          vigencia_fim: string | null
+          vigencia_inicio: string
+        }
+        Insert: {
+          created_at?: string
+          faixa_max_empregados?: number | null
+          faixa_min_empregados: number
+          gradacao: string
+          grau_risco: number
+          id?: string
+          portaria_ref: string
+          valor_reais: number
+          vigencia_fim?: string | null
+          vigencia_inicio: string
+        }
+        Update: {
+          created_at?: string
+          faixa_max_empregados?: number | null
+          faixa_min_empregados?: number
+          gradacao?: string
+          grau_risco?: number
+          id?: string
+          portaria_ref?: string
+          valor_reais?: number
+          vigencia_fim?: string | null
+          vigencia_inicio?: string
+        }
+        Relationships: []
+      }
+      inspecoes: {
+        Row: {
+          aberta_por: string
+          created_at: string
+          data_inspecao: string
+          empresa_id: string | null
+          escopo: string | null
+          frente_servico_id: string | null
+          id: string
+          local_descricao: string
+          observacoes: string | null
+          participantes: string | null
+          publicada_em: string | null
+          revisada_por: string | null
+          status: string
+          tipo_local: string | null
+          updated_at: string
+        }
+        Insert: {
+          aberta_por: string
+          created_at?: string
+          data_inspecao: string
+          empresa_id?: string | null
+          escopo?: string | null
+          frente_servico_id?: string | null
+          id?: string
+          local_descricao: string
+          observacoes?: string | null
+          participantes?: string | null
+          publicada_em?: string | null
+          revisada_por?: string | null
+          status?: string
+          tipo_local?: string | null
+          updated_at?: string
+        }
+        Update: {
+          aberta_por?: string
+          created_at?: string
+          data_inspecao?: string
+          empresa_id?: string | null
+          escopo?: string | null
+          frente_servico_id?: string | null
+          id?: string
+          local_descricao?: string
+          observacoes?: string | null
+          participantes?: string | null
+          publicada_em?: string | null
+          revisada_por?: string | null
+          status?: string
+          tipo_local?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inspecoes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inspecoes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "v_contratada_dossie_status"
+            referencedColumns: ["company_id"]
+          },
+          {
+            foreignKeyName: "inspecoes_frente_servico_id_fkey"
+            columns: ["frente_servico_id"]
+            isOneToOne: false
+            referencedRelation: "company_frentes_servico"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       integracao_participantes: {
         Row: {
           assinatura_snapshot: string | null
