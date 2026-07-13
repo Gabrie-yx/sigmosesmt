@@ -11,11 +11,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Brain, Plus, Copy, Loader2, AlertTriangle, ShieldCheck, Users, BarChart3, ListChecks, ClipboardList, Pencil, Trash2, Check, ChevronDown, X } from "lucide-react";
+import { Brain, Plus, Copy, Loader2, AlertTriangle, ShieldCheck, Users, BarChart3, ListChecks, ClipboardList, Pencil, Trash2, Check, ChevronDown, X, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from "@/components/ui/sheet";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
