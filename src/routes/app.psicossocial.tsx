@@ -625,6 +625,10 @@ function EditarCampanhaDialog({
 /* ============ 3. DIAGNÓSTICO ============ */
 function DiagnosticoTab() {
   const [campanhaId, setCampanhaId] = useState<string>("");
+  const [pdfDoc, setPdfDoc] = useState<jsPDF | null>(null);
+  const [pdfName, setPdfName] = useState<string>("Parecer-Psicossocial.pdf");
+  const [tstSig, setTstSig] = useState<string | null>(null);
+  const [supSig, setSupSig] = useState<string | null>(null);
 
   const { data: campanhas } = useQuery({
     queryKey: ["psico-campanhas-diag"],
