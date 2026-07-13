@@ -746,13 +746,13 @@ function MatrizDiagnostico({ linhas, minRespondentes }: { linhas: any[]; minResp
         </tbody>
       </table>
 
-      {/* Legenda enxuta */}
+      {/* Legenda enxuta — cores da Matriz 5x5 DMN */}
       <div className="mt-3 pt-3 border-t border-rose-500/20 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[10px] text-rose-100/70">
         <span className="font-semibold text-rose-100/80">Legenda:</span>
-        <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> ≤ 2,4 · Baixo</span>
-        <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-600" /> 2,5 – 3,4 · Médio</span>
-        <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-rose-600" /> ≥ 3,5 · Alto</span>
-        <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-rose-600" /> Violência ≥ 1,5 · Alerta</span>
+        <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-[#2ecc71]" /> &lt; 2,0 · Baixo risco</span>
+        <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-[#f7d842]" /> 2,0 – 2,9 · Risco moderado</span>
+        <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-[#f39c12]" /> 3,0 – 3,9 · Alto risco</span>
+        <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-[#e74c3c]" /> ≥ 4,0 · Risco crítico</span>
         <span className="ml-auto text-rose-100/50">Passe o mouse na célula para ver o status.</span>
       </div>
     </Card>
@@ -788,23 +788,27 @@ function ComoLerMatrizSheet() {
 
         <div className="mt-5 space-y-6">
           <section>
-            <h4 className="text-sm font-bold mb-2 text-rose-50">Cores = nível de risco</h4>
+            <h4 className="text-sm font-bold mb-2 text-rose-50">Cores = nível de risco (Matriz 5x5 DMN)</h4>
             <table className="w-full text-xs">
               <thead className="text-rose-100/60">
                 <tr><th className="text-left py-1.5">Cor</th><th className="text-left py-1.5">Faixa</th><th className="text-left py-1.5">Significado</th></tr>
               </thead>
               <tbody className="[&_td]:py-2 [&_td]:border-t [&_td]:border-rose-500/15">
                 <tr>
-                  <td><span className="inline-flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-emerald-500" /> Verde</span></td>
-                  <td>≤ 2,4</td><td><b>Baixo</b> — dimensão saudável</td>
+                  <td><span className="inline-flex items-center gap-2"><span className="w-3 h-3 rounded-sm bg-[#2ecc71]" /> Verde</span></td>
+                  <td>&lt; 2,0</td><td><b>Baixo risco</b> — dimensão saudável</td>
                 </tr>
                 <tr>
-                  <td><span className="inline-flex items-center gap-2"><span className="w-3 h-3 rounded-sm bg-amber-600" /> Marrom/laranja</span></td>
-                  <td>2,5 – 3,4</td><td><b>Médio</b> — atenção, monitorar</td>
+                  <td><span className="inline-flex items-center gap-2"><span className="w-3 h-3 rounded-sm bg-[#f7d842]" /> Amarelo</span></td>
+                  <td>2,0 – 2,9</td><td><b>Risco moderado</b> — monitorar</td>
                 </tr>
                 <tr>
-                  <td><span className="inline-flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-rose-600" /> Vinho/vermelho</span></td>
-                  <td>≥ 3,5 <b>ou</b> violência ≥ 1,5</td><td><b>Alto</b> — plano de ação obrigatório</td>
+                  <td><span className="inline-flex items-center gap-2"><span className="w-3 h-3 rounded-sm bg-[#f39c12]" /> Laranja</span></td>
+                  <td>3,0 – 3,9</td><td><b>Alto risco</b> — plano de ação</td>
+                </tr>
+                <tr>
+                  <td><span className="inline-flex items-center gap-2"><span className="w-3 h-3 rounded-sm bg-[#e74c3c]" /> Vermelho</span></td>
+                  <td>≥ 4,0 <b>ou</b> violência ≥ 1,5</td><td><b>Risco crítico</b> — ação imediata</td>
                 </tr>
               </tbody>
             </table>
@@ -832,14 +836,15 @@ function ComoLerMatrizSheet() {
   );
 }
 
-/* Status textual + cor por média, com regra especial para violência/assédio */
+/* Status textual + cor por média, alinhado à Matriz 5x5 DMN (verde/amarelo/laranja/vermelho) */
 function statusPorMedia(m: number, dimensao: string): { label: string; desc: string; cor: string } {
   if (dimensao === "violencia_assedio" && m >= 1.5) {
-    return { label: "ALERTA", desc: "tolerância zero (ISO 45003)", cor: "bg-rose-600" };
+    return { label: "Risco crítico", desc: "violência/assédio — ação imediata", cor: "bg-[#e74c3c]" };
   }
-  if (m <= 2.4) return { label: "Baixo", desc: "dimensão saudável", cor: "bg-emerald-500" };
-  if (m <= 3.4) return { label: "Médio", desc: "atenção, monitorar", cor: "bg-amber-600" };
-  return { label: "Alto", desc: "plano de ação obrigatório", cor: "bg-rose-600" };
+  if (m < 2.0) return { label: "Baixo risco", desc: "dimensão saudável", cor: "bg-[#2ecc71]" };
+  if (m < 3.0) return { label: "Risco moderado", desc: "monitorar", cor: "bg-[#f7d842] !text-slate-900" };
+  if (m < 4.0) return { label: "Alto risco", desc: "plano de ação", cor: "bg-[#f39c12]" };
+  return { label: "Risco crítico", desc: "ação imediata", cor: "bg-[#e74c3c]" };
 }
 
 /* ============ 4. INSTRUMENTO (preview do questionário) ============ */
