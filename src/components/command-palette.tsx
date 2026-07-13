@@ -25,6 +25,33 @@ import {
   Plus,
   Compass,
 } from "lucide-react";
+import { SignedAvatarImg } from "@/components/signed-avatar-img";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+
+const RECENT_EMP_KEY = "cmdk:recent-employees";
+const INCLUDE_INACTIVE_KEY = "cmdk:include-inactive";
+
+function pushRecentEmployee(emp: { id: string; nome: string }) {
+  try {
+    const raw = localStorage.getItem(RECENT_EMP_KEY);
+    const arr: { id: string; nome: string }[] = raw ? JSON.parse(raw) : [];
+    const filtered = arr.filter((e) => e.id !== emp.id);
+    const next = [{ id: emp.id, nome: emp.nome }, ...filtered].slice(0, 5);
+    localStorage.setItem(RECENT_EMP_KEY, JSON.stringify(next));
+  } catch {
+    /* noop */
+  }
+}
+
+function readRecentEmployees(): { id: string; nome: string }[] {
+  try {
+    const raw = localStorage.getItem(RECENT_EMP_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
 
 type NavItem = { to: string; label: string; group: string; icon?: any };
 
