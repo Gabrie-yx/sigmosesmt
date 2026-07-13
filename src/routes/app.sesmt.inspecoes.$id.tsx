@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ChevronLeft, Camera, Upload, Plus, Trash2, AlertTriangle, ShieldAlert, Video, FileText, Info } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -584,6 +584,3 @@ function NcPlanos({ ncId, editable }: { ncId: string; editable: boolean }) {
     </div>
   );
 }
-
-// force TooltipProvider mount at root (small helper wrapper)
-export function _tt() { return <TooltipProvider />; }
