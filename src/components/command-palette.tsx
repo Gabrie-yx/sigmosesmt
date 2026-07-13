@@ -132,7 +132,7 @@ export function CommandPalette() {
     queryFn: async () => {
       let q = supabase
         .from("employees")
-        .select("id, nome, funcao, status, matricula, cpf, foto_url, company_id, companies(name)")
+        .select("id, nome, status, matricula, cpf, foto_url, company_id, companies(name), roles(name)")
         .order("nome")
         .limit(800);
       if (!includeInactive) q = q.neq("status", "DESLIGADO");
@@ -195,7 +195,8 @@ export function CommandPalette() {
     return employees
       .filter((e: any) => {
         const empresa = (e.companies?.name ?? "").toLowerCase();
-        const haystack = `${e.nome ?? ""} ${e.funcao ?? ""} ${e.matricula ?? ""} ${empresa}`.toLowerCase();
+        const cargo = (e.roles?.name ?? "").toLowerCase();
+        const haystack = `${e.nome ?? ""} ${cargo} ${e.matricula ?? ""} ${empresa}`.toLowerCase();
         if (haystack.includes(q)) return true;
         if (qDigits.length >= 3) {
           const cpfDigits = String(e.cpf ?? "").replace(/\D/g, "");
@@ -254,7 +255,7 @@ export function CommandPalette() {
             {filteredEmployees.map((e: any) => (
               <CommandItem
                 key={`emp-${e.id}`}
-                value={`funcionario ${e.nome} ${e.funcao ?? ""} ${e.matricula ?? ""} ${e.companies?.name ?? ""}`}
+                value={`funcionario ${e.nome} ${e.roles?.name ?? ""} ${e.matricula ?? ""} ${e.companies?.name ?? ""}`}
                 onSelect={() => goEmployee({ id: e.id, nome: e.nome })}
               >
                 <div className="h-7 w-7 shrink-0 rounded-full overflow-hidden border border-border/60 bg-muted flex items-center justify-center">
@@ -267,7 +268,7 @@ export function CommandPalette() {
                 <div className="flex flex-col min-w-0 flex-1">
                   <span className="font-medium truncate">{e.nome}</span>
                   <span className="text-xs text-muted-foreground truncate">
-                    {e.funcao ?? "—"}
+                    {e.roles?.name ?? "—"}
                     {e.matricula ? ` · Mat. ${e.matricula}` : ""}
                     {e.companies?.name ? ` · ${e.companies.name}` : ""}
                   </span>
