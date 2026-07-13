@@ -272,7 +272,7 @@ export function gerarParecerPsicossocialPdf(opts: ParecerPsicoOpts): jsPDF {
   const sup = opts.signatarios?.supervisor ?? "Anderson — Supervisor Geral";
   const gap = 12;
   const colW = (W - M * 2 - gap) / 2;
-  const sigBoxH = 26;            // altura da área da assinatura (imagem)
+  const sigBoxH = 20;            // altura da área da assinatura (imagem)
   const sigTop = y + 6;
   const lineY = sigTop + sigBoxH;
 
@@ -280,9 +280,16 @@ export function gerarParecerPsicossocialPdf(opts: ParecerPsicoOpts): jsPDF {
   const stampSig = (dataUrl: string | null | undefined, x: number) => {
     if (!dataUrl) return;
     try {
-      const maxW = colW - 8;
+      // Preserva aspecto — evita assinatura esticada/gigante.
+      const props = doc.getImageProperties(dataUrl);
+      const maxW = Math.min(colW - 20, 55); // limita largura absoluta
       const maxH = sigBoxH - 2;
-      doc.addImage(dataUrl, "PNG", x + (colW - maxW) / 2, sigTop, maxW, maxH, undefined, "FAST");
+      const ratio = Math.min(maxW / props.width, maxH / props.height);
+      const w = props.width * ratio;
+      const h = props.height * ratio;
+      const cx = x + (colW - w) / 2;
+      const cy = sigTop + (sigBoxH - h); // apoia acima da linha
+      doc.addImage(dataUrl, "PNG", cx, cy, w, h, undefined, "FAST");
     } catch {
       /* ignore image errors */
     }
