@@ -882,7 +882,7 @@ function NcPlanos({ ncId, editable, empresaId, prazoSugerido }: { ncId: string; 
           <Input placeholder="Nova ação..." value={acao} onChange={(e) => setAcao(e.target.value)} className="h-7 text-xs flex-1 min-w-[160px]" />
           <Select value={respId} onValueChange={setRespId}>
             <SelectTrigger className="h-7 text-xs w-40"><SelectValue placeholder="Responsável" /></SelectTrigger>
-            <SelectContent position="popper" side="top" align="end" sideOffset={4} className="max-h-72 z-[100]">
+            <SelectContent position="popper" side="top" align="end" sideOffset={4} avoidCollisions={false} className="max-h-60 z-[100]">
               {empregados.length === 0 ? (
                 <div className="px-2 py-1.5 text-xs text-slate-500">Sem funcionários ativos nesta empresa.</div>
               ) : (
