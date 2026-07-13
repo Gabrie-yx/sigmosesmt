@@ -36,6 +36,42 @@ async function sha256(file: Blob): Promise<string> {
   return Array.from(new Uint8Array(hash)).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+// Comprime foto de celular pra evitar "insuficiência de memória" no Chrome Android.
+// Fotos modernas têm 12MP (~5MB); redimensionamos pra 1600px lado maior + JPEG 0.8 (~300KB).
+// Usa createImageBitmap (streaming, libera memória) ao invés de dataURL/FileReader.
+async function comprimirImagem(file: File, maxDim = 1600, quality = 0.8): Promise<File> {
+  // Se já é pequeno (<800KB), não mexe
+  if (file.size < 800 * 1024) return file;
+  let bitmap: ImageBitmap | null = null;
+  try {
+    bitmap = await createImageBitmap(file);
+    const { width, height } = bitmap;
+    const scale = Math.min(1, maxDim / Math.max(width, height));
+    const w = Math.round(width * scale);
+    const h = Math.round(height * scale);
+    const canvas = typeof OffscreenCanvas !== "undefined"
+      ? new OffscreenCanvas(w, h)
+      : Object.assign(document.createElement("canvas"), { width: w, height: h });
+    const ctx = (canvas as any).getContext("2d");
+    if (!ctx) return file;
+    ctx.drawImage(bitmap, 0, 0, w, h);
+    const blob: Blob = "convertToBlob" in canvas
+      ? await (canvas as OffscreenCanvas).convertToBlob({ type: "image/jpeg", quality })
+      : await new Promise((res, rej) =>
+          (canvas as HTMLCanvasElement).toBlob((b) => (b ? res(b) : rej(new Error("toBlob falhou"))), "image/jpeg", quality)
+        );
+    // Se compressão piorou (raro), devolve original
+    if (blob.size >= file.size) return file;
+    const nome = file.name.replace(/\.(heic|heif|png|webp|jpg|jpeg)$/i, "") + ".jpg";
+    return new File([blob], nome, { type: "image/jpeg", lastModified: file.lastModified });
+  } catch (e) {
+    console.warn("[inspecao] compressão falhou, enviando original", e);
+    return file;
+  } finally {
+    bitmap?.close?.();
+  }
+}
+
 function getGeo(): Promise<{ lat: number; lng: number; acc: number } | null> {
   return new Promise((resolve) => {
     if (!("geolocation" in navigator)) return resolve(null);
