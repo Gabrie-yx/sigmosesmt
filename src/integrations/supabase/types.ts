@@ -10680,6 +10680,48 @@ export type Database = {
         }
         Relationships: []
       }
+      sesmt_notificacoes: {
+        Row: {
+          contexto_id: string | null
+          contexto_tabela: string | null
+          corpo: string | null
+          created_at: string
+          id: string
+          lida_em: string | null
+          link: string | null
+          prazo: string | null
+          tipo: string
+          titulo: string
+          user_id: string
+        }
+        Insert: {
+          contexto_id?: string | null
+          contexto_tabela?: string | null
+          corpo?: string | null
+          created_at?: string
+          id?: string
+          lida_em?: string | null
+          link?: string | null
+          prazo?: string | null
+          tipo: string
+          titulo: string
+          user_id: string
+        }
+        Update: {
+          contexto_id?: string | null
+          contexto_tabela?: string | null
+          corpo?: string | null
+          created_at?: string
+          id?: string
+          lida_em?: string | null
+          link?: string | null
+          prazo?: string | null
+          tipo?: string
+          titulo?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       temp_admins: {
         Row: {
           created_at: string

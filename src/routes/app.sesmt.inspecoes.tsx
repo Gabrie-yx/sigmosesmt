@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Target, Plus, ChevronRight, ChevronLeft, ClipboardList, Trash2, Info, Camera, ShieldAlert, FileText } from "lucide-react";
+import { Target, Plus, ChevronRight, ChevronLeft, ClipboardList, Trash2, Info, Camera, ShieldAlert, FileText, Bell, CheckCheck } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -33,6 +33,30 @@ function InspecoesList() {
   const [open, setOpen] = useState(false);
   const [excluir, setExcluir] = useState<{ id: string; local: string } | null>(null);
   const canDelete = roles?.some((r) => r === "admin" || r === "tst");
+
+  const { data: notifs = [] } = useQuery({
+    queryKey: ["sesmt-notifs-me", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("sesmt_notificacoes")
+        .select("id, titulo, corpo, link, prazo, created_at, lida_em")
+        .eq("user_id", user!.id)
+        .is("lida_em", null)
+        .order("created_at", { ascending: false })
+        .limit(10);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const marcarLida = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("sesmt_notificacoes").update({ lida_em: new Date().toISOString() }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["sesmt-notifs-me"] }),
+  });
 
   const { data: inspecoes = [], isLoading } = useQuery({
     queryKey: ["inspecoes"],
@@ -263,6 +287,38 @@ function InspecoesList() {
           )}
         </CardContent>
       </Card>
+
+      {notifs.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-black uppercase tracking-wide text-orange-700 flex items-center gap-2">
+              <Bell className="h-4 w-4" /> Minhas pendências ({notifs.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {notifs.map((n: any) => (
+              <div key={n.id} className="flex items-start gap-2 border rounded p-2 bg-orange-50/40">
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-semibold text-slate-800">{n.titulo}</div>
+                  {n.corpo && <div className="text-[11px] text-slate-600 whitespace-pre-line">{n.corpo}</div>}
+                  <div className="text-[10px] text-slate-500 mt-0.5">
+                    {n.prazo && <>Prazo: {format(new Date(n.prazo + "T00:00:00"), "dd/MM/yyyy")} · </>}
+                    {format(new Date(n.created_at), "dd/MM/yyyy HH:mm")}
+                  </div>
+                </div>
+                {n.link && (
+                  <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => navigate({ to: n.link })}>
+                    Abrir
+                  </Button>
+                )}
+                <Button size="icon" variant="ghost" className="h-7 w-7 text-emerald-700" title="Marcar como lida" onClick={() => marcarLida.mutate(n.id)}>
+                  <CheckCheck className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader className="pb-2">
