@@ -24,10 +24,10 @@ export const Route = createFileRoute("/app/sesmt/inspecoes/$id")({
 const BUCKET = "inspecoes-fotos";
 
 const CLASSE_CLS: Record<string, string> = {
-  BAIXO: "bg-emerald-100 text-primary",
-  MODERADO: "bg-yellow-100 text-yellow-800",
-  ALTO: "bg-orange-100 text-orange-800",
-  CRITICO: "bg-red-200 text-red-900",
+  BAIXO: "bg-emerald-500/15 text-emerald-200 border border-emerald-500/40",
+  MODERADO: "bg-yellow-500/15 text-yellow-200 border border-yellow-500/40",
+  ALTO: "bg-orange-500/15 text-orange-200 border border-orange-500/40",
+  CRITICO: "bg-red-500/20 text-red-100 border border-red-500/50",
 };
 
 async function sha256(file: Blob): Promise<string> {
