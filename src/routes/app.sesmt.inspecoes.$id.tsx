@@ -174,12 +174,16 @@ function InspecaoDetail() {
       if (!user) throw new Error("Sessão expirada");
       if (!files.length) throw new Error("Selecione pelo menos uma foto");
       const geo = await getGeo();
-      for (const file of Array.from(files)) {
-        if (!file.type.startsWith("image/")) throw new Error(`${file.name} não é uma imagem válida`);
+      for (const original of Array.from(files)) {
+        if (!original.type.startsWith("image/") && !/\.(heic|heif)$/i.test(original.name)) {
+          throw new Error(`${original.name} não é uma imagem válida`);
+        }
+        // Comprime ANTES do hash pra não estourar memória em fotos de 12MP
+        const file = await comprimirImagem(original);
         const hash = await sha256(file);
-        const ext = file.name.split(".").pop() ?? "jpg";
+        const ext = (file.name.split(".").pop() ?? "jpg").toLowerCase();
         const path = `${id}/${Date.now()}-${crypto.randomUUID()}-${hash.slice(0, 8)}.${ext}`;
-        const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, file, { contentType: file.type });
+        const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, file, { contentType: file.type || "image/jpeg" });
         if (upErr) throw upErr;
         const { error } = await supabase.from("inspecao_fotos").insert({
           inspecao_id: id,
