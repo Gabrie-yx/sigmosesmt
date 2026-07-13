@@ -323,40 +323,55 @@ export function gerarParecerPsicossocialPdf(opts: ParecerPsicoOpts): jsPDF {
 function drawMatrizHeatmap(doc: jsPDF, startY: number, agregado: AgregadoLinha[], ghes: GheInfo[]): number {
   const M = 12;
   const W = doc.internal.pageSize.getWidth();
+  const H = doc.internal.pageSize.getHeight();
+  const BOTTOM = 14;
   const dims = Object.keys(DIMENSAO_LABEL);
   const gheIds = Array.from(new Set(agregado.map((l) => l.ghe_id))).filter(Boolean);
 
-  const gheColW = 34;
+  const gheColW = 40;
   const cellW = (W - M * 2 - gheColW) / dims.length;
   const rowH = 10;
   const headerH = 18;
 
   let y = startY;
 
-  // header
-  doc.setFillColor(15, 23, 42);
-  doc.rect(M, y, W - M * 2, headerH, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
-  doc.text("GHE", M + 2, y + headerH / 2 + 1);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(6.5);
-  dims.forEach((d, i) => {
-    const cx = M + gheColW + i * cellW + cellW / 2;
-    const label = DIMENSAO_LABEL[d as keyof typeof DIMENSAO_LABEL] ?? d;
-    // quebra em 2 linhas
-    const words = label.split(" ");
-    const mid = Math.ceil(words.length / 2);
-    const l1 = words.slice(0, mid).join(" ");
-    const l2 = words.slice(mid).join(" ");
-    doc.text(l1, cx, y + 7, { align: "center" });
-    if (l2) doc.text(l2, cx, y + 12.5, { align: "center" });
-  });
-  y += headerH;
+  const drawHeader = () => {
+    doc.setFillColor(15, 23, 42);
+    doc.rect(M, y, W - M * 2, headerH, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.text("GHE", M + 2, y + headerH / 2 + 1);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(6.5);
+    dims.forEach((d, i) => {
+      const cx = M + gheColW + i * cellW + cellW / 2;
+      const label = DIMENSAO_LABEL[d as keyof typeof DIMENSAO_LABEL] ?? d;
+      const words = label.split(" ");
+      const mid = Math.ceil(words.length / 2);
+      const l1 = words.slice(0, mid).join(" ");
+      const l2 = words.slice(mid).join(" ");
+      doc.text(l1, cx, y + 7, { align: "center" });
+      if (l2) doc.text(l2, cx, y + 12.5, { align: "center" });
+    });
+    y += headerH;
+  };
+  let matrixTop = y;
+  drawHeader();
 
   // rows
   gheIds.forEach((gid) => {
+    // quebra de página preservando cabeçalho da matriz
+    if (y + rowH > H - BOTTOM) {
+      // fecha borda da parte anterior
+      doc.setDrawColor(203, 213, 225);
+      doc.setLineWidth(0.3);
+      doc.rect(M, matrixTop, W - M * 2, y - matrixTop);
+      doc.addPage();
+      y = M;
+      matrixTop = y;
+      drawHeader();
+    }
     const g = ghes.find((x) => x.id === gid);
     const rotulo = g ? `GHE ${g.numero} — ${g.setor}` : String(gid).slice(0, 10);
 
@@ -366,7 +381,7 @@ function drawMatrizHeatmap(doc: jsPDF, startY: number, agregado: AgregadoLinha[]
     doc.setTextColor(15, 23, 42);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(7.5);
-    doc.text(truncate(rotulo, 22), M + 2, y + rowH / 2 + 1);
+    doc.text(truncate(rotulo, 26), M + 2, y + rowH / 2 + 1);
 
     dims.forEach((d, i) => {
       const cell = agregado.find((l) => l.ghe_id === gid && l.dimensao === d);
@@ -402,7 +417,7 @@ function drawMatrizHeatmap(doc: jsPDF, startY: number, agregado: AgregadoLinha[]
   // borda externa
   doc.setDrawColor(203, 213, 225);
   doc.setLineWidth(0.3);
-  doc.rect(M, startY, W - M * 2, y - startY);
+  doc.rect(M, matrixTop, W - M * 2, y - matrixTop);
 
   return y + 4;
 }
