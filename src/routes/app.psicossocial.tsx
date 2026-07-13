@@ -672,7 +672,19 @@ function DiagnosticoTab() {
   function baixarParecer() {
     if (!campanhaSel) return;
     try {
-      const doc = gerarParecerPsicossocialPdf({
+      const doc = buildParecer(tstSig, supSig);
+      if (!doc) return;
+      const stamp = new Date().toISOString().slice(0, 10);
+      setPdfName(`Parecer-Psicossocial-${stamp}.pdf`);
+      setPdfDoc(doc);
+    } catch (e: any) {
+      toast.error("Falha ao gerar PDF: " + (e?.message ?? "erro"));
+    }
+  }
+
+  function buildParecer(tst: string | null, sup: string | null): jsPDF | null {
+    if (!campanhaSel) return null;
+    return gerarParecerPsicossocialPdf({
         campanha: {
           titulo: campanhaSel.titulo,
           descricao: campanhaSel.descricao,
@@ -686,13 +698,8 @@ function DiagnosticoTab() {
         ghes: (ghes ?? []) as any,
         planoAcao: (planoAcao ?? []) as any,
         signatarios: { tst: "Técnico de Segurança do Trabalho", supervisor: "Anderson — Supervisor Geral" },
+      assinaturas: { tst, supervisor: sup },
       });
-      const stamp = new Date().toISOString().slice(0, 10);
-      doc.save(`Parecer-Psicossocial-${stamp}.pdf`);
-      toast.success("Parecer técnico gerado.");
-    } catch (e: any) {
-      toast.error("Falha ao gerar PDF: " + (e?.message ?? "erro"));
-    }
   }
 
   return (
