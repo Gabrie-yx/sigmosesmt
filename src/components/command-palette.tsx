@@ -25,6 +25,33 @@ import {
   Plus,
   Compass,
 } from "lucide-react";
+import { SignedAvatarImg } from "@/components/signed-avatar-img";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+
+const RECENT_EMP_KEY = "cmdk:recent-employees";
+const INCLUDE_INACTIVE_KEY = "cmdk:include-inactive";
+
+function pushRecentEmployee(emp: { id: string; nome: string }) {
+  try {
+    const raw = localStorage.getItem(RECENT_EMP_KEY);
+    const arr: { id: string; nome: string }[] = raw ? JSON.parse(raw) : [];
+    const filtered = arr.filter((e) => e.id !== emp.id);
+    const next = [{ id: emp.id, nome: emp.nome }, ...filtered].slice(0, 5);
+    localStorage.setItem(RECENT_EMP_KEY, JSON.stringify(next));
+  } catch {
+    /* noop */
+  }
+}
+
+function readRecentEmployees(): { id: string; nome: string }[] {
+  try {
+    const raw = localStorage.getItem(RECENT_EMP_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
 
 type NavItem = { to: string; label: string; group: string; icon?: any };
 
@@ -66,6 +93,11 @@ const QUICK_ACTIONS: NavItem[] = [
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [includeInactive, setIncludeInactive] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem(INCLUDE_INACTIVE_KEY) === "1";
+  });
+  const [recentIds, setRecentIds] = useState<{ id: string; nome: string }[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -75,19 +107,36 @@ export function CommandPalette() {
         setOpen((o) => !o);
       }
     };
+    const onOpenEvent = () => setOpen(true);
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("cmdk:open", onOpenEvent);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("cmdk:open", onOpenEvent);
+    };
   }, []);
 
+  useEffect(() => {
+    if (open) setRecentIds(readRecentEmployees());
+  }, [open]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(INCLUDE_INACTIVE_KEY, includeInactive ? "1" : "0");
+    }
+  }, [includeInactive]);
+
   const { data: employees = [] } = useQuery({
-    queryKey: ["cmdk-employees"],
+    queryKey: ["cmdk-employees", includeInactive],
     enabled: open,
     queryFn: async () => {
-      const { data } = await supabase
+      let q = supabase
         .from("employees")
-        .select("id, nome, funcao, status")
+        .select("id, nome, funcao, status, matricula, cpf, foto_url, company_id, companies(name)")
         .order("nome")
-        .limit(500);
+        .limit(800);
+      if (!includeInactive) q = q.neq("status", "DESLIGADO");
+      const { data } = await q;
       return data ?? [];
     },
   });
@@ -125,15 +174,39 @@ export function CommandPalette() {
     else navigate({ to } as any);
   };
 
+  const goEmployee = (e: { id: string; nome: string }) => {
+    pushRecentEmployee(e);
+    go("/app/employees/$id", { id: e.id });
+  };
+
   const q = query.trim().toLowerCase();
+  const qDigits = q.replace(/\D/g, "");
   const filteredEmployees = useMemo(() => {
-    if (!q) return employees.slice(0, 8);
+    if (!q) {
+      // Sem busca: mostra recentes primeiro
+      if (recentIds.length > 0) {
+        const map = new Map(employees.map((e: any) => [e.id, e]));
+        const recentes = recentIds.map((r) => map.get(r.id)).filter(Boolean);
+        const outros = employees.filter((e: any) => !recentIds.some((r) => r.id === e.id));
+        return [...recentes, ...outros].slice(0, 8);
+      }
+      return employees.slice(0, 8);
+    }
     return employees
-      .filter((e: any) =>
-        `${e.nome ?? ""} ${e.funcao ?? ""}`.toLowerCase().includes(q),
-      )
-      .slice(0, 12);
-  }, [employees, q]);
+      .filter((e: any) => {
+        const empresa = (e.companies?.name ?? "").toLowerCase();
+        const haystack = `${e.nome ?? ""} ${e.funcao ?? ""} ${e.matricula ?? ""} ${empresa}`.toLowerCase();
+        if (haystack.includes(q)) return true;
+        if (qDigits.length >= 3) {
+          const cpfDigits = String(e.cpf ?? "").replace(/\D/g, "");
+          if (cpfDigits.includes(qDigits)) return true;
+          const matDigits = String(e.matricula ?? "").replace(/\D/g, "");
+          if (matDigits.includes(qDigits)) return true;
+        }
+        return false;
+      })
+      .slice(0, 15);
+  }, [employees, q, qDigits, recentIds]);
 
   const filteredAprs = useMemo(() => {
     if (!q) return aprs.slice(0, 6);
@@ -160,28 +233,50 @@ export function CommandPalette() {
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
       <CommandInput
-        placeholder="Buscar funcionários, APRs, requisições, páginas… (⌘K)"
+        placeholder="Buscar por nome, matrícula, CPF, empresa, APR, página… (⌘K)"
         value={query}
         onValueChange={setQuery}
       />
+      <div className="flex items-center justify-between gap-3 border-b border-border/60 px-3 py-2 text-[11px]">
+        <span className="font-black uppercase tracking-widest text-muted-foreground">
+          Funcionários {includeInactive ? "· todos" : "· só ativos"}
+        </span>
+        <label className="flex items-center gap-2 cursor-pointer select-none">
+          <span className="text-muted-foreground">Incluir desligados</span>
+          <Switch checked={includeInactive} onCheckedChange={setIncludeInactive} />
+        </label>
+      </div>
       <CommandList className="max-h-[60vh]">
         <CommandEmpty>Nada encontrado.</CommandEmpty>
 
         {filteredEmployees.length > 0 && (
-          <CommandGroup heading="Funcionários">
+          <CommandGroup heading={!q && recentIds.length > 0 ? "Funcionários — Recentes primeiro" : "Funcionários"}>
             {filteredEmployees.map((e: any) => (
               <CommandItem
                 key={`emp-${e.id}`}
-                value={`funcionario ${e.nome} ${e.funcao ?? ""}`}
-                onSelect={() => go("/app/employees/$id", { id: e.id })}
+                value={`funcionario ${e.nome} ${e.funcao ?? ""} ${e.matricula ?? ""} ${e.companies?.name ?? ""}`}
+                onSelect={() => goEmployee({ id: e.id, nome: e.nome })}
               >
-                <Users className="text-muted-foreground" />
-                <div className="flex flex-col">
-                  <span className="font-medium">{e.nome}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {e.funcao ?? "—"} {e.status ? `· ${e.status}` : ""}
+                <div className="h-7 w-7 shrink-0 rounded-full overflow-hidden border border-border/60 bg-muted flex items-center justify-center">
+                  {e.foto_url ? (
+                    <SignedAvatarImg src={e.foto_url} alt={e.nome} className="h-full w-full object-cover" />
+                  ) : (
+                    <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                  )}
+                </div>
+                <div className="flex flex-col min-w-0 flex-1">
+                  <span className="font-medium truncate">{e.nome}</span>
+                  <span className="text-xs text-muted-foreground truncate">
+                    {e.funcao ?? "—"}
+                    {e.matricula ? ` · Mat. ${e.matricula}` : ""}
+                    {e.companies?.name ? ` · ${e.companies.name}` : ""}
                   </span>
                 </div>
+                {e.status && e.status !== "ATIVO" && (
+                  <span className="ml-2 shrink-0 rounded-full bg-muted px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-muted-foreground">
+                    {e.status}
+                  </span>
+                )}
               </CommandItem>
             ))}
           </CommandGroup>
