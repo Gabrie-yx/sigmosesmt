@@ -59,6 +59,8 @@ export type ParecerPsicoOpts = {
   ghes: GheInfo[];
   planoAcao: PlanoAcaoItem[];
   signatarios?: { tst?: string; supervisor?: string };
+  /** Data URLs (PNG) para estampar acima das linhas de assinatura. */
+  assinaturas?: { tst?: string | null; supervisor?: string | null };
 };
 
 export function gerarParecerPsicossocialPdf(opts: ParecerPsicoOpts): jsPDF {
