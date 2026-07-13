@@ -64,6 +64,7 @@ import { Route as AppSesmtPrestadoresRouteImport } from './routes/app.sesmt.pres
 import { Route as AppSesmtOrganogramaRouteImport } from './routes/app.sesmt.organograma'
 import { Route as AppSesmtOcrTesteRouteImport } from './routes/app.sesmt.ocr-teste'
 import { Route as AppSesmtIntegracoesRouteImport } from './routes/app.sesmt.integracoes'
+import { Route as AppSesmtInspecoesRouteImport } from './routes/app.sesmt.inspecoes'
 import { Route as AppSesmtGuiaDocumentosRouteImport } from './routes/app.sesmt.guia-documentos'
 import { Route as AppSesmtEquipamentosMoveisRouteImport } from './routes/app.sesmt.equipamentos-moveis'
 import { Route as AppSesmtDocsRouteImport } from './routes/app.sesmt.docs'
@@ -403,6 +404,11 @@ const AppSesmtOcrTesteRoute = AppSesmtOcrTesteRouteImport.update({
 const AppSesmtIntegracoesRoute = AppSesmtIntegracoesRouteImport.update({
   id: '/sesmt/integracoes',
   path: '/sesmt/integracoes',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSesmtInspecoesRoute = AppSesmtInspecoesRouteImport.update({
+  id: '/sesmt/inspecoes',
+  path: '/sesmt/inspecoes',
   getParentRoute: () => AppRoute,
 } as any)
 const AppSesmtGuiaDocumentosRoute = AppSesmtGuiaDocumentosRouteImport.update({
@@ -821,6 +827,7 @@ export interface FileRoutesByFullPath {
   '/app/sesmt/docs': typeof AppSesmtDocsRoute
   '/app/sesmt/equipamentos-moveis': typeof AppSesmtEquipamentosMoveisRoute
   '/app/sesmt/guia-documentos': typeof AppSesmtGuiaDocumentosRoute
+  '/app/sesmt/inspecoes': typeof AppSesmtInspecoesRoute
   '/app/sesmt/integracoes': typeof AppSesmtIntegracoesRoute
   '/app/sesmt/ocr-teste': typeof AppSesmtOcrTesteRoute
   '/app/sesmt/organograma': typeof AppSesmtOrganogramaRoute
@@ -935,6 +942,7 @@ export interface FileRoutesByTo {
   '/app/sesmt/docs': typeof AppSesmtDocsRoute
   '/app/sesmt/equipamentos-moveis': typeof AppSesmtEquipamentosMoveisRoute
   '/app/sesmt/guia-documentos': typeof AppSesmtGuiaDocumentosRoute
+  '/app/sesmt/inspecoes': typeof AppSesmtInspecoesRoute
   '/app/sesmt/integracoes': typeof AppSesmtIntegracoesRoute
   '/app/sesmt/ocr-teste': typeof AppSesmtOcrTesteRoute
   '/app/sesmt/organograma': typeof AppSesmtOrganogramaRoute
@@ -1054,6 +1062,7 @@ export interface FileRoutesById {
   '/app/sesmt/docs': typeof AppSesmtDocsRoute
   '/app/sesmt/equipamentos-moveis': typeof AppSesmtEquipamentosMoveisRoute
   '/app/sesmt/guia-documentos': typeof AppSesmtGuiaDocumentosRoute
+  '/app/sesmt/inspecoes': typeof AppSesmtInspecoesRoute
   '/app/sesmt/integracoes': typeof AppSesmtIntegracoesRoute
   '/app/sesmt/ocr-teste': typeof AppSesmtOcrTesteRoute
   '/app/sesmt/organograma': typeof AppSesmtOrganogramaRoute
@@ -1174,6 +1183,7 @@ export interface FileRouteTypes {
     | '/app/sesmt/docs'
     | '/app/sesmt/equipamentos-moveis'
     | '/app/sesmt/guia-documentos'
+    | '/app/sesmt/inspecoes'
     | '/app/sesmt/integracoes'
     | '/app/sesmt/ocr-teste'
     | '/app/sesmt/organograma'
@@ -1288,6 +1298,7 @@ export interface FileRouteTypes {
     | '/app/sesmt/docs'
     | '/app/sesmt/equipamentos-moveis'
     | '/app/sesmt/guia-documentos'
+    | '/app/sesmt/inspecoes'
     | '/app/sesmt/integracoes'
     | '/app/sesmt/ocr-teste'
     | '/app/sesmt/organograma'
@@ -1406,6 +1417,7 @@ export interface FileRouteTypes {
     | '/app/sesmt/docs'
     | '/app/sesmt/equipamentos-moveis'
     | '/app/sesmt/guia-documentos'
+    | '/app/sesmt/inspecoes'
     | '/app/sesmt/integracoes'
     | '/app/sesmt/ocr-teste'
     | '/app/sesmt/organograma'
@@ -1842,6 +1854,13 @@ declare module '@tanstack/react-router' {
       path: '/sesmt/integracoes'
       fullPath: '/app/sesmt/integracoes'
       preLoaderRoute: typeof AppSesmtIntegracoesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/sesmt/inspecoes': {
+      id: '/app/sesmt/inspecoes'
+      path: '/sesmt/inspecoes'
+      fullPath: '/app/sesmt/inspecoes'
+      preLoaderRoute: typeof AppSesmtInspecoesRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/sesmt/guia-documentos': {
@@ -2424,6 +2443,7 @@ interface AppRouteChildren {
   AppSesmtDocsRoute: typeof AppSesmtDocsRoute
   AppSesmtEquipamentosMoveisRoute: typeof AppSesmtEquipamentosMoveisRoute
   AppSesmtGuiaDocumentosRoute: typeof AppSesmtGuiaDocumentosRoute
+  AppSesmtInspecoesRoute: typeof AppSesmtInspecoesRoute
   AppSesmtIntegracoesRoute: typeof AppSesmtIntegracoesRoute
   AppSesmtOcrTesteRoute: typeof AppSesmtOcrTesteRoute
   AppSesmtOrganogramaRoute: typeof AppSesmtOrganogramaRoute
@@ -2514,6 +2534,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSesmtDocsRoute: AppSesmtDocsRoute,
   AppSesmtEquipamentosMoveisRoute: AppSesmtEquipamentosMoveisRoute,
   AppSesmtGuiaDocumentosRoute: AppSesmtGuiaDocumentosRoute,
+  AppSesmtInspecoesRoute: AppSesmtInspecoesRoute,
   AppSesmtIntegracoesRoute: AppSesmtIntegracoesRoute,
   AppSesmtOcrTesteRoute: AppSesmtOcrTesteRoute,
   AppSesmtOrganogramaRoute: AppSesmtOrganogramaRoute,
