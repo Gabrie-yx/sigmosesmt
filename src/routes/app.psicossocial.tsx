@@ -24,6 +24,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { DIMENSAO_LABEL, PSICO_ITEMS } from "@/lib/psico-instrument";
 import { gerarParecerPsicossocialPdf } from "@/lib/psico-parecer-pdf";
+import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
+import type jsPDF from "jspdf";
 
 export const Route = createFileRoute("/app/psicossocial")({
   component: PsicossocialPage,
