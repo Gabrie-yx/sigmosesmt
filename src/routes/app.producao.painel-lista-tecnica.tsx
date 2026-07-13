@@ -310,22 +310,29 @@ function PainelListaTecnicaPage() {
     const consumo = itensVisiveis
       .filter((it) => String(it.unidade ?? "").toUpperCase() === "KG")
       .reduce((s, it) => s + (it.consumo ?? 0), 0);
-    const pesoEst = Number(listaPlan?.peso_total_estimado ?? 0);
     const linhas = itensVisiveis.length;
     const distintos = new Set(itensVisiveis.map((it) => String(it.codigo_sap))).size;
-    const desvio = pesoEst > 0 ? ((consumo - pesoEst) / pesoEst) * 100 : 0;
     // Consumo Ferro/Aço da Ordem: usa a categoria resolvida (Base MP +
     // Classificação MB51 + descrição), pois nem toda MB51 vem com a coluna
     // "Classificação" preenchida. Restrito a UM = KG e LÍQUIDO
-    // (consumo − estornos), mesma base do card "PESO REAL (B51)".
-    const consumoOrdem = itensEnriq
-      .filter((it) =>
-        it.categoria === "FERRO" &&
-        String(it.unidade ?? "").toUpperCase() === "KG",
-      )
-      .reduce((s, it) => s + Number(it.consumo ?? 0), 0);
+    // (consumo − estornos), clampado ≥ 0 para casar com "Realizado vs. Orçado FERRO"
+    // do painel abaixo (mesma fórmula, mesma unidade, mesma base).
+    const consumoOrdem = Math.max(
+      0,
+      itensEnriq
+        .filter((it) =>
+          it.categoria === "FERRO" &&
+          String(it.unidade ?? "").toUpperCase() === "KG",
+        )
+        .reduce((s, it) => s + Number(it.consumo ?? 0), 0),
+    );
+    // Planejado Lista Técnica: soma categorizada item-a-item (mesma base do
+    // card "Material Planejado · Total" abaixo), não o total bruto do
+    // cabeçalho. Assim os cards de cima e de baixo batem por definição.
+    const pesoEst = CATEGORIAS.reduce((s, c) => s + (previstoPorCategoria[c] || 0), 0);
+    const desvio = pesoEst > 0 ? ((consumo - pesoEst) / pesoEst) * 100 : 0;
     return { pesoReal: consumo, pesoEst, pecas: linhas, distintos, desvio, consumoOrdem };
-  }, [itensVisiveis, itensEnriq, listaPlan]);
+  }, [itensVisiveis, itensEnriq, previstoPorCategoria]);
 
   const dadosPorCategoria = useMemo(() => {
     const empty = () => ({
