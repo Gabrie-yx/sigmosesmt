@@ -232,12 +232,12 @@ export function gerarParecerPsicossocialPdf(opts: ParecerPsicoOpts): jsPDF {
       styles: { fontSize: 8, cellPadding: 1.6, lineColor: [203, 213, 225], lineWidth: 0.2, valign: "top", overflow: "linebreak" },
       headStyles: { fillColor: [15, 23, 42], textColor: 255, fontStyle: "bold", fontSize: 8 },
       columnStyles: {
-        0: { cellWidth: 42 }, // o quê
-        1: { cellWidth: 35 }, // por quê
-        2: { cellWidth: 25 }, // onde
-        3: { cellWidth: 25 }, // quem
+        0: { cellWidth: 44 }, // o quê
+        1: { cellWidth: 34 }, // por quê
+        2: { cellWidth: 26 }, // onde
+        3: { cellWidth: 28 }, // quem
         4: { cellWidth: 18, halign: "center" }, // quando
-        5: { cellWidth: 22, halign: "center" }, // status
+        5: { cellWidth: 32, halign: "center" }, // status
       },
       head: [["O quê", "Por quê", "Onde", "Quem", "Quando", "Status"]],
       body: opts.planoAcao.map((p) => [
@@ -246,7 +246,7 @@ export function gerarParecerPsicossocialPdf(opts: ParecerPsicoOpts): jsPDF {
         p.onde ?? "—",
         p.quem ?? "—",
         p.quando ? fmtBR(p.quando) : "—",
-        p.status ?? "PENDENTE",
+        formatStatus(p.status),
       ]),
     });
     y = (doc as any).lastAutoTable.finalY + 6;
