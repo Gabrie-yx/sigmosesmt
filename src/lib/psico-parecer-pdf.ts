@@ -170,11 +170,11 @@ export function gerarParecerPsicossocialPdf(opts: ParecerPsicoOpts): jsPDF {
     headStyles: { fillColor: [15, 23, 42], textColor: 255, fontStyle: "bold", fontSize: 8.5 },
     columnStyles: {
       0: { cellWidth: 10, halign: "center" },
-      1: { cellWidth: 30 },
-      2: { cellWidth: 55 },
-      3: { cellWidth: 18, halign: "center" },
-      4: { cellWidth: 22, halign: "center" },
-      5: { cellWidth: 22, halign: "center" },
+      1: { cellWidth: 52 },
+      2: { cellWidth: 60 },
+      3: { cellWidth: 16, halign: "center" },
+      4: { cellWidth: 12, halign: "center" },
+      5: { cellWidth: 26, halign: "center" },
     },
     head: [["#", "GHE", "Dimensão", "Média", "n", "Nível"]],
     body: ranking.map((r, i) => {
