@@ -187,11 +187,49 @@ function InspecaoDetail() {
       if (novo === "publicada") { patch.publicada_em = new Date().toISOString(); patch.revisada_por = user?.id; }
       const { error } = await supabase.from("inspecoes").update(patch).eq("id", id);
       if (error) throw error;
+
+      // Ao publicar: espelha cada NC da inspeção em nao_conformidades (alimenta indicadores).
+      if (novo === "publicada" && ncs.length > 0 && insp) {
+        const origens = ncs.map((n: any) => `inspecao_nc:${n.id}`);
+        const { data: jaExistem } = await supabase
+          .from("nao_conformidades")
+          .select("pendencia_origem")
+          .in("pendencia_origem", origens);
+        const existentes = new Set((jaExistem ?? []).map((r: any) => r.pendencia_origem));
+        const sevMap: Record<string, string> = { BAIXO: "BAIXA", MODERADO: "MEDIA", ALTO: "ALTA", CRITICO: "CRITICA" };
+        const novas = ncs
+          .filter((n: any) => !existentes.has(`inspecao_nc:${n.id}`))
+          .map((n: any) => ({
+            company_id: insp.empresa_id ?? null,
+            titulo: `${n.nr_codigo}${n.nr_item ? ` ${n.nr_item}` : ""} — ${insp.local_descricao}`,
+            descricao: n.descricao,
+            origem: `Inspeção de Segurança · ${format(new Date(insp.data_inspecao + "T00:00:00"), "dd/MM/yyyy")}`,
+            severidade: sevMap[n.classe_risco] ?? "MEDIA",
+            status: "ABERTA",
+            data_identificacao: insp.data_inspecao,
+            classificacao: "Não Conformidade",
+            norma: n.nr_codigo,
+            requisito: n.nr_item ?? null,
+            acao_imediata: n.recomendacao ?? null,
+            emitente: user?.email ?? null,
+            departamento: "SESMT",
+            created_by: user?.id ?? null,
+            pendencia_origem: `inspecao_nc:${n.id}`,
+          }));
+        if (novas.length > 0) {
+          const { error: ncErr } = await supabase.from("nao_conformidades").insert(novas);
+          if (ncErr) throw ncErr;
+        }
+        return { publicadas: novas.length, total: ncs.length };
+      }
+      return { publicadas: 0, total: ncs.length };
     },
-    onSuccess: () => {
-      toast.success("Status atualizado");
+    onSuccess: (r: any) => {
+      if (r?.publicadas > 0) toast.success(`Publicada · ${r.publicadas} NC(s) enviada(s) ao painel de Não Conformidades`);
+      else toast.success("Status atualizado");
       qc.invalidateQueries({ queryKey: ["inspecao", id] });
       qc.invalidateQueries({ queryKey: ["inspecoes"] });
+      qc.invalidateQueries({ queryKey: ["nao_conformidades"] });
     },
     onError: (e: any) => toast.error(e.message ?? "Erro"),
   });
