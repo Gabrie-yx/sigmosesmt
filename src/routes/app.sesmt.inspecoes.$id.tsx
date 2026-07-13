@@ -12,9 +12,10 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { ChevronLeft, Camera, Upload, Plus, Trash2, AlertTriangle, ShieldAlert, Video, FileText, Info } from "lucide-react";
+import { ChevronLeft, Camera, Upload, Plus, Trash2, AlertTriangle, ShieldAlert, Video, FileText, Info, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { gerarInspecaoPdf } from "@/lib/inspecao-pdf";
 
 export const Route = createFileRoute("/app/sesmt/inspecoes/$id")({
   component: InspecaoDetail,
@@ -195,6 +196,29 @@ function InspecaoDetail() {
     onError: (e: any) => toast.error(e.message ?? "Erro"),
   });
 
+  const baixarPdf = useMutation({
+    mutationFn: async () => {
+      const planosPorNc: Record<string, any[]> = {};
+      if (ncs.length > 0) {
+        const ids = ncs.map((n: any) => n.id);
+        const { data, error } = await supabase.from("inspecao_ncs_planos").select("*").in("nc_id", ids).order("created_at");
+        if (error) throw error;
+        (data ?? []).forEach((p: any) => {
+          (planosPorNc[p.nc_id] = planosPorNc[p.nc_id] ?? []).push(p);
+        });
+      }
+      await gerarInspecaoPdf({
+        inspecao: insp,
+        fotos,
+        ncs,
+        planosPorNc,
+        rubrica,
+        responsavelNome: user?.email ?? null,
+      });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro ao gerar PDF"),
+  });
+
   if (isLoading || !insp) return <div className="p-6 text-slate-500 text-sm">Carregando...</div>;
 
   const editable = insp.status === "rascunho" || insp.status === "em_revisao";
@@ -221,6 +245,9 @@ function InspecaoDetail() {
             </div>
             <div className="flex items-center gap-2">
               <Badge>{insp.status}</Badge>
+              <Button size="sm" variant="outline" className="gap-1" onClick={() => baixarPdf.mutate()} disabled={baixarPdf.isPending}>
+                <FileDown className="h-3.5 w-3.5" /> {baixarPdf.isPending ? "Gerando..." : "Baixar PDF"}
+              </Button>
               {editable && canManage && (
                 <Button size="sm" variant="outline" onClick={() => alterarStatus.mutate("publicada")}>Publicar</Button>
               )}
