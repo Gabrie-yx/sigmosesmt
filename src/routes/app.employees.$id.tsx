@@ -378,6 +378,15 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-3">
             <h1 className="heading-display text-lg sm:text-2xl lg:text-[28px] leading-tight text-slate-100/95 break-words min-w-0 tracking-tight drop-shadow-[0_1px_0_rgba(0,0,0,0.45)]">{emp.nome}</h1>
             <div className="shrink-0 flex flex-row flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new CustomEvent("cmdk:open"))}
+                className="inline-flex h-8 items-center gap-1.5 rounded-full border border-white/15 bg-white/5 hover:bg-white/10 hover:border-brand/40 px-3 text-[10px] font-black uppercase tracking-widest text-slate-100 shadow-sm backdrop-blur-sm transition-all"
+                title="Buscar outro funcionário (⌘K / Ctrl+K)"
+              >
+                <Search className="h-3.5 w-3.5" /> Buscar funcionário
+                <kbd className="ml-1 hidden sm:inline-flex items-center rounded bg-black/30 px-1 text-[9px] font-mono text-slate-300">⌘K</kbd>
+              </button>
               {isEditor && !isDesligado && (tab === "profile" || tab === "nrs") && (
                 <button
                   type="button"
