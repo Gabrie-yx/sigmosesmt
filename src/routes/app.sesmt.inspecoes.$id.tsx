@@ -403,6 +403,21 @@ function InspecaoDetail() {
         </CardContent>
       </Card>
 
+      {/* TUTORIAL — como usar */}
+      <details className="rounded-lg border border-emerald-200 bg-emerald-50/60 group">
+        <summary className="cursor-pointer list-none px-3 py-2 flex items-center gap-2 text-xs font-black uppercase tracking-wide text-emerald-900">
+          <Info className="h-4 w-4" /> Como usar esta inspeção (passo a passo)
+          <span className="ml-auto text-[10px] font-normal text-emerald-700 group-open:hidden">clique para abrir</span>
+        </summary>
+        <div className="px-4 pb-3 text-[12px] text-slate-700 space-y-2 leading-relaxed">
+          <div><b>1. Anexe fotos (obrigatório).</b> Use <b>Enviar foto</b> pelo laptop ou <b>Tirar foto</b> pelo celular. Cada foto guarda hash, data/hora e GPS quando o navegador permitir — evidência rastreável.</div>
+          <div><b>2. Registrar NC é opcional.</b> Se a área está conforme, você pode publicar direto após as fotos — vai virar um relatório de inspeção <i>sem não conformidades</i>. Só registre NC se realmente encontrou algo fora do padrão (NR + item + matriz 5x5).</div>
+          <div><b>3. Se houver NC, monte o PDCA.</b> Cada NC precisa de pelo menos uma ação com responsável e prazo antes de publicar. O sistema sugere o prazo pela norma.</div>
+          <div><b>4. Publicar.</b> Trava a edição, gera o PDF e alimenta os indicadores. Pode ser reaberta pelo SESMT se precisar corrigir.</div>
+          <div className="text-[11px] text-slate-500 pt-1 border-t border-emerald-200">Regra mínima para publicar: <b>pelo menos 1 foto</b>. Se houver NCs, todas precisam de plano de ação.</div>
+        </div>
+      </details>
+
       {/* FOTOS */}
       <Card>
         <CardHeader className="pb-3">
