@@ -507,6 +507,12 @@ function truncate(s: string, n: number): string {
   return s.length > n ? s.slice(0, n - 1) + "…" : s;
 }
 
+function formatStatus(s: string | null | undefined): string {
+  if (!s) return "Pendente";
+  const t = s.replace(/_/g, " ").toLowerCase();
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
+
 function fmtBR(d: string): string {
   if (!d) return "";
   const [y, m, day] = d.split("T")[0].split("-");
