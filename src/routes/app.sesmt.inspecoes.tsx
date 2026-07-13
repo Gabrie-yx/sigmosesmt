@@ -63,6 +63,16 @@ function InspecoesList() {
     escopo: "",
     tipo_local: "",
     participantes: "",
+    ghe_id: "",
+  });
+
+  const { data: ghes = [] } = useQuery({
+    queryKey: ["pgr-ghes-min"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("pgr_ghe").select("id, numero, setor, descricao_ambiente").eq("ativo", true).order("numero");
+      if (error) throw error;
+      return data ?? [];
+    },
   });
 
   const criar = useMutation({
@@ -73,6 +83,7 @@ function InspecoesList() {
         .from("inspecoes")
         .insert({
           empresa_id: form.empresa_id || null,
+          ghe_id: form.ghe_id || null,
           local_descricao: form.local_descricao.trim(),
           data_inspecao: form.data_inspecao,
           escopo: form.escopo.trim() || null,
@@ -148,6 +159,30 @@ function InspecoesList() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              <div>
+                <Label>GHE / setor (opcional)</Label>
+                <Select
+                  value={form.ghe_id}
+                  onValueChange={(v) => {
+                    const g = ghes.find((x: any) => x.id === v);
+                    setForm((f) => ({
+                      ...f,
+                      ghe_id: v,
+                      local_descricao: f.local_descricao.trim()
+                        ? f.local_descricao
+                        : g ? `GHE ${g.numero} — ${g.setor}` : f.local_descricao,
+                    }));
+                  }}
+                >
+                  <SelectTrigger><SelectValue placeholder="Vincular a um GHE do PGR..." /></SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    {ghes.map((g: any) => (
+                      <SelectItem key={g.id} value={g.id}>GHE {g.numero} — {g.setor}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[10px] text-slate-500 mt-1">Ao escolher um GHE, o local é preenchido automaticamente e a inspeção alimenta o inventário de riscos daquele GHE.</p>
               </div>
               <div>
                 <Label>Local / área inspecionada *</Label>

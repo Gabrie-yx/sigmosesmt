@@ -1824,6 +1824,50 @@ export type Database = {
         }
         Relationships: []
       }
+      catalogo_nrs_itens: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          gravidade_sugerida: string | null
+          id: string
+          item: string
+          nr_codigo: string
+          prazo_dias_sugerido: number | null
+          texto_oficial: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          gravidade_sugerida?: string | null
+          id?: string
+          item: string
+          nr_codigo: string
+          prazo_dias_sugerido?: number | null
+          texto_oficial: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          gravidade_sugerida?: string | null
+          id?: string
+          item?: string
+          nr_codigo?: string
+          prazo_dias_sugerido?: number | null
+          texto_oficial?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalogo_nrs_itens_nr_codigo_fkey"
+            columns: ["nr_codigo"]
+            isOneToOne: false
+            referencedRelation: "catalogo_nrs"
+            referencedColumns: ["codigo"]
+          },
+        ]
+      }
       catalogo_perigos_psicossociais: {
         Row: {
           agravo: string | null
@@ -6128,6 +6172,7 @@ export type Database = {
       }
       inspecao_ncs: {
         Row: {
+          catalogo_item_id: string | null
           classe_risco: string | null
           created_at: string
           criada_por: string
@@ -6146,6 +6191,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          catalogo_item_id?: string | null
           classe_risco?: string | null
           created_at?: string
           criada_por: string
@@ -6164,6 +6210,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          catalogo_item_id?: string | null
           classe_risco?: string | null
           created_at?: string
           criada_por?: string
@@ -6182,6 +6229,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "inspecao_ncs_catalogo_item_id_fkey"
+            columns: ["catalogo_item_id"]
+            isOneToOne: false
+            referencedRelation: "catalogo_nrs_itens"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "inspecao_ncs_foto_id_fkey"
             columns: ["foto_id"]
@@ -6210,6 +6264,7 @@ export type Database = {
           nc_id: string
           observacoes: string | null
           prazo: string | null
+          prazo_dias_sugerido: number | null
           responsavel_id: string | null
           responsavel_nome: string | null
           updated_at: string
@@ -6225,6 +6280,7 @@ export type Database = {
           nc_id: string
           observacoes?: string | null
           prazo?: string | null
+          prazo_dias_sugerido?: number | null
           responsavel_id?: string | null
           responsavel_nome?: string | null
           updated_at?: string
@@ -6240,6 +6296,7 @@ export type Database = {
           nc_id?: string
           observacoes?: string | null
           prazo?: string | null
+          prazo_dias_sugerido?: number | null
           responsavel_id?: string | null
           responsavel_nome?: string | null
           updated_at?: string
@@ -6301,6 +6358,7 @@ export type Database = {
           empresa_id: string | null
           escopo: string | null
           frente_servico_id: string | null
+          ghe_id: string | null
           id: string
           local_descricao: string
           observacoes: string | null
@@ -6318,6 +6376,7 @@ export type Database = {
           empresa_id?: string | null
           escopo?: string | null
           frente_servico_id?: string | null
+          ghe_id?: string | null
           id?: string
           local_descricao: string
           observacoes?: string | null
@@ -6335,6 +6394,7 @@ export type Database = {
           empresa_id?: string | null
           escopo?: string | null
           frente_servico_id?: string | null
+          ghe_id?: string | null
           id?: string
           local_descricao?: string
           observacoes?: string | null
@@ -6366,6 +6426,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "company_frentes_servico"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inspecoes_ghe_id_fkey"
+            columns: ["ghe_id"]
+            isOneToOne: false
+            referencedRelation: "pgr_ghe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inspecoes_ghe_id_fkey"
+            columns: ["ghe_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["ghe_id"]
           },
         ]
       }
