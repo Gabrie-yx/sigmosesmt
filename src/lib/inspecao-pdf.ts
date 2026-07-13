@@ -116,10 +116,14 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput) {
       const planoTxt = planos.length
         ? planos.map((p) => `[${p.fase_pdca}] ${p.acao}${p.responsavel_nome ? ` — ${p.responsavel_nome}` : ""}${p.prazo ? ` (${br(p.prazo)})` : ""}`).join("\n")
         : "Sem plano de ação registrado.";
+      const textoOficial = (nc as any).catalogo_nrs_itens?.texto_oficial as string | undefined;
+      const descricaoCompleta = textoOficial
+        ? `${nc.descricao}\n\nTexto oficial (${nc.nr_codigo}${nc.nr_item ? ` ${nc.nr_item}` : ""}):\n"${textoOficial}"${nc.recomendacao ? `\n\nRecomendação: ${nc.recomendacao}` : ""}`
+        : `${nc.descricao}${nc.recomendacao ? `\n\nRecomendação: ${nc.recomendacao}` : ""}`;
       return [
         String(i + 1),
         `${nc.nr_codigo}${nc.nr_item ? `\n${nc.nr_item}` : ""}`,
-        `${nc.descricao}${nc.recomendacao ? `\n\nRecomendação: ${nc.recomendacao}` : ""}`,
+        descricaoCompleta,
         `${nc.classe_risco}\nP${nc.probabilidade}×S${nc.severidade}=${nc.risco_calculado}`,
         nc.multa_estimada
           ? `${nc.gradacao_nr28}\nR$ ${Number(nc.multa_estimada).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`
