@@ -93,6 +93,11 @@ const QUICK_ACTIONS: NavItem[] = [
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [includeInactive, setIncludeInactive] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem(INCLUDE_INACTIVE_KEY) === "1";
+  });
+  const [recentIds, setRecentIds] = useState<{ id: string; nome: string }[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -102,19 +107,36 @@ export function CommandPalette() {
         setOpen((o) => !o);
       }
     };
+    const onOpenEvent = () => setOpen(true);
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("cmdk:open", onOpenEvent);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("cmdk:open", onOpenEvent);
+    };
   }, []);
 
+  useEffect(() => {
+    if (open) setRecentIds(readRecentEmployees());
+  }, [open]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(INCLUDE_INACTIVE_KEY, includeInactive ? "1" : "0");
+    }
+  }, [includeInactive]);
+
   const { data: employees = [] } = useQuery({
-    queryKey: ["cmdk-employees"],
+    queryKey: ["cmdk-employees", includeInactive],
     enabled: open,
     queryFn: async () => {
-      const { data } = await supabase
+      let q = supabase
         .from("employees")
-        .select("id, nome, funcao, status")
+        .select("id, nome, funcao, status, matricula, cpf, foto_url, company_id, companies(name)")
         .order("nome")
-        .limit(500);
+        .limit(800);
+      if (!includeInactive) q = q.neq("status", "DESLIGADO");
+      const { data } = await q;
       return data ?? [];
     },
   });
@@ -152,15 +174,39 @@ export function CommandPalette() {
     else navigate({ to } as any);
   };
 
+  const goEmployee = (e: { id: string; nome: string }) => {
+    pushRecentEmployee(e);
+    go("/app/employees/$id", { id: e.id });
+  };
+
   const q = query.trim().toLowerCase();
+  const qDigits = q.replace(/\D/g, "");
   const filteredEmployees = useMemo(() => {
-    if (!q) return employees.slice(0, 8);
+    if (!q) {
+      // Sem busca: mostra recentes primeiro
+      if (recentIds.length > 0) {
+        const map = new Map(employees.map((e: any) => [e.id, e]));
+        const recentes = recentIds.map((r) => map.get(r.id)).filter(Boolean);
+        const outros = employees.filter((e: any) => !recentIds.some((r) => r.id === e.id));
+        return [...recentes, ...outros].slice(0, 8);
+      }
+      return employees.slice(0, 8);
+    }
     return employees
-      .filter((e: any) =>
-        `${e.nome ?? ""} ${e.funcao ?? ""}`.toLowerCase().includes(q),
-      )
-      .slice(0, 12);
-  }, [employees, q]);
+      .filter((e: any) => {
+        const empresa = (e.companies?.name ?? "").toLowerCase();
+        const haystack = `${e.nome ?? ""} ${e.funcao ?? ""} ${e.matricula ?? ""} ${empresa}`.toLowerCase();
+        if (haystack.includes(q)) return true;
+        if (qDigits.length >= 3) {
+          const cpfDigits = String(e.cpf ?? "").replace(/\D/g, "");
+          if (cpfDigits.includes(qDigits)) return true;
+          const matDigits = String(e.matricula ?? "").replace(/\D/g, "");
+          if (matDigits.includes(qDigits)) return true;
+        }
+        return false;
+      })
+      .slice(0, 15);
+  }, [employees, q, qDigits, recentIds]);
 
   const filteredAprs = useMemo(() => {
     if (!q) return aprs.slice(0, 6);
