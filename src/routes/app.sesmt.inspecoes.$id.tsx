@@ -123,11 +123,13 @@ function InspecaoDetail() {
   const uploadFoto = useMutation({
     mutationFn: async (files: FileList) => {
       if (!user) throw new Error("Sessão expirada");
+      if (!files.length) throw new Error("Selecione pelo menos uma foto");
       const geo = await getGeo();
       for (const file of Array.from(files)) {
+        if (!file.type.startsWith("image/")) throw new Error(`${file.name} não é uma imagem válida`);
         const hash = await sha256(file);
         const ext = file.name.split(".").pop() ?? "jpg";
-        const path = `${id}/${Date.now()}-${hash.slice(0, 8)}.${ext}`;
+        const path = `${id}/${Date.now()}-${crypto.randomUUID()}-${hash.slice(0, 8)}.${ext}`;
         const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, file, { contentType: file.type });
         if (upErr) throw upErr;
         const { error } = await supabase.from("inspecao_fotos").insert({
@@ -141,12 +143,16 @@ function InspecaoDetail() {
           gps_accuracy: geo?.acc ?? null,
           tirada_por: user.id,
         });
-        if (error) throw error;
+        if (error) {
+          await supabase.storage.from(BUCKET).remove([path]);
+          throw error;
+        }
       }
     },
     onSuccess: () => {
       toast.success("Foto(s) enviada(s)");
       qc.invalidateQueries({ queryKey: ["inspecao-fotos", id] });
+      qc.invalidateQueries({ queryKey: ["inspecao-fotos-urls"] });
     },
     onError: (e: any) => toast.error(e.message ?? "Erro no upload"),
   });
@@ -187,8 +193,20 @@ function InspecaoDetail() {
 
   const alterarStatus = useMutation({
     mutationFn: async (novo: string) => {
+      if (novo === "publicada") {
+        if (fotos.length === 0) throw new Error("Antes de publicar, anexe ao menos uma evidência fotográfica.");
+        if (ncs.length === 0) throw new Error("Antes de publicar, registre ao menos uma não conformidade vinculada à inspeção.");
+        const ids = ncs.map((n: any) => n.id);
+        const { data: planos, error: planosErr } = await supabase.from("inspecao_ncs_planos").select("nc_id").in("nc_id", ids);
+        if (planosErr) throw planosErr;
+        const comPlano = new Set((planos ?? []).map((p: any) => p.nc_id));
+        if (ids.some((ncId: string) => !comPlano.has(ncId))) {
+          throw new Error("Antes de publicar, cada NC precisa ter pelo menos uma ação PDCA com responsável/prazo quando aplicável.");
+        }
+      }
       const patch: any = { status: novo };
       if (novo === "publicada") { patch.publicada_em = new Date().toISOString(); patch.revisada_por = user?.id; }
+      if (novo !== "publicada") { patch.publicada_em = null; }
       const { error } = await supabase.from("inspecoes").update(patch).eq("id", id);
       if (error) throw error;
 
@@ -240,6 +258,8 @@ function InspecaoDetail() {
 
   const baixarPdf = useMutation({
     mutationFn: async () => {
+      if (fotos.length === 0) throw new Error("O relatório final exige evidência fotográfica. Reabra a inspeção e anexe as fotos.");
+      if (ncs.length === 0) throw new Error("O relatório final exige pelo menos uma NC registrada com matriz 5x5 e plano de ação.");
       const planosPorNc: Record<string, any[]> = {};
       if (ncs.length > 0) {
         const ids = ncs.map((n: any) => n.id);
@@ -264,6 +284,7 @@ function InspecaoDetail() {
   if (isLoading || !insp) return <div className="p-6 text-slate-500 text-sm">Carregando...</div>;
 
   const editable = insp.status === "rascunho" || insp.status === "em_revisao";
+  const publicadoIncompleto = insp.status === "publicada" && (fotos.length === 0 || ncs.length === 0);
 
   return (
     <div className="p-4 md:p-6 max-w-6xl mx-auto space-y-4">
@@ -290,6 +311,9 @@ function InspecaoDetail() {
               <Button size="sm" variant="outline" className="gap-1" onClick={() => baixarPdf.mutate()} disabled={baixarPdf.isPending}>
                 <FileDown className="h-3.5 w-3.5" /> {baixarPdf.isPending ? "Gerando..." : "Baixar PDF"}
               </Button>
+              {insp.status === "publicada" && canManage && (
+                <Button size="sm" variant="outline" onClick={() => alterarStatus.mutate("em_revisao")} disabled={alterarStatus.isPending}>Reabrir edição</Button>
+              )}
               {editable && canManage && (
                 <Button size="sm" variant="outline" onClick={() => alterarStatus.mutate("publicada")}>Publicar</Button>
               )}
@@ -300,6 +324,12 @@ function InspecaoDetail() {
           </div>
         </CardHeader>
         <CardContent className="text-xs text-slate-600 space-y-1">
+          {publicadoIncompleto && (
+            <div className="mb-2 rounded border border-orange-200 bg-orange-50 text-orange-900 p-2 flex items-center justify-between gap-2 flex-wrap">
+              <span><b>Inspeção publicada incompleta.</b> Reabra a edição para anexar evidências, registrar NCs e montar o PDCA antes do PDF final.</span>
+              {canManage && <Button size="sm" variant="outline" className="h-7" onClick={() => alterarStatus.mutate("em_revisao")}>Reabrir agora</Button>}
+            </div>
+          )}
           {insp.escopo && <div><b>Escopo:</b> {insp.escopo}</div>}
           {insp.participantes && <div><b>Participantes:</b> {insp.participantes}</div>}
         </CardContent>
@@ -318,12 +348,18 @@ function InspecaoDetail() {
         <CardContent className="space-y-3">
           {editable && (
             <div className="flex gap-2 flex-wrap">
-              <label className="inline-flex items-center gap-2 text-xs bg-emerald-600 text-white px-3 py-2 rounded cursor-pointer hover:bg-emerald-700">
-                <Upload className="h-3.5 w-3.5" /> Enviar foto
-                <input type="file" multiple accept="image/*" capture="environment" className="hidden"
+              <label className={`inline-flex items-center gap-2 text-xs bg-emerald-600 text-white px-3 py-2 rounded cursor-pointer hover:bg-emerald-700 ${uploadFoto.isPending ? "opacity-70 pointer-events-none" : ""}`}>
+                <Upload className="h-3.5 w-3.5" /> {uploadFoto.isPending ? "Enviando..." : "Enviar foto"}
+                <input type="file" multiple accept="image/*,.heic,.heif" capture="environment" className="hidden" disabled={uploadFoto.isPending}
                   onChange={(e) => { if (e.target.files?.length) uploadFoto.mutate(e.target.files); e.currentTarget.value = ""; }} />
               </label>
               <CftvDialog onSubmit={(p) => addCftv.mutate(p)} />
+            </div>
+          )}
+          {!editable && publicadoIncompleto && canManage && (
+            <div className="rounded border border-orange-200 bg-orange-50 text-orange-900 text-xs p-2 flex items-center justify-between gap-2 flex-wrap">
+              <span>Para anexar fotos agora, reabra a inspeção. O sistema não deve gerar relatório final sem evidência.</span>
+              <Button size="sm" variant="outline" className="h-7" onClick={() => alterarStatus.mutate("em_revisao")}>Reabrir para anexar</Button>
             </div>
           )}
           {fotos.length === 0 ? (
