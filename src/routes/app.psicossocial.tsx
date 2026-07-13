@@ -24,6 +24,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { DIMENSAO_LABEL, PSICO_ITEMS } from "@/lib/psico-instrument";
 import { gerarParecerPsicossocialPdf } from "@/lib/psico-parecer-pdf";
+import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
+import type jsPDF from "jspdf";
 
 export const Route = createFileRoute("/app/psicossocial")({
   component: PsicossocialPage,
@@ -623,6 +625,10 @@ function EditarCampanhaDialog({
 /* ============ 3. DIAGNÓSTICO ============ */
 function DiagnosticoTab() {
   const [campanhaId, setCampanhaId] = useState<string>("");
+  const [pdfDoc, setPdfDoc] = useState<jsPDF | null>(null);
+  const [pdfName, setPdfName] = useState<string>("Parecer-Psicossocial.pdf");
+  const [tstSig, setTstSig] = useState<string | null>(null);
+  const [supSig, setSupSig] = useState<string | null>(null);
 
   const { data: campanhas } = useQuery({
     queryKey: ["psico-campanhas-diag"],
@@ -666,7 +672,19 @@ function DiagnosticoTab() {
   function baixarParecer() {
     if (!campanhaSel) return;
     try {
-      const doc = gerarParecerPsicossocialPdf({
+      const doc = buildParecer(tstSig, supSig);
+      if (!doc) return;
+      const stamp = new Date().toISOString().slice(0, 10);
+      setPdfName(`Parecer-Psicossocial-${stamp}.pdf`);
+      setPdfDoc(doc);
+    } catch (e: any) {
+      toast.error("Falha ao gerar PDF: " + (e?.message ?? "erro"));
+    }
+  }
+
+  function buildParecer(tst: string | null, sup: string | null): jsPDF | null {
+    if (!campanhaSel) return null;
+    return gerarParecerPsicossocialPdf({
         campanha: {
           titulo: campanhaSel.titulo,
           descricao: campanhaSel.descricao,
@@ -680,13 +698,8 @@ function DiagnosticoTab() {
         ghes: (ghes ?? []) as any,
         planoAcao: (planoAcao ?? []) as any,
         signatarios: { tst: "Técnico de Segurança do Trabalho", supervisor: "Anderson — Supervisor Geral" },
+      assinaturas: { tst, supervisor: sup },
       });
-      const stamp = new Date().toISOString().slice(0, 10);
-      doc.save(`Parecer-Psicossocial-${stamp}.pdf`);
-      toast.success("Parecer técnico gerado.");
-    } catch (e: any) {
-      toast.error("Falha ao gerar PDF: " + (e?.message ?? "erro"));
-    }
   }
 
   return (
@@ -733,6 +746,21 @@ function DiagnosticoTab() {
           minRespondentes={(campanhas ?? []).find((c: any) => c.id === campanhaId)?.min_respondentes ?? 5}
         />
       )}
+
+      <PDFPreviewDialog
+        open={!!pdfDoc}
+        onClose={() => { setPdfDoc(null); setTstSig(null); setSupSig(null); }}
+        doc={pdfDoc}
+        fileName={pdfName}
+        title="Parecer Técnico Psicossocial"
+        signable
+        useSignatureGallery
+        signatureLabels={{ enc: "Téc. Segurança Trabalho", sesmt: "Supervisor Geral" }}
+        encSig={tstSig}
+        sesmtSig={supSig}
+        onChangeEncSig={(v) => { setTstSig(v); const d = buildParecer(v, supSig); if (d) setPdfDoc(d); }}
+        onChangeSesmtSig={(v) => { setSupSig(v); const d = buildParecer(tstSig, v); if (d) setPdfDoc(d); }}
+      />
     </div>
   );
 }

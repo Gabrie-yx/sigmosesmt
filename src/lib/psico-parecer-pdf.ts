@@ -59,6 +59,8 @@ export type ParecerPsicoOpts = {
   ghes: GheInfo[];
   planoAcao: PlanoAcaoItem[];
   signatarios?: { tst?: string; supervisor?: string };
+  /** Data URLs (PNG) para estampar acima das linhas de assinatura. */
+  assinaturas?: { tst?: string | null; supervisor?: string | null };
 };
 
 export function gerarParecerPsicossocialPdf(opts: ParecerPsicoOpts): jsPDF {
@@ -66,6 +68,17 @@ export function gerarParecerPsicossocialPdf(opts: ParecerPsicoOpts): jsPDF {
   const W = doc.internal.pageSize.getWidth();
   const H = doc.internal.pageSize.getHeight();
   const M = 12;
+  const BOTTOM = 14; // reserva para rodapé
+  const usableBottom = H - BOTTOM;
+
+  // helper — reserva de espaço; força quebra se não couber `needed` mm.
+  function ensureSpace(y: number, needed: number): number {
+    if (y + needed > usableBottom) {
+      doc.addPage();
+      return M;
+    }
+    return y;
+  }
 
   const pctAdesao =
     opts.campanha.total_tokens > 0
@@ -91,6 +104,7 @@ export function gerarParecerPsicossocialPdf(opts: ParecerPsicoOpts): jsPDF {
       { label: "Altos", value: altas, tone: altas ? "warning" : "success" },
     ],
   });
+  y += 2;
 
   // ============== 1. METODOLOGIA ==============
   y = sectionTitle(doc, "1. METODOLOGIA", y);
@@ -131,12 +145,17 @@ export function gerarParecerPsicossocialPdf(opts: ParecerPsicoOpts): jsPDF {
   y = (doc as any).lastAutoTable.finalY + 6;
 
   // ============== 3. MATRIZ DIAGNÓSTICA (com cores) ==============
-  y = sectionTitle(doc, "3. MATRIZ DIAGNÓSTICA (GHE × Dimensão)", y);
-  y = drawMatrizHeatmap(doc, y, opts.agregado, opts.ghes);
-  y = legendaCores(doc, y);
+  {
+    const gheIds = Array.from(new Set(opts.agregado.map((l) => l.ghe_id))).filter(Boolean);
+    const heatmapH = 18 /*header*/ + gheIds.length * 10 + 4 /*gap*/ + 8 /*legenda*/;
+    y = ensureSpace(y, 12 /*title*/ + heatmapH);
+    y = sectionTitle(doc, "3. MATRIZ DIAGNÓSTICA (GHE × Dimensão)", y);
+    y = drawMatrizHeatmap(doc, y, opts.agregado, opts.ghes);
+    y = legendaCores(doc, y);
+  }
 
   // ============== 4. RANKING DE CRITICIDADE ==============
-  if (y > H - 60) { doc.addPage(); y = M; }
+  y = ensureSpace(y + 4, 40);
   y = sectionTitle(doc, "4. RANKING DE CRITICIDADE", y);
   const ranking = validas
     .map((l) => ({ ...l, mediaNum: Number(l.media) }))
@@ -144,7 +163,8 @@ export function gerarParecerPsicossocialPdf(opts: ParecerPsicoOpts): jsPDF {
     .slice(0, 15);
   autoTable(doc, {
     startY: y,
-    margin: { left: M, right: M },
+    margin: { left: M, right: M, bottom: BOTTOM },
+    showHead: "everyPage",
     theme: "grid",
     styles: { fontSize: 8.5, cellPadding: 1.8, lineColor: [203, 213, 225], lineWidth: 0.2 },
     headStyles: { fillColor: [15, 23, 42], textColor: 255, fontStyle: "bold", fontSize: 8.5 },
@@ -181,7 +201,7 @@ export function gerarParecerPsicossocialPdf(opts: ParecerPsicoOpts): jsPDF {
   y = (doc as any).lastAutoTable.finalY + 6;
 
   // ============== 5. NÃO CONFORMIDADES ==============
-  if (y > H - 40) { doc.addPage(); y = M; }
+  y = ensureSpace(y, 40);
   y = sectionTitle(doc, "5. NÃO CONFORMIDADES IDENTIFICADAS", y);
   const nc: string[] = [];
   if (criticas > 0) nc.push(`${criticas} recorte(s) em nível CRÍTICO — exigem ação imediata (NR-01 1.5.5).`);
@@ -194,7 +214,7 @@ export function gerarParecerPsicossocialPdf(opts: ParecerPsicoOpts): jsPDF {
   y += 3;
 
   // ============== 6. PLANO DE AÇÃO 5W2H ==============
-  if (y > H - 40) { doc.addPage(); y = M; }
+  y = ensureSpace(y, 40);
   y = sectionTitle(doc, "6. PLANO DE AÇÃO (5W2H) — VÍNCULO COM PGR", y);
   if (opts.planoAcao.length === 0) {
     y = paragraph(
@@ -206,7 +226,8 @@ export function gerarParecerPsicossocialPdf(opts: ParecerPsicoOpts): jsPDF {
   } else {
     autoTable(doc, {
       startY: y,
-      margin: { left: M, right: M },
+      margin: { left: M, right: M, bottom: BOTTOM },
+      showHead: "everyPage",
       theme: "grid",
       styles: { fontSize: 8, cellPadding: 1.6, lineColor: [203, 213, 225], lineWidth: 0.2, valign: "top", overflow: "linebreak" },
       headStyles: { fillColor: [15, 23, 42], textColor: 255, fontStyle: "bold", fontSize: 8 },
@@ -232,7 +253,8 @@ export function gerarParecerPsicossocialPdf(opts: ParecerPsicoOpts): jsPDF {
   }
 
   // ============== 7. CONCLUSÃO E ASSINATURAS ==============
-  if (y > H - 70) { doc.addPage(); y = M; }
+  // Conclusão + bloco de assinatura (~70mm) devem viver juntos na mesma página.
+  y = ensureSpace(y, 90);
   y = sectionTitle(doc, "7. CONCLUSÃO", y);
   const conclusao =
     criticas > 0
@@ -243,27 +265,45 @@ export function gerarParecerPsicossocialPdf(opts: ParecerPsicoOpts): jsPDF {
           "com prazos e responsáveis, incorporado ao PGR."
         : "Não foram identificados recortes em nível ALTO ou CRÍTICO. Recomenda-se manter monitoramento periódico.";
   y = paragraph(doc, conclusao, y);
-  y += 8;
 
-  // Assinaturas
+  // ---- Bloco de assinaturas ----
+  y = ensureSpace(y + 4, 55);
   const tst = opts.signatarios?.tst ?? "Técnico de Segurança do Trabalho";
   const sup = opts.signatarios?.supervisor ?? "Anderson — Supervisor Geral";
-  const colW = (W - M * 2 - 10) / 2;
-  const lineY = y + 18;
+  const gap = 12;
+  const colW = (W - M * 2 - gap) / 2;
+  const sigBoxH = 26;            // altura da área da assinatura (imagem)
+  const sigTop = y + 6;
+  const lineY = sigTop + sigBoxH;
+
+  // Estampa as imagens de assinatura, se fornecidas
+  const stampSig = (dataUrl: string | null | undefined, x: number) => {
+    if (!dataUrl) return;
+    try {
+      const maxW = colW - 8;
+      const maxH = sigBoxH - 2;
+      doc.addImage(dataUrl, "PNG", x + (colW - maxW) / 2, sigTop, maxW, maxH, undefined, "FAST");
+    } catch {
+      /* ignore image errors */
+    }
+  };
+  stampSig(opts.assinaturas?.tst, M);
+  stampSig(opts.assinaturas?.supervisor, M + colW + gap);
+
   doc.setDrawColor(15, 23, 42);
   doc.setLineWidth(0.3);
   doc.line(M, lineY, M + colW, lineY);
-  doc.line(M + colW + 10, lineY, M + colW * 2 + 10, lineY);
+  doc.line(M + colW + gap, lineY, M + colW * 2 + gap, lineY);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
   doc.setTextColor(15, 23, 42);
   doc.text(tst, M + colW / 2, lineY + 5, { align: "center" });
-  doc.text(sup, M + colW + 10 + colW / 2, lineY + 5, { align: "center" });
+  doc.text(sup, M + colW + gap + colW / 2, lineY + 5, { align: "center" });
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   doc.setTextColor(71, 85, 105);
   doc.text("Técnico de Segurança do Trabalho", M + colW / 2, lineY + 9, { align: "center" });
-  doc.text("Supervisor Geral", M + colW + 10 + colW / 2, lineY + 9, { align: "center" });
+  doc.text("Supervisor Geral", M + colW + gap + colW / 2, lineY + 9, { align: "center" });
 
   // Rodapé com paginação
   const pageCount = (doc as any).internal.getNumberOfPages();
@@ -283,40 +323,55 @@ export function gerarParecerPsicossocialPdf(opts: ParecerPsicoOpts): jsPDF {
 function drawMatrizHeatmap(doc: jsPDF, startY: number, agregado: AgregadoLinha[], ghes: GheInfo[]): number {
   const M = 12;
   const W = doc.internal.pageSize.getWidth();
+  const H = doc.internal.pageSize.getHeight();
+  const BOTTOM = 14;
   const dims = Object.keys(DIMENSAO_LABEL);
   const gheIds = Array.from(new Set(agregado.map((l) => l.ghe_id))).filter(Boolean);
 
-  const gheColW = 34;
+  const gheColW = 40;
   const cellW = (W - M * 2 - gheColW) / dims.length;
   const rowH = 10;
   const headerH = 18;
 
   let y = startY;
 
-  // header
-  doc.setFillColor(15, 23, 42);
-  doc.rect(M, y, W - M * 2, headerH, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
-  doc.text("GHE", M + 2, y + headerH / 2 + 1);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(6.5);
-  dims.forEach((d, i) => {
-    const cx = M + gheColW + i * cellW + cellW / 2;
-    const label = DIMENSAO_LABEL[d as keyof typeof DIMENSAO_LABEL] ?? d;
-    // quebra em 2 linhas
-    const words = label.split(" ");
-    const mid = Math.ceil(words.length / 2);
-    const l1 = words.slice(0, mid).join(" ");
-    const l2 = words.slice(mid).join(" ");
-    doc.text(l1, cx, y + 7, { align: "center" });
-    if (l2) doc.text(l2, cx, y + 12.5, { align: "center" });
-  });
-  y += headerH;
+  const drawHeader = () => {
+    doc.setFillColor(15, 23, 42);
+    doc.rect(M, y, W - M * 2, headerH, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.text("GHE", M + 2, y + headerH / 2 + 1);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(6.5);
+    dims.forEach((d, i) => {
+      const cx = M + gheColW + i * cellW + cellW / 2;
+      const label = DIMENSAO_LABEL[d as keyof typeof DIMENSAO_LABEL] ?? d;
+      const words = label.split(" ");
+      const mid = Math.ceil(words.length / 2);
+      const l1 = words.slice(0, mid).join(" ");
+      const l2 = words.slice(mid).join(" ");
+      doc.text(l1, cx, y + 7, { align: "center" });
+      if (l2) doc.text(l2, cx, y + 12.5, { align: "center" });
+    });
+    y += headerH;
+  };
+  let matrixTop = y;
+  drawHeader();
 
   // rows
   gheIds.forEach((gid) => {
+    // quebra de página preservando cabeçalho da matriz
+    if (y + rowH > H - BOTTOM) {
+      // fecha borda da parte anterior
+      doc.setDrawColor(203, 213, 225);
+      doc.setLineWidth(0.3);
+      doc.rect(M, matrixTop, W - M * 2, y - matrixTop);
+      doc.addPage();
+      y = M;
+      matrixTop = y;
+      drawHeader();
+    }
     const g = ghes.find((x) => x.id === gid);
     const rotulo = g ? `GHE ${g.numero} — ${g.setor}` : String(gid).slice(0, 10);
 
@@ -326,7 +381,7 @@ function drawMatrizHeatmap(doc: jsPDF, startY: number, agregado: AgregadoLinha[]
     doc.setTextColor(15, 23, 42);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(7.5);
-    doc.text(truncate(rotulo, 22), M + 2, y + rowH / 2 + 1);
+    doc.text(truncate(rotulo, 26), M + 2, y + rowH / 2 + 1);
 
     dims.forEach((d, i) => {
       const cell = agregado.find((l) => l.ghe_id === gid && l.dimensao === d);
@@ -362,7 +417,7 @@ function drawMatrizHeatmap(doc: jsPDF, startY: number, agregado: AgregadoLinha[]
   // borda externa
   doc.setDrawColor(203, 213, 225);
   doc.setLineWidth(0.3);
-  doc.rect(M, startY, W - M * 2, y - startY);
+  doc.rect(M, matrixTop, W - M * 2, y - matrixTop);
 
   return y + 4;
 }
