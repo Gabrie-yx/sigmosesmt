@@ -7331,6 +7331,7 @@ export type Database = {
           evidencias: Json | null
           id: string
           incidente_id: string | null
+          inspecao_nc_plano_id: string | null
           nc_id: string | null
           observacoes: string | null
           onde: string | null
@@ -7361,6 +7362,7 @@ export type Database = {
           evidencias?: Json | null
           id?: string
           incidente_id?: string | null
+          inspecao_nc_plano_id?: string | null
           nc_id?: string | null
           observacoes?: string | null
           onde?: string | null
@@ -7391,6 +7393,7 @@ export type Database = {
           evidencias?: Json | null
           id?: string
           incidente_id?: string | null
+          inspecao_nc_plano_id?: string | null
           nc_id?: string | null
           observacoes?: string | null
           onde?: string | null
@@ -7433,6 +7436,13 @@ export type Database = {
             columns: ["incidente_id"]
             isOneToOne: false
             referencedRelation: "incidentes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plano_acoes_inspecao_nc_plano_id_fkey"
+            columns: ["inspecao_nc_plano_id"]
+            isOneToOne: true
+            referencedRelation: "inspecao_ncs_planos"
             referencedColumns: ["id"]
           },
           {
