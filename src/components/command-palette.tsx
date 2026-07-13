@@ -255,7 +255,7 @@ export function CommandPalette() {
             {filteredEmployees.map((e: any) => (
               <CommandItem
                 key={`emp-${e.id}`}
-                value={`funcionario ${e.nome} ${e.funcao ?? ""} ${e.matricula ?? ""} ${e.companies?.name ?? ""}`}
+                value={`funcionario ${e.nome} ${e.roles?.name ?? ""} ${e.matricula ?? ""} ${e.companies?.name ?? ""}`}
                 onSelect={() => goEmployee({ id: e.id, nome: e.nome })}
               >
                 <div className="h-7 w-7 shrink-0 rounded-full overflow-hidden border border-border/60 bg-muted flex items-center justify-center">
@@ -268,7 +268,7 @@ export function CommandPalette() {
                 <div className="flex flex-col min-w-0 flex-1">
                   <span className="font-medium truncate">{e.nome}</span>
                   <span className="text-xs text-muted-foreground truncate">
-                    {e.funcao ?? "—"}
+                    {e.roles?.name ?? "—"}
                     {e.matricula ? ` · Mat. ${e.matricula}` : ""}
                     {e.companies?.name ? ` · ${e.companies.name}` : ""}
                   </span>
