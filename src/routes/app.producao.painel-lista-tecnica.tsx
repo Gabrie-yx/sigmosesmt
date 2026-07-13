@@ -1141,7 +1141,7 @@ function PainelListaTecnicaPage() {
                 <CheckCircle2 className="h-4 w-4 text-green-400" />
               )}
               <span className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">
-                Realizado vs. Orçado (B51)
+                REALIZADO
               </span>
               {alertasAtivos.length > 0 ? (
                 <span className="text-[11px] text-amber-300 font-medium">
