@@ -358,7 +358,7 @@ function InspecaoDetail() {
           <CardTitle className="text-sm font-black uppercase tracking-wide text-slate-800 flex items-center gap-2">
             <ShieldAlert className="h-4 w-4" /> Não conformidades ({ncs.length})
           </CardTitle>
-          {editable && <NcDialog inspecaoId={id} fotos={fotos} nrs={nrs} rubrica={rubrica} grauRisco={insp.companies?.grau_risco ?? 3} />}
+          {editable && <NcDialog inspecaoId={id} fotos={fotos} nrs={nrs} rubrica={rubrica} grauRisco={insp.companies?.grau_risco ?? 3} empresaId={insp.empresa_id ?? null} />}
         </CardHeader>
         <CardContent>
           {ncs.length === 0 ? (
@@ -438,32 +438,68 @@ function CftvDialog({ onSubmit }: { onSubmit: (p: { url: string; camera: string;
   );
 }
 
-function NcDialog({ inspecaoId, fotos, nrs, rubrica, grauRisco }: { inspecaoId: string; fotos: any[]; nrs: any[]; rubrica: any[]; grauRisco: number }) {
+function NcDialog({ inspecaoId, fotos, nrs, rubrica, grauRisco, empresaId }: { inspecaoId: string; fotos: any[]; nrs: any[]; rubrica: any[]; grauRisco: number; empresaId: string | null }) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [foto_id, setFotoId] = useState<string>("");
   const [nr_codigo, setNrCodigo] = useState("");
   const [nr_item, setNrItem] = useState("");
+  const [catalogo_item_id, setCatalogoItemId] = useState<string>("");
   const [descricao, setDescricao] = useState("");
   const [recomendacao, setRecomendacao] = useState("");
   const [probabilidade, setP] = useState(3);
   const [severidade, setS] = useState(3);
   const [gradacao, setGradacao] = useState<string>("I2");
-  const [empregados, setEmpregados] = useState<number>(100);
+  const [empregados, setEmpregados] = useState<number>(0);
+  const [empregadosManual, setEmpregadosManual] = useState(false);
 
   const rP = useMemo(() => rubrica.filter((r) => r.eixo === "P"), [rubrica]);
   const rS = useMemo(() => rubrica.filter((r) => r.eixo === "S"), [rubrica]);
 
+  // Itens oficiais da NR selecionada
+  const { data: nrItens = [] } = useQuery({
+    queryKey: ["catalogo-nr-itens", nr_codigo],
+    enabled: !!nr_codigo,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("catalogo_nrs_itens")
+        .select("id, item, texto_oficial, prazo_dias_sugerido, gravidade_sugerida")
+        .eq("nr_codigo", nr_codigo)
+        .eq("ativo", true)
+        .order("item");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  // Nº real de empregados ativos da empresa alvo
+  const { data: empregadosReais } = useQuery({
+    queryKey: ["empresa-empregados-ativos", empresaId],
+    enabled: !!empresaId,
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("employees")
+        .select("id", { count: "exact", head: true })
+        .eq("company_id", empresaId!)
+        .eq("status", "ativo");
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
+  // Sincroniza contagem real → input (a menos que usuário tenha editado manualmente)
+  const empregadosFinal = empregadosManual ? empregados : (empregadosReais ?? 0);
+
   const { data: nr28 } = useQuery({
-    queryKey: ["nr28", gradacao, grauRisco, empregados],
-    enabled: !!gradacao && empregados > 0,
+    queryKey: ["nr28", gradacao, grauRisco, empregadosFinal],
+    enabled: !!gradacao && empregadosFinal > 0,
     queryFn: async () => {
       const { data, error } = await supabase.from("inspecao_nr28_valores")
         .select("valor_reais, portaria_ref")
         .eq("gradacao", gradacao).eq("grau_risco", grauRisco)
-        .lte("faixa_min_empregados", empregados)
-        .or(`faixa_max_empregados.gte.${empregados},faixa_max_empregados.is.null`)
+        .lte("faixa_min_empregados", empregadosFinal)
+        .or(`faixa_max_empregados.gte.${empregadosFinal},faixa_max_empregados.is.null`)
         .order("faixa_min_empregados", { ascending: false })
         .limit(1);
       if (error) throw error;
@@ -475,11 +511,13 @@ function NcDialog({ inspecaoId, fotos, nrs, rubrica, grauRisco }: { inspecaoId: 
     mutationFn: async () => {
       if (!user) throw new Error("Sessão expirada");
       if (!nr_codigo) throw new Error("Selecione a NR");
+      if (!catalogo_item_id) throw new Error("Selecione o item oficial da NR");
       if (!descricao.trim()) throw new Error("Descreva a NC");
       const { error } = await supabase.from("inspecao_ncs").insert({
         inspecao_id: inspecaoId,
         foto_id: foto_id || null,
         nr_codigo, nr_item: nr_item || null,
+        catalogo_item_id: catalogo_item_id || null,
         descricao: descricao.trim(),
         recomendacao: recomendacao.trim() || null,
         probabilidade, severidade,
@@ -493,12 +531,13 @@ function NcDialog({ inspecaoId, fotos, nrs, rubrica, grauRisco }: { inspecaoId: 
       toast.success("NC registrada");
       qc.invalidateQueries({ queryKey: ["inspecao-ncs", inspecaoId] });
       setOpen(false);
-      setNrCodigo(""); setNrItem(""); setDescricao(""); setRecomendacao(""); setP(3); setS(3);
+      setNrCodigo(""); setNrItem(""); setCatalogoItemId(""); setDescricao(""); setRecomendacao(""); setP(3); setS(3);
     },
     onError: (e: any) => toast.error(e.message ?? "Erro"),
   });
 
   const classe = probabilidade * severidade >= 15 ? "CRITICO" : probabilidade * severidade >= 8 ? "ALTO" : probabilidade * severidade >= 4 ? "MODERADO" : "BAIXO";
+  const itemSelecionado = nrItens.find((i: any) => i.id === catalogo_item_id);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -511,15 +550,47 @@ function NcDialog({ inspecaoId, fotos, nrs, rubrica, grauRisco }: { inspecaoId: 
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label>NR *</Label>
-              <Select value={nr_codigo} onValueChange={setNrCodigo}>
+              <Select value={nr_codigo} onValueChange={(v) => { setNrCodigo(v); setCatalogoItemId(""); setNrItem(""); }}>
                 <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                 <SelectContent className="max-h-72">
                   {nrs.map((n: any) => (<SelectItem key={n.codigo} value={n.codigo}>{n.codigo} — {n.titulo}</SelectItem>))}
                 </SelectContent>
               </Select>
             </div>
-            <div><Label>Item</Label><Input value={nr_item} onChange={(e) => setNrItem(e.target.value)} placeholder="Ex.: 34.11.6.1" /></div>
+            <div>
+              <Label>Item da NR *</Label>
+              <Select
+                value={catalogo_item_id}
+                onValueChange={(v) => {
+                  setCatalogoItemId(v);
+                  const it = nrItens.find((i: any) => i.id === v);
+                  if (it) {
+                    setNrItem(it.item);
+                    if (!descricao.trim()) setDescricao(it.texto_oficial);
+                  }
+                }}
+                disabled={!nr_codigo}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={nr_codigo ? (nrItens.length ? "Selecione o item oficial" : "Sem itens cadastrados") : "Escolha a NR antes"} />
+                </SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {nrItens.map((i: any) => (
+                    <SelectItem key={i.id} value={i.id}>{i.item} — {i.texto_oficial.slice(0, 60)}{i.texto_oficial.length > 60 ? "…" : ""}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
+          {itemSelecionado && (
+            <div className="rounded border border-emerald-200 bg-emerald-50 text-emerald-900 text-[11px] p-2">
+              <div className="font-black">{nr_codigo} {itemSelecionado.item}</div>
+              <div className="mt-1">{itemSelecionado.texto_oficial}</div>
+              {itemSelecionado.prazo_dias_sugerido && (
+                <div className="mt-1 text-emerald-800">Prazo sugerido pela norma: <b>{itemSelecionado.prazo_dias_sugerido} dias</b> · gravidade sugerida: <b>{itemSelecionado.gravidade_sugerida}</b></div>
+              )}
+            </div>
+          )}
           <div>
             <Label>Foto vinculada</Label>
             <Select value={foto_id} onValueChange={setFotoId}>
@@ -572,7 +643,19 @@ function NcDialog({ inspecaoId, fotos, nrs, rubrica, grauRisco }: { inspecaoId: 
                   </SelectContent>
                 </Select>
               </div>
-              <div><Label>Nº de empregados</Label><Input type="number" value={empregados} onChange={(e) => setEmpregados(Number(e.target.value))} /></div>
+              <div>
+                <Label>Nº de empregados</Label>
+                <Input
+                  type="number"
+                  value={empregadosFinal}
+                  onChange={(e) => { setEmpregadosManual(true); setEmpregados(Number(e.target.value)); }}
+                />
+                <p className="text-[10px] text-slate-500 mt-1">
+                  {empregadosManual
+                    ? <>Valor manual. <button className="underline" onClick={() => { setEmpregadosManual(false); }}>Voltar ao real ({empregadosReais ?? 0})</button></>
+                    : <>Contagem automática da empresa: <b>{empregadosReais ?? 0}</b> ativos.</>}
+                </p>
+              </div>
             </div>
             <div className="text-xs text-slate-600">
               {nr28 ? <>Valor: <b>R$ {Number(nr28.valor_reais).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</b> ({nr28.portaria_ref})</> : "Faixa não encontrada"}
