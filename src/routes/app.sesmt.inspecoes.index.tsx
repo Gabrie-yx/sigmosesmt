@@ -15,7 +15,7 @@ import { Target, Plus, ChevronRight, ChevronLeft, ClipboardList, Trash2, Info, C
 import { toast } from "sonner";
 import { format } from "date-fns";
 
-export const Route = createFileRoute("/app/sesmt/inspecoes")({
+export const Route = createFileRoute("/app/sesmt/inspecoes/")({
   component: InspecoesList,
 });
 
