@@ -24,7 +24,7 @@ export const Route = createFileRoute("/app/sesmt/inspecoes/$id")({
 const BUCKET = "inspecoes-fotos";
 
 const CLASSE_CLS: Record<string, string> = {
-  BAIXO: "bg-emerald-100 text-emerald-800",
+  BAIXO: "bg-emerald-100 text-primary",
   MODERADO: "bg-yellow-100 text-yellow-800",
   ALTO: "bg-orange-100 text-orange-800",
   CRITICO: "bg-red-200 text-red-900",
@@ -346,7 +346,7 @@ function InspecaoDetail() {
     onError: (e: any) => toast.error(e.message ?? "Erro ao gerar PDF"),
   });
 
-  if (isLoading || !insp) return <div className="p-6 text-slate-500 text-sm">Carregando...</div>;
+  if (isLoading || !insp) return <div className="p-6 text-muted-foreground text-sm">Carregando...</div>;
 
   const ncsComPlano = new Set((planosResumo ?? []).map((p: any) => p.nc_id));
   const faltaPlano = ncs.length > 0 && (planosResumoLoading || ncs.some((n: any) => !ncsComPlano.has(n.id)));
@@ -356,7 +356,7 @@ function InspecaoDetail() {
 
   return (
     <div className="p-4 md:p-6 max-w-6xl mx-auto space-y-4">
-      <Link to="/app/sesmt/inspecoes" className="text-[10px] font-black uppercase tracking-wider text-slate-500 hover:text-slate-800 flex items-center gap-1">
+      <Link to="/app/sesmt/inspecoes" className="text-[10px] font-black uppercase tracking-wider text-muted-foreground hover:text-foreground flex items-center gap-1">
         <ChevronLeft className="h-3 w-3" /> Inspeções
       </Link>
 
@@ -364,10 +364,10 @@ function InspecaoDetail() {
         <CardHeader>
           <div className="flex items-start justify-between gap-3 flex-wrap">
             <div>
-              <CardTitle className="text-lg font-black uppercase tracking-tight text-slate-900">
+              <CardTitle className="text-lg font-black uppercase tracking-tight text-foreground">
                 {insp.local_descricao}
               </CardTitle>
-              <div className="text-xs text-slate-500 mt-1 flex gap-2 flex-wrap">
+              <div className="text-xs text-muted-foreground mt-1 flex gap-2 flex-wrap">
                 <span>{format(new Date(insp.data_inspecao + "T00:00:00"), "dd/MM/yyyy")}</span>
                 {insp.companies && <span>· {insp.companies.nome_fantasia ?? insp.companies.name}</span>}
                 {insp.tipo_local && <span>· {insp.tipo_local}</span>}
@@ -391,9 +391,9 @@ function InspecaoDetail() {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="text-xs text-slate-600 space-y-1">
+        <CardContent className="text-xs text-muted-foreground space-y-1">
           {publicadoIncompleto && (
-            <div className="mb-2 rounded border border-orange-200 bg-orange-50 text-orange-900 p-2 flex items-center justify-between gap-2 flex-wrap">
+            <div className="mb-2 rounded border border-amber-500/40 bg-amber-500/10 text-amber-100 p-2 flex items-center justify-between gap-2 flex-wrap">
               <span><b>Inspeção publicada incompleta.</b> Reabra a edição para anexar evidências, registrar NCs e montar o PDCA antes do PDF final.</span>
               {canManage && <Button size="sm" variant="outline" className="h-7" onClick={() => alterarStatus.mutate("em_revisao")}>Reabrir agora</Button>}
             </div>
@@ -403,83 +403,13 @@ function InspecaoDetail() {
         </CardContent>
       </Card>
 
-      {/* TUTORIAL — como usar (passo a passo detalhado, aberto por padrão) */}
-      <details open className="rounded-lg border border-emerald-200 bg-emerald-50/60 group">
-        <summary className="cursor-pointer list-none px-3 py-2 flex items-center gap-2 text-xs font-black uppercase tracking-wide text-emerald-900">
-          <Info className="h-4 w-4" /> Como usar esta inspeção — tutorial passo a passo
-          <span className="ml-auto text-[10px] font-normal text-emerald-700 group-open:hidden">clique para abrir</span>
-          <span className="ml-auto text-[10px] font-normal text-emerald-700 hidden group-open:inline">clique para recolher</span>
-        </summary>
-        <div className="px-4 pb-4 pt-1 text-[12px] text-slate-700 space-y-3 leading-relaxed">
-
-          <div className="rounded-md bg-white/70 border border-emerald-200 p-2.5">
-            <div className="font-black text-emerald-900 mb-0.5">Antes de começar</div>
-            <div>Confirme no cabeçalho acima: <b>Empresa</b>, <b>Área</b>, <b>Escopo</b> e <b>Participantes</b>. Isso vai pro PDF e pros indicadores — inspeção sem contexto não vira histórico útil.</div>
-          </div>
-
-          <div>
-            <div className="font-black text-emerald-900">Passo 1 — Anexar fotos (obrigatório)</div>
-            <ul className="list-disc pl-5 mt-1 space-y-0.5">
-              <li><b>Celular:</b> toque em <b>Tirar foto</b> na seção “Evidências fotográficas”. Autorize câmera e localização no navegador (o GPS entra na evidência).</li>
-              <li><b>Laptop:</b> use <b>Enviar foto</b> e selecione arquivos JPG/PNG/HEIC do computador. Pode enviar várias de uma vez.</li>
-              <li>Cada foto grava <b>hash SHA-256, data/hora e GPS</b> — dá pra provar autenticidade depois.</li>
-              <li>Pelo menos <b>1 foto</b> é obrigatório pra publicar. Sem foto, sem inspeção.</li>
-            </ul>
-          </div>
-
-          <div>
-            <div className="font-black text-emerald-900">Passo 2 — Achou algo fora do padrão? (opcional)</div>
-            <ul className="list-disc pl-5 mt-1 space-y-0.5">
-              <li>Se a área está <b>conforme</b>, pule direto pro Passo 4. Vai virar relatório <i>sem não conformidades</i> — é normal e desejável.</li>
-              <li>Se achou algo, clique em <b>Nova NC</b> e preencha:
-                <ul className="list-[circle] pl-5 mt-0.5">
-                  <li><b>Descrição</b> objetiva do desvio (o que, onde).</li>
-                  <li><b>NR + item</b> descumprido (ex.: NR-06 6.7.1).</li>
-                  <li><b>Severidade × Probabilidade</b> (matriz 5×5) — o sistema calcula o risco.</li>
-                  <li>Anexe as fotos específicas do achado (opcional, mas ajuda).</li>
-                </ul>
-              </li>
-              <li>Cada NC vira uma <b>TNC-###/AAAA</b> numerada automaticamente ao publicar.</li>
-            </ul>
-          </div>
-
-          <div>
-            <div className="font-black text-emerald-900">Passo 3 — Plano de ação PDCA (só se tiver NC)</div>
-            <ul className="list-disc pl-5 mt-1 space-y-0.5">
-              <li>Em cada NC, clique <b>Adicionar ação</b>. Preencha:
-                <ul className="list-[circle] pl-5 mt-0.5">
-                  <li><b>O quê</b> — ação corretiva (verbo no infinitivo: “substituir”, “treinar”, “isolar”).</li>
-                  <li><b>Responsável</b> — funcionário ativo da empresa (o modal lista todos).</li>
-                  <li><b>Prazo</b> — o sistema sugere pela norma/risco, mas você pode ajustar.</li>
-                </ul>
-              </li>
-              <li><b>Regra:</b> toda NC precisa de <b>pelo menos 1 ação</b> antes de publicar. Sem PDCA, o botão Publicar trava.</li>
-              <li>Ao publicar, o plano cai no módulo <b>Ações</b> e o responsável recebe notificação.</li>
-            </ul>
-          </div>
-
-          <div>
-            <div className="font-black text-emerald-900">Passo 4 — Publicar</div>
-            <ul className="list-disc pl-5 mt-1 space-y-0.5">
-              <li>Clique em <b>Publicar inspeção</b> (topo direito). O sistema valida foto + PDCA das NCs.</li>
-              <li>Publicação: <b>trava edição</b>, gera <b>PDF</b>, alimenta <b>indicadores</b> e cria as <b>TNCs</b> numeradas.</li>
-              <li>Precisou corrigir? SESMT pode <b>reabrir</b> a inspeção — histórico fica auditado.</li>
-            </ul>
-          </div>
-
-          <div className="rounded-md bg-amber-50 border border-amber-200 p-2.5 text-amber-900">
-            <div className="font-black mb-0.5">Resumo das regras</div>
-            <div>✅ Mínimo pra publicar: <b>1 foto</b>. &nbsp; ✅ Se tem NC → cada uma precisa de <b>ação (responsável + prazo)</b>. &nbsp; ✅ Sem NC = inspeção conforme, publica normal.</div>
-          </div>
-        </div>
-      </details>
 
       {/* FOTOS */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-black uppercase tracking-wide text-slate-800 flex items-center gap-2">
+          <CardTitle className="text-sm font-black uppercase tracking-wide text-foreground flex items-center gap-2">
             <Camera className="h-4 w-4" /> Evidências fotográficas
-            <Tooltip><TooltipTrigger asChild><Info className="h-3.5 w-3.5 text-slate-400 cursor-help" /></TooltipTrigger>
+            <Tooltip><TooltipTrigger asChild><Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" /></TooltipTrigger>
               <TooltipContent className="max-w-xs text-xs">Toda foto é registrada com hash SHA-256, timestamp e GPS quando disponível — evidência rastreável.</TooltipContent>
             </Tooltip>
           </CardTitle>
@@ -487,12 +417,12 @@ function InspecaoDetail() {
         <CardContent className="space-y-3">
           {editable && (
             <div className="flex gap-2 flex-wrap">
-              <label className={`inline-flex items-center gap-2 text-xs bg-emerald-600 text-white px-3 py-2 rounded cursor-pointer hover:bg-emerald-700 ${uploadFoto.isPending ? "opacity-70 pointer-events-none" : ""}`}>
+              <label className={`inline-flex items-center gap-2 text-xs bg-primary text-white px-3 py-2 rounded cursor-pointer hover:bg-primary/90 ${uploadFoto.isPending ? "opacity-70 pointer-events-none" : ""}`}>
                 <Upload className="h-3.5 w-3.5" /> {uploadFoto.isPending ? "Enviando..." : "Enviar foto"}
                 <input type="file" multiple accept="image/*,.heic,.heif" className="hidden" disabled={uploadFoto.isPending}
                   onChange={(e) => { selecionarFotos(e.currentTarget.files); e.currentTarget.value = ""; }} />
               </label>
-              <label className={`inline-flex items-center gap-2 text-xs border border-slate-200 bg-white text-slate-700 px-3 py-2 rounded cursor-pointer hover:bg-slate-50 ${uploadFoto.isPending ? "opacity-70 pointer-events-none" : ""}`}>
+              <label className={`inline-flex items-center gap-2 text-xs border border-border bg-white text-foreground px-3 py-2 rounded cursor-pointer hover:bg-accent ${uploadFoto.isPending ? "opacity-70 pointer-events-none" : ""}`}>
                 <Camera className="h-3.5 w-3.5" /> Tirar foto
                 <input type="file" accept="image/*,.heic,.heif" capture="environment" className="hidden" disabled={uploadFoto.isPending}
                   onChange={(e) => { selecionarFotos(e.currentTarget.files); e.currentTarget.value = ""; }} />
@@ -501,31 +431,31 @@ function InspecaoDetail() {
             </div>
           )}
           {!editable && publicadoIncompleto && canManage && (
-            <div className="rounded border border-orange-200 bg-orange-50 text-orange-900 text-xs p-2 flex items-center justify-between gap-2 flex-wrap">
+            <div className="rounded border border-amber-500/40 bg-amber-500/10 text-amber-100 text-xs p-2 flex items-center justify-between gap-2 flex-wrap">
               <span>Para anexar fotos agora, reabra a inspeção. O sistema não deve gerar relatório final sem evidência.</span>
               <Button size="sm" variant="outline" className="h-7" onClick={() => alterarStatus.mutate("em_revisao")}>Reabrir para anexar</Button>
             </div>
           )}
           {fotos.length === 0 ? (
-            <div className="text-xs text-slate-500">Sem fotos ainda.</div>
+            <div className="text-xs text-muted-foreground">Sem fotos ainda.</div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {fotos.map((f: any) => (
-                <div key={f.id} className="relative border rounded overflow-hidden bg-slate-50">
+                <div key={f.id} className="relative border rounded overflow-hidden bg-muted/40">
                   {f.fonte === "cftv" ? (
-                    <div className="aspect-video flex flex-col items-center justify-center text-slate-500 text-[10px] p-2">
+                    <div className="aspect-video flex flex-col items-center justify-center text-muted-foreground text-[10px] p-2">
                       <Video className="h-6 w-6 mb-1" />
                       <div className="truncate max-w-full text-center">{f.camera_ref ?? "CFTV"}</div>
-                      <a href={f.storage_path.replace(/^cftv:\/\//, "")} target="_blank" rel="noreferrer" className="text-emerald-700 underline mt-1">abrir</a>
+                      <a href={f.storage_path.replace(/^cftv:\/\//, "")} target="_blank" rel="noreferrer" className="text-primary underline mt-1">abrir</a>
                     </div>
                   ) : (
                     <img src={(fotoUrls as any)[f.storage_path]} alt="" className="aspect-video object-cover w-full" />
                   )}
-                  <div className="text-[9px] p-1 text-slate-500 truncate" title={f.hash_sha256}>
+                  <div className="text-[9px] p-1 text-muted-foreground truncate" title={f.hash_sha256}>
                     #{f.hash_sha256.slice(0, 10)} · {f.timestamp_captura ? format(new Date(f.timestamp_captura), "dd/MM HH:mm") : "s/timestamp"}
                   </div>
                   {editable && (
-                    <button onClick={() => removerFoto.mutate(f)} className="absolute top-1 right-1 bg-white/90 rounded p-1 hover:bg-red-50">
+                    <button onClick={() => removerFoto.mutate(f)} className="absolute top-1 right-1 bg-background/80 rounded p-1 hover:bg-red-500/20">
                       <Trash2 className="h-3 w-3 text-red-600" />
                     </button>
                   )}
@@ -539,25 +469,25 @@ function InspecaoDetail() {
       {/* NCs */}
       <Card>
         <CardHeader className="pb-3 flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-black uppercase tracking-wide text-slate-800 flex items-center gap-2">
+          <CardTitle className="text-sm font-black uppercase tracking-wide text-foreground flex items-center gap-2">
             <ShieldAlert className="h-4 w-4" /> Não conformidades ({ncs.length})
           </CardTitle>
           {editable && <NcDialog inspecaoId={id} fotos={fotos} nrs={nrs} rubrica={rubrica} grauRisco={insp.companies?.grau_risco ?? 3} empresaId={insp.empresa_id ?? null} />}
         </CardHeader>
         <CardContent>
           {ncs.length === 0 ? (
-            <div className="text-xs text-slate-500">Nenhuma NC registrada.</div>
+            <div className="text-xs text-muted-foreground">Nenhuma NC registrada.</div>
           ) : (
             <div className="space-y-2">
               {ncs.map((nc: any) => (
-                <div key={nc.id} className="border rounded p-3 space-y-1 bg-white">
+                <div key={nc.id} className="border rounded p-3 space-y-1 bg-card">
                   <div className="flex items-center gap-2 flex-wrap">
                     <Badge variant="outline" className="text-[10px]">{nc.nr_codigo}{nc.nr_item ? ` · ${nc.nr_item}` : ""}</Badge>
                     <Badge className={CLASSE_CLS[nc.classe_risco] + " text-[10px]"}>{nc.classe_risco} · P{nc.probabilidade}×S{nc.severidade}={nc.risco_calculado}</Badge>
                     {nc.gradacao_nr28 && <Badge variant="secondary" className="text-[10px]">NR-28 {nc.gradacao_nr28}: R$ {Number(nc.multa_estimada ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</Badge>}
                   </div>
-                  <div className="text-sm text-slate-800">{nc.descricao}</div>
-                  {nc.recomendacao && <div className="text-xs text-slate-600"><b>Recomendação:</b> {nc.recomendacao}</div>}
+                  <div className="text-sm text-foreground">{nc.descricao}</div>
+                  {nc.recomendacao && <div className="text-xs text-muted-foreground"><b>Recomendação:</b> {nc.recomendacao}</div>}
                   <NcPlanos
                     ncId={nc.id}
                     editable={editable}
@@ -574,19 +504,19 @@ function InspecaoDetail() {
       {/* Rubrica visível */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-xs font-black uppercase tracking-wide text-slate-700 flex items-center gap-2">
+          <CardTitle className="text-xs font-black uppercase tracking-wide text-foreground flex items-center gap-2">
             <FileText className="h-3.5 w-3.5" /> Rubrica da matriz 5x5 (referência)
           </CardTitle>
         </CardHeader>
-        <CardContent className="grid md:grid-cols-2 gap-3 text-[11px] text-slate-600">
+        <CardContent className="grid md:grid-cols-2 gap-3 text-[11px] text-muted-foreground">
           <div>
-            <div className="font-bold text-slate-800 mb-1">Probabilidade</div>
+            <div className="font-bold text-foreground mb-1">Probabilidade</div>
             {rubrica.filter((r: any) => r.eixo === "P").map((r: any) => (
               <div key={r.id}><b>P{r.nivel} — {r.rotulo}:</b> {r.definicao}</div>
             ))}
           </div>
           <div>
-            <div className="font-bold text-slate-800 mb-1">Severidade</div>
+            <div className="font-bold text-foreground mb-1">Severidade</div>
             {rubrica.filter((r: any) => r.eixo === "S").map((r: any) => (
               <div key={r.id}><b>S{r.nivel} — {r.rotulo}:</b> {r.definicao}</div>
             ))}
@@ -772,11 +702,11 @@ function NcDialog({ inspecaoId, fotos, nrs, rubrica, grauRisco, empresaId }: { i
             </div>
           </div>
           {itemSelecionado && (
-            <div className="rounded border border-emerald-200 bg-emerald-50 text-emerald-900 text-[11px] p-2">
+            <div className="rounded border border-primary/40 bg-primary/10 text-foreground text-[11px] p-2">
               <div className="font-black">{nr_codigo} {itemSelecionado.item}</div>
               <div className="mt-1">{itemSelecionado.texto_oficial}</div>
               {itemSelecionado.prazo_dias_sugerido && (
-                <div className="mt-1 text-emerald-800">Prazo sugerido pela norma: <b>{itemSelecionado.prazo_dias_sugerido} dias</b> · gravidade sugerida: <b>{itemSelecionado.gravidade_sugerida}</b></div>
+                <div className="mt-1 text-primary">Prazo sugerido pela norma: <b>{itemSelecionado.prazo_dias_sugerido} dias</b> · gravidade sugerida: <b>{itemSelecionado.gravidade_sugerida}</b></div>
               )}
             </div>
           )}
@@ -792,8 +722,8 @@ function NcDialog({ inspecaoId, fotos, nrs, rubrica, grauRisco, empresaId }: { i
           <div><Label>Descrição da NC *</Label><Textarea rows={3} value={descricao} onChange={(e) => setDescricao(e.target.value)} /></div>
           <div><Label>Recomendação</Label><Textarea rows={2} value={recomendacao} onChange={(e) => setRecomendacao(e.target.value)} /></div>
 
-          <div className="border rounded p-3 bg-slate-50 space-y-2">
-            <div className="text-xs font-black uppercase tracking-wide text-slate-700">Matriz de risco 5x5</div>
+          <div className="border rounded p-3 bg-muted/40 space-y-2">
+            <div className="text-xs font-black uppercase tracking-wide text-foreground">Matriz de risco 5x5</div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Probabilidade</Label>
@@ -814,11 +744,11 @@ function NcDialog({ inspecaoId, fotos, nrs, rubrica, grauRisco, empresaId }: { i
                 </Select>
               </div>
             </div>
-            <div className="text-xs text-slate-600">Risco = {probabilidade * severidade} → <Badge className={CLASSE_CLS[classe]}>{classe}</Badge></div>
+            <div className="text-xs text-muted-foreground">Risco = {probabilidade * severidade} → <Badge className={CLASSE_CLS[classe]}>{classe}</Badge></div>
           </div>
 
-          <div className="border rounded p-3 bg-slate-50 space-y-2">
-            <div className="text-xs font-black uppercase tracking-wide text-slate-700">Multa estimada NR-28 (grau {grauRisco})</div>
+          <div className="border rounded p-3 bg-muted/40 space-y-2">
+            <div className="text-xs font-black uppercase tracking-wide text-foreground">Multa estimada NR-28 (grau {grauRisco})</div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Gradação</Label>
@@ -839,14 +769,14 @@ function NcDialog({ inspecaoId, fotos, nrs, rubrica, grauRisco, empresaId }: { i
                   value={empregadosFinal}
                   onChange={(e) => { setEmpregadosManual(true); setEmpregados(Number(e.target.value)); }}
                 />
-                <p className="text-[10px] text-slate-500 mt-1">
+                <p className="text-[10px] text-muted-foreground mt-1">
                   {empregadosManual
                     ? <>Valor manual. <button className="underline" onClick={() => { setEmpregadosManual(false); }}>Voltar ao real ({empregadosReais ?? 0})</button></>
                     : <>Contagem automática da empresa: <b>{empregadosReais ?? 0}</b> ativos.</>}
                 </p>
               </div>
             </div>
-            <div className="text-xs text-slate-600">
+            <div className="text-xs text-muted-foreground">
               {nr28 ? <>Valor: <b>R$ {Number(nr28.valor_reais).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</b> ({nr28.portaria_ref})</> : "Faixa não encontrada"}
             </div>
           </div>
@@ -936,16 +866,16 @@ function NcPlanos({ ncId, editable, empresaId, prazoSugerido }: { ncId: string; 
   });
   return (
     <div className="mt-2 border-t pt-2 space-y-1">
-      <div className="text-[10px] font-black uppercase tracking-wide text-slate-500">Plano de ação (PDCA)</div>
+      <div className="text-[10px] font-black uppercase tracking-wide text-muted-foreground">Plano de ação (PDCA)</div>
       {prazoSugerido && (
-        <div className="text-[10px] text-emerald-700">Prazo sugerido pela norma: <b>{prazoSugerido} dias</b> a partir de hoje.</div>
+        <div className="text-[10px] text-primary">Prazo sugerido pela norma: <b>{prazoSugerido} dias</b> a partir de hoje.</div>
       )}
       {planos.map((p: any) => (
         <div key={p.id} className="flex items-center gap-2 text-xs">
           <Badge variant="outline" className="text-[9px]">{p.fase_pdca}</Badge>
           <span className="flex-1">{p.acao}</span>
-          {(p.employees?.nome || p.responsavel_nome) && <span className="text-slate-500">{p.employees?.nome ?? p.responsavel_nome}</span>}
-          {p.prazo && <span className="text-slate-500">{format(new Date(p.prazo + "T00:00:00"), "dd/MM/yy")}</span>}
+          {(p.employees?.nome || p.responsavel_nome) && <span className="text-muted-foreground">{p.employees?.nome ?? p.responsavel_nome}</span>}
+          {p.prazo && <span className="text-muted-foreground">{format(new Date(p.prazo + "T00:00:00"), "dd/MM/yy")}</span>}
           {editable && p.fase_pdca !== "ENCERRADO" && <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]" onClick={() => avancar.mutate(p)}>avançar</Button>}
         </div>
       ))}
@@ -956,7 +886,7 @@ function NcPlanos({ ncId, editable, empresaId, prazoSugerido }: { ncId: string; 
             <SelectTrigger className="h-7 text-xs w-40"><SelectValue placeholder="Responsável" /></SelectTrigger>
             <SelectContent position="popper" side="top" align="end" sideOffset={4} avoidCollisions={false} className="max-h-60 z-[100]">
               {empregados.length === 0 ? (
-                <div className="px-2 py-1.5 text-xs text-slate-500">Sem funcionários ativos nesta empresa.</div>
+                <div className="px-2 py-1.5 text-xs text-muted-foreground">Sem funcionários ativos nesta empresa.</div>
               ) : (
                 empregados.map((e: any) => (<SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>))
               )}
