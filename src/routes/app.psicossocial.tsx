@@ -680,8 +680,9 @@ function DiagnosticoTab() {
   );
 }
 
-function MatrizDiagnostico({ linhas }: { linhas: any[] }) {
+function MatrizDiagnostico({ linhas, minRespondentes }: { linhas: any[]; minRespondentes?: number }) {
   // agrupa por GHE × dimensão
+  const minResp = minRespondentes ?? 5;
   const dimensoes = Object.keys(DIMENSAO_LABEL);
   const ghes = Array.from(new Set(linhas.map((l) => l.ghe_id))).filter(Boolean);
 
@@ -695,26 +696,44 @@ function MatrizDiagnostico({ linhas }: { linhas: any[] }) {
             {dimensoes.map((d) => (
               <th key={d} className="text-center p-2 border-b text-[10px]">{DIMENSAO_LABEL[d as keyof typeof DIMENSAO_LABEL]}</th>
             ))}
+            <th className="text-center p-2 border-b text-[10px]">Respondentes</th>
           </tr>
         </thead>
         <tbody>
-          {ghes.map((ghe) => (
-            <tr key={ghe as string}>
-              <td className="p-2 border-b text-rose-100/80 font-semibold">{(ghe as string).slice(0, 8)}…</td>
-              {dimensoes.map((d) => {
-                const cell = linhas.find((l) => l.ghe_id === ghe && l.dimensao === d);
-                if (!cell) return <td key={d} className="p-2 border-b text-center text-rose-100/30">—</td>;
-                if (cell.suprimido)
-                  return <td key={d} className="p-2 border-b text-center text-rose-100/40" title="Menos de 5 respondentes (LGPD)">🔒</td>;
-                const cor = corPorMedia(Number(cell.media));
-                return (
-                  <td key={d} className={`p-2 border-b text-center font-bold text-white ${cor}`}>
-                    {Number(cell.media).toFixed(1)}
-                  </td>
-                );
-              })}
-            </tr>
-          ))}
+          {ghes.map((ghe) => {
+            const linhasGhe = linhas.filter((l) => l.ghe_id === ghe);
+            const maxN = Math.max(0, ...linhasGhe.map((l) => Number(l.n_respostas ?? 0)));
+            const atingiu = maxN >= minResp;
+            return (
+              <tr key={ghe as string}>
+                <td className="p-2 border-b text-rose-100/80 font-semibold">{(ghe as string).slice(0, 8)}…</td>
+                {dimensoes.map((d) => {
+                  const cell = linhas.find((l) => l.ghe_id === ghe && l.dimensao === d);
+                  if (!cell) return <td key={d} className="p-2 border-b text-center text-rose-100/30">—</td>;
+                  if (cell.suprimido)
+                    return <td key={d} className="p-2 border-b text-center text-rose-100/40" title="Menos de 5 respondentes (LGPD)">🔒</td>;
+                  const cor = corPorMedia(Number(cell.media));
+                  return (
+                    <td key={d} className={`p-2 border-b text-center font-bold text-white ${cor}`}>
+                      {Number(cell.media).toFixed(1)}
+                    </td>
+                  );
+                })}
+                <td className="p-2 border-b text-center">
+                  <span
+                    className={`inline-flex items-center justify-center rounded px-2 py-0.5 text-[10px] font-bold ${
+                      atingiu
+                        ? "bg-emerald-500/20 text-emerald-200 border border-emerald-500/30"
+                        : "bg-amber-500/20 text-amber-200 border border-amber-500/30"
+                    }`}
+                    title={atingiu ? "Mínimo atingido" : `Faltam ${minResp - maxN} respondente(s)`}
+                  >
+                    {Math.min(maxN, minResp)}/{minResp}
+                  </span>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </Card>
