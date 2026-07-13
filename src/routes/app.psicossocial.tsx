@@ -900,14 +900,6 @@ function statusColor(s: string) {
   }
 }
 
-function corPorMedia(m: number) {
-  if (m < 2) return "bg-rose-500";
-  if (m < 2.75) return "bg-lime-500";
-  if (m < 3.5) return "bg-amber-500";
-  if (m < 4.25) return "bg-orange-500";
-  return "bg-rose-600";
-}
-
 function randomToken() {
   const arr = new Uint8Array(24);
   crypto.getRandomValues(arr);
