@@ -671,7 +671,10 @@ function DiagnosticoTab() {
       )}
 
       {campanhaId && (agregado ?? []).length > 0 && (
-        <MatrizDiagnostico linhas={agregado ?? []} />
+        <MatrizDiagnostico
+          linhas={agregado ?? []}
+          minRespondentes={(campanhas ?? []).find((c: any) => c.id === campanhaId)?.min_respondentes ?? 5}
+        />
       )}
     </div>
   );
