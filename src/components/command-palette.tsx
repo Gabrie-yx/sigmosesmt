@@ -233,28 +233,50 @@ export function CommandPalette() {
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
       <CommandInput
-        placeholder="Buscar funcionários, APRs, requisições, páginas… (⌘K)"
+        placeholder="Buscar por nome, matrícula, CPF, empresa, APR, página… (⌘K)"
         value={query}
         onValueChange={setQuery}
       />
+      <div className="flex items-center justify-between gap-3 border-b border-border/60 px-3 py-2 text-[11px]">
+        <span className="font-black uppercase tracking-widest text-muted-foreground">
+          Funcionários {includeInactive ? "· todos" : "· só ativos"}
+        </span>
+        <label className="flex items-center gap-2 cursor-pointer select-none">
+          <span className="text-muted-foreground">Incluir desligados</span>
+          <Switch checked={includeInactive} onCheckedChange={setIncludeInactive} />
+        </label>
+      </div>
       <CommandList className="max-h-[60vh]">
         <CommandEmpty>Nada encontrado.</CommandEmpty>
 
         {filteredEmployees.length > 0 && (
-          <CommandGroup heading="Funcionários">
+          <CommandGroup heading={!q && recentIds.length > 0 ? "Funcionários — Recentes primeiro" : "Funcionários"}>
             {filteredEmployees.map((e: any) => (
               <CommandItem
                 key={`emp-${e.id}`}
-                value={`funcionario ${e.nome} ${e.funcao ?? ""}`}
-                onSelect={() => go("/app/employees/$id", { id: e.id })}
+                value={`funcionario ${e.nome} ${e.funcao ?? ""} ${e.matricula ?? ""} ${e.companies?.name ?? ""}`}
+                onSelect={() => goEmployee({ id: e.id, nome: e.nome })}
               >
-                <Users className="text-muted-foreground" />
-                <div className="flex flex-col">
-                  <span className="font-medium">{e.nome}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {e.funcao ?? "—"} {e.status ? `· ${e.status}` : ""}
+                <div className="h-7 w-7 shrink-0 rounded-full overflow-hidden border border-border/60 bg-muted flex items-center justify-center">
+                  {e.foto_url ? (
+                    <SignedAvatarImg src={e.foto_url} alt={e.nome} className="h-full w-full object-cover" />
+                  ) : (
+                    <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                  )}
+                </div>
+                <div className="flex flex-col min-w-0 flex-1">
+                  <span className="font-medium truncate">{e.nome}</span>
+                  <span className="text-xs text-muted-foreground truncate">
+                    {e.funcao ?? "—"}
+                    {e.matricula ? ` · Mat. ${e.matricula}` : ""}
+                    {e.companies?.name ? ` · ${e.companies.name}` : ""}
                   </span>
                 </div>
+                {e.status && e.status !== "ATIVO" && (
+                  <span className="ml-2 shrink-0 rounded-full bg-muted px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-muted-foreground">
+                    {e.status}
+                  </span>
+                )}
               </CommandItem>
             ))}
           </CommandGroup>
