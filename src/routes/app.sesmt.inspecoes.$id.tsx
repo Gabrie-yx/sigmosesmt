@@ -283,8 +283,8 @@ function InspecaoDetail() {
 
   if (isLoading || !insp) return <div className="p-6 text-slate-500 text-sm">Carregando...</div>;
 
-  const editable = insp.status === "rascunho" || insp.status === "em_revisao";
   const publicadoIncompleto = insp.status === "publicada" && (fotos.length === 0 || ncs.length === 0);
+  const editable = insp.status === "rascunho" || insp.status === "em_revisao" || (publicadoIncompleto && canManage);
 
   return (
     <div className="p-4 md:p-6 max-w-6xl mx-auto space-y-4">
@@ -314,7 +314,7 @@ function InspecaoDetail() {
               {insp.status === "publicada" && canManage && (
                 <Button size="sm" variant="outline" onClick={() => alterarStatus.mutate("em_revisao")} disabled={alterarStatus.isPending}>Reabrir edição</Button>
               )}
-              {editable && canManage && (
+              {editable && canManage && insp.status !== "publicada" && (
                 <Button size="sm" variant="outline" onClick={() => alterarStatus.mutate("publicada")}>Publicar</Button>
               )}
               {editable && !canManage && insp.status === "rascunho" && (
