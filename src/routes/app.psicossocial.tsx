@@ -11,11 +11,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Brain, Plus, Copy, Loader2, AlertTriangle, ShieldCheck, Users, BarChart3, ListChecks, ClipboardList, Pencil, Trash2, Check, ChevronDown, X } from "lucide-react";
+import { Brain, Plus, Copy, Loader2, AlertTriangle, ShieldCheck, Users, BarChart3, ListChecks, ClipboardList, Pencil, Trash2, Check, ChevronDown, X, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from "@/components/ui/sheet";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -688,7 +689,10 @@ function MatrizDiagnostico({ linhas, minRespondentes }: { linhas: any[]; minResp
 
   return (
     <Card className="p-4 overflow-x-auto border-rose-500/20 bg-gradient-to-br from-rose-950/40 to-slate-950/60">
-      <h3 className="font-bold text-slate-900 mb-3">Matriz agregada por GHE × Dimensão</h3>
+      <div className="flex items-center justify-between gap-3 mb-3">
+        <h3 className="font-bold text-rose-50">Matriz agregada por GHE × Dimensão</h3>
+        <ComoLerMatrizSheet />
+      </div>
       <table className="w-full text-xs">
         <thead>
           <tr>
@@ -712,10 +716,15 @@ function MatrizDiagnostico({ linhas, minRespondentes }: { linhas: any[]; minResp
                   if (!cell) return <td key={d} className="p-2 border-b text-center text-rose-100/30">—</td>;
                   if (cell.suprimido)
                     return <td key={d} className="p-2 border-b text-center text-rose-100/40" title="Menos de 5 respondentes (LGPD)">🔒</td>;
-                  const cor = corPorMedia(Number(cell.media));
+                  const media = Number(cell.media);
+                  const st = statusPorMedia(media, d);
                   return (
-                    <td key={d} className={`p-2 border-b text-center font-bold text-white ${cor}`}>
-                      {Number(cell.media).toFixed(1)}
+                    <td
+                      key={d}
+                      className={`p-2 border-b text-center font-bold text-white ${st.cor} cursor-help`}
+                      title={`${media.toFixed(1)} — ${st.label}: ${st.desc}`}
+                    >
+                      {media.toFixed(1)}
                     </td>
                   );
                 })}
@@ -736,8 +745,101 @@ function MatrizDiagnostico({ linhas, minRespondentes }: { linhas: any[]; minResp
           })}
         </tbody>
       </table>
+
+      {/* Legenda enxuta */}
+      <div className="mt-3 pt-3 border-t border-rose-500/20 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[10px] text-rose-100/70">
+        <span className="font-semibold text-rose-100/80">Legenda:</span>
+        <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> ≤ 2,4 · Baixo</span>
+        <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-600" /> 2,5 – 3,4 · Médio</span>
+        <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-rose-600" /> ≥ 3,5 · Alto</span>
+        <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-rose-600" /> Violência ≥ 1,5 · Alerta</span>
+        <span className="ml-auto text-rose-100/50">Passe o mouse na célula para ver o status.</span>
+      </div>
     </Card>
   );
+}
+
+/* ---- Sheet: Como ler a matriz ---- */
+function ComoLerMatrizSheet() {
+  const leitura: Array<{ dim: string; foco: string }> = [
+    { dim: "demandas_trabalho", foco: "Carga e pressão de tempo" },
+    { dim: "controle_autonomia", foco: "Autonomia decisória" },
+    { dim: "apoio_social", foco: "Apoio de colegas e liderança" },
+    { dim: "reconhecimento_recompensa", foco: "Reconhecimento percebido" },
+    { dim: "papel_mudanca", foco: "Clareza de papel e mudanças" },
+    { dim: "relacoes_interpessoais", foco: "Atritos e convivência" },
+    { dim: "violencia_assedio", foco: "Tolerância zero (ISO 45003)" },
+    { dim: "interface_trabalho_vida", foco: "Invasão do trabalho na vida pessoal" },
+  ];
+  return (
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="outline" size="sm" className="h-8 gap-1.5 border-rose-500/30 bg-rose-500/10 text-rose-100 hover:bg-rose-500/20">
+          <HelpCircle className="h-3.5 w-3.5" /> Como ler esta matriz
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto bg-gradient-to-br from-slate-950 via-rose-950/40 to-slate-950 border-rose-500/20 text-rose-50">
+        <SheetHeader>
+          <SheetTitle className="text-rose-50">Como ler a matriz de diagnóstico</SheetTitle>
+          <SheetDescription className="text-rose-100/70">
+            Cada célula é a média das respostas (escala Likert 1–5) daquele GHE naquela dimensão psicossocial.
+          </SheetDescription>
+        </SheetHeader>
+
+        <div className="mt-5 space-y-6">
+          <section>
+            <h4 className="text-sm font-bold mb-2 text-rose-50">Cores = nível de risco</h4>
+            <table className="w-full text-xs">
+              <thead className="text-rose-100/60">
+                <tr><th className="text-left py-1.5">Cor</th><th className="text-left py-1.5">Faixa</th><th className="text-left py-1.5">Significado</th></tr>
+              </thead>
+              <tbody className="[&_td]:py-2 [&_td]:border-t [&_td]:border-rose-500/15">
+                <tr>
+                  <td><span className="inline-flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-emerald-500" /> Verde</span></td>
+                  <td>≤ 2,4</td><td><b>Baixo</b> — dimensão saudável</td>
+                </tr>
+                <tr>
+                  <td><span className="inline-flex items-center gap-2"><span className="w-3 h-3 rounded-sm bg-amber-600" /> Marrom/laranja</span></td>
+                  <td>2,5 – 3,4</td><td><b>Médio</b> — atenção, monitorar</td>
+                </tr>
+                <tr>
+                  <td><span className="inline-flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-rose-600" /> Vinho/vermelho</span></td>
+                  <td>≥ 3,5 <b>ou</b> violência ≥ 1,5</td><td><b>Alto</b> — plano de ação obrigatório</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section>
+            <h4 className="text-sm font-bold mb-2 text-rose-50">Leitura das 8 dimensões</h4>
+            <ul className="space-y-1.5 text-xs">
+              {leitura.map((l) => (
+                <li key={l.dim} className="flex justify-between gap-4 py-1.5 border-t border-rose-500/15">
+                  <span className="text-rose-50 font-medium">{DIMENSAO_LABEL[l.dim as keyof typeof DIMENSAO_LABEL]}</span>
+                  <span className="text-rose-100/60 text-right">{l.foco}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <section className="rounded-md border border-rose-500/20 bg-rose-500/5 p-3 text-[11px] text-rose-100/70">
+            <b className="text-rose-100">Regras de anonimato:</b> GHEs com menos de 5 respondentes são suprimidos (🔒).
+            <b className="text-rose-100"> Violência/assédio:</b> tolerância zero — qualquer score ≥ 1,5 já dispara plano de ação (NR-01 + ISO 45003).
+          </section>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+/* Status textual + cor por média, com regra especial para violência/assédio */
+function statusPorMedia(m: number, dimensao: string): { label: string; desc: string; cor: string } {
+  if (dimensao === "violencia_assedio" && m >= 1.5) {
+    return { label: "ALERTA", desc: "tolerância zero (ISO 45003)", cor: "bg-rose-600" };
+  }
+  if (m <= 2.4) return { label: "Baixo", desc: "dimensão saudável", cor: "bg-emerald-500" };
+  if (m <= 3.4) return { label: "Médio", desc: "atenção, monitorar", cor: "bg-amber-600" };
+  return { label: "Alto", desc: "plano de ação obrigatório", cor: "bg-rose-600" };
 }
 
 /* ============ 4. INSTRUMENTO (preview do questionário) ============ */
@@ -796,14 +898,6 @@ function statusColor(s: string) {
     case "CANCELADA": return "bg-rose-500/20 text-rose-200 border-rose-500/30";
     default: return "bg-amber-500/20 text-amber-200 border-amber-500/30";
   }
-}
-
-function corPorMedia(m: number) {
-  if (m < 2) return "bg-rose-500";
-  if (m < 2.75) return "bg-lime-500";
-  if (m < 3.5) return "bg-amber-500";
-  if (m < 4.25) return "bg-orange-500";
-  return "bg-rose-600";
 }
 
 function randomToken() {
