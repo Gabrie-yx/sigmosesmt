@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Brain, Plus, Copy, Loader2, AlertTriangle, ShieldCheck, Users, BarChart3, ListChecks, ClipboardList, Pencil, Trash2, Check, ChevronDown, X, HelpCircle } from "lucide-react";
+import { FileText } from "lucide-react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -22,6 +23,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { DIMENSAO_LABEL, PSICO_ITEMS } from "@/lib/psico-instrument";
+import { gerarParecerPsicossocialPdf } from "@/lib/psico-parecer-pdf";
 
 export const Route = createFileRoute("/app/psicossocial")({
   component: PsicossocialPage,
@@ -625,7 +627,7 @@ function DiagnosticoTab() {
   const { data: campanhas } = useQuery({
     queryKey: ["psico-campanhas-diag"],
     queryFn: async () => {
-      const { data } = await sb.from("psico_campanhas").select("id, titulo, min_respondentes").order("created_at", { ascending: false });
+      const { data } = await sb.from("psico_campanhas").select("*").order("created_at", { ascending: false });
       return (data ?? []) as any[];
     },
   });
@@ -643,6 +645,50 @@ function DiagnosticoTab() {
     enabled: !!campanhaId,
   });
 
+  const { data: ghes } = useQuery({
+    queryKey: ["pgr-ghe-diag"],
+    queryFn: async () => {
+      const { data } = await sb.from("pgr_ghe").select("id, numero, setor").order("numero");
+      return (data ?? []) as any[];
+    },
+  });
+
+  const { data: planoAcao } = useQuery({
+    queryKey: ["pgr-plano-acao-diag"],
+    queryFn: async () => {
+      const { data } = await sb.from("pgr_plano_acao").select("o_que, por_que, onde, quem, quando, como, status").order("quando", { ascending: true });
+      return (data ?? []) as any[];
+    },
+  });
+
+  const campanhaSel = (campanhas ?? []).find((c: any) => c.id === campanhaId);
+
+  function baixarParecer() {
+    if (!campanhaSel) return;
+    try {
+      const doc = gerarParecerPsicossocialPdf({
+        campanha: {
+          titulo: campanhaSel.titulo,
+          descricao: campanhaSel.descricao,
+          data_inicio: campanhaSel.data_inicio,
+          data_fim: campanhaSel.data_fim,
+          min_respondentes: campanhaSel.min_respondentes ?? 5,
+          total_tokens: campanhaSel.total_tokens ?? 0,
+          total_respostas: campanhaSel.total_respostas ?? 0,
+        },
+        agregado: (agregado ?? []) as any,
+        ghes: (ghes ?? []) as any,
+        planoAcao: (planoAcao ?? []) as any,
+        signatarios: { tst: "Técnico de Segurança do Trabalho", supervisor: "Anderson — Supervisor Geral" },
+      });
+      const stamp = new Date().toISOString().slice(0, 10);
+      doc.save(`Parecer-Psicossocial-${stamp}.pdf`);
+      toast.success("Parecer técnico gerado.");
+    } catch (e: any) {
+      toast.error("Falha ao gerar PDF: " + (e?.message ?? "erro"));
+    }
+  }
+
   return (
     <div className="space-y-3">
       <Card className="p-4 flex items-center gap-3 border-rose-500/20 bg-gradient-to-br from-rose-950/40 to-slate-950/60">
@@ -653,16 +699,26 @@ function DiagnosticoTab() {
         </p>
       </Card>
 
-      <div className="max-w-md">
-        <Label>Selecione a campanha</Label>
-        <Select value={campanhaId} onValueChange={setCampanhaId}>
-          <SelectTrigger><SelectValue placeholder="Escolha uma campanha…" /></SelectTrigger>
-          <SelectContent>
-            {(campanhas ?? []).map((c: any) => (
-              <SelectItem key={c.id} value={c.id}>{c.titulo}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="flex items-end gap-3 flex-wrap">
+        <div className="max-w-md flex-1 min-w-[240px]">
+          <Label>Selecione a campanha</Label>
+          <Select value={campanhaId} onValueChange={setCampanhaId}>
+            <SelectTrigger><SelectValue placeholder="Escolha uma campanha…" /></SelectTrigger>
+            <SelectContent>
+              {(campanhas ?? []).map((c: any) => (
+                <SelectItem key={c.id} value={c.id}>{c.titulo}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <Button
+          className="bg-rose-600 hover:bg-rose-700 text-white"
+          disabled={!campanhaId || !(agregado && agregado.length > 0)}
+          onClick={baixarParecer}
+          title="Gerar Parecer Técnico (PDF) NR-01 / ISO 45003"
+        >
+          <FileText className="h-4 w-4 mr-1" /> Parecer Técnico (PDF)
+        </Button>
       </div>
 
       {campanhaId && agregado && agregado.length === 0 && (
