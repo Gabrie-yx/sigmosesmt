@@ -56,6 +56,7 @@ import { Route as AppEstoqueIndexRouteImport } from './routes/app.estoque.index'
 import { Route as AppEmployeesIndexRouteImport } from './routes/app.employees.index'
 import { Route as AppDdsIndexRouteImport } from './routes/app.dds.index'
 import { Route as AppCalIndexRouteImport } from './routes/app.cal.index'
+import { Route as AppSesmtVincularUsuariosRouteImport } from './routes/app.sesmt.vincular-usuarios'
 import { Route as AppSesmtTerceirosRouteImport } from './routes/app.sesmt.terceiros'
 import { Route as AppSesmtTemplatesDocumentosRouteImport } from './routes/app.sesmt.templates-documentos'
 import { Route as AppSesmtRequisicoesRouteImport } from './routes/app.sesmt.requisicoes'
@@ -366,6 +367,12 @@ const AppCalIndexRoute = AppCalIndexRouteImport.update({
   path: '/cal/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSesmtVincularUsuariosRoute =
+  AppSesmtVincularUsuariosRouteImport.update({
+    id: '/sesmt/vincular-usuarios',
+    path: '/sesmt/vincular-usuarios',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppSesmtTerceirosRoute = AppSesmtTerceirosRouteImport.update({
   id: '/sesmt/terceiros',
   path: '/sesmt/terceiros',
@@ -842,6 +849,7 @@ export interface FileRoutesByFullPath {
   '/app/sesmt/requisicoes': typeof AppSesmtRequisicoesRoute
   '/app/sesmt/templates-documentos': typeof AppSesmtTemplatesDocumentosRoute
   '/app/sesmt/terceiros': typeof AppSesmtTerceirosRoute
+  '/app/sesmt/vincular-usuarios': typeof AppSesmtVincularUsuariosRoute
   '/app/cal/': typeof AppCalIndexRoute
   '/app/dds/': typeof AppDdsIndexRoute
   '/app/employees/': typeof AppEmployeesIndexRoute
@@ -958,6 +966,7 @@ export interface FileRoutesByTo {
   '/app/sesmt/requisicoes': typeof AppSesmtRequisicoesRoute
   '/app/sesmt/templates-documentos': typeof AppSesmtTemplatesDocumentosRoute
   '/app/sesmt/terceiros': typeof AppSesmtTerceirosRoute
+  '/app/sesmt/vincular-usuarios': typeof AppSesmtVincularUsuariosRoute
   '/app/cal': typeof AppCalIndexRoute
   '/app/dds': typeof AppDdsIndexRoute
   '/app/employees': typeof AppEmployeesIndexRoute
@@ -1079,6 +1088,7 @@ export interface FileRoutesById {
   '/app/sesmt/requisicoes': typeof AppSesmtRequisicoesRoute
   '/app/sesmt/templates-documentos': typeof AppSesmtTemplatesDocumentosRoute
   '/app/sesmt/terceiros': typeof AppSesmtTerceirosRoute
+  '/app/sesmt/vincular-usuarios': typeof AppSesmtVincularUsuariosRoute
   '/app/cal/': typeof AppCalIndexRoute
   '/app/dds/': typeof AppDdsIndexRoute
   '/app/employees/': typeof AppEmployeesIndexRoute
@@ -1201,6 +1211,7 @@ export interface FileRouteTypes {
     | '/app/sesmt/requisicoes'
     | '/app/sesmt/templates-documentos'
     | '/app/sesmt/terceiros'
+    | '/app/sesmt/vincular-usuarios'
     | '/app/cal/'
     | '/app/dds/'
     | '/app/employees/'
@@ -1317,6 +1328,7 @@ export interface FileRouteTypes {
     | '/app/sesmt/requisicoes'
     | '/app/sesmt/templates-documentos'
     | '/app/sesmt/terceiros'
+    | '/app/sesmt/vincular-usuarios'
     | '/app/cal'
     | '/app/dds'
     | '/app/employees'
@@ -1437,6 +1449,7 @@ export interface FileRouteTypes {
     | '/app/sesmt/requisicoes'
     | '/app/sesmt/templates-documentos'
     | '/app/sesmt/terceiros'
+    | '/app/sesmt/vincular-usuarios'
     | '/app/cal/'
     | '/app/dds/'
     | '/app/employees/'
@@ -1810,6 +1823,13 @@ declare module '@tanstack/react-router' {
       path: '/cal'
       fullPath: '/app/cal/'
       preLoaderRoute: typeof AppCalIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/sesmt/vincular-usuarios': {
+      id: '/app/sesmt/vincular-usuarios'
+      path: '/sesmt/vincular-usuarios'
+      fullPath: '/app/sesmt/vincular-usuarios'
+      preLoaderRoute: typeof AppSesmtVincularUsuariosRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/sesmt/terceiros': {
@@ -2482,6 +2502,7 @@ interface AppRouteChildren {
   AppSesmtRequisicoesRoute: typeof AppSesmtRequisicoesRoute
   AppSesmtTemplatesDocumentosRoute: typeof AppSesmtTemplatesDocumentosRoute
   AppSesmtTerceirosRoute: typeof AppSesmtTerceirosRoute
+  AppSesmtVincularUsuariosRoute: typeof AppSesmtVincularUsuariosRoute
   AppCalIndexRoute: typeof AppCalIndexRoute
   AppDdsIndexRoute: typeof AppDdsIndexRoute
   AppEstoqueIndexRoute: typeof AppEstoqueIndexRoute
@@ -2573,6 +2594,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSesmtRequisicoesRoute: AppSesmtRequisicoesRoute,
   AppSesmtTemplatesDocumentosRoute: AppSesmtTemplatesDocumentosRoute,
   AppSesmtTerceirosRoute: AppSesmtTerceirosRoute,
+  AppSesmtVincularUsuariosRoute: AppSesmtVincularUsuariosRoute,
   AppCalIndexRoute: AppCalIndexRoute,
   AppDdsIndexRoute: AppDdsIndexRoute,
   AppEstoqueIndexRoute: AppEstoqueIndexRoute,

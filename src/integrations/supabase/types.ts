@@ -4490,6 +4490,7 @@ export type Database = {
           titulo: string | null
           uf: string | null
           updated_at: string
+          user_id: string | null
           whatsapp: string | null
           whatsapp_emergencia: string | null
         }
@@ -4543,6 +4544,7 @@ export type Database = {
           titulo?: string | null
           uf?: string | null
           updated_at?: string
+          user_id?: string | null
           whatsapp?: string | null
           whatsapp_emergencia?: string | null
         }
@@ -4596,6 +4598,7 @@ export type Database = {
           titulo?: string | null
           uf?: string | null
           updated_at?: string
+          user_id?: string | null
           whatsapp?: string | null
           whatsapp_emergencia?: string | null
         }
