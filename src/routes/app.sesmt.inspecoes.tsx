@@ -156,7 +156,13 @@ function InspecoesList() {
             <p className="text-xs text-slate-500">Registro rastreável de inspeções, NCs e planos de ação (PDCA)</p>
           </div>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <div className="flex items-center gap-2">
+          {canDelete && (
+            <Button asChild size="sm" variant="outline" className="gap-1 h-9 text-xs">
+              <Link to="/app/sesmt/vincular-usuarios">Vincular usuários</Link>
+            </Button>
+          )}
+          <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button size="sm" className="gap-1"><Plus className="h-4 w-4" /> Nova inspeção</Button>
           </DialogTrigger>
@@ -236,7 +242,8 @@ function InspecoesList() {
               <Button onClick={() => criar.mutate()} disabled={criar.isPending}>Criar e abrir</Button>
             </DialogFooter>
           </DialogContent>
-        </Dialog>
+          </Dialog>
+        </div>
       </div>
 
       <Card>
