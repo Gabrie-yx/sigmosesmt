@@ -29,6 +29,7 @@ export const MENU_CATALOG: MenuEntry[] = [
   { key: "/app/trainings", label: "Treinamentos & NRs", module: "sesmt" },
   { key: "/app/sesmt/integracoes", label: "Integrações NR-01", module: "sesmt" },
   { key: "/app/sesmt/equipamentos-moveis", label: "Checklist de Equipamentos", module: "sesmt" },
+  { key: "/app/sesmt/inspecoes", label: "Inspeções de Segurança", module: "sesmt" },
   { key: "/app/sesmt/terceiros", label: "Painel de Terceiros", module: "sesmt" },
   { key: "/app/relatorios/reincidencia-epi", label: "Reincidência de EPI", module: "sesmt" },
   { key: "/app/ncs", label: "Não Conformidades", module: "sesmt" },
