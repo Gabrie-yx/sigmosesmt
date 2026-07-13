@@ -1340,14 +1340,14 @@ function EntregasFichaReport() {
   const { data: roles = [] } = useQuery({
     queryKey: ["roles_simple"],
     queryFn: async () => {
-      const { data } = await (supabase as any).from("roles").select("id, nome");
+      const { data } = await (supabase as any).from("roles").select("id, nome:name");
       return (data ?? []) as { id: string; nome: string }[];
     },
   });
   const { data: companies = [] } = useQuery({
     queryKey: ["companies_simple"],
     queryFn: async () => {
-      const { data } = await (supabase as any).from("companies").select("id, nome");
+      const { data } = await (supabase as any).from("companies").select("id, nome:name");
       return (data ?? []) as { id: string; nome: string }[];
     },
   });
