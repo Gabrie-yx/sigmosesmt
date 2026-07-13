@@ -307,8 +307,8 @@ function InspecoesList() {
                   </div>
                 </div>
                 {n.link && (
-                  <Button asChild size="sm" variant="outline" className="h-7 text-[11px]">
-                    <Link to={n.link}>Abrir</Link>
+                  <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => navigate({ to: n.link })}>
+                    Abrir
                   </Button>
                 )}
                 <Button size="icon" variant="ghost" className="h-7 w-7 text-emerald-700" title="Marcar como lida" onClick={() => marcarLida.mutate(n.id)}>
