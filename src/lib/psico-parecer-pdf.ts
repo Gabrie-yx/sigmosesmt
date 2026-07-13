@@ -170,11 +170,11 @@ export function gerarParecerPsicossocialPdf(opts: ParecerPsicoOpts): jsPDF {
     headStyles: { fillColor: [15, 23, 42], textColor: 255, fontStyle: "bold", fontSize: 8.5 },
     columnStyles: {
       0: { cellWidth: 10, halign: "center" },
-      1: { cellWidth: 30 },
-      2: { cellWidth: 55 },
-      3: { cellWidth: 18, halign: "center" },
-      4: { cellWidth: 22, halign: "center" },
-      5: { cellWidth: 22, halign: "center" },
+      1: { cellWidth: 52 },
+      2: { cellWidth: 60 },
+      3: { cellWidth: 16, halign: "center" },
+      4: { cellWidth: 12, halign: "center" },
+      5: { cellWidth: 26, halign: "center" },
     },
     head: [["#", "GHE", "Dimensão", "Média", "n", "Nível"]],
     body: ranking.map((r, i) => {
@@ -232,12 +232,12 @@ export function gerarParecerPsicossocialPdf(opts: ParecerPsicoOpts): jsPDF {
       styles: { fontSize: 8, cellPadding: 1.6, lineColor: [203, 213, 225], lineWidth: 0.2, valign: "top", overflow: "linebreak" },
       headStyles: { fillColor: [15, 23, 42], textColor: 255, fontStyle: "bold", fontSize: 8 },
       columnStyles: {
-        0: { cellWidth: 42 }, // o quê
-        1: { cellWidth: 35 }, // por quê
-        2: { cellWidth: 25 }, // onde
-        3: { cellWidth: 25 }, // quem
+        0: { cellWidth: 44 }, // o quê
+        1: { cellWidth: 34 }, // por quê
+        2: { cellWidth: 26 }, // onde
+        3: { cellWidth: 28 }, // quem
         4: { cellWidth: 18, halign: "center" }, // quando
-        5: { cellWidth: 22, halign: "center" }, // status
+        5: { cellWidth: 32, halign: "center" }, // status
       },
       head: [["O quê", "Por quê", "Onde", "Quem", "Quando", "Status"]],
       body: opts.planoAcao.map((p) => [
@@ -246,7 +246,7 @@ export function gerarParecerPsicossocialPdf(opts: ParecerPsicoOpts): jsPDF {
         p.onde ?? "—",
         p.quem ?? "—",
         p.quando ? fmtBR(p.quando) : "—",
-        p.status ?? "PENDENTE",
+        formatStatus(p.status),
       ]),
     });
     y = (doc as any).lastAutoTable.finalY + 6;
@@ -272,7 +272,7 @@ export function gerarParecerPsicossocialPdf(opts: ParecerPsicoOpts): jsPDF {
   const sup = opts.signatarios?.supervisor ?? "Anderson — Supervisor Geral";
   const gap = 12;
   const colW = (W - M * 2 - gap) / 2;
-  const sigBoxH = 26;            // altura da área da assinatura (imagem)
+  const sigBoxH = 20;            // altura da área da assinatura (imagem)
   const sigTop = y + 6;
   const lineY = sigTop + sigBoxH;
 
@@ -280,9 +280,16 @@ export function gerarParecerPsicossocialPdf(opts: ParecerPsicoOpts): jsPDF {
   const stampSig = (dataUrl: string | null | undefined, x: number) => {
     if (!dataUrl) return;
     try {
-      const maxW = colW - 8;
+      // Preserva aspecto — evita assinatura esticada/gigante.
+      const props = doc.getImageProperties(dataUrl);
+      const maxW = Math.min(colW - 20, 55); // limita largura absoluta
       const maxH = sigBoxH - 2;
-      doc.addImage(dataUrl, "PNG", x + (colW - maxW) / 2, sigTop, maxW, maxH, undefined, "FAST");
+      const ratio = Math.min(maxW / props.width, maxH / props.height);
+      const w = props.width * ratio;
+      const h = props.height * ratio;
+      const cx = x + (colW - w) / 2;
+      const cy = sigTop + (sigBoxH - h); // apoia acima da linha
+      doc.addImage(dataUrl, "PNG", cx, cy, w, h, undefined, "FAST");
     } catch {
       /* ignore image errors */
     }
@@ -498,6 +505,12 @@ function bullet(doc: jsPDF, texto: string, y: number): number {
 
 function truncate(s: string, n: number): string {
   return s.length > n ? s.slice(0, n - 1) + "…" : s;
+}
+
+function formatStatus(s: string | null | undefined): string {
+  if (!s) return "Pendente";
+  const t = s.replace(/_/g, " ").toLowerCase();
+  return t.charAt(0).toUpperCase() + t.slice(1);
 }
 
 function fmtBR(d: string): string {
