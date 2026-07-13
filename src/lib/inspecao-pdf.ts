@@ -283,5 +283,6 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput) {
     doc.text(`${i} / ${pages}`, W - M, H - 6, { align: "right" });
   }
 
-  printPdf(doc, `inspecao-${inspecao.local_descricao.replace(/\s+/g, "-").toLowerCase()}-${inspecao.data_inspecao}.pdf`);
+  const blob = doc.output("blob");
+  await printPdf(blob, `inspecao-${inspecao.local_descricao.replace(/\s+/g, "-").toLowerCase()}-${inspecao.data_inspecao}.pdf`);
 }
