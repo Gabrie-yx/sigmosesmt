@@ -403,18 +403,74 @@ function InspecaoDetail() {
         </CardContent>
       </Card>
 
-      {/* TUTORIAL — como usar */}
-      <details className="rounded-lg border border-emerald-200 bg-emerald-50/60 group">
+      {/* TUTORIAL — como usar (passo a passo detalhado, aberto por padrão) */}
+      <details open className="rounded-lg border border-emerald-200 bg-emerald-50/60 group">
         <summary className="cursor-pointer list-none px-3 py-2 flex items-center gap-2 text-xs font-black uppercase tracking-wide text-emerald-900">
-          <Info className="h-4 w-4" /> Como usar esta inspeção (passo a passo)
+          <Info className="h-4 w-4" /> Como usar esta inspeção — tutorial passo a passo
           <span className="ml-auto text-[10px] font-normal text-emerald-700 group-open:hidden">clique para abrir</span>
+          <span className="ml-auto text-[10px] font-normal text-emerald-700 hidden group-open:inline">clique para recolher</span>
         </summary>
-        <div className="px-4 pb-3 text-[12px] text-slate-700 space-y-2 leading-relaxed">
-          <div><b>1. Anexe fotos (obrigatório).</b> Use <b>Enviar foto</b> pelo laptop ou <b>Tirar foto</b> pelo celular. Cada foto guarda hash, data/hora e GPS quando o navegador permitir — evidência rastreável.</div>
-          <div><b>2. Registrar NC é opcional.</b> Se a área está conforme, você pode publicar direto após as fotos — vai virar um relatório de inspeção <i>sem não conformidades</i>. Só registre NC se realmente encontrou algo fora do padrão (NR + item + matriz 5x5).</div>
-          <div><b>3. Se houver NC, monte o PDCA.</b> Cada NC precisa de pelo menos uma ação com responsável e prazo antes de publicar. O sistema sugere o prazo pela norma.</div>
-          <div><b>4. Publicar.</b> Trava a edição, gera o PDF e alimenta os indicadores. Pode ser reaberta pelo SESMT se precisar corrigir.</div>
-          <div className="text-[11px] text-slate-500 pt-1 border-t border-emerald-200">Regra mínima para publicar: <b>pelo menos 1 foto</b>. Se houver NCs, todas precisam de plano de ação.</div>
+        <div className="px-4 pb-4 pt-1 text-[12px] text-slate-700 space-y-3 leading-relaxed">
+
+          <div className="rounded-md bg-white/70 border border-emerald-200 p-2.5">
+            <div className="font-black text-emerald-900 mb-0.5">Antes de começar</div>
+            <div>Confirme no cabeçalho acima: <b>Empresa</b>, <b>Área</b>, <b>Escopo</b> e <b>Participantes</b>. Isso vai pro PDF e pros indicadores — inspeção sem contexto não vira histórico útil.</div>
+          </div>
+
+          <div>
+            <div className="font-black text-emerald-900">Passo 1 — Anexar fotos (obrigatório)</div>
+            <ul className="list-disc pl-5 mt-1 space-y-0.5">
+              <li><b>Celular:</b> toque em <b>Tirar foto</b> na seção “Evidências fotográficas”. Autorize câmera e localização no navegador (o GPS entra na evidência).</li>
+              <li><b>Laptop:</b> use <b>Enviar foto</b> e selecione arquivos JPG/PNG/HEIC do computador. Pode enviar várias de uma vez.</li>
+              <li>Cada foto grava <b>hash SHA-256, data/hora e GPS</b> — dá pra provar autenticidade depois.</li>
+              <li>Pelo menos <b>1 foto</b> é obrigatório pra publicar. Sem foto, sem inspeção.</li>
+            </ul>
+          </div>
+
+          <div>
+            <div className="font-black text-emerald-900">Passo 2 — Achou algo fora do padrão? (opcional)</div>
+            <ul className="list-disc pl-5 mt-1 space-y-0.5">
+              <li>Se a área está <b>conforme</b>, pule direto pro Passo 4. Vai virar relatório <i>sem não conformidades</i> — é normal e desejável.</li>
+              <li>Se achou algo, clique em <b>Nova NC</b> e preencha:
+                <ul className="list-[circle] pl-5 mt-0.5">
+                  <li><b>Descrição</b> objetiva do desvio (o que, onde).</li>
+                  <li><b>NR + item</b> descumprido (ex.: NR-06 6.7.1).</li>
+                  <li><b>Severidade × Probabilidade</b> (matriz 5×5) — o sistema calcula o risco.</li>
+                  <li>Anexe as fotos específicas do achado (opcional, mas ajuda).</li>
+                </ul>
+              </li>
+              <li>Cada NC vira uma <b>TNC-###/AAAA</b> numerada automaticamente ao publicar.</li>
+            </ul>
+          </div>
+
+          <div>
+            <div className="font-black text-emerald-900">Passo 3 — Plano de ação PDCA (só se tiver NC)</div>
+            <ul className="list-disc pl-5 mt-1 space-y-0.5">
+              <li>Em cada NC, clique <b>Adicionar ação</b>. Preencha:
+                <ul className="list-[circle] pl-5 mt-0.5">
+                  <li><b>O quê</b> — ação corretiva (verbo no infinitivo: “substituir”, “treinar”, “isolar”).</li>
+                  <li><b>Responsável</b> — funcionário ativo da empresa (o modal lista todos).</li>
+                  <li><b>Prazo</b> — o sistema sugere pela norma/risco, mas você pode ajustar.</li>
+                </ul>
+              </li>
+              <li><b>Regra:</b> toda NC precisa de <b>pelo menos 1 ação</b> antes de publicar. Sem PDCA, o botão Publicar trava.</li>
+              <li>Ao publicar, o plano cai no módulo <b>Ações</b> e o responsável recebe notificação.</li>
+            </ul>
+          </div>
+
+          <div>
+            <div className="font-black text-emerald-900">Passo 4 — Publicar</div>
+            <ul className="list-disc pl-5 mt-1 space-y-0.5">
+              <li>Clique em <b>Publicar inspeção</b> (topo direito). O sistema valida foto + PDCA das NCs.</li>
+              <li>Publicação: <b>trava edição</b>, gera <b>PDF</b>, alimenta <b>indicadores</b> e cria as <b>TNCs</b> numeradas.</li>
+              <li>Precisou corrigir? SESMT pode <b>reabrir</b> a inspeção — histórico fica auditado.</li>
+            </ul>
+          </div>
+
+          <div className="rounded-md bg-amber-50 border border-amber-200 p-2.5 text-amber-900">
+            <div className="font-black mb-0.5">Resumo das regras</div>
+            <div>✅ Mínimo pra publicar: <b>1 foto</b>. &nbsp; ✅ Se tem NC → cada uma precisa de <b>ação (responsável + prazo)</b>. &nbsp; ✅ Sem NC = inspeção conforme, publica normal.</div>
+          </div>
         </div>
       </details>
 
