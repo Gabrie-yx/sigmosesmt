@@ -90,6 +90,7 @@ function InspecaoDetail() {
   const qc = useQueryClient();
   const canManage = roles?.some((r) => r === "admin" || r === "tst");
   const [blockMsg, setBlockMsg] = useState<string | null>(null);
+  const [ncParaExcluir, setNcParaExcluir] = useState<string | null>(null);
 
   const { data: insp, isLoading } = useQuery({
     queryKey: ["inspecao", id],
@@ -535,7 +536,7 @@ function InspecaoDetail() {
                           trigger={<Button size="icon" variant="ghost" className="h-7 w-7"><Pencil className="h-3.5 w-3.5" /></Button>}
                         />
                         <Button size="icon" variant="ghost" className="h-7 w-7 text-red-500 hover:text-red-400"
-                          onClick={() => { if (confirm("Excluir esta NC e seus planos?")) removerNc.mutate(nc.id); }}>
+                          onClick={() => setNcParaExcluir(nc.id)}>
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       </div>
@@ -588,6 +589,26 @@ function InspecaoDetail() {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogAction onClick={() => setBlockMsg(null)}>Entendi</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    <AlertDialog open={!!ncParaExcluir} onOpenChange={(o) => !o && setNcParaExcluir(null)}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2"><Trash2 className="h-5 w-5 text-red-500" /> Excluir não conformidade</AlertDialogTitle>
+          <AlertDialogDescription>
+            Esta ação remove a NC e todos os planos de ação vinculados a ela. Não é possível desfazer.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <Button variant="outline" onClick={() => setNcParaExcluir(null)}>Cancelar</Button>
+          <AlertDialogAction
+            className="bg-red-600 hover:bg-red-500 text-white"
+            onClick={() => { if (ncParaExcluir) { removerNc.mutate(ncParaExcluir); setNcParaExcluir(null); } }}
+          >
+            Excluir
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
