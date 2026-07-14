@@ -314,7 +314,7 @@ function InspecaoDetail() {
             norma: n.nr_codigo,
             requisito: n.nr_item ?? null,
             acao_imediata: n.recomendacao ?? null,
-            emitente: user?.email ?? null,
+            emitente: meuProfile?.full_name ?? null,
             departamento: "SESMT",
             created_by: user?.id ?? null,
             pendencia_origem: `inspecao_nc:${n.id}`,

@@ -99,17 +99,37 @@ export function AnalisarFotosIA({ inspecaoId, temFotos, disabled }: { inspecaoId
         recomendacao: n.recomendacao || null,
         criada_por: user.id,
       }));
-      const { data: criadas, error } = await supabase.from("inspecao_ncs").insert(rows).select("id");
+      const { data: criadas, error } = await supabase.from("inspecao_ncs").insert(rows).select("id, descricao");
       if (error) throw error;
-      const planos = (criadas ?? []).map((nc: any, idx: number) => montarPlanoSugerido(selecionadas[idx], nc.id, user.id));
+      // Map defensivo por descrição (única no lote da IA) em vez de índice.
+      const porDesc = new Map<string, string>();
+      (criadas ?? []).forEach((c: any) => porDesc.set(c.descricao, c.id));
+      const planos = selecionadas
+        .map((n) => {
+          const ncId = porDesc.get(n.descricao);
+          return ncId ? montarPlanoSugerido(n, ncId, user.id) : null;
+        })
+        .filter(Boolean);
+      let planosCriados = 0;
+      let planoErr: string | null = null;
       if (planos.length) {
-        const { error: planoError } = await supabase.from("inspecao_ncs_planos").insert(planos as any);
-        if (planoError) throw planoError;
+        const { error: planoError, count } = await supabase
+          .from("inspecao_ncs_planos")
+          .insert(planos as any, { count: "exact" });
+        if (planoError) planoErr = planoError.message;
+        else planosCriados = count ?? planos.length;
       }
-      return rows.length;
+      return { ncs: rows.length, planos: planosCriados, planoErr };
     },
-    onSuccess: (n) => {
-      toast.success(`${n} NC(s) criada(s) com 5W2H sugerido`);
+    onSuccess: (r) => {
+      if (r.planoErr) {
+        toast.warning(
+          `${r.ncs} NC(s) criada(s), mas o 5W2H automático falhou: ${r.planoErr}. Abra cada NC e clique em "Criar 5W2H automático".`,
+          { duration: 8000 },
+        );
+      } else {
+        toast.success(`${r.ncs} NC(s) criada(s) com ${r.planos} plano(s) 5W2H sugerido(s)`);
+      }
       qc.invalidateQueries({ queryKey: ["inspecao-ncs", inspecaoId] });
       qc.invalidateQueries({ queryKey: ["inspecao-planos-resumo"] });
       setOpen(false);
