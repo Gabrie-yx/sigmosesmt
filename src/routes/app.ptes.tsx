@@ -101,6 +101,18 @@ function PtesPage() {
     equipe_lista: [] as { nome: string; funcao: string }[],
     assinatura_encarregado_nome: "",
     assinatura_gerente_nome: "",
+    // FOR-SEG-04 — Blindagens (7 pontos): parecer TST × clima, rigging, PTEs irmãs
+    parecer_tst_clima: "" as string,
+    rigging: {
+      guindaste: "",
+      moitão: "",
+      peso_kg: "",
+      raio_m: "",
+      angulo_graus: "",
+      capacidade_kg: "",
+      art_numero: "",
+    } as Record<string, string>,
+    pts_relacionadas: [] as string[],
   };
   const [f, setF] = useState<any>(emptyForm);
 
@@ -386,18 +398,41 @@ function PtesPage() {
         equipe_lista: (f.equipe_lista ?? []).filter((r: any) => r && (r.nome?.trim() || r.funcao?.trim())),
         assinatura_encarregado_nome: (f.assinatura_encarregado_nome ?? "").trim() || null,
         assinatura_gerente_nome: (f.assinatura_gerente_nome ?? "").trim() || null,
+        parecer_tst_clima: (f.parecer_tst_clima ?? "").trim() || null,
+        rigging: (f.atv_movimentacao_cargas || f.tipo_pt === "PTI") ? {
+          guindaste: (f.rigging?.guindaste ?? "").trim() || null,
+          moitao: (f.rigging?.moitão ?? "").trim() || null,
+          peso_kg: f.rigging?.peso_kg ? Number(f.rigging.peso_kg) : null,
+          raio_m: f.rigging?.raio_m ? Number(f.rigging.raio_m) : null,
+          angulo_graus: f.rigging?.angulo_graus ? Number(f.rigging.angulo_graus) : null,
+          capacidade_kg: f.rigging?.capacidade_kg ? Number(f.rigging.capacidade_kg) : null,
+          art_numero: (f.rigging?.art_numero ?? "").trim() || null,
+        } : null,
       };
 
       if (editingId) {
         // Reemissão: ao atualizar, considera como nova emissão (zera o "envelhecimento" de 7 dias)
         const { error } = await supabase
           .from("ptes")
-          .update({ ...commonPayload, data_emissao: new Date().toISOString(), dados: dadosPdf })
+          .update({ ...commonPayload, data_emissao: new Date().toISOString(), dados: dadosPdf, pts_relacionadas: f.pts_relacionadas ?? [] })
           .eq("id", editingId);
         if (error) throw error;
       } else {
-        const numero = `${f.tipo_pt}-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000 + 1000)}`;
-        const { error } = await supabase.from("ptes").insert({ ...commonPayload, numero, status: "ATIVA", dados: dadosPdf });
+        // Numeração sequencial atômica por tipo/ano (RPC proximo_numero_pte)
+        const anoAtual = new Date().getFullYear();
+        const { data: numeroRpc, error: nErr } = await supabase.rpc(
+          "proximo_numero_pte" as any,
+          { _tipo: f.tipo_pt, _ano: anoAtual } as any,
+        );
+        if (nErr) throw nErr;
+        const numero = String(numeroRpc ?? `${f.tipo_pt}-${anoAtual}-0000`);
+        const { error } = await supabase.from("ptes").insert({
+          ...commonPayload,
+          numero,
+          status: "ATIVA",
+          dados: dadosPdf,
+          pts_relacionadas: f.pts_relacionadas ?? [],
+        });
         if (error) throw error;
       }
     },
