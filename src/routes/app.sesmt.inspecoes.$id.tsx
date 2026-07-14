@@ -1235,16 +1235,30 @@ function NcPlanos({ ncId, editable, empresaId, prazoSugerido, classeRisco }: { n
             </div>
             <div>
               <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Quem · <span className="text-primary">Who</span></Label>
-              <Select value={form.respId} onValueChange={(v) => setForm((f) => ({ ...f, respId: v }))}>
-                <SelectTrigger className="h-8 text-xs w-full min-w-0"><SelectValue placeholder="Responsável" /></SelectTrigger>
-                <SelectContent position="popper" className="max-h-60 z-[100]">
-                  {empregados.length === 0 ? (
-                    <div className="px-2 py-1.5 text-xs text-muted-foreground">Sem funcionários ativos.</div>
-                  ) : (
-                    empregados.map((e: any) => (<SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>))
-                  )}
-                </SelectContent>
-              </Select>
+              {respModo === "select" ? (
+                <>
+                  <Select value={form.respId} onValueChange={(v) => setForm((f) => ({ ...f, respId: v, respNome: "" }))}>
+                    <SelectTrigger className="h-8 text-xs w-full min-w-0"><SelectValue placeholder="Responsável" /></SelectTrigger>
+                    <SelectContent position="popper" className="max-h-60 z-[100]">
+                      {empregados.length === 0 ? (
+                        <div className="px-2 py-1.5 text-xs text-muted-foreground">Sem funcionários ativos.</div>
+                      ) : (
+                        empregados.map((e: any) => (<SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>))
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <button type="button" className="text-[10px] text-primary underline mt-0.5" onClick={() => { setRespModo("livre"); setForm((f) => ({ ...f, respId: "" })); }}>
+                    Digitar nome livre (terceiro, encarregado, SESMT...)
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Input placeholder="Ex.: João Silva — Encarregado" value={form.respNome} onChange={(e) => setForm((f) => ({ ...f, respNome: e.target.value }))} className="h-8 text-xs" />
+                  <button type="button" className="text-[10px] text-primary underline mt-0.5" onClick={() => { setRespModo("select"); setForm((f) => ({ ...f, respNome: "" })); }}>
+                    Voltar para lista de funcionários
+                  </button>
+                </>
+              )}
             </div>
           </div>
           <div>
@@ -1255,6 +1269,15 @@ function NcPlanos({ ncId, editable, empresaId, prazoSugerido, classeRisco }: { n
             <div>
               <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Quando · <span className="text-primary">When</span></Label>
               <Input type="date" value={form.prazo} onChange={(e) => setForm((f) => ({ ...f, prazo: e.target.value }))} className="h-8 text-xs w-full" />
+              {prazoFallback != null && (
+                <button
+                  type="button"
+                  className="text-[10px] text-primary underline mt-0.5"
+                  onClick={() => setForm((f) => ({ ...f, prazo: prazoInicial() }))}
+                >
+                  Aplicar sugerido ({prazoFallback} dia{prazoFallback === 1 ? "" : "s"})
+                </button>
+              )}
             </div>
             <div>
               <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Custo · <span className="text-primary">How much</span></Label>
