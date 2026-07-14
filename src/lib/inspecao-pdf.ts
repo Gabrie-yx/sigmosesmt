@@ -332,35 +332,34 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput): Promise<{ doc: 
         const foto = fotos.find((f: any) => f.id === nc.foto_id);
         if (foto) {
           ensureRoom(doc, y, 65, () => { doc.addPage(); y = M; });
-          const fw = 80, fh = 55;
+          const maxW = 80, maxH = 55;
           const fx = M;
           if (String(foto.storage_path).startsWith("cftv://")) {
+            const fw = maxW, fh = maxH;
             doc.setDrawColor(203, 213, 225).setLineWidth(0.2);
             doc.rect(fx, y, fw, fh);
             doc.setFont("helvetica", "bold").setFontSize(9).setTextColor(80);
             doc.text("CFTV", fx + fw / 2, y + fh / 2, { align: "center" });
+            renderFotoMeta(doc, foto, fx + fw + 4, y, W - (fx + fw + 4) - M);
+            y += fh + 6;
           } else {
             const dUrl = await getFotoDataUrl(foto);
+            let fw = maxW, fh = maxH;
             if (dUrl) {
+              const dims = await imgNaturalDims(dUrl);
+              if (dims && dims.w > 0 && dims.h > 0) {
+                const r = dims.w / dims.h;
+                if (maxW / r <= maxH) { fw = maxW; fh = maxW / r; }
+                else { fh = maxH; fw = maxH * r; }
+              }
               try {
                 const fmt = dUrl.includes("image/png") ? "PNG" : "JPEG";
                 doc.addImage(dUrl, fmt, fx, y, fw, fh, undefined, "FAST");
               } catch {}
             }
+            renderFotoMeta(doc, foto, fx + fw + 4, y, W - (fx + fw + 4) - M);
+            y += fh + 6;
           }
-          doc.setFont("helvetica", "normal").setFontSize(7).setTextColor(71, 85, 105);
-          const meta = [
-            `Hash: ${String(foto.hash_sha256 ?? "").slice(0, 16)}`,
-            foto.timestamp_captura ? brDateTime(foto.timestamp_captura) : "sem timestamp",
-            foto.gps_lat && foto.gps_lng ? `GPS ${Number(foto.gps_lat).toFixed(5)}, ${Number(foto.gps_lng).toFixed(5)}` : "",
-          ].filter(Boolean).join(" · ");
-          const metaX = fx + fw + 4;
-          doc.setFont("helvetica", "bold").setFontSize(8).setTextColor(15, 23, 42);
-          doc.text("Evidência fotográfica", metaX, y + 4);
-          doc.setFont("helvetica", "normal").setFontSize(7.5).setTextColor(71, 85, 105);
-          const mt = doc.splitTextToSize(meta, W - metaX - M);
-          doc.text(mt, metaX, y + 9);
-          y += fh + 6;
         }
       }
 
