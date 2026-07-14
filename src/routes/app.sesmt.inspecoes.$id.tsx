@@ -611,19 +611,20 @@ function CftvDialog({ onSubmit }: { onSubmit: (p: { url: string; camera: string;
   );
 }
 
-function NcDialog({ inspecaoId, fotos, nrs, rubrica, grauRisco, empresaId }: { inspecaoId: string; fotos: any[]; nrs: any[]; rubrica: any[]; grauRisco: number; empresaId: string | null }) {
+function NcDialog({ inspecaoId, fotos, nrs, rubrica, grauRisco, empresaId, nc, trigger }: { inspecaoId: string; fotos: any[]; nrs: any[]; rubrica: any[]; grauRisco: number; empresaId: string | null; nc?: any; trigger?: React.ReactNode }) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [foto_id, setFotoId] = useState<string>("");
-  const [nr_codigo, setNrCodigo] = useState("");
-  const [nr_item, setNrItem] = useState("");
-  const [catalogo_item_id, setCatalogoItemId] = useState<string>("");
-  const [descricao, setDescricao] = useState("");
-  const [recomendacao, setRecomendacao] = useState("");
-  const [probabilidade, setP] = useState(3);
-  const [severidade, setS] = useState(3);
-  const [gradacao, setGradacao] = useState<string>("I2");
+  const isEdit = !!nc;
+  const [foto_id, setFotoId] = useState<string>(nc?.foto_id ?? "");
+  const [nr_codigo, setNrCodigo] = useState(nc?.nr_codigo ?? "");
+  const [nr_item, setNrItem] = useState(nc?.nr_item ?? "");
+  const [catalogo_item_id, setCatalogoItemId] = useState<string>(nc?.catalogo_item_id ?? "");
+  const [descricao, setDescricao] = useState(nc?.descricao ?? "");
+  const [recomendacao, setRecomendacao] = useState(nc?.recomendacao ?? "");
+  const [probabilidade, setP] = useState<number>(nc?.probabilidade ?? 3);
+  const [severidade, setS] = useState<number>(nc?.severidade ?? 3);
+  const [gradacao, setGradacao] = useState<string>(nc?.gradacao_nr28 ?? "I2");
   const [empregados, setEmpregados] = useState<number>(0);
   const [empregadosManual, setEmpregadosManual] = useState(false);
 
@@ -686,25 +687,37 @@ function NcDialog({ inspecaoId, fotos, nrs, rubrica, grauRisco, empresaId }: { i
       if (!nr_codigo) throw new Error("Selecione a NR");
       if (!catalogo_item_id) throw new Error("Selecione o item oficial da NR");
       if (!descricao.trim()) throw new Error("Descreva a NC");
-      const { error } = await supabase.from("inspecao_ncs").insert({
-        inspecao_id: inspecaoId,
+      const payload = {
         foto_id: foto_id || null,
-        nr_codigo, nr_item: nr_item || null,
+        nr_codigo,
+        nr_item: nr_item || null,
         catalogo_item_id: catalogo_item_id || null,
         descricao: descricao.trim(),
         recomendacao: recomendacao.trim() || null,
-        probabilidade, severidade,
+        probabilidade,
+        severidade,
         gradacao_nr28: gradacao,
         multa_estimada: nr28?.valor_reais ?? null,
-        criada_por: user.id,
-      });
-      if (error) throw error;
+      };
+      if (isEdit) {
+        const { error } = await supabase.from("inspecao_ncs").update(payload).eq("id", nc.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("inspecao_ncs").insert({
+          ...payload,
+          inspecao_id: inspecaoId,
+          criada_por: user.id,
+        });
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
-      toast.success("NC registrada");
+      toast.success(isEdit ? "NC atualizada" : "NC registrada");
       qc.invalidateQueries({ queryKey: ["inspecao-ncs", inspecaoId] });
       setOpen(false);
-      setNrCodigo(""); setNrItem(""); setCatalogoItemId(""); setDescricao(""); setRecomendacao(""); setP(3); setS(3);
+      if (!isEdit) {
+        setNrCodigo(""); setNrItem(""); setCatalogoItemId(""); setDescricao(""); setRecomendacao(""); setP(3); setS(3);
+      }
     },
     onError: (e: any) => toast.error(e.message ?? "Erro"),
   });
@@ -715,10 +728,10 @@ function NcDialog({ inspecaoId, fotos, nrs, rubrica, grauRisco, empresaId }: { i
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="gap-1"><Plus className="h-3.5 w-3.5" /> Nova NC</Button>
+        {trigger ?? <Button size="sm" className="gap-1"><Plus className="h-3.5 w-3.5" /> Nova NC</Button>}
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>Registrar não conformidade</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{isEdit ? "Editar não conformidade" : "Registrar não conformidade"}</DialogTitle></DialogHeader>
         <div className="grid gap-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
