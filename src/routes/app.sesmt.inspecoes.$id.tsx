@@ -1314,6 +1314,61 @@ function NcPlanos({ ncId, editable, empresaId, prazoSugerido, classeRisco }: { n
   );
 }
 
+function EditarCabecalhoDialog({ insp }: { insp: any }) {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [local, setLocal] = useState(insp.local_descricao ?? "");
+  const [escopo, setEscopo] = useState(insp.escopo ?? "");
+  const [participantes, setParticipantes] = useState(insp.participantes ?? "");
+  const [tipoLocal, setTipoLocal] = useState(insp.tipo_local ?? "");
+  const [data, setData] = useState(insp.data_inspecao ?? "");
+
+  const salvar = useMutation({
+    mutationFn: async () => {
+      if (!local.trim()) throw new Error("Local é obrigatório");
+      if (!data) throw new Error("Data é obrigatória");
+      const { error } = await supabase.from("inspecoes").update({
+        local_descricao: local.trim(),
+        escopo: escopo.trim() || null,
+        participantes: participantes.trim() || null,
+        tipo_local: tipoLocal.trim() || null,
+        data_inspecao: data,
+      }).eq("id", insp.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Cabeçalho atualizado");
+      qc.invalidateQueries({ queryKey: ["inspecao", insp.id] });
+      setOpen(false);
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Erro ao salvar"),
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { if (!salvar.isPending) setOpen(o); }}>
+      <Button size="sm" variant="outline" className="gap-1" onClick={() => setOpen(true)}>
+        <Pencil className="h-3.5 w-3.5" /> Editar cabeçalho
+      </Button>
+      <DialogContent className="max-w-lg">
+        <DialogHeader><DialogTitle>Editar cabeçalho da inspeção</DialogTitle></DialogHeader>
+        <div className="grid gap-3">
+          <div><Label>Local *</Label><Input value={local} onChange={(e) => setLocal(e.target.value)} /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>Data *</Label><Input type="date" value={data} onChange={(e) => setData(e.target.value)} /></div>
+            <div><Label>Tipo de local</Label><Input value={tipoLocal} onChange={(e) => setTipoLocal(e.target.value)} placeholder="Ex.: Pátio, Casco, Oficina" /></div>
+          </div>
+          <div><Label>Escopo</Label><Textarea rows={3} value={escopo} onChange={(e) => setEscopo(e.target.value)} placeholder="O que + Onde + Com o quê" /></div>
+          <div><Label>Participantes</Label><Textarea rows={2} value={participantes} onChange={(e) => setParticipantes(e.target.value)} placeholder="Nome / função dos presentes" /></div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)} disabled={salvar.isPending}>Cancelar</Button>
+          <Button onClick={() => salvar.mutate()} disabled={salvar.isPending}>{salvar.isPending ? "Salvando…" : "Salvar"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function PlanoCard({ p, idx, editable, onAvancar, prioCls }: { p: any; idx: number; editable: boolean; onAvancar: () => void; prioCls: Record<string, string> }) {
   const [open, setOpen] = useState(false);
   const prio = p.prioridade ?? "MEDIA";
