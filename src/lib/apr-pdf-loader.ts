@@ -86,7 +86,7 @@ export async function buildAprPdf(aprId: string, opts?: { encSig?: string | null
 
 export async function abrirAprPdf(aprId: string) {
   const doc = await buildAprPdf(aprId);
-  window.open(doc.output("bloburl"), "_blank");
+  openPdfBlob(doc.output("blob") as Blob);
 }
 
 export async function imprimirAprPdf(aprId: string) {
@@ -97,4 +97,31 @@ export async function imprimirAprPdf(aprId: string) {
 export async function baixarAprPdf(aprId: string, numero?: string | null) {
   const doc = await buildAprPdf(aprId);
   doc.save(`${numero ?? "apr"}.pdf`);
+}
+
+/**
+ * Abre um PDF (Blob) em nova aba de forma compatível com Chrome + adblockers.
+ * `window.open("blob:...")` é frequentemente bloqueado (ERR_BLOCKED_BY_CLIENT);
+ * um <a target="_blank"> clicado sinteticamente passa como gesto do usuário.
+ * Fallback: força download.
+ */
+export function openPdfBlob(blob: Blob, filename = "documento.pdf") {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.target = "_blank";
+  a.rel = "noopener";
+  a.download = ""; // sugere abertura em nova aba, mas permite salvar
+  document.body.appendChild(a);
+  try {
+    a.click();
+  } catch {
+    // Fallback: navega direto (pode cair no bloqueio, mas é última cartada)
+    window.location.href = url;
+  } finally {
+    a.remove();
+    // Revoga depois que o browser teve tempo de carregar
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  }
+  void filename;
 }

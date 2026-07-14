@@ -836,7 +836,8 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
   async function handleAbrir() {
     if (!apr.id) { toast.error("Salve a APR antes"); return; }
     const doc = await buildPdf();
-    window.open(doc.output("bloburl"), "_blank");
+    const { openPdfBlob } = await import("@/lib/apr-pdf-loader");
+    openPdfBlob(doc.output("blob") as Blob, `${apr.numero ?? "apr"}.pdf`);
   }
   async function handleImprimir() {
     if (!apr.id) { toast.error("Salve a APR antes"); return; }
