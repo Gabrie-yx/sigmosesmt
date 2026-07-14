@@ -1011,24 +1011,26 @@ function PainelListaTecnicaPage() {
                       key={o.id}
                       type="button"
                       onClick={() => { setOrdemSel(o.id); limparFiltros(); }}
-                      className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all duration-200 whitespace-nowrap flex items-center gap-2 ${
+                      className={`px-3 pt-1.5 pb-1 rounded-2xl text-xs font-bold border transition-all duration-200 whitespace-nowrap flex flex-col gap-1 min-w-[220px] ${
                         isActive
                           ? "bg-primary text-primary-foreground border-primary shadow-[0_0_14px_2px_hsl(var(--primary)/0.55)]"
                           : "bg-slate-950/60 text-white/90 border-primary/30 shadow-[0_0_6px_0_hsl(var(--primary)/0.25)] hover:border-primary/70 hover:shadow-[0_0_12px_2px_hsl(var(--primary)/0.45)] hover:bg-slate-900"
                       }`}
                       title={planKg > 0
-                        ? `Aplicado ${fmt(aplKg, 0)} kg / Planejado ${fmt(planKg, 0)} kg — ${pctRaw.toFixed(1)}%`
+                        ? `Aplicado ${fmt(aplKg, 0)} kg / Planejado ${fmt(planKg, 0)} kg — ${pctRaw.toFixed(1)}%${pctRaw > 100 ? " (excedeu o plano)" : ""}`
                         : "Sem lista técnica (B51) importada — progresso indisponível"}
                     >
-                      <span>SAP {sap} · {label}</span>
-                      <span className="relative inline-block h-1.5 w-16 rounded-full bg-white/15 overflow-hidden shrink-0">
+                      <div className="flex items-center justify-between gap-3 w-full">
+                        <span className="truncate">SAP {sap} · {label}</span>
+                        <span className={`tabular-nums text-[10px] font-black shrink-0 ${isActive ? "text-primary-foreground" : "text-amber-300"}`}>
+                          {planKg > 0 ? `${pct.toFixed(0)}%` : "—"}
+                        </span>
+                      </div>
+                      <span className="relative block h-1 w-full rounded-full bg-white/15 overflow-hidden">
                         <span
                           className="absolute inset-y-0 left-0 rounded-full bg-amber-400 shadow-[0_0_6px_0_rgba(251,191,36,0.7)] transition-all duration-500"
                           style={{ width: `${pct}%` }}
                         />
-                      </span>
-                      <span className={`tabular-nums text-[10px] font-black ${isActive ? "text-primary-foreground" : "text-amber-300"}`}>
-                        {planKg > 0 ? `${pct.toFixed(0)}%` : "—"}
                       </span>
                     </button>
                   );
