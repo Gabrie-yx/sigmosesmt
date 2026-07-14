@@ -227,7 +227,7 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput): Promise<{ doc: 
       body: ncs.map((nc, i) => [
         String(i + 1),
         `${nc.nr_codigo}${nc.nr_item ? ` ${nc.nr_item}` : ""}`,
-        String(nc.descricao ?? "").slice(0, 180),
+        String(nc.descricao ?? "—"),
         nc.classe_risco ?? "—",
         `P${nc.probabilidade}×S${nc.severidade}=${nc.risco_calculado}`,
         nc.gradacao_nr28 ?? "—",
