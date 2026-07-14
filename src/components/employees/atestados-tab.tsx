@@ -146,6 +146,14 @@ export function AtestadosTab({ empId, canEdit, canDelete, qc }: Props) {
       })
       .eq("id", at.override_id);
     if (error) return toast.error(error.message);
+    // Limpa o vínculo no atestado para que o ícone de "revogar" suma da UI.
+    const { error: e2 } = await (supabase as any)
+      .from("employee_atestados")
+      .update({ override_id: null })
+      .eq("id", at.id);
+    if (e2) return toast.error(e2.message);
+    await qc.invalidateQueries({ queryKey: ["safety-overrides", empId] });
+    await qc.invalidateQueries({ queryKey: ["safety-overrides-all"] });
     toast.success("Bloqueio revogado — funcionário liberado na portaria");
     refresh();
   }
