@@ -1788,6 +1788,11 @@ function PtesPage() {
                         <AlertTriangle className="h-3 w-3" /> SEM PLANO DE RESGATE
                       </span>
                     )}
+                    {Array.isArray(p.pts_relacionadas) && p.pts_relacionadas.length > 0 && (
+                      <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-fuchsia-900/70 text-fuchsia-100 border border-fuchsia-400/40 flex items-center gap-1" title="PTEs vinculadas — mesma manobra">
+                        <Link2 className="h-3 w-3" /> +{p.pts_relacionadas.length} vinculadas
+                      </span>
+                    )}
                   </div>
                   <div className="flex gap-2 items-center">
                     <div className={`text-[9px] font-black uppercase px-2 py-0.5 rounded tracking-widest border ${p.status === "ATIVA" ? "bg-gradient-to-br from-amber-600/80 to-amber-900/80 text-amber-50 border-amber-100/60/20 shadow-[0_0_12px_-2px_rgba(245,158,11,0.5)]" : "bg-black/40 text-slate-300/70 border-white/10"}`}>{p.status}</div>
