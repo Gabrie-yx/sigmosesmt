@@ -920,6 +920,74 @@ function NcDialog({ inspecaoId, fotos, nrs, rubrica, grauRisco, empresaId, nc, t
               )}
             </div>
           )}
+
+          <div className="border rounded p-3 bg-muted/40 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="text-xs font-black uppercase tracking-wide text-foreground">NRs correlatas (opcional)</div>
+              <span className="text-[10px] text-muted-foreground">Outras NRs feridas pela mesma NC</span>
+            </div>
+            {correlatas.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {correlatas.map((c, i) => (
+                  <Badge key={`${c.nr_codigo}-${c.nr_item}-${i}`} variant="outline" className="text-[10px] border-dashed gap-1">
+                    {c.nr_codigo}{c.nr_item ? ` · ${c.nr_item}` : ""}
+                    <button
+                      type="button"
+                      className="ml-1 text-red-500 hover:text-red-400"
+                      onClick={() => setCorrelatas((arr) => arr.filter((_, idx) => idx !== i))}
+                      aria-label="Remover"
+                    >×</button>
+                  </Badge>
+                ))}
+              </div>
+            )}
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2">
+              <Select value={corrNr} onValueChange={(v) => { setCorrNr(v); setCorrItemId(""); }}>
+                <SelectTrigger><SelectValue placeholder="NR correlata..." /></SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {nrs.filter((n: any) => n.codigo !== nr_codigo).map((n: any) => (
+                    <SelectItem key={n.codigo} value={n.codigo}>{n.codigo} — {n.titulo}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={corrItemId} onValueChange={setCorrItemId} disabled={!corrNr}>
+                <SelectTrigger>
+                  <SelectValue placeholder={corrNr ? (corrItens.length ? "Item oficial" : "Sem itens") : "Escolha a NR"} />
+                </SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {corrItens.map((i: any) => (
+                    <SelectItem key={i.id} value={i.id}>{i.item} — {i.texto_oficial.slice(0, 60)}{i.texto_oficial.length > 60 ? "…" : ""}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={!corrNr || !corrItemId}
+                onClick={() => {
+                  const it = corrItens.find((i: any) => i.id === corrItemId);
+                  if (!it) return;
+                  const nova: Correlata = {
+                    nr_codigo: corrNr,
+                    nr_item: it.item,
+                    catalogo_item_id: it.id,
+                    texto_oficial: it.texto_oficial,
+                  };
+                  // evita duplicar
+                  if (correlatas.some((c) => c.nr_codigo === nova.nr_codigo && c.nr_item === nova.nr_item)) {
+                    toast.error("Essa NR + item já foi adicionada");
+                    return;
+                  }
+                  setCorrelatas((arr) => [...arr, nova]);
+                  setCorrNr(""); setCorrItemId("");
+                }}
+              >
+                <Plus className="h-3.5 w-3.5 mr-1" /> Adicionar
+              </Button>
+            </div>
+          </div>
+
           <div>
             <Label>Foto vinculada</Label>
             <Select value={foto_id} onValueChange={setFotoId}>
