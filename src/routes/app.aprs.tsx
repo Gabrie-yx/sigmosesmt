@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -32,10 +33,10 @@ export const Route = createFileRoute("/app/aprs")({
 });
 
 const STATUS_TONE: Record<string, string> = {
-  RASCUNHO: "bg-white/10 text-rose-100/80 border border-white/15",
-  ATIVA: "bg-gradient-to-br from-emerald-600/80 to-emerald-900/80 text-emerald-50 border-emerald-400/40 shadow-[0_0_12px_-2px_rgba(16,185,129,0.5)]",
-  ENCERRADA: "bg-black/40 text-rose-200/50 border border-white/10",
-  CANCELADA: "bg-gradient-to-br from-rose-700/80 to-rose-900/80 text-rose-50 border border-rose-400/30",
+  RASCUNHO: "bg-slate-100 text-slate-700 border border-slate-300",
+  ATIVA: "bg-emerald-100 text-emerald-700 border border-emerald-300",
+  ENCERRADA: "bg-slate-100 text-slate-500 border border-slate-200",
+  CANCELADA: "bg-red-100 text-red-700 border border-red-300",
 };
 
 const newAprDraft = {
