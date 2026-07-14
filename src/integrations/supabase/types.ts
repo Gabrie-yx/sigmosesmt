@@ -6303,48 +6303,63 @@ export type Database = {
       inspecao_ncs_planos: {
         Row: {
           acao: string
+          como: string | null
           created_at: string
           criada_por: string
+          custo_estimado: number | null
           encerrada_em: string | null
           evidencia_path: string | null
           fase_pdca: string
           id: string
           nc_id: string
           observacoes: string | null
+          onde: string | null
+          por_que: string | null
           prazo: string | null
           prazo_dias_sugerido: number | null
+          prioridade: string
           responsavel_id: string | null
           responsavel_nome: string | null
           updated_at: string
         }
         Insert: {
           acao: string
+          como?: string | null
           created_at?: string
           criada_por: string
+          custo_estimado?: number | null
           encerrada_em?: string | null
           evidencia_path?: string | null
           fase_pdca?: string
           id?: string
           nc_id: string
           observacoes?: string | null
+          onde?: string | null
+          por_que?: string | null
           prazo?: string | null
           prazo_dias_sugerido?: number | null
+          prioridade?: string
           responsavel_id?: string | null
           responsavel_nome?: string | null
           updated_at?: string
         }
         Update: {
           acao?: string
+          como?: string | null
           created_at?: string
           criada_por?: string
+          custo_estimado?: number | null
           encerrada_em?: string | null
           evidencia_path?: string | null
           fase_pdca?: string
           id?: string
           nc_id?: string
           observacoes?: string | null
+          onde?: string | null
+          por_que?: string | null
           prazo?: string | null
           prazo_dias_sugerido?: number | null
+          prioridade?: string
           responsavel_id?: string | null
           responsavel_nome?: string | null
           updated_at?: string
