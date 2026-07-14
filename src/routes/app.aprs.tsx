@@ -576,7 +576,7 @@ function AprsPage() {
                             return (
                               <TableRow
                                 key={a.id}
-                                className={`cursor-pointer hover:bg-muted/40 transition-colors ${a._vencida ? "bg-red-50" : ""}`}
+                                className={`cursor-pointer transition-all hover:bg-red-500/15 hover:shadow-[inset_3px_0_0_0_hsl(0_72%_51%)] ${a._vencida ? "bg-red-50" : ""}`}
                                 onClick={() => isEditor && setEditing(a.id)}
                               >
                                 {isEditor && (
