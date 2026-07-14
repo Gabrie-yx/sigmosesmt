@@ -6173,6 +6173,51 @@ export type Database = {
         }
         Relationships: []
       }
+      inspecao_nc_nrs_correlatas: {
+        Row: {
+          catalogo_item_id: string | null
+          created_at: string
+          id: string
+          nc_id: string
+          nr_codigo: string
+          nr_item: string | null
+          observacao: string | null
+        }
+        Insert: {
+          catalogo_item_id?: string | null
+          created_at?: string
+          id?: string
+          nc_id: string
+          nr_codigo: string
+          nr_item?: string | null
+          observacao?: string | null
+        }
+        Update: {
+          catalogo_item_id?: string | null
+          created_at?: string
+          id?: string
+          nc_id?: string
+          nr_codigo?: string
+          nr_item?: string | null
+          observacao?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inspecao_nc_nrs_correlatas_catalogo_item_id_fkey"
+            columns: ["catalogo_item_id"]
+            isOneToOne: false
+            referencedRelation: "catalogo_nrs_itens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inspecao_nc_nrs_correlatas_nc_id_fkey"
+            columns: ["nc_id"]
+            isOneToOne: false
+            referencedRelation: "inspecao_ncs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inspecao_ncs: {
         Row: {
           catalogo_item_id: string | null

@@ -134,7 +134,7 @@ function InspecaoDetail() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("inspecao_ncs")
-        .select("*, catalogo_nrs_itens(prazo_dias_sugerido, gravidade_sugerida, texto_oficial)")
+        .select("*, catalogo_nrs_itens(prazo_dias_sugerido, gravidade_sugerida, texto_oficial), inspecao_nc_nrs_correlatas(id, nr_codigo, nr_item)")
         .eq("inspecao_id", id)
         .order("created_at");
       if (error) throw error;
@@ -543,6 +543,11 @@ function InspecaoDetail() {
                   <div className="flex items-center gap-2 flex-wrap justify-between">
                     <div className="flex items-center gap-2 flex-wrap">
                       <Badge variant="outline" className="text-[10px]">{nc.nr_codigo}{nc.nr_item ? ` · ${nc.nr_item}` : ""}</Badge>
+                      {(nc.inspecao_nc_nrs_correlatas ?? []).map((c: any) => (
+                        <Badge key={c.id} variant="outline" className="text-[10px] border-dashed opacity-80">
+                          {c.nr_codigo}{c.nr_item ? ` · ${c.nr_item}` : ""}
+                        </Badge>
+                      ))}
                       <Badge className={CLASSE_CLS[nc.classe_risco] + " text-[10px]"}>{nc.classe_risco} · P{nc.probabilidade}×S{nc.severidade}={nc.risco_calculado}</Badge>
                       {nc.gradacao_nr28 && <Badge variant="secondary" className="text-[10px]">NR-28 {nc.gradacao_nr28}: R$ {Number(nc.multa_estimada ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</Badge>}
                     </div>
@@ -703,6 +708,12 @@ function NcDialog({ inspecaoId, fotos, nrs, rubrica, grauRisco, empresaId, nc, t
   const [empregados, setEmpregados] = useState<number>(0);
   const [empregadosManual, setEmpregadosManual] = useState(false);
 
+  // NRs correlatas (multi): além da NR principal acima, outras NRs feridas pela mesma NC
+  type Correlata = { nr_codigo: string; nr_item: string; catalogo_item_id: string; texto_oficial?: string };
+  const [correlatas, setCorrelatas] = useState<Correlata[]>([]);
+  const [corrNr, setCorrNr] = useState("");
+  const [corrItemId, setCorrItemId] = useState("");
+
   const rP = useMemo(() => rubrica.filter((r) => r.eixo === "P"), [rubrica]);
   const rS = useMemo(() => rubrica.filter((r) => r.eixo === "S"), [rubrica]);
 
@@ -718,6 +729,41 @@ function NcDialog({ inspecaoId, fotos, nrs, rubrica, grauRisco, empresaId, nc, t
         .eq("ativo", true)
         .order("item");
       if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  // Itens da NR correlata em edição
+  const { data: corrItens = [] } = useQuery({
+    queryKey: ["catalogo-nr-itens", corrNr],
+    enabled: !!corrNr,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("catalogo_nrs_itens")
+        .select("id, item, texto_oficial")
+        .eq("nr_codigo", corrNr)
+        .eq("ativo", true)
+        .order("item");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  // Carrega correlatas existentes ao editar NC
+  useQuery({
+    queryKey: ["nc-correlatas-load", nc?.id ?? "", open],
+    enabled: !!nc?.id && open,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("inspecao_nc_nrs_correlatas")
+        .select("nr_codigo, nr_item, catalogo_item_id")
+        .eq("nc_id", nc.id);
+      if (error) throw error;
+      setCorrelatas((data ?? []).map((r: any) => ({
+        nr_codigo: r.nr_codigo,
+        nr_item: r.nr_item ?? "",
+        catalogo_item_id: r.catalogo_item_id ?? "",
+      })));
       return data ?? [];
     },
   });
@@ -774,16 +820,37 @@ function NcDialog({ inspecaoId, fotos, nrs, rubrica, grauRisco, empresaId, nc, t
         gradacao_nr28: gradacao,
         multa_estimada: nr28?.valor_reais ?? null,
       };
+      let ncId: string;
       if (isEdit) {
         const { error } = await supabase.from("inspecao_ncs").update(payload).eq("id", nc.id);
         if (error) throw error;
+        ncId = nc.id;
       } else {
-        const { error } = await supabase.from("inspecao_ncs").insert({
+        const { data: inserted, error } = await supabase.from("inspecao_ncs").insert({
           ...payload,
           inspecao_id: inspecaoId,
           criada_por: user.id,
-        });
+        }).select("id").single();
         if (error) throw error;
+        ncId = inserted!.id;
+      }
+
+      // Sincroniza NRs correlatas: apaga todas e reinsere (idempotente e simples)
+      const { error: delErr } = await supabase
+        .from("inspecao_nc_nrs_correlatas")
+        .delete()
+        .eq("nc_id", ncId);
+      if (delErr) throw delErr;
+      if (correlatas.length > 0) {
+        const { error: insErr } = await supabase
+          .from("inspecao_nc_nrs_correlatas")
+          .insert(correlatas.map((c) => ({
+            nc_id: ncId,
+            nr_codigo: c.nr_codigo,
+            nr_item: c.nr_item || null,
+            catalogo_item_id: c.catalogo_item_id || null,
+          })));
+        if (insErr) throw insErr;
       }
     },
     onSuccess: () => {
@@ -792,6 +859,7 @@ function NcDialog({ inspecaoId, fotos, nrs, rubrica, grauRisco, empresaId, nc, t
       setOpen(false);
       if (!isEdit) {
         setNrCodigo(""); setNrItem(""); setCatalogoItemId(""); setDescricao(""); setRecomendacao(""); setP(3); setS(3);
+        setCorrelatas([]); setCorrNr(""); setCorrItemId("");
       }
     },
     onError: (e: any) => toast.error(e.message ?? "Erro"),
@@ -852,6 +920,74 @@ function NcDialog({ inspecaoId, fotos, nrs, rubrica, grauRisco, empresaId, nc, t
               )}
             </div>
           )}
+
+          <div className="border rounded p-3 bg-muted/40 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="text-xs font-black uppercase tracking-wide text-foreground">NRs correlatas (opcional)</div>
+              <span className="text-[10px] text-muted-foreground">Outras NRs feridas pela mesma NC</span>
+            </div>
+            {correlatas.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {correlatas.map((c, i) => (
+                  <Badge key={`${c.nr_codigo}-${c.nr_item}-${i}`} variant="outline" className="text-[10px] border-dashed gap-1">
+                    {c.nr_codigo}{c.nr_item ? ` · ${c.nr_item}` : ""}
+                    <button
+                      type="button"
+                      className="ml-1 text-red-500 hover:text-red-400"
+                      onClick={() => setCorrelatas((arr) => arr.filter((_, idx) => idx !== i))}
+                      aria-label="Remover"
+                    >×</button>
+                  </Badge>
+                ))}
+              </div>
+            )}
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2">
+              <Select value={corrNr} onValueChange={(v) => { setCorrNr(v); setCorrItemId(""); }}>
+                <SelectTrigger><SelectValue placeholder="NR correlata..." /></SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {nrs.filter((n: any) => n.codigo !== nr_codigo).map((n: any) => (
+                    <SelectItem key={n.codigo} value={n.codigo}>{n.codigo} — {n.titulo}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={corrItemId} onValueChange={setCorrItemId} disabled={!corrNr}>
+                <SelectTrigger>
+                  <SelectValue placeholder={corrNr ? (corrItens.length ? "Item oficial" : "Sem itens") : "Escolha a NR"} />
+                </SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {corrItens.map((i: any) => (
+                    <SelectItem key={i.id} value={i.id}>{i.item} — {i.texto_oficial.slice(0, 60)}{i.texto_oficial.length > 60 ? "…" : ""}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={!corrNr || !corrItemId}
+                onClick={() => {
+                  const it = corrItens.find((i: any) => i.id === corrItemId);
+                  if (!it) return;
+                  const nova: Correlata = {
+                    nr_codigo: corrNr,
+                    nr_item: it.item,
+                    catalogo_item_id: it.id,
+                    texto_oficial: it.texto_oficial,
+                  };
+                  // evita duplicar
+                  if (correlatas.some((c) => c.nr_codigo === nova.nr_codigo && c.nr_item === nova.nr_item)) {
+                    toast.error("Essa NR + item já foi adicionada");
+                    return;
+                  }
+                  setCorrelatas((arr) => [...arr, nova]);
+                  setCorrNr(""); setCorrItemId("");
+                }}
+              >
+                <Plus className="h-3.5 w-3.5 mr-1" /> Adicionar
+              </Button>
+            </div>
+          </div>
+
           <div>
             <Label>Foto vinculada</Label>
             <Select value={foto_id} onValueChange={setFotoId}>
