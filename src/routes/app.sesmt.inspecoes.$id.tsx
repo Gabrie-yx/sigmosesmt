@@ -389,6 +389,7 @@ function InspecaoDetail() {
   const editable = insp.status === "rascunho" || insp.status === "em_revisao" || (publicadoIncompleto && canManage);
 
   return (
+    <>
     <div className="p-4 md:p-6 max-w-6xl mx-auto space-y-4">
       <Link to="/app/sesmt/inspecoes" className="text-[10px] font-black uppercase tracking-wider text-muted-foreground hover:text-foreground flex items-center gap-1">
         <ChevronLeft className="h-3 w-3" /> Inspeções
