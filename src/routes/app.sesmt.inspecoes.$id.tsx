@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { ChevronLeft, Camera, Upload, Plus, Trash2, AlertTriangle, ShieldAlert, Video, FileText, Info, FileDown, Pencil } from "lucide-react";
+import { ChevronLeft, Camera, Upload, Plus, Trash2, AlertTriangle, ShieldAlert, Video, FileText, Info, FileDown, Pencil, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { gerarInspecaoPdf } from "@/lib/inspecao-pdf";
