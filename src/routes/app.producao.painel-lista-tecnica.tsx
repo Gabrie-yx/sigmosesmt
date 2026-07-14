@@ -198,6 +198,27 @@ function PainelListaTecnicaPage() {
   const ordemAtivaId = ordemSel ?? (mb51Ordens as any[])[0]?.id ?? null;
   const ordemAtiva = (mb51Ordens as any[]).find((o) => o.id === ordemAtivaId) ?? null;
 
+  // ===== Aplicado (FERRO/KG) por Ordem — para a barra de progresso das pills =====
+  const { data: aplicadoFerroPorOrdem = new Map<string, number>() } = useQuery({
+    queryKey: ["mb51-aplicado-ferro-por-ordem", (mb51Ordens as any[]).length, baseMpMap.size],
+    enabled: (mb51Ordens as any[]).length > 0,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("producao_mb51_movimentos")
+        .select("ordem_id, codigo, quantidade, unidade")
+        .eq("unidade", "KG");
+      if (error) throw error;
+      const map = new Map<string, number>();
+      (data ?? []).forEach((m: any) => {
+        const tipo = baseMpMap.get(String(m.codigo));
+        if (tipo !== "FERRO") return;
+        const cur = map.get(m.ordem_id) ?? 0;
+        map.set(m.ordem_id, cur + Number(m.quantidade ?? 0));
+      });
+      return map;
+    },
+  });
+
   const { data: movimentos = [], isFetching } = useQuery({
     queryKey: ["mb51-movimentos", ordemAtivaId],
     enabled: !!ordemAtivaId,
