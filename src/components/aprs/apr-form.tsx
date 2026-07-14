@@ -341,6 +341,7 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
   // para que a cobertura por categoria funcione antes do save. No save, gravamos
   // apr_id nessas linhas.
   const [draftPteIds, setDraftPteIds] = useState<string[]>([]);
+  const [previewDoc, setPreviewDoc] = useState<jsPDF | null>(null);
   const currentAprId = apr.id ?? aprId ?? null;
 
   // (SignatureBox declarado abaixo, fora do componente)
