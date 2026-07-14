@@ -242,9 +242,19 @@ function PainelListaTecnicaPage() {
       .on("postgres_changes", { event: "*", schema: "public", table: "producao_mb51_movimentos" }, () => {
         qc.invalidateQueries({ queryKey: ["mb51-movimentos"] });
         qc.invalidateQueries({ queryKey: ["comparativo-mb51-movimentos"] });
+        qc.invalidateQueries({ queryKey: ["mb51-aplicado-ferro-por-ordem"] });
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "producao_base_materia_prima" }, () => {
         qc.invalidateQueries({ queryKey: ["mb51-base-mp-map"] });
+        qc.invalidateQueries({ queryKey: ["mb51-aplicado-ferro-por-ordem"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "producao_lista_tecnica" }, () => {
+        qc.invalidateQueries({ queryKey: ["listas-tecnicas-latest"] });
+        qc.invalidateQueries({ queryKey: ["comparativo-lista-tecnica-itens"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "producao_lista_tecnica_itens" }, () => {
+        qc.invalidateQueries({ queryKey: ["listas-tecnicas-latest"] });
+        qc.invalidateQueries({ queryKey: ["comparativo-lista-tecnica-itens"] });
       })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
