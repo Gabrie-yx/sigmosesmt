@@ -1243,6 +1243,24 @@ function PtesPage() {
                   </div>
                 </div>
               </div>
+              {f.mao_obra === "EXTERNA" && (
+                <div className="rounded-xl border border-amber-400/40 bg-amber-500/10 p-3 flex items-start gap-3">
+                  <Building2 className="h-4 w-4 text-amber-200 mt-0.5" />
+                  <div className="flex-1">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-amber-100">
+                      Mão de obra externa — checar documentação de terceiros
+                    </div>
+                    <p className="text-[10px] text-amber-100/85 mt-1">
+                      Confirme ASO válido, NR-11/NR-35 (quando aplicável), CA dos EPIs e ART da contratada antes de emitir.
+                      Marque em <b>S/N/NA</b> o item "Foi checado as documentações de terceiros?".
+                    </p>
+                    <Link2 className="hidden" />
+                    <a href="/app/sesmt/terceiros" className="inline-block mt-1 text-[10px] font-black uppercase underline text-amber-50 hover:text-white">
+                      Abrir cadastro de Terceiros →
+                    </a>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
