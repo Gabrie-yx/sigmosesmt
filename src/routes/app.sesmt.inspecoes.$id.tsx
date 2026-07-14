@@ -708,6 +708,12 @@ function NcDialog({ inspecaoId, fotos, nrs, rubrica, grauRisco, empresaId, nc, t
   const [empregados, setEmpregados] = useState<number>(0);
   const [empregadosManual, setEmpregadosManual] = useState(false);
 
+  // NRs correlatas (multi): além da NR principal acima, outras NRs feridas pela mesma NC
+  type Correlata = { nr_codigo: string; nr_item: string; catalogo_item_id: string; texto_oficial?: string };
+  const [correlatas, setCorrelatas] = useState<Correlata[]>([]);
+  const [corrNr, setCorrNr] = useState("");
+  const [corrItemId, setCorrItemId] = useState("");
+
   const rP = useMemo(() => rubrica.filter((r) => r.eixo === "P"), [rubrica]);
   const rS = useMemo(() => rubrica.filter((r) => r.eixo === "S"), [rubrica]);
 
@@ -723,6 +729,41 @@ function NcDialog({ inspecaoId, fotos, nrs, rubrica, grauRisco, empresaId, nc, t
         .eq("ativo", true)
         .order("item");
       if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  // Itens da NR correlata em edição
+  const { data: corrItens = [] } = useQuery({
+    queryKey: ["catalogo-nr-itens", corrNr],
+    enabled: !!corrNr,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("catalogo_nrs_itens")
+        .select("id, item, texto_oficial")
+        .eq("nr_codigo", corrNr)
+        .eq("ativo", true)
+        .order("item");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  // Carrega correlatas existentes ao editar NC
+  useQuery({
+    queryKey: ["nc-correlatas-load", nc?.id ?? "", open],
+    enabled: !!nc?.id && open,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("inspecao_nc_nrs_correlatas")
+        .select("nr_codigo, nr_item, catalogo_item_id")
+        .eq("nc_id", nc.id);
+      if (error) throw error;
+      setCorrelatas((data ?? []).map((r: any) => ({
+        nr_codigo: r.nr_codigo,
+        nr_item: r.nr_item ?? "",
+        catalogo_item_id: r.catalogo_item_id ?? "",
+      })));
       return data ?? [];
     },
   });
@@ -779,16 +820,37 @@ function NcDialog({ inspecaoId, fotos, nrs, rubrica, grauRisco, empresaId, nc, t
         gradacao_nr28: gradacao,
         multa_estimada: nr28?.valor_reais ?? null,
       };
+      let ncId: string;
       if (isEdit) {
         const { error } = await supabase.from("inspecao_ncs").update(payload).eq("id", nc.id);
         if (error) throw error;
+        ncId = nc.id;
       } else {
-        const { error } = await supabase.from("inspecao_ncs").insert({
+        const { data: inserted, error } = await supabase.from("inspecao_ncs").insert({
           ...payload,
           inspecao_id: inspecaoId,
           criada_por: user.id,
-        });
+        }).select("id").single();
         if (error) throw error;
+        ncId = inserted!.id;
+      }
+
+      // Sincroniza NRs correlatas: apaga todas e reinsere (idempotente e simples)
+      const { error: delErr } = await supabase
+        .from("inspecao_nc_nrs_correlatas")
+        .delete()
+        .eq("nc_id", ncId);
+      if (delErr) throw delErr;
+      if (correlatas.length > 0) {
+        const { error: insErr } = await supabase
+          .from("inspecao_nc_nrs_correlatas")
+          .insert(correlatas.map((c) => ({
+            nc_id: ncId,
+            nr_codigo: c.nr_codigo,
+            nr_item: c.nr_item || null,
+            catalogo_item_id: c.catalogo_item_id || null,
+          })));
+        if (insErr) throw insErr;
       }
     },
     onSuccess: () => {
@@ -797,6 +859,7 @@ function NcDialog({ inspecaoId, fotos, nrs, rubrica, grauRisco, empresaId, nc, t
       setOpen(false);
       if (!isEdit) {
         setNrCodigo(""); setNrItem(""); setCatalogoItemId(""); setDescricao(""); setRecomendacao(""); setP(3); setS(3);
+        setCorrelatas([]); setCorrNr(""); setCorrItemId("");
       }
     },
     onError: (e: any) => toast.error(e.message ?? "Erro"),
