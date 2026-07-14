@@ -94,6 +94,9 @@ function InspecaoDetail() {
   const [blockMsg, setBlockMsg] = useState<string | null>(null);
   const [ncParaExcluir, setNcParaExcluir] = useState<string | null>(null);
   const [pdfPreview, setPdfPreview] = useState<{ doc: jsPDF; fileName: string } | null>(null);
+  const [engSig, setEngSig] = useState<string | null>(null);
+  const [sesmtSig, setSesmtSig] = useState<string | null>(null);
+  const [encSig, setEncSig] = useState<string | null>(null);
 
   const { data: meuProfile } = useQuery({
     queryKey: ["meu-profile-nome", user?.id],
