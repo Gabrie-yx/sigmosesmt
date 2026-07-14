@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { gerarInspecaoPdf } from "@/lib/inspecao-pdf";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
+import { AnalisarFotosIA } from "@/components/inspecoes/AnalisarFotosIA";
 import type jsPDF from "jspdf";
 
 export const Route = createFileRoute("/app/sesmt/inspecoes/$id")({
