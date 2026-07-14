@@ -491,6 +491,7 @@ function InspecaoDetail() {
                   onChange={(e) => { selecionarFotos(e.currentTarget.files); e.currentTarget.value = ""; }} />
               </label>
               <CftvDialog onSubmit={(p) => addCftv.mutate(p)} />
+              <AnalisarFotosIA inspecaoId={id} temFotos={fotos.length > 0} />
             </div>
           )}
           {!editable && publicadoIncompleto && canManage && (
