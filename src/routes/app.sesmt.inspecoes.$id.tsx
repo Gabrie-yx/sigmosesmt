@@ -515,10 +515,30 @@ function InspecaoDetail() {
             <div className="space-y-2">
               {ncs.map((nc: any) => (
                 <div key={nc.id} className="border rounded p-3 space-y-1 bg-card">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Badge variant="outline" className="text-[10px]">{nc.nr_codigo}{nc.nr_item ? ` · ${nc.nr_item}` : ""}</Badge>
-                    <Badge className={CLASSE_CLS[nc.classe_risco] + " text-[10px]"}>{nc.classe_risco} · P{nc.probabilidade}×S{nc.severidade}={nc.risco_calculado}</Badge>
-                    {nc.gradacao_nr28 && <Badge variant="secondary" className="text-[10px]">NR-28 {nc.gradacao_nr28}: R$ {Number(nc.multa_estimada ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</Badge>}
+                  <div className="flex items-center gap-2 flex-wrap justify-between">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge variant="outline" className="text-[10px]">{nc.nr_codigo}{nc.nr_item ? ` · ${nc.nr_item}` : ""}</Badge>
+                      <Badge className={CLASSE_CLS[nc.classe_risco] + " text-[10px]"}>{nc.classe_risco} · P{nc.probabilidade}×S{nc.severidade}={nc.risco_calculado}</Badge>
+                      {nc.gradacao_nr28 && <Badge variant="secondary" className="text-[10px]">NR-28 {nc.gradacao_nr28}: R$ {Number(nc.multa_estimada ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</Badge>}
+                    </div>
+                    {editable && (
+                      <div className="flex items-center gap-1">
+                        <NcDialog
+                          inspecaoId={id}
+                          fotos={fotos}
+                          nrs={nrs}
+                          rubrica={rubrica}
+                          grauRisco={insp.companies?.grau_risco ?? 3}
+                          empresaId={insp.empresa_id ?? null}
+                          nc={nc}
+                          trigger={<Button size="icon" variant="ghost" className="h-7 w-7"><Pencil className="h-3.5 w-3.5" /></Button>}
+                        />
+                        <Button size="icon" variant="ghost" className="h-7 w-7 text-red-500 hover:text-red-400"
+                          onClick={() => { if (confirm("Excluir esta NC e seus planos?")) removerNc.mutate(nc.id); }}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                   <div className="text-sm text-foreground">{nc.descricao}</div>
                   {nc.recomendacao && <div className="text-xs text-muted-foreground"><b>Recomendação:</b> {nc.recomendacao}</div>}
