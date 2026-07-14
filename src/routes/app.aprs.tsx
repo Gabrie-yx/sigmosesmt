@@ -673,8 +673,8 @@ function AprsPage() {
         open={editing !== null}
         onOpenChange={(o) => !o && setEditing(null)}
       >
-        <DialogContent className="max-w-[95vw] w-[1200px] h-[92vh] flex flex-col p-0 gap-0">
-          <DialogHeader className="px-6 py-4 border-b shrink-0">
+        <DialogContent className="max-w-[95vw] w-[1200px] h-[92vh] flex flex-col p-0 gap-0 bg-background border-border">
+          <DialogHeader className="sr-only">
             <DialogTitle>{editing === "new" ? "Nova APR" : "Editar APR"}</DialogTitle>
           </DialogHeader>
           <div className="flex-1 overflow-hidden">
