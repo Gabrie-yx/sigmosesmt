@@ -422,9 +422,9 @@ function InspecaoDetail() {
 
       <Card>
         <CardHeader>
-          <div className="flex items-start justify-between gap-3 flex-wrap">
-            <div>
-              <CardTitle className="text-lg font-black uppercase tracking-tight text-foreground">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 sm:flex sm:flex-wrap sm:justify-between">
+            <div className="min-w-0">
+              <CardTitle className="text-base sm:text-lg font-black uppercase tracking-tight text-foreground break-words">
                 {insp.local_descricao}
               </CardTitle>
               <div className="text-xs text-muted-foreground mt-1 flex gap-2 flex-wrap">
@@ -434,22 +434,22 @@ function InspecaoDetail() {
                 <span>· Grau de risco {insp.companies?.grau_risco ?? "—"}</span>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Badge>{insp.status}</Badge>
+            <div className="col-span-2 flex flex-wrap items-center gap-2 sm:col-auto">
+              <Badge className="shrink-0">{insp.status}</Badge>
               {editable && canManage && (
                 <EditarCabecalhoDialog insp={insp} />
               )}
-              <Button size="sm" variant="outline" className="gap-1" onClick={() => baixarPdf.mutate()} disabled={baixarPdf.isPending}>
+              <Button size="sm" variant="outline" className="gap-1 h-8 text-xs" onClick={() => baixarPdf.mutate()} disabled={baixarPdf.isPending}>
                 <FileDown className="h-3.5 w-3.5" /> {baixarPdf.isPending ? "Gerando..." : "Baixar PDF"}
               </Button>
               {insp.status === "publicada" && canManage && (
-                <Button size="sm" variant="outline" onClick={() => alterarStatus.mutate("em_revisao")} disabled={alterarStatus.isPending}>Reabrir edição</Button>
+                <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => alterarStatus.mutate("em_revisao")} disabled={alterarStatus.isPending}>Reabrir edição</Button>
               )}
               {editable && canManage && insp.status !== "publicada" && (
-                <Button size="sm" variant="outline" onClick={() => tentarPublicar()}>Publicar</Button>
+                <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => tentarPublicar()}>Publicar</Button>
               )}
               {editable && !canManage && insp.status === "rascunho" && (
-                <Button size="sm" variant="outline" onClick={() => alterarStatus.mutate("em_revisao")}>Enviar p/ revisão</Button>
+                <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => alterarStatus.mutate("em_revisao")}>Enviar p/ revisão</Button>
               )}
             </div>
           </div>
@@ -1396,11 +1396,11 @@ function EditarCabecalhoDialog({ insp }: { insp: any }) {
       <Button size="sm" variant="outline" className="gap-1" onClick={() => setOpen(true)}>
         <Pencil className="h-3.5 w-3.5" /> Editar cabeçalho
       </Button>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="w-[calc(100vw-1rem)] max-w-lg max-h-[92dvh] overflow-y-auto">
         <DialogHeader><DialogTitle>Editar cabeçalho da inspeção</DialogTitle></DialogHeader>
         <div className="grid gap-3">
           <div><Label>Local *</Label><Input value={local} onChange={(e) => setLocal(e.target.value)} /></div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div><Label>Data *</Label><Input type="date" value={data} onChange={(e) => setData(e.target.value)} /></div>
             <div><Label>Tipo de local</Label><Input value={tipoLocal} onChange={(e) => setTipoLocal(e.target.value)} placeholder="Ex.: Pátio, Casco, Oficina" /></div>
           </div>
@@ -1432,7 +1432,7 @@ function PlanoCard({ p, idx, editable, onAvancar, prioCls }: { p: any; idx: numb
         </Button>
       </div>
       {open && (
-        <div className="pl-8 pr-1 space-y-1 text-[11px] text-muted-foreground border-t border-border/40 pt-1">
+        <div className="pl-2 sm:pl-8 pr-1 space-y-1 text-[11px] text-muted-foreground border-t border-border/40 pt-1 break-words">
           {p.por_que && <div><span className="font-black text-primary/80">Por quê:</span> {p.por_que}</div>}
           {p.onde && <div><span className="font-black text-primary/80">Onde:</span> {p.onde}</div>}
           {(p.employees?.nome || p.responsavel_nome) && <div><span className="font-black text-primary/80">Quem:</span> {p.employees?.nome ?? p.responsavel_nome}</div>}
