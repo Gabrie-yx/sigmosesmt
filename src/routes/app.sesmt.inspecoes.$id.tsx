@@ -583,7 +583,7 @@ function InspecaoDetail() {
     <AlertDialog open={!!blockMsg} onOpenChange={(o) => !o && setBlockMsg(null)}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle className="flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-amber-500" /> Não é possível publicar</AlertDialogTitle>
+          <AlertDialogTitle className="flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-amber-500" /> Ação não permitida</AlertDialogTitle>
           <AlertDialogDescription>{blockMsg}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
