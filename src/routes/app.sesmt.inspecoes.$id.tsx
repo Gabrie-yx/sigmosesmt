@@ -89,6 +89,7 @@ function InspecaoDetail() {
   const { user, roles } = useAuth();
   const qc = useQueryClient();
   const canManage = roles?.some((r) => r === "admin" || r === "tst");
+  const [blockMsg, setBlockMsg] = useState<string | null>(null);
 
   const { data: insp, isLoading } = useQuery({
     queryKey: ["inspecao", id],
