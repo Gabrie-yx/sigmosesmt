@@ -50,243 +50,534 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput) {
   const H = doc.internal.pageSize.getHeight();
   const M = 12;
 
-  const empresaNome = inspecao.companies?.nome_fantasia ?? inspecao.companies?.name ?? "—";
+  const empresa = inspecao.companies ?? {};
+  const empresaNome = empresa.nome_fantasia ?? empresa.name ?? "—";
+  const empresaCnpj = empresa.cnpj ?? "—";
+  const empresaEndereco = [empresa.logradouro, empresa.numero, empresa.bairro, empresa.cidade, empresa.uf].filter(Boolean).join(", ") || "—";
+  const grauRisco = empresa.grau_risco ?? "—";
 
   const totMulta = ncs.reduce((s, n) => s + Number(n.multa_estimada ?? 0), 0);
   const totCritico = ncs.filter((n) => n.classe_risco === "CRITICO").length;
   const totAlto = ncs.filter((n) => n.classe_risco === "ALTO").length;
+  const totMedio = ncs.filter((n) => n.classe_risco === "MEDIO").length;
+  const totBaixo = ncs.filter((n) => n.classe_risco === "BAIXO").length;
 
+  const laudoNum = `INSP-${String(inspecao.id ?? "").slice(0, 8).toUpperCase()}-${new Date(inspecao.data_inspecao + "T00:00:00").getFullYear()}`;
+  const isPrevia = String(inspecao.status ?? "").toLowerCase() !== "publicada";
+
+  // ---- pré-carrega URLs assinadas de todas as fotos (usadas nos detalhes por NC) ----
+  const fotosPaths = fotos.filter((f) => !String(f.storage_path).startsWith("cftv://")).map((f) => f.storage_path);
+  const signedUrls: Record<string, string> = {};
+  if (fotosPaths.length) {
+    const { data } = await supabase.storage.from(BUCKET).createSignedUrls(fotosPaths, 900);
+    data?.forEach((r) => { if (r.path && r.signedUrl) signedUrls[r.path] = r.signedUrl; });
+  }
+  const dataUrlCache: Record<string, string | null> = {};
+  async function getFotoDataUrl(f: any): Promise<string | null> {
+    if (String(f.storage_path).startsWith("cftv://")) return null;
+    if (dataUrlCache[f.storage_path] !== undefined) return dataUrlCache[f.storage_path];
+    const url = signedUrls[f.storage_path];
+    if (!url) return null;
+    const d = await fetchImageAsDataUrl(url);
+    dataUrlCache[f.storage_path] = d;
+    return d;
+  }
+
+  // ============= CAPA =============
   let y = drawPdfHeader(doc, {
-    titulo: "Relatório de Inspeção de Segurança",
-    subtitulo: `${inspecao.local_descricao} · ${empresaNome}`,
+    titulo: "LAUDO TÉCNICO DE INSPEÇÃO DE SEGURANÇA DO TRABALHO",
+    subtitulo: `${laudoNum} · ${empresaNome}`,
     responsavel: responsavelNome ?? undefined,
     filtros: [
-      `Data: ${br(inspecao.data_inspecao)}`,
-      `Status: ${String(inspecao.status ?? "—").toUpperCase()}`,
+      `Local: ${inspecao.local_descricao}`,
+      `Data da inspeção: ${br(inspecao.data_inspecao)}`,
       inspecao.tipo_local ? `Tipo: ${inspecao.tipo_local}` : "",
+      `Grau de risco (CNAE): ${grauRisco}`,
     ].filter(Boolean),
     kpis: [
-      { label: "NCs", value: ncs.length, tone: "neutral" },
+      { label: "Total NCs", value: ncs.length, tone: "neutral" },
       { label: "Críticas", value: totCritico, tone: "danger" },
       { label: "Altas", value: totAlto, tone: "warning" },
       { label: "Multa NR-28 (R$)", value: totMulta.toLocaleString("pt-BR", { minimumFractionDigits: 2 }), tone: "danger" },
     ],
   });
 
-  y += 4;
-
-  // Escopo / participantes
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(9);
-  doc.setTextColor(15, 23, 42);
-  doc.text("ESCOPO", M, y);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  const escopo = inspecao.escopo || "Não informado.";
-  const lines = doc.splitTextToSize(escopo, W - 2 * M);
-  doc.text(lines, M, y + 4);
-  y += 4 + lines.length * 4;
-
-  if (inspecao.participantes) {
-    y += 2;
+  if (isPrevia) {
+    // marca d'água PRÉVIA
+    doc.saveGraphicsState?.();
+    doc.setTextColor(220, 38, 38);
     doc.setFont("helvetica", "bold");
-    doc.text("PARTICIPANTES", M, y);
-    doc.setFont("helvetica", "normal");
-    const lp = doc.splitTextToSize(inspecao.participantes, W - 2 * M);
-    doc.text(lp, M, y + 4);
-    y += 4 + lp.length * 4;
+    doc.setFontSize(80);
+    (doc as any).setGState?.(new (doc as any).GState({ opacity: 0.12 }));
+    doc.text("PRÉVIA", W / 2, H / 2, { align: "center", angle: 30 });
+    (doc as any).setGState?.(new (doc as any).GState({ opacity: 1 }));
+    doc.restoreGraphicsState?.();
+    doc.setTextColor(15, 23, 42);
   }
 
-  // ============= NCs =============
+  y += 6;
+  autoTable(doc, {
+    startY: y,
+    theme: "grid",
+    styles: { fontSize: 9, cellPadding: 2.5, textColor: [15, 23, 42], lineColor: [200, 200, 200] },
+    columnStyles: { 0: { cellWidth: 45, fontStyle: "bold", fillColor: [248, 250, 252] } },
+    body: [
+      ["Nº do Laudo", laudoNum],
+      ["Empresa auditada", `${empresaNome}${empresa.razao_social ? ` (${empresa.razao_social})` : ""}`],
+      ["CNPJ", empresaCnpj],
+      ["Endereço", empresaEndereco],
+      ["CNAE / Grau de risco", `${empresa.cnae_principal ?? "—"} · Grau ${grauRisco}`],
+      ["Local inspecionado", inspecao.local_descricao || "—"],
+      ["Data da inspeção", br(inspecao.data_inspecao)],
+      ["Inspetor responsável", responsavelNome ?? "—"],
+      ["Status", String(inspecao.status ?? "—").toUpperCase()],
+      ["Emitido em", brDateTime(new Date().toISOString())],
+    ],
+    margin: { left: M, right: M },
+  });
+  y = (doc as any).lastAutoTable.finalY + 6;
+
+  // ============= 1. SUMÁRIO EXECUTIVO =============
+  sectionTitle(doc, "1. SUMÁRIO EXECUTIVO", y);
+  y += 6;
+  const intro = `Este laudo formaliza os achados da inspeção de segurança realizada em ${br(inspecao.data_inspecao)} no local "${inspecao.local_descricao}" da empresa ${empresaNome}. Foram identificadas ${ncs.length} não conformidade(s), sendo ${totCritico} crítica(s), ${totAlto} de alto risco, ${totMedio} médio(s) e ${totBaixo} baixo(s). A exposição financeira estimada por infração à NR-28 é de R$ ${totMulta.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}, calculada com base no grau de risco ${grauRisco} da empresa e na Portaria MTP nº 667/2021.`;
+  y = paragraph(doc, intro, y, W, M);
+  y += 3;
+
+  autoTable(doc, {
+    startY: y,
+    theme: "grid",
+    head: [["Indicador", "Valor"]],
+    headStyles: { fillColor: [127, 29, 29], textColor: 255, fontStyle: "bold" },
+    body: [
+      ["Não conformidades totais", String(ncs.length)],
+      ["Críticas (I4)", String(totCritico)],
+      ["Alto risco (I3)", String(totAlto)],
+      ["Médio (I2)", String(totMedio)],
+      ["Baixo (I1)", String(totBaixo)],
+      ["Multa NR-28 estimada (R$)", totMulta.toLocaleString("pt-BR", { minimumFractionDigits: 2 })],
+      ["Evidências fotográficas anexadas", String(fotos.length)],
+    ],
+    styles: { fontSize: 9, cellPadding: 2 },
+    columnStyles: { 0: { cellWidth: 90, fontStyle: "bold" }, 1: { halign: "right" } },
+    margin: { left: M, right: M },
+  });
+  y = (doc as any).lastAutoTable.finalY + 6;
+
+  if (inspecao.escopo) {
+    ensureRoom(doc, y, 30, () => { y = M; });
+    doc.setFont("helvetica", "bold").setFontSize(9).setTextColor(15, 23, 42);
+    doc.text("Escopo declarado", M, y);
+    y += 4;
+    y = paragraph(doc, inspecao.escopo, y, W, M);
+  }
+  if (inspecao.participantes) {
+    ensureRoom(doc, y, 30, () => { y = M; });
+    doc.setFont("helvetica", "bold").setFontSize(9).setTextColor(15, 23, 42);
+    doc.text("Participantes", M, y);
+    y += 4;
+    y = paragraph(doc, inspecao.participantes, y, W, M);
+  }
+
+  // ============= 2. METODOLOGIA E BASE LEGAL =============
+  doc.addPage(); y = M;
+  sectionTitle(doc, "2. METODOLOGIA E BASE LEGAL", y);
+  y += 6;
+  const metodo = [
+    "Este laudo foi elaborado conforme os requisitos do Programa de Gerenciamento de Riscos (PGR) previsto na NR-01, item 1.5, que estabelece o Gerenciamento de Riscos Ocupacionais (GRO) como processo obrigatório e permanente.",
+    "A gradação das infrações e a estimativa de multas seguem o disposto na NR-28 (Fiscalização e Penalidades), com os valores atualizados pela Portaria MTP nº 667, de 08 de novembro de 2021, considerando o Grau de Risco da atividade principal da empresa (CNAE) e o número de empregados na faixa aplicável.",
+    "A avaliação de risco de cada não conformidade utiliza a Matriz 5×5 (Probabilidade × Severidade), com rubrica quantitativa reproduzida ao final deste documento (Anexo I). O produto P × S determina a classe de risco (BAIXO, MÉDIO, ALTO ou CRÍTICO) e a urgência da ação corretiva.",
+    "As evidências fotográficas anexadas possuem hash SHA-256, marca temporal (timestamp) e, quando disponíveis, coordenadas GPS de captura, garantindo rastreabilidade e integridade da prova para fins de auditoria fiscal e judicial.",
+    "O plano de ação segue o ciclo PDCA (Plan-Do-Check-Act) e a metodologia 5W2H, atribuindo responsável, prazo e verificação de eficácia para cada ação corretiva.",
+  ].join("\n\n");
+  y = paragraph(doc, metodo, y, W, M);
+
+  // ============= 3. QUADRO CONSOLIDADO =============
   y += 4;
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  doc.text("NÃO CONFORMIDADES E PLANO DE AÇÃO (PDCA)", M, y);
-  y += 2;
+  ensureRoom(doc, y, 40, () => { doc.addPage(); y = M; });
+  sectionTitle(doc, "3. QUADRO CONSOLIDADO DE NÃO CONFORMIDADES", y);
+  y += 4;
 
   if (ncs.length === 0) {
-    doc.setFont("helvetica", "italic");
-    doc.setFontSize(9);
-    doc.setTextColor(100);
-    doc.text("Nenhuma NC registrada nesta inspeção.", M, y + 5);
-    y += 10;
+    doc.setFont("helvetica", "italic").setFontSize(9).setTextColor(100);
+    doc.text("Nenhuma NC registrada nesta inspeção — condição CONFORME.", M, y + 6);
+    y += 12;
   } else {
-    const rows = ncs.map((nc, i) => {
-      const planos = planosPorNc[nc.id] ?? [];
-      const planoTxt = planos.length
-        ? planos.map((p) => `[${p.fase_pdca}] ${p.acao}${p.responsavel_nome ? ` — ${p.responsavel_nome}` : ""}${p.prazo ? ` (${br(p.prazo)})` : ""}`).join("\n")
-        : "Sem plano de ação registrado.";
-      const textoOficial = (nc as any).catalogo_nrs_itens?.texto_oficial as string | undefined;
-      const descricaoCompleta = textoOficial
-        ? `${nc.descricao}\n\nTexto oficial (${nc.nr_codigo}${nc.nr_item ? ` ${nc.nr_item}` : ""}):\n"${textoOficial}"${nc.recomendacao ? `\n\nRecomendação: ${nc.recomendacao}` : ""}`
-        : `${nc.descricao}${nc.recomendacao ? `\n\nRecomendação: ${nc.recomendacao}` : ""}`;
-      return [
-        String(i + 1),
-        `${nc.nr_codigo}${nc.nr_item ? `\n${nc.nr_item}` : ""}`,
-        descricaoCompleta,
-        `${nc.classe_risco}\nP${nc.probabilidade}×S${nc.severidade}=${nc.risco_calculado}`,
-        nc.multa_estimada
-          ? `${nc.gradacao_nr28}\nR$ ${Number(nc.multa_estimada).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`
-          : "—",
-        planoTxt,
-      ];
-    });
     autoTable(doc, {
       startY: y + 2,
-      head: [["#", "NR", "Descrição", "Risco", "NR-28", "Plano (PDCA)"]],
-      body: rows,
-      styles: { fontSize: 8, cellPadding: 2, valign: "top" },
-      headStyles: { fillColor: [15, 23, 42], textColor: 255 },
+      head: [["#", "NR / Item", "Descrição resumida", "Classe", "P×S", "Gradação", "Multa R$"]],
+      body: ncs.map((nc, i) => [
+        String(i + 1),
+        `${nc.nr_codigo}${nc.nr_item ? ` ${nc.nr_item}` : ""}`,
+        String(nc.descricao ?? "").slice(0, 180),
+        nc.classe_risco ?? "—",
+        `P${nc.probabilidade}×S${nc.severidade}=${nc.risco_calculado}`,
+        nc.gradacao_nr28 ?? "—",
+        nc.multa_estimada ? Number(nc.multa_estimada).toLocaleString("pt-BR", { minimumFractionDigits: 2 }) : "—",
+      ]),
+      styles: { fontSize: 7.5, cellPadding: 1.8, valign: "top", lineColor: [200, 200, 200] },
+      headStyles: { fillColor: [127, 29, 29], textColor: 255, fontStyle: "bold" },
       columnStyles: {
         0: { cellWidth: 8, halign: "center" },
         1: { cellWidth: 22 },
-        2: { cellWidth: 60 },
-        3: { cellWidth: 22, halign: "center" },
-        4: { cellWidth: 26, halign: "center" },
-        5: { cellWidth: "auto" },
+        2: { cellWidth: "auto" },
+        3: { cellWidth: 20, halign: "center" },
+        4: { cellWidth: 22, halign: "center" },
+        5: { cellWidth: 18, halign: "center" },
+        6: { cellWidth: 24, halign: "right" },
+      },
+      didParseCell: (data) => {
+        if (data.section === "body" && data.column.index === 3) {
+          const v = String(data.cell.raw);
+          const map: Record<string, [number, number, number]> = {
+            CRITICO: [220, 38, 38], ALTO: [234, 88, 12], MEDIO: [202, 138, 4], BAIXO: [22, 163, 74],
+          };
+          const c = map[v];
+          if (c) { data.cell.styles.textColor = c; data.cell.styles.fontStyle = "bold"; }
+        }
+      },
+      margin: { left: M, right: M },
+    });
+    y = (doc as any).lastAutoTable.finalY + 4;
+    doc.setFont("helvetica", "italic").setFontSize(7.5).setTextColor(100);
+    doc.text(`Total geral de multa estimada NR-28: R$ ${totMulta.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} · Grau de risco ${grauRisco} · Base: Portaria MTP 667/2021`, M, y);
+    y += 6;
+  }
+
+  // ============= 4. DETALHAMENTO POR NC =============
+  if (ncs.length > 0) {
+    doc.addPage(); y = M;
+    sectionTitle(doc, "4. DETALHAMENTO DAS NÃO CONFORMIDADES", y);
+    y += 8;
+
+    for (let i = 0; i < ncs.length; i++) {
+      const nc = ncs[i];
+      const planos = planosPorNc[nc.id] ?? [];
+      ensureRoom(doc, y, 90, () => { doc.addPage(); y = M; });
+
+      // Título da NC
+      doc.setFillColor(127, 29, 29);
+      doc.rect(M, y, W - 2 * M, 7, "F");
+      doc.setFont("helvetica", "bold").setFontSize(10).setTextColor(255, 255, 255);
+      doc.text(`NC #${String(i + 1).padStart(2, "0")} — ${nc.nr_codigo}${nc.nr_item ? ` item ${nc.nr_item}` : ""}`, M + 2, y + 5);
+      const badgeColor: Record<string, [number, number, number]> = {
+        CRITICO: [153, 27, 27], ALTO: [154, 52, 18], MEDIO: [133, 77, 14], BAIXO: [22, 101, 52],
+      };
+      const bc = badgeColor[nc.classe_risco] ?? [51, 65, 85];
+      doc.setFillColor(bc[0], bc[1], bc[2]);
+      doc.rect(W - M - 34, y + 1, 32, 5, "F");
+      doc.setFontSize(8).setTextColor(255);
+      doc.text(nc.classe_risco ?? "—", W - M - 18, y + 4.5, { align: "center" });
+      y += 10;
+
+      // Texto oficial da NR
+      const textoOficial = nc.catalogo_nrs_itens?.texto_oficial as string | undefined;
+      if (textoOficial) {
+        doc.setFont("helvetica", "bold").setFontSize(8.5).setTextColor(15, 23, 42);
+        doc.text("Texto normativo oficial:", M, y);
+        y += 4;
+        doc.setFont("helvetica", "italic").setFontSize(8.5).setTextColor(71, 85, 105);
+        const lns = doc.splitTextToSize(`"${textoOficial}"`, W - 2 * M);
+        doc.text(lns, M, y);
+        y += lns.length * 3.8 + 2;
+      }
+
+      // Descrição da NC
+      doc.setFont("helvetica", "bold").setFontSize(8.5).setTextColor(15, 23, 42);
+      doc.text("Descrição da não conformidade:", M, y);
+      y += 4;
+      y = paragraph(doc, nc.descricao ?? "—", y, W, M, 8.5);
+
+      // Matriz de risco + multa lado a lado
+      ensureRoom(doc, y, 50, () => { doc.addPage(); y = M; });
+      const matrixX = M;
+      const matrixY = y + 2;
+      drawMatriz5x5(doc, matrixX, matrixY, Number(nc.probabilidade), Number(nc.severidade));
+      const infoX = matrixX + 55;
+      doc.setFont("helvetica", "bold").setFontSize(8.5).setTextColor(15, 23, 42);
+      doc.text("Avaliação de risco:", infoX, matrixY + 4);
+      doc.setFont("helvetica", "normal").setFontSize(8.5);
+      doc.text(`Probabilidade: P${nc.probabilidade}`, infoX, matrixY + 9);
+      doc.text(`Severidade: S${nc.severidade}`, infoX, matrixY + 13);
+      doc.text(`Score: ${nc.risco_calculado} (${nc.classe_risco})`, infoX, matrixY + 17);
+      doc.setFont("helvetica", "bold").setFontSize(8.5);
+      doc.text("Exposição legal NR-28:", infoX, matrixY + 24);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Gradação: ${nc.gradacao_nr28 ?? "—"}`, infoX, matrixY + 29);
+      doc.text(`Multa: R$ ${nc.multa_estimada ? Number(nc.multa_estimada).toLocaleString("pt-BR", { minimumFractionDigits: 2 }) : "—"}`, infoX, matrixY + 33);
+      doc.setFont("helvetica", "italic").setFontSize(7).setTextColor(100);
+      doc.text(`(Grau risco ${grauRisco} · Portaria MTP 667/2021)`, infoX, matrixY + 37);
+      y = matrixY + 48;
+
+      // Foto associada
+      if (nc.foto_id) {
+        const foto = fotos.find((f: any) => f.id === nc.foto_id);
+        if (foto) {
+          ensureRoom(doc, y, 65, () => { doc.addPage(); y = M; });
+          const fw = 80, fh = 55;
+          const fx = M;
+          if (String(foto.storage_path).startsWith("cftv://")) {
+            doc.setDrawColor(203, 213, 225).setLineWidth(0.2);
+            doc.rect(fx, y, fw, fh);
+            doc.setFont("helvetica", "bold").setFontSize(9).setTextColor(80);
+            doc.text("CFTV", fx + fw / 2, y + fh / 2, { align: "center" });
+          } else {
+            const dUrl = await getFotoDataUrl(foto);
+            if (dUrl) {
+              try {
+                const fmt = dUrl.includes("image/png") ? "PNG" : "JPEG";
+                doc.addImage(dUrl, fmt, fx, y, fw, fh, undefined, "FAST");
+              } catch {}
+            }
+          }
+          doc.setFont("helvetica", "normal").setFontSize(7).setTextColor(71, 85, 105);
+          const meta = [
+            `Hash: ${String(foto.hash_sha256 ?? "").slice(0, 16)}`,
+            foto.timestamp_captura ? brDateTime(foto.timestamp_captura) : "sem timestamp",
+            foto.gps_lat && foto.gps_lng ? `GPS ${Number(foto.gps_lat).toFixed(5)}, ${Number(foto.gps_lng).toFixed(5)}` : "",
+          ].filter(Boolean).join(" · ");
+          const metaX = fx + fw + 4;
+          doc.setFont("helvetica", "bold").setFontSize(8).setTextColor(15, 23, 42);
+          doc.text("Evidência fotográfica", metaX, y + 4);
+          doc.setFont("helvetica", "normal").setFontSize(7.5).setTextColor(71, 85, 105);
+          const mt = doc.splitTextToSize(meta, W - metaX - M);
+          doc.text(mt, metaX, y + 9);
+          y += fh + 6;
+        }
+      }
+
+      // Recomendação técnica
+      if (nc.recomendacao) {
+        ensureRoom(doc, y, 20, () => { doc.addPage(); y = M; });
+        doc.setFont("helvetica", "bold").setFontSize(8.5).setTextColor(15, 23, 42);
+        doc.text("Recomendação técnica:", M, y);
+        y += 4;
+        y = paragraph(doc, nc.recomendacao, y, W, M, 8.5);
+      }
+
+      // Plano 5W2H / PDCA
+      ensureRoom(doc, y, 30, () => { doc.addPage(); y = M; });
+      doc.setFont("helvetica", "bold").setFontSize(8.5).setTextColor(15, 23, 42);
+      doc.text("Plano de ação (PDCA / 5W2H):", M, y);
+      y += 3;
+      if (planos.length === 0) {
+        doc.setFont("helvetica", "italic").setFontSize(8).setTextColor(120);
+        doc.text("Sem plano de ação registrado.", M, y + 4);
+        y += 8;
+      } else {
+        autoTable(doc, {
+          startY: y + 1,
+          head: [["Fase", "Ação (What)", "Responsável (Who)", "Prazo (When)", "Como (How)"]],
+          body: planos.map((p: any) => [
+            p.fase_pdca ?? "—",
+            p.acao ?? "—",
+            p.responsavel_nome ?? "—",
+            p.prazo ? br(p.prazo) : "—",
+            p.observacoes ?? "—",
+          ]),
+          styles: { fontSize: 7.5, cellPadding: 1.5, valign: "top" },
+          headStyles: { fillColor: [30, 41, 59], textColor: 255, fontSize: 7.5 },
+          columnStyles: {
+            0: { cellWidth: 14, halign: "center" },
+            1: { cellWidth: 55 },
+            2: { cellWidth: 35 },
+            3: { cellWidth: 22, halign: "center" },
+            4: { cellWidth: "auto" },
+          },
+          margin: { left: M, right: M },
+        });
+        y = (doc as any).lastAutoTable.finalY + 6;
+      }
+
+      // separador entre NCs
+      if (i < ncs.length - 1) {
+        doc.setDrawColor(226, 232, 240).setLineWidth(0.2);
+        doc.line(M, y, W - M, y);
+        y += 4;
+      }
+    }
+  }
+
+  // ============= 5. PLANO DE AÇÃO CONSOLIDADO =============
+  const todasAcoes: Array<{ nc: any; p: any; idx: number }> = [];
+  ncs.forEach((nc, idx) => (planosPorNc[nc.id] ?? []).forEach((p) => todasAcoes.push({ nc, p, idx: idx + 1 })));
+  if (todasAcoes.length > 0) {
+    doc.addPage(); y = M;
+    sectionTitle(doc, "5. PLANO DE AÇÃO CONSOLIDADO", y);
+    y += 6;
+    todasAcoes.sort((a, b) => String(a.p.prazo ?? "9999").localeCompare(String(b.p.prazo ?? "9999")));
+    autoTable(doc, {
+      startY: y,
+      head: [["NC", "NR", "Ação", "Fase", "Responsável", "Prazo", "Status"]],
+      body: todasAcoes.map(({ nc, p, idx }) => [
+        `#${String(idx).padStart(2, "0")}`,
+        `${nc.nr_codigo}${nc.nr_item ? ` ${nc.nr_item}` : ""}`,
+        p.acao ?? "—",
+        p.fase_pdca ?? "—",
+        p.responsavel_nome ?? "—",
+        p.prazo ? br(p.prazo) : "—",
+        p.encerrada_em ? "Concluída" : "Pendente",
+      ]),
+      styles: { fontSize: 8, cellPadding: 1.8, valign: "top" },
+      headStyles: { fillColor: [127, 29, 29], textColor: 255 },
+      columnStyles: {
+        0: { cellWidth: 12, halign: "center" },
+        1: { cellWidth: 22 },
+        3: { cellWidth: 14, halign: "center" },
+        5: { cellWidth: 20, halign: "center" },
+        6: { cellWidth: 22, halign: "center" },
       },
       margin: { left: M, right: M },
     });
     y = (doc as any).lastAutoTable.finalY + 6;
   }
 
-  // ============= FOTOS =============
-  if (fotos.length > 0) {
-    if (y > H - 60) { doc.addPage(); y = M; }
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
-    doc.setTextColor(15, 23, 42);
-    doc.text("EVIDÊNCIAS FOTOGRÁFICAS", M, y);
-    y += 4;
-
-    const paths = fotos.filter((f) => !String(f.storage_path).startsWith("cftv://")).map((f) => f.storage_path);
-    let signed: Record<string, string> = {};
-    if (paths.length) {
-      const { data } = await supabase.storage.from(BUCKET).createSignedUrls(paths, 600);
-      data?.forEach((r) => { if (r.path && r.signedUrl) signed[r.path] = r.signedUrl; });
-    }
-
-    const cols = 2;
-    const gap = 4;
-    const cellW = (W - 2 * M - gap) / cols;
-    const cellH = 55;
-    let col = 0;
-
-    for (const f of fotos) {
-      if (y + cellH + 8 > H - M) { doc.addPage(); y = M; col = 0; }
-      const x = M + col * (cellW + gap);
-
-      doc.setDrawColor(203, 213, 225);
-      doc.setLineWidth(0.2);
-      doc.rect(x, y, cellW, cellH);
-
-      if (String(f.storage_path).startsWith("cftv://")) {
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(9);
-        doc.setTextColor(80);
-        doc.text("CFTV", x + cellW / 2, y + cellH / 2 - 2, { align: "center" });
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(7);
-        doc.text(f.camera_ref ?? "—", x + cellW / 2, y + cellH / 2 + 4, { align: "center" });
-      } else {
-        const url = signed[f.storage_path];
-        if (url) {
-          const dataUrl = await fetchImageAsDataUrl(url);
-          if (dataUrl) {
-            try {
-              const fmt = dataUrl.includes("image/png") ? "PNG" : "JPEG";
-              doc.addImage(dataUrl, fmt, x + 0.5, y + 0.5, cellW - 1, cellH - 1, undefined, "FAST");
-            } catch {}
-          }
-        }
-      }
-
-      // Legenda
-      const legY = y + cellH + 3;
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(7);
-      doc.setTextColor(71, 85, 105);
-      const meta = [
-        `#${String(f.hash_sha256 ?? "").slice(0, 12)}`,
-        f.timestamp_captura ? brDateTime(f.timestamp_captura) : "s/ timestamp",
-        f.gps_lat && f.gps_lng ? `GPS ${Number(f.gps_lat).toFixed(4)},${Number(f.gps_lng).toFixed(4)}` : "",
-        f.camera_ref ? `Cam ${f.camera_ref}` : "",
-      ].filter(Boolean).join(" · ");
-      const metaLines = doc.splitTextToSize(meta, cellW);
-      doc.text(metaLines, x, legY);
-
-      col += 1;
-      if (col >= cols) { col = 0; y += cellH + 12; }
-    }
-    if (col !== 0) y += cellH + 12;
-  }
-
-  // ============= RUBRICA =============
-  doc.addPage();
-  y = M;
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  doc.setTextColor(15, 23, 42);
-  doc.text("RUBRICA DA MATRIZ DE RISCO 5×5 (referência)", M, y);
-  y += 3;
-
+  // ============= 6. RUBRICA MATRIZ 5x5 =============
+  doc.addPage(); y = M;
+  sectionTitle(doc, "ANEXO I — RUBRICA DA MATRIZ DE RISCO 5×5", y);
+  y += 6;
   const rP = rubrica.filter((r: any) => r.eixo === "P").map((r: any) => [`P${r.nivel}`, r.rotulo, r.definicao]);
   const rS = rubrica.filter((r: any) => r.eixo === "S").map((r: any) => [`S${r.nivel}`, r.rotulo, r.definicao]);
-
   autoTable(doc, {
-    startY: y + 2,
+    startY: y,
     head: [["Probabilidade", "Rótulo", "Definição"]],
     body: rP,
     styles: { fontSize: 8, cellPadding: 2 },
-    headStyles: { fillColor: [15, 23, 42], textColor: 255 },
+    headStyles: { fillColor: [30, 41, 59], textColor: 255 },
     margin: { left: M, right: M },
   });
   y = (doc as any).lastAutoTable.finalY + 4;
-
   autoTable(doc, {
     startY: y,
     head: [["Severidade", "Rótulo", "Definição"]],
     body: rS,
     styles: { fontSize: 8, cellPadding: 2 },
-    headStyles: { fillColor: [15, 23, 42], textColor: 255 },
+    headStyles: { fillColor: [30, 41, 59], textColor: 255 },
     margin: { left: M, right: M },
   });
   y = (doc as any).lastAutoTable.finalY + 8;
 
-  // Nota legal + ART
-  doc.setFont("helvetica", "italic");
-  doc.setFontSize(8);
-  doc.setTextColor(71, 85, 105);
-  const nota = "Este documento é um Relatório de Inspeção de Segurança (não constitui laudo técnico). As evidências fotográficas anexadas possuem hash SHA-256, timestamp de captura e coordenadas GPS quando disponíveis, garantindo rastreabilidade da prova. A estimativa de multa NR-28 é referencial, baseada no grau de risco da empresa e na portaria vigente cadastrada no sistema.";
-  const notaLines = doc.splitTextToSize(nota, W - 2 * M);
-  doc.text(notaLines, M, y);
-  y += notaLines.length * 3.5 + 8;
+  // ============= 7. PARECER TÉCNICO =============
+  ensureRoom(doc, y, 60, () => { doc.addPage(); y = M; });
+  sectionTitle(doc, "PARECER TÉCNICO E CONCLUSÃO", y);
+  y += 6;
+  let parecer = inspecao.parecer_tecnico as string | undefined;
+  if (!parecer) {
+    if (ncs.length === 0) {
+      parecer = `Após inspeção realizada no local "${inspecao.local_descricao}", NÃO foram identificadas não conformidades no escopo avaliado. As condições de segurança verificadas atendem aos requisitos das Normas Regulamentadoras aplicáveis. Recomenda-se a manutenção do padrão observado e a continuidade das inspeções de rotina previstas no PGR.`;
+    } else {
+      const urgencia = totCritico > 0 ? "IMEDIATA (72h)" : totAlto > 0 ? "URGENTE (15 dias)" : "PROGRAMADA (60 dias)";
+      parecer = `A inspeção realizada identificou ${ncs.length} não conformidade(s) que caracterizam risco à saúde e integridade dos trabalhadores, com exposição legal de R$ ${totMulta.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} conforme NR-28. As ações corretivas propostas seguem o ciclo PDCA e devem ser executadas pelos responsáveis designados nos prazos estipulados. Nível de urgência recomendado: ${urgencia}. O não tratamento dessas NCs sujeita a empresa a autuação fiscal do Ministério do Trabalho e responsabilização civil e criminal em caso de acidente decorrente.`;
+    }
+  }
+  y = paragraph(doc, parecer, y, W, M);
 
-  // Assinaturas
-  const sigW = (W - 2 * M - 10) / 2;
-  doc.setDrawColor(120);
-  doc.setLineWidth(0.3);
-  doc.line(M, y + 12, M + sigW, y + 12);
-  doc.line(M + sigW + 10, y + 12, M + sigW * 2 + 10, y + 12);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  doc.setTextColor(71, 85, 105);
-  doc.text("Responsável pela inspeção (SESMT)", M, y + 16);
-  doc.text(responsavelNome ?? "", M, y + 20);
-  doc.text("Responsável Técnico / ART", M + sigW + 10, y + 16);
-  doc.text("Nº ART: ________________________", M + sigW + 10, y + 20);
+  // ============= 8. ASSINATURAS =============
+  ensureRoom(doc, y, 55, () => { doc.addPage(); y = M; });
+  y += 8;
+  const sigW = (W - 2 * M - 10) / 3;
+  const sigY = y + 18;
+  doc.setDrawColor(80).setLineWidth(0.3);
+  const sigs = [
+    { label: "Engenheiro de Segurança do Trabalho", sub: "CREA nº ________________________" },
+    { label: "Técnico de Segurança do Trabalho", sub: responsavelNome ?? "Registro MTE ________________" },
+    { label: "Encarregado da Área", sub: "Responsável pela execução das ações" },
+  ];
+  sigs.forEach((s, i) => {
+    const x = M + i * (sigW + 5);
+    doc.line(x, sigY, x + sigW, sigY);
+    doc.setFont("helvetica", "bold").setFontSize(8).setTextColor(15, 23, 42);
+    doc.text(s.label, x + sigW / 2, sigY + 4, { align: "center" });
+    doc.setFont("helvetica", "normal").setFontSize(7).setTextColor(100);
+    doc.text(s.sub, x + sigW / 2, sigY + 8, { align: "center" });
+  });
+  y = sigY + 14;
+  doc.setFont("helvetica", "italic").setFontSize(7).setTextColor(100);
+  const legal = "Documento emitido em conformidade com a NR-01 (GRO/PGR), NR-28 (Fiscalização) e demais Normas Regulamentadoras aplicáveis. As evidências fotográficas anexadas possuem hash SHA-256, timestamp e coordenadas GPS quando disponíveis, garantindo integridade probatória. Multas estimadas conforme Portaria MTP nº 667/2021, considerando o grau de risco da atividade principal da empresa auditada.";
+  const legalLines = doc.splitTextToSize(legal, W - 2 * M);
+  doc.text(legalLines, M, y);
 
-  // Rodapé com paginação
+  // ============= Rodapé em todas as páginas =============
   const pages = (doc as any).internal.getNumberOfPages();
+  const emitido = new Date().toLocaleString("pt-BR");
   for (let i = 1; i <= pages; i++) {
     doc.setPage(i);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(7);
-    doc.setTextColor(120);
-    doc.text(`Relatório de Inspeção · ${inspecao.local_descricao} · ${br(inspecao.data_inspecao)}`, M, H - 6);
-    doc.text(`${i} / ${pages}`, W - M, H - 6, { align: "right" });
+    doc.setDrawColor(226, 232, 240).setLineWidth(0.2);
+    doc.line(M, H - 9, W - M, H - 9);
+    doc.setFont("helvetica", "normal").setFontSize(7).setTextColor(100);
+    doc.text(`Laudo ${laudoNum} · ${empresaNome} · Emitido em ${emitido}`, M, H - 5);
+    doc.text(`Página ${i} de ${pages}`, W - M, H - 5, { align: "right" });
   }
 
   const blob = doc.output("blob");
-  await printPdf(blob, `inspecao-${inspecao.local_descricao.replace(/\s+/g, "-").toLowerCase()}-${inspecao.data_inspecao}.pdf`);
+  await printPdf(blob, `laudo-${laudoNum.toLowerCase()}-${inspecao.data_inspecao}.pdf`);
+}
+
+// ============= Helpers de layout =============
+function sectionTitle(doc: jsPDF, text: string, y: number) {
+  const W = doc.internal.pageSize.getWidth();
+  const M = 12;
+  doc.setFillColor(127, 29, 29);
+  doc.rect(M, y - 4, W - 2 * M, 6, "F");
+  doc.setFont("helvetica", "bold").setFontSize(10).setTextColor(255, 255, 255);
+  doc.text(text, M + 2, y);
+  doc.setTextColor(15, 23, 42);
+}
+
+function paragraph(doc: jsPDF, text: string, y: number, W: number, M: number, size = 9): number {
+  doc.setFont("helvetica", "normal").setFontSize(size).setTextColor(30, 41, 59);
+  const lns = doc.splitTextToSize(text, W - 2 * M);
+  const lineH = size * 0.42;
+  const H = doc.internal.pageSize.getHeight();
+  let cursor = y;
+  for (const ln of lns) {
+    if (cursor > H - 20) { doc.addPage(); cursor = M; }
+    doc.text(ln, M, cursor);
+    cursor += lineH;
+  }
+  return cursor + 1;
+}
+
+function ensureRoom(doc: jsPDF, y: number, needed: number, onBreak: () => void) {
+  const H = doc.internal.pageSize.getHeight();
+  if (y + needed > H - 15) { doc.addPage(); onBreak(); }
+}
+
+function drawMatriz5x5(doc: jsPDF, x: number, y: number, p: number, s: number) {
+  const cell = 8;
+  const originX = x + 6;
+  const originY = y + 6;
+  // rótulos eixos
+  doc.setFont("helvetica", "bold").setFontSize(6).setTextColor(15, 23, 42);
+  doc.text("S →", originX + cell * 5 + 1, originY - 1);
+  doc.text("P ↓", x, originY + cell * 5 + 3);
+  // células
+  for (let sv = 1; sv <= 5; sv++) {
+    for (let pv = 1; pv <= 5; pv++) {
+      const score = pv * sv;
+      let bg: [number, number, number] = [34, 197, 94]; // baixo
+      if (score >= 15) bg = [220, 38, 38];
+      else if (score >= 8) bg = [234, 88, 12];
+      else if (score >= 4) bg = [202, 138, 4];
+      doc.setFillColor(bg[0], bg[1], bg[2]);
+      const cx = originX + (sv - 1) * cell;
+      const cy = originY + (pv - 1) * cell;
+      doc.rect(cx, cy, cell, cell, "F");
+      doc.setDrawColor(255).setLineWidth(0.2);
+      doc.rect(cx, cy, cell, cell);
+      doc.setFont("helvetica", "normal").setFontSize(6).setTextColor(255);
+      doc.text(String(score), cx + cell / 2, cy + cell / 2 + 1, { align: "center" });
+    }
+  }
+  // rótulos numéricos
+  doc.setFont("helvetica", "normal").setFontSize(5.5).setTextColor(15, 23, 42);
+  for (let sv = 1; sv <= 5; sv++) doc.text(String(sv), originX + (sv - 1) * cell + cell / 2, originY - 2, { align: "center" });
+  for (let pv = 1; pv <= 5; pv++) doc.text(String(pv), originX - 2, originY + (pv - 1) * cell + cell / 2 + 1, { align: "right" });
+  // marca célula ativa
+  if (p >= 1 && p <= 5 && s >= 1 && s <= 5) {
+    const cx = originX + (s - 1) * cell;
+    const cy = originY + (p - 1) * cell;
+    doc.setDrawColor(15, 23, 42).setLineWidth(1.2);
+    doc.rect(cx, cy, cell, cell);
+  }
 }
