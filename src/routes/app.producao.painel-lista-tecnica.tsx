@@ -249,11 +249,11 @@ function PainelListaTecnicaPage() {
         qc.invalidateQueries({ queryKey: ["mb51-aplicado-ferro-por-ordem"] });
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "producao_lista_tecnica" }, () => {
-        qc.invalidateQueries({ queryKey: ["listas-tecnicas-atuais"] });
+        qc.invalidateQueries({ queryKey: ["listas-tecnicas-latest"] });
         qc.invalidateQueries({ queryKey: ["comparativo-lista-tecnica-itens"] });
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "producao_lista_tecnica_itens" }, () => {
-        qc.invalidateQueries({ queryKey: ["listas-tecnicas-atuais"] });
+        qc.invalidateQueries({ queryKey: ["listas-tecnicas-latest"] });
         qc.invalidateQueries({ queryKey: ["comparativo-lista-tecnica-itens"] });
       })
       .subscribe();
