@@ -1,0 +1,1 @@
+TRUNCATE TABLE public.inspecao_nc_nrs_correlatas, public.inspecao_ncs_planos, public.inspecao_ncs, public.inspecao_fotos, public.inspecoes, public.plano_acoes RESTART IDENTITY CASCADE;
