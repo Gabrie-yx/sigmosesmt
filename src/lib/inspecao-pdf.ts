@@ -198,7 +198,7 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput): Promise<{ doc: 
   }
 
   // ============= 2. METODOLOGIA E BASE LEGAL =============
-  doc.addPage(); y = M;
+  ensureRoom(doc, y, 60, () => { doc.addPage(); y = M; });
   sectionTitle(doc, "2. METODOLOGIA E BASE LEGAL", y);
   y += 6;
   const metodo = [
@@ -264,7 +264,7 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput): Promise<{ doc: 
 
   // ============= 4. DETALHAMENTO POR NC =============
   if (ncs.length > 0) {
-    doc.addPage(); y = M;
+    ensureRoom(doc, y, 40, () => { doc.addPage(); y = M; });
     sectionTitle(doc, "4. DETALHAMENTO DAS NÃO CONFORMIDADES", y);
     y += 8;
 
@@ -420,7 +420,7 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput): Promise<{ doc: 
   const todasAcoes: Array<{ nc: any; p: any; idx: number }> = [];
   ncs.forEach((nc, idx) => (planosPorNc[nc.id] ?? []).forEach((p) => todasAcoes.push({ nc, p, idx: idx + 1 })));
   if (todasAcoes.length > 0) {
-    doc.addPage(); y = M;
+    ensureRoom(doc, y, 40, () => { doc.addPage(); y = M; });
     sectionTitle(doc, "5. PLANO DE AÇÃO CONSOLIDADO", y);
     y += 6;
     todasAcoes.sort((a, b) => String(a.p.prazo ?? "9999").localeCompare(String(b.p.prazo ?? "9999")));
@@ -451,7 +451,7 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput): Promise<{ doc: 
   }
 
   // ============= 6. RUBRICA MATRIZ 5x5 =============
-  doc.addPage(); y = M;
+  ensureRoom(doc, y, 80, () => { doc.addPage(); y = M; });
   sectionTitle(doc, "ANEXO I — RUBRICA DA MATRIZ DE RISCO 5×5", y);
   y += 6;
   const rP = rubrica.filter((r: any) => r.eixo === "P").map((r: any) => [`P${r.nivel}`, r.rotulo, r.definicao]);
