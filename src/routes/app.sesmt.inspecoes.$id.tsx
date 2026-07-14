@@ -417,7 +417,7 @@ function InspecaoDetail() {
                 <Button size="sm" variant="outline" onClick={() => alterarStatus.mutate("em_revisao")} disabled={alterarStatus.isPending}>Reabrir edição</Button>
               )}
               {editable && canManage && insp.status !== "publicada" && (
-                <Button size="sm" variant="outline" onClick={() => alterarStatus.mutate("publicada")}>Publicar</Button>
+                <Button size="sm" variant="outline" onClick={() => tentarPublicar()}>Publicar</Button>
               )}
               {editable && !canManage && insp.status === "rascunho" && (
                 <Button size="sm" variant="outline" onClick={() => alterarStatus.mutate("em_revisao")}>Enviar p/ revisão</Button>
