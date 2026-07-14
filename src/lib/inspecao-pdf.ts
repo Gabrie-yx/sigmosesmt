@@ -626,15 +626,13 @@ function renderFotoMeta(doc: jsPDF, foto: any, x: number, y: number, maxW: numbe
 
 function drawMatriz5x5(doc: jsPDF, x: number, y: number, p: number, s: number) {
   const cell = 8;
-  const originX = x + 6;
-  const originY = y + 6;
+  const originX = x + 8;
+  const originY = y + 9;
   // rótulos eixos
-  doc.setFont("helvetica", "bold").setFontSize(6).setTextColor(15, 23, 42);
-  doc.text("Severidade", originX + cell * 2.5, originY - 3, { align: "center" });
-  doc.text("P", x + 1, originY + cell * 2.5, { align: "left" });
-  doc.text("r", x + 1, originY + cell * 2.5 + 2.2, { align: "left" });
-  doc.text("o", x + 1, originY + cell * 2.5 + 4.4, { align: "left" });
-  doc.text("b", x + 1, originY + cell * 2.5 + 6.6, { align: "left" });
+  doc.setFont("helvetica", "bold").setFontSize(7).setTextColor(15, 23, 42);
+  doc.text("Severidade", originX + cell * 2.5, originY - 6, { align: "center" });
+  // "Probabilidade" rotacionado 90° no eixo Y
+  doc.text("Probabilidade", x + 2, originY + cell * 2.5, { align: "center", angle: 90 });
   // células
   for (let sv = 1; sv <= 5; sv++) {
     for (let pv = 1; pv <= 5; pv++) {
