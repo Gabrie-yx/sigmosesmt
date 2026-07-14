@@ -134,7 +134,7 @@ function InspecaoDetail() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("inspecao_ncs")
-        .select("*, catalogo_nrs_itens(prazo_dias_sugerido, gravidade_sugerida, texto_oficial)")
+        .select("*, catalogo_nrs_itens(prazo_dias_sugerido, gravidade_sugerida, texto_oficial), inspecao_nc_nrs_correlatas(id, nr_codigo, nr_item)")
         .eq("inspecao_id", id)
         .order("created_at");
       if (error) throw error;
