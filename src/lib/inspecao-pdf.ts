@@ -434,24 +434,25 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput): Promise<{ doc: 
     todasAcoes.sort((a, b) => String(a.p.prazo ?? "9999").localeCompare(String(b.p.prazo ?? "9999")));
     autoTable(doc, {
       startY: y,
-      head: [["NC", "NR", "Ação", "Fase", "Responsável", "Prazo", "Status"]],
+      head: [["NC", "NR", "Ação (What)", "Como (How)", "Fase", "Responsável", "Prazo", "Status"]],
       body: todasAcoes.map(({ nc, p, idx }) => [
         `#${String(idx).padStart(2, "0")}`,
         `${nc.nr_codigo}${nc.nr_item ? ` ${nc.nr_item}` : ""}`,
         p.acao ?? "—",
+        p.como ?? "—",
         p.fase_pdca ?? "—",
-        p.responsavel_nome ?? "—",
+        p.responsavel_nome ?? "A definir",
         p.prazo ? br(p.prazo) : "—",
         p.encerrada_em ? "Concluída" : "Pendente",
       ]),
-      styles: { fontSize: 8, cellPadding: 1.8, valign: "top" },
+      styles: { fontSize: 7.5, cellPadding: 1.5, valign: "top" },
       headStyles: { fillColor: [127, 29, 29], textColor: 255 },
       columnStyles: {
         0: { cellWidth: 12, halign: "center" },
-        1: { cellWidth: 22 },
-        3: { cellWidth: 14, halign: "center" },
-        5: { cellWidth: 20, halign: "center" },
-        6: { cellWidth: 22, halign: "center" },
+        1: { cellWidth: 20 },
+        4: { cellWidth: 12, halign: "center" },
+        6: { cellWidth: 18, halign: "center" },
+        7: { cellWidth: 18, halign: "center" },
       },
       margin: { left: M, right: M },
     });
