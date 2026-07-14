@@ -160,11 +160,11 @@ export function AnalisarFotosIA({ inspecaoId, temFotos, disabled }: { inspecaoId
       >
         <Sparkles className="h-3.5 w-3.5" /> Analisar fotos com IA
       </Button>
-      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-primary" /> Análise por IA das evidências</DialogTitle>
+      <DialogContent className="flex max-h-[92dvh] w-[calc(100vw-1rem)] max-w-3xl flex-col overflow-hidden p-0">
+        <DialogHeader className="shrink-0 px-4 pt-4 sm:px-6 sm:pt-6">
+          <DialogTitle className="flex items-center gap-2 text-base"><Sparkles className="h-4 w-4 text-primary shrink-0" /> <span className="truncate">Análise por IA das evidências</span></DialogTitle>
         </DialogHeader>
-
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3 sm:px-6">
         {sugestoes.length === 0 && !rodando && (
           <div className="space-y-3">
             <p className="text-xs text-muted-foreground">
@@ -191,24 +191,24 @@ export function AnalisarFotosIA({ inspecaoId, temFotos, disabled }: { inspecaoId
         {sugestoes.length > 0 && !rodando && (
           <div className="space-y-3">
             {parecer && (
-              <div className="text-xs text-muted-foreground border-l-2 border-primary pl-2 italic">
+              <div className="text-xs text-muted-foreground border-l-2 border-primary pl-2 italic break-words">
                 <b className="not-italic text-foreground">Parecer IA:</b> {parecer}
               </div>
             )}
             <div className="space-y-2">
               {sugestoes.map((n, i) => (
-                <div key={i} className="border rounded p-2 space-y-2 bg-card">
+                <div key={i} className="border rounded p-2 space-y-2 bg-card/60">
                   <div className="flex items-start gap-2">
-                    <Checkbox checked={n._sel} onCheckedChange={() => toggle(i)} className="mt-1" />
-                    <div className="flex-1 space-y-2">
+                    <Checkbox checked={n._sel} onCheckedChange={() => toggle(i)} className="mt-1 shrink-0" />
+                    <div className="flex-1 min-w-0 space-y-2">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <Badge className={CLASSE_CLS[n.classe_risco] + " text-[10px] font-black border"}>{n.classe_risco}</Badge>
-                        <Badge variant="outline" className="text-[10px]">{n.nr_codigo}{n.nr_item ? ` · ${n.nr_item}` : ""}</Badge>
+                        <Badge variant="outline" className="text-[10px] break-all">{n.nr_codigo}{n.nr_item ? ` · ${n.nr_item}` : ""}</Badge>
                         <Badge variant="outline" className="text-[10px]">P{n.probabilidade}×S{n.severidade}={n.risco_calculado}</Badge>
                         {n.foto_id && <Badge variant="secondary" className="text-[10px]">Foto linkada</Badge>}
                       </div>
-                      <Textarea rows={2} value={n.descricao} onChange={(e) => editar(i, { descricao: e.target.value })} className="text-xs" />
-                      <Textarea rows={2} value={n.recomendacao} onChange={(e) => editar(i, { recomendacao: e.target.value })} className="text-xs" placeholder="Recomendação" />
+                      <Textarea rows={3} value={n.descricao} onChange={(e) => editar(i, { descricao: e.target.value })} className="text-xs w-full" />
+                      <Textarea rows={3} value={n.recomendacao} onChange={(e) => editar(i, { recomendacao: e.target.value })} className="text-xs w-full" placeholder="Recomendação" />
                     </div>
                   </div>
                 </div>
@@ -219,11 +219,11 @@ export function AnalisarFotosIA({ inspecaoId, temFotos, disabled }: { inspecaoId
             </p>
           </div>
         )}
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)} disabled={salvar.isPending}>Cancelar</Button>
+        </div>
+        <DialogFooter className="shrink-0 gap-2 border-t border-border/60 bg-background/60 px-4 py-3 sm:px-6 flex-col-reverse sm:flex-row">
+          <Button variant="outline" className="w-full sm:w-auto" onClick={() => setOpen(false)} disabled={salvar.isPending}>Cancelar</Button>
           {sugestoes.length > 0 && !rodando && (
-            <Button onClick={() => salvar.mutate()} disabled={salvar.isPending || sugestoes.every((n) => !n._sel)}>
+            <Button className="w-full sm:w-auto" onClick={() => salvar.mutate()} disabled={salvar.isPending || sugestoes.every((n) => !n._sel)}>
               {salvar.isPending ? "Salvando…" : `Criar ${sugestoes.filter((n) => n._sel).length} NC(s)`}
             </Button>
           )}
