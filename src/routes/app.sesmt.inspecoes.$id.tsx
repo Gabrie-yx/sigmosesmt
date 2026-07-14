@@ -586,6 +586,9 @@ function InspecaoDetail() {
                   {nc.recomendacao && <div className="text-xs text-muted-foreground"><b>Recomendação:</b> {nc.recomendacao}</div>}
                   <NcPlanos
                     ncId={nc.id}
+                    ncDescricao={nc.descricao}
+                    ncRecomendacao={nc.recomendacao ?? null}
+                    ncNorma={`${nc.nr_codigo}${nc.nr_item ? ` ${nc.nr_item}` : ""}`.trim()}
                     editable={editable}
                     empresaId={insp.empresa_id ?? null}
                     prazoSugerido={nc.catalogo_nrs_itens?.prazo_dias_sugerido ?? null}
@@ -1084,7 +1087,7 @@ function NcDialog({ inspecaoId, fotos, nrs, rubrica, grauRisco, empresaId, nc, t
   );
 }
 
-function NcPlanos({ ncId, editable, empresaId, prazoSugerido, classeRisco }: { ncId: string; editable: boolean; empresaId: string | null; prazoSugerido: number | null; classeRisco?: string | null }) {
+function NcPlanos({ ncId, ncDescricao, ncRecomendacao, ncNorma, editable, empresaId, prazoSugerido, classeRisco }: { ncId: string; ncDescricao: string; ncRecomendacao: string | null; ncNorma: string; editable: boolean; empresaId: string | null; prazoSugerido: number | null; classeRisco?: string | null }) {
   const { user } = useAuth();
   const qc = useQueryClient();
   // Fallback de prazo pela classe de risco quando o catálogo não trouxer sugestão explícita
@@ -1131,16 +1134,28 @@ function NcPlanos({ ncId, editable, empresaId, prazoSugerido, classeRisco }: { n
     d.setDate(d.getDate() + prazoFallback);
     return d.toISOString().slice(0, 10);
   };
+  const prioridadeInicial = (): "CRITICA" | "ALTA" | "MEDIA" | "BAIXA" | "VERIFICACAO" => {
+    switch (classeRisco) {
+      case "CRITICO": return "CRITICA";
+      case "ALTO": return "ALTA";
+      case "MODERADO": return "MEDIA";
+      case "BAIXO": return "BAIXA";
+      default: return "MEDIA";
+    }
+  };
+  const sugestaoBase = () => ({
+    acao: (ncRecomendacao || `Corrigir a condição identificada: ${ncDescricao}`).trim(),
+    por_que: `Eliminar/controlar o risco identificado na NC${ncNorma ? ` (${ncNorma})` : ""}: ${ncDescricao}`,
+    onde: "Área evidenciada na foto da inspeção",
+    como: "Comunicar a liderança, controlar ou paralisar a atividade quando aplicável, corrigir a condição, registrar evidência fotográfica e validar a eficácia antes do encerramento.",
+  });
   const emptyForm = () => ({
-    acao: "",
-    por_que: "",
-    onde: "",
-    como: "",
+    ...sugestaoBase(),
     respId: "",
-    respNome: "",
+    respNome: "Encarregado da área / SESMT",
     prazo: prazoInicial(),
     custo: "",
-    prioridade: "MEDIA" as "CRITICA" | "ALTA" | "MEDIA" | "BAIXA" | "VERIFICACAO",
+    prioridade: prioridadeInicial(),
   });
   const [form, setForm] = useState(emptyForm);
   const [openForm, setOpenForm] = useState(false);
@@ -1214,7 +1229,7 @@ function NcPlanos({ ncId, editable, empresaId, prazoSugerido, classeRisco }: { n
       ))}
       {editable && !openForm && (
         <Button size="sm" variant="outline" className="w-full h-8 gap-1 text-xs border-dashed" onClick={() => setOpenForm(true)}>
-          <Plus className="h-3 w-3" /> Adicionar plano 5W2H
+          <Plus className="h-3 w-3" /> Criar 5W2H sugerido
         </Button>
       )}
       {editable && openForm && (
