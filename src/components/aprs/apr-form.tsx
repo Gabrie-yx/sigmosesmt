@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, lazy, Suspense } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,11 @@ import { PteLookupSheet } from "@/components/aprs/pte-lookup-sheet";
 import { hasGlobalOverride, type SafetyOverride } from "@/lib/safety-overrides";
 import { useAuth } from "@/hooks/use-auth";
 import { printPdf } from "@/lib/pdf-print";
+import type jsPDF from "jspdf";
+
+const PDFPreviewDialog = lazy(() =>
+  import("@/components/pdf-preview-dialog").then((m) => ({ default: m.PDFPreviewDialog })),
+);
 
 /* ---------- tipos ---------- */
 type APR = {
@@ -336,6 +341,7 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
   // para que a cobertura por categoria funcione antes do save. No save, gravamos
   // apr_id nessas linhas.
   const [draftPteIds, setDraftPteIds] = useState<string[]>([]);
+  const [previewDoc, setPreviewDoc] = useState<jsPDF | null>(null);
   const currentAprId = apr.id ?? aprId ?? null;
 
   // (SignatureBox declarado abaixo, fora do componente)
@@ -836,8 +842,7 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
   async function handleAbrir() {
     if (!apr.id) { toast.error("Salve a APR antes"); return; }
     const doc = await buildPdf();
-    const { openPdfBlob } = await import("@/lib/apr-pdf-loader");
-    openPdfBlob(doc.output("blob") as Blob, `${apr.numero ?? "apr"}.pdf`);
+    setPreviewDoc(doc);
   }
   async function handleImprimir() {
     if (!apr.id) { toast.error("Salve a APR antes"); return; }
@@ -1633,6 +1638,15 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
           })();
         }}
       />
+      <Suspense fallback={null}>
+        <PDFPreviewDialog
+          open={!!previewDoc}
+          onClose={() => setPreviewDoc(null)}
+          doc={previewDoc}
+          fileName={`${apr.numero ?? "apr"}.pdf`}
+          title="APR"
+        />
+      </Suspense>
     </div>
     </TooltipProvider>
   );
