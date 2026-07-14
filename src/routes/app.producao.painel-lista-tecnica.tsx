@@ -205,15 +205,14 @@ function PainelListaTecnicaPage() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("producao_mb51_movimentos")
-        .select("ordem_id, codigo, quantidade, unidade")
-        .eq("unidade", "KG");
+        .select("ordem_id, quantidade, unidade, tipo_resolvido")
+        .eq("unidade", "KG")
+        .eq("tipo_resolvido", "FERRO");
       if (error) throw error;
       const map = new Map<string, number>();
       (data ?? []).forEach((m: any) => {
-        const tipo = baseMpMap.get(String(m.codigo));
-        if (tipo !== "FERRO") return;
         const cur = map.get(m.ordem_id) ?? 0;
-        map.set(m.ordem_id, cur + Number(m.quantidade ?? 0));
+        map.set(m.ordem_id, cur + Math.abs(Number(m.quantidade ?? 0)));
       });
       return map;
     },
