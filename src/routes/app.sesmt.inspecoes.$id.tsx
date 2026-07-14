@@ -368,8 +368,7 @@ function InspecaoDetail() {
     onError: (e: any) => toast.error(e.message ?? "Erro"),
   });
 
-  const baixarPdf = useMutation({
-    mutationFn: async () => {
+  const gerarLaudo = async (sigs?: { eng?: string | null; sesmt?: string | null; enc?: string | null }) => {
       if (fotos.length === 0) throw new Error("O relatório final exige evidência fotográfica. Reabra a inspeção e anexe as fotos.");
       const planosPorNc: Record<string, any[]> = {};
       if (ncs.length > 0) {
@@ -392,9 +391,16 @@ function InspecaoDetail() {
         // Usar SEMPRE o nome completo do profile — nunca o e-mail (PII).
         responsavelNome: meuProfile?.full_name ?? null,
         responsavelRegistro: null,
+        assinaturas: {
+          eng: sigs?.eng ?? engSig,
+          sesmt: sigs?.sesmt ?? sesmtSig,
+          enc: sigs?.enc ?? encSig,
+        },
       });
       setPdfPreview(result);
-    },
+  };
+  const baixarPdf = useMutation({
+    mutationFn: () => gerarLaudo(),
     onError: (e: any) => setBlockMsg(e?.message ?? "Erro ao gerar PDF"),
   });
 
