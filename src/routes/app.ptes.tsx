@@ -101,6 +101,18 @@ function PtesPage() {
     equipe_lista: [] as { nome: string; funcao: string }[],
     assinatura_encarregado_nome: "",
     assinatura_gerente_nome: "",
+    // FOR-SEG-04 — Blindagens (7 pontos): parecer TST × clima, rigging, PTEs irmãs
+    parecer_tst_clima: "" as string,
+    rigging: {
+      guindaste: "",
+      moitão: "",
+      peso_kg: "",
+      raio_m: "",
+      angulo_graus: "",
+      capacidade_kg: "",
+      art_numero: "",
+    } as Record<string, string>,
+    pts_relacionadas: [] as string[],
   };
   const [f, setF] = useState<any>(emptyForm);
 
@@ -269,6 +281,44 @@ function PtesPage() {
         if (!f.supervisor_entrada_id) throw new Error("Supervisor de Entrada é obrigatório em PET (NR-33).");
       }
 
+      // Blindagens FOR-SEG-04 (7 pontos):
+      // (2) Campos obrigatórios do papel — encarregado, hora fim e ≥1 risco marcado
+      if (!(f.encarregado_nome ?? "").trim()) {
+        throw new Error("Nome do Encarregado (FOR-SEG-04) é obrigatório.");
+      }
+      if (!f.hora_fim) {
+        throw new Error("Hora fim é obrigatória.");
+      }
+      const _algumRisco = Object.values(f.riscos_potenciais ?? {}).some(Boolean);
+      if (!_algumRisco) {
+        throw new Error("Marque ao menos 1 risco potencial no bloco Riscos.");
+      }
+
+      // (4) Sanidade risco × atividade — chuva/clima + içamento exige parecer explícito do TST
+      const _eIcamento = !!f.atv_movimentacao_cargas || f.tipo_pt === "PTI";
+      const _climaRuim = !!(f.riscos_potenciais?.condicoes_climaticas);
+      if (_eIcamento && _climaRuim && (f.parecer_tst_clima ?? "").trim().length < 10) {
+        throw new Error("Içamento com 'Condições climáticas desfavoráveis' marcado exige parecer explícito do TST (mín. 10 caracteres) autorizando a manobra.");
+      }
+
+      // (7) PTE de içamento deve puxar dados de equipamentos (rigging)
+      if (_eIcamento) {
+        const r = f.rigging ?? {};
+        const _falta = !((r.guindaste ?? "").toString().trim()) ||
+                       !(r.peso_kg && Number(r.peso_kg) > 0) ||
+                       !(r.raio_m && Number(r.raio_m) > 0) ||
+                       !(r.capacidade_kg && Number(r.capacidade_kg) > 0);
+        if (_falta) {
+          throw new Error("Plano de Rigging incompleto — guindaste, peso da peça, raio e capacidade no raio são obrigatórios em içamento.");
+        }
+        if (Number(r.peso_kg) > Number(r.capacidade_kg)) {
+          throw new Error(`Bloqueio: peso da peça (${r.peso_kg} kg) excede a capacidade do guindaste no raio informado (${r.capacidade_kg} kg).`);
+        }
+        if (Number(r.peso_kg) > 5000 && !((r.art_numero ?? "").toString().trim())) {
+          throw new Error("Içamento acima de 5.000 kg exige nº da ART do plano de rigging.");
+        }
+      }
+
       const requisitante = emps.find((x: any) => x.id === f.requisitante_id);
 
       // Regra de ouro: APR obrigatória (exceto emergência justificada)
@@ -386,18 +436,41 @@ function PtesPage() {
         equipe_lista: (f.equipe_lista ?? []).filter((r: any) => r && (r.nome?.trim() || r.funcao?.trim())),
         assinatura_encarregado_nome: (f.assinatura_encarregado_nome ?? "").trim() || null,
         assinatura_gerente_nome: (f.assinatura_gerente_nome ?? "").trim() || null,
+        parecer_tst_clima: (f.parecer_tst_clima ?? "").trim() || null,
+        rigging: (f.atv_movimentacao_cargas || f.tipo_pt === "PTI") ? {
+          guindaste: (f.rigging?.guindaste ?? "").trim() || null,
+          moitao: (f.rigging?.moitão ?? "").trim() || null,
+          peso_kg: f.rigging?.peso_kg ? Number(f.rigging.peso_kg) : null,
+          raio_m: f.rigging?.raio_m ? Number(f.rigging.raio_m) : null,
+          angulo_graus: f.rigging?.angulo_graus ? Number(f.rigging.angulo_graus) : null,
+          capacidade_kg: f.rigging?.capacidade_kg ? Number(f.rigging.capacidade_kg) : null,
+          art_numero: (f.rigging?.art_numero ?? "").trim() || null,
+        } : null,
       };
 
       if (editingId) {
         // Reemissão: ao atualizar, considera como nova emissão (zera o "envelhecimento" de 7 dias)
         const { error } = await supabase
           .from("ptes")
-          .update({ ...commonPayload, data_emissao: new Date().toISOString(), dados: dadosPdf })
+          .update({ ...commonPayload, data_emissao: new Date().toISOString(), dados: dadosPdf, pts_relacionadas: f.pts_relacionadas ?? [] })
           .eq("id", editingId);
         if (error) throw error;
       } else {
-        const numero = `${f.tipo_pt}-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000 + 1000)}`;
-        const { error } = await supabase.from("ptes").insert({ ...commonPayload, numero, status: "ATIVA", dados: dadosPdf });
+        // Numeração sequencial atômica por tipo/ano (RPC proximo_numero_pte)
+        const anoAtual = new Date().getFullYear();
+        const { data: numeroRpc, error: nErr } = await supabase.rpc(
+          "proximo_numero_pte" as any,
+          { _tipo: f.tipo_pt, _ano: anoAtual } as any,
+        );
+        if (nErr) throw nErr;
+        const numero = String(numeroRpc ?? `${f.tipo_pt}-${anoAtual}-0000`);
+        const { error } = await supabase.from("ptes").insert({
+          ...commonPayload,
+          numero,
+          status: "ATIVA",
+          dados: dadosPdf,
+          pts_relacionadas: f.pts_relacionadas ?? [],
+        });
         if (error) throw error;
       }
     },
@@ -505,6 +578,17 @@ function PtesPage() {
       equipe_lista: Array.isArray(d.equipe_lista) ? d.equipe_lista : [],
       assinatura_encarregado_nome: d.assinatura_encarregado_nome ?? "",
       assinatura_gerente_nome: d.assinatura_gerente_nome ?? "",
+      parecer_tst_clima: d.parecer_tst_clima ?? "",
+      rigging: {
+        guindaste: d.rigging?.guindaste ?? "",
+        moitão: d.rigging?.moitao ?? d.rigging?.["moitão"] ?? "",
+        peso_kg: d.rigging?.peso_kg != null ? String(d.rigging.peso_kg) : "",
+        raio_m: d.rigging?.raio_m != null ? String(d.rigging.raio_m) : "",
+        angulo_graus: d.rigging?.angulo_graus != null ? String(d.rigging.angulo_graus) : "",
+        capacidade_kg: d.rigging?.capacidade_kg != null ? String(d.rigging.capacidade_kg) : "",
+        art_numero: d.rigging?.art_numero ?? "",
+      },
+      pts_relacionadas: (p.pts_relacionadas as string[] | null) ?? [],
     });
   }
   function cancelEdit() {
@@ -758,6 +842,46 @@ function PtesPage() {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* PTEs IRMÃS — vinculação de PETs simultâneas da mesma manobra */}
+            {(() => {
+              const dataAtual = String(f.data || "").slice(0, 10);
+              const candidatas = (ptes as any[]).filter((p) =>
+                p.id !== editingId &&
+                p.status === "ATIVA" &&
+                String(p.data).slice(0, 10) === dataAtual &&
+                (!f.casco_id || p.casco_id === f.casco_id),
+              );
+              if (candidatas.length === 0) return null;
+              const sel: string[] = f.pts_relacionadas ?? [];
+              return (
+                <div className="rounded-xl border border-fuchsia-400/25 bg-gradient-to-br from-fuchsia-950/40 to-black/40 p-3 space-y-2">
+                  <Label className="text-[10px] font-black text-fuchsia-200 uppercase flex items-center gap-2">
+                    <Link2 className="h-3.5 w-3.5" /> PTEs vinculadas (mesma manobra / mesmo pátio)
+                  </Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5 max-h-40 overflow-y-auto custom-scrollbar">
+                    {candidatas.map((p: any) => {
+                      const on = sel.includes(p.id);
+                      return (
+                        <label key={p.id} className={`flex items-center gap-2 text-[10px] font-bold uppercase rounded-lg px-2 py-1.5 cursor-pointer border ${on ? "bg-fuchsia-500/20 text-fuchsia-50 border-fuchsia-300/50" : "bg-black/40 text-slate-200 border-white/10 hover:border-fuchsia-300/40"}`}>
+                          <Checkbox
+                            checked={on}
+                            onCheckedChange={(v) => {
+                              const next = v ? [...sel, p.id] : sel.filter((x) => x !== p.id);
+                              setF({ ...f, pts_relacionadas: next });
+                            }}
+                          />
+                          <span className="truncate">{p.numero} · {p.tipo_pt} · {p.employee_name ?? "s/ requisitante"}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <p className="text-[9px] font-bold uppercase text-fuchsia-200/70">
+                    Vincule PTEs simultâneas para bloquear ações conflitantes na mesma carga (ex.: içar × pessoal embaixo).
+                  </p>
+                </div>
+              );
+            })()}
 
             {/* APR VINCULADA — OBRIGATÓRIA */}
             <div className="rounded-xl p-4 bg-gradient-to-br from-rose-950/60 to-black/40 border border-rose-500/20 shadow-[inset_0_1px_0_rgba(255,230,235,0.05)]">
@@ -1119,6 +1243,24 @@ function PtesPage() {
                   </div>
                 </div>
               </div>
+              {f.mao_obra === "EXTERNA" && (
+                <div className="rounded-xl border border-amber-400/40 bg-amber-500/10 p-3 flex items-start gap-3">
+                  <Building2 className="h-4 w-4 text-amber-200 mt-0.5" />
+                  <div className="flex-1">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-amber-100">
+                      Mão de obra externa — checar documentação de terceiros
+                    </div>
+                    <p className="text-[10px] text-amber-100/85 mt-1">
+                      Confirme ASO válido, NR-11/NR-35 (quando aplicável), CA dos EPIs e ART da contratada antes de emitir.
+                      Marque em <b>S/N/NA</b> o item "Foi checado as documentações de terceiros?".
+                    </p>
+                    <Link2 className="hidden" />
+                    <a href="/app/sesmt/terceiros" className="inline-block mt-1 text-[10px] font-black uppercase underline text-amber-50 hover:text-white">
+                      Abrir cadastro de Terceiros →
+                    </a>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -1131,6 +1273,19 @@ function PtesPage() {
               <PdfCheckboxGroup title="Marque os que se aplicam" group="riscos_potenciais" items={PTE_RISCOS_POTENCIAIS} />
               {f.riscos_potenciais?.outros && (
                 <Input value={f.outros_risco_texto} onChange={(e) => setF({ ...f, outros_risco_texto: e.target.value })} placeholder="Outros riscos" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-slate-400/70 text-xs font-bold uppercase" />
+              )}
+              {(f.atv_movimentacao_cargas || f.tipo_pt === "PTI") && f.riscos_potenciais?.condicoes_climaticas && (
+                <div className="rounded-xl border border-amber-400/40 bg-amber-500/10 p-3 space-y-2">
+                  <Label className="text-[10px] font-black text-amber-100 uppercase flex items-center gap-2">
+                    <AlertTriangle className="h-3.5 w-3.5" /> Parecer do TST — clima × içamento (obrigatório)
+                  </Label>
+                  <Textarea
+                    value={f.parecer_tst_clima}
+                    onChange={(e) => setF({ ...f, parecer_tst_clima: e.target.value })}
+                    placeholder="Descreva a análise do TST autorizando o içamento com condições climáticas desfavoráveis (vento, chuva, visibilidade). Mín. 10 caracteres."
+                    className="bg-black/40 border-amber-300/30 text-amber-50 placeholder:text-amber-200/40 text-xs min-h-[80px]"
+                  />
+                </div>
               )}
             </div>
           </div>
@@ -1186,6 +1341,47 @@ function PtesPage() {
                 <HardHat className="h-4 w-4 text-amber-100/80/75" /> Movimentação e Içamento de Carga
               </h3>
               <PdfCheckboxGroup title="Precauções" group="precaucao_carga" items={PTE_PRECAUCOES_CARGA} />
+              {(f.atv_movimentacao_cargas || f.tipo_pt === "PTI") && (
+                <div className="mt-3 rounded-xl border border-lime-300/30 bg-black/40 p-3 space-y-3">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-lime-200 flex items-center gap-2">
+                    <HardHat className="h-3.5 w-3.5" /> Plano de Rigging (obrigatório em içamento)
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    {[
+                      { k: "guindaste", l: "Guindaste (modelo/tag)", ph: "Ex.: LTM 1050" },
+                      { k: "moitão", l: "Moitão / cabo", ph: "Ex.: 4t / 12mm" },
+                      { k: "peso_kg", l: "Peso da peça (kg) *", ph: "0", type: "number" },
+                      { k: "raio_m", l: "Raio de operação (m) *", ph: "0", type: "number" },
+                      { k: "angulo_graus", l: "Ângulo da lança (°)", ph: "0", type: "number" },
+                      { k: "capacidade_kg", l: "Capacidade no raio (kg) *", ph: "0", type: "number" },
+                      { k: "art_numero", l: "Nº ART (>5t)", ph: "ART-XXXX" },
+                    ].map((c) => (
+                      <div key={c.k} className="space-y-1">
+                        <Label className="text-[9px] font-black uppercase tracking-wider text-slate-200/80">{c.l}</Label>
+                        <Input
+                          type={c.type as any}
+                          value={f.rigging?.[c.k] ?? ""}
+                          onChange={(e) => setF({ ...f, rigging: { ...(f.rigging ?? {}), [c.k]: e.target.value } })}
+                          placeholder={c.ph}
+                          className="bg-black/50 border-white/10 text-lime-50 placeholder:text-slate-500 text-xs font-bold"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  {(() => {
+                    const p = Number(f.rigging?.peso_kg ?? 0);
+                    const c = Number(f.rigging?.capacidade_kg ?? 0);
+                    if (p > 0 && c > 0 && p > c) {
+                      return (
+                        <div className="rounded-lg border border-rose-400/40 bg-rose-500/10 px-3 py-2 text-[10px] font-black uppercase text-rose-100 flex items-center gap-2">
+                          <AlertTriangle className="h-3.5 w-3.5" /> Bloqueio: peso ({p} kg) excede capacidade no raio ({c} kg).
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+                </div>
+              )}
             </div>
             <div className="rounded-xl border border-lime-300/25 bg-gradient-to-br from-lime-500/5 via-black/40 to-black/40 p-3.5 space-y-4">
               <h3 className="text-sm font-black uppercase tracking-wider text-lime-100 border-b border-lime-300/20 pb-2 flex items-center gap-2">
@@ -1590,6 +1786,11 @@ function PtesPage() {
                     {p.tipo_pt === "PET" && petAlertas.get(p.id)?.needsPlano && (
                       <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-orange-600 text-white flex items-center gap-1" title="Plano de resgate NR-33 33.3.2.h não preenchido">
                         <AlertTriangle className="h-3 w-3" /> SEM PLANO DE RESGATE
+                      </span>
+                    )}
+                    {Array.isArray(p.pts_relacionadas) && p.pts_relacionadas.length > 0 && (
+                      <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-fuchsia-900/70 text-fuchsia-100 border border-fuchsia-400/40 flex items-center gap-1" title="PTEs vinculadas — mesma manobra">
+                        <Link2 className="h-3 w-3" /> +{p.pts_relacionadas.length} vinculadas
                       </span>
                     )}
                   </div>
