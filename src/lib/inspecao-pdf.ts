@@ -598,6 +598,19 @@ function ensureRoom(doc: jsPDF, y: number, needed: number, onBreak: () => void) 
   if (y + needed > H - 15) { doc.addPage(); onBreak(); }
 }
 
+function renderFotoMeta(doc: jsPDF, foto: any, x: number, y: number, maxW: number) {
+  const meta = [
+    `Hash: ${String(foto.hash_sha256 ?? "").slice(0, 16)}`,
+    foto.timestamp_captura ? brDateTime(foto.timestamp_captura) : "sem timestamp",
+    foto.gps_lat && foto.gps_lng ? `GPS ${Number(foto.gps_lat).toFixed(5)}, ${Number(foto.gps_lng).toFixed(5)}` : "",
+  ].filter(Boolean).join(" · ");
+  doc.setFont("helvetica", "bold").setFontSize(8).setTextColor(15, 23, 42);
+  doc.text("Evidência fotográfica", x, y + 4);
+  doc.setFont("helvetica", "normal").setFontSize(7.5).setTextColor(71, 85, 105);
+  const mt = doc.splitTextToSize(meta, maxW);
+  doc.text(mt, x, y + 9);
+}
+
 function drawMatriz5x5(doc: jsPDF, x: number, y: number, p: number, s: number) {
   const cell = 8;
   const originX = x + 6;
