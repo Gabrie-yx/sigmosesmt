@@ -572,9 +572,13 @@ function AprsPage() {
                               : [];
                             const linkedPtes = [...byApr, ...legacy];
                             return (
-                              <TableRow key={a.id} className={a._vencida ? "bg-rose-900/20" : ""}>
+                              <TableRow
+                                key={a.id}
+                                className={`cursor-pointer hover:bg-rose-500/10 transition-colors ${a._vencida ? "bg-rose-900/20" : ""}`}
+                                onClick={() => isEditor && setEditing(a.id)}
+                              >
                                 {isEditor && (
-                                  <TableCell className="w-8 pr-0">
+                                  <TableCell className="w-8 pr-0" onClick={(e) => e.stopPropagation()}>
                                     <Checkbox
                                       checked={selectedIds.has(a.id)}
                                       onCheckedChange={() => toggleSel(a.id)}
@@ -609,7 +613,7 @@ function AprsPage() {
                                 <TableCell>
                                   <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded border ${STATUS_TONE[a.status] ?? ""}`}>{a.status}</span>
                                 </TableCell>
-                                <TableCell className="text-right">
+                                <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                                   <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                       <Button size="icon" variant="ghost" className="h-8 w-8">
