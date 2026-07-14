@@ -20,10 +20,10 @@ export const Route = createFileRoute("/app/sesmt/inspecoes/")({
 });
 
 const STATUS_LABEL: Record<string, { label: string; cls: string }> = {
-  rascunho: { label: "Rascunho", cls: "bg-slate-200 text-slate-700" },
-  em_revisao: { label: "Em revisão", cls: "bg-amber-200 text-amber-800" },
-  publicada: { label: "Publicada", cls: "bg-emerald-200 text-emerald-800" },
-  arquivada: { label: "Arquivada", cls: "bg-zinc-200 text-zinc-600" },
+  rascunho: { label: "Rascunho", cls: "bg-slate-500/15 text-slate-200 border border-slate-400/30" },
+  em_revisao: { label: "Em revisão", cls: "bg-amber-500/15 text-amber-200 border border-amber-400/40" },
+  publicada: { label: "Publicada", cls: "bg-emerald-500/15 text-emerald-200 border border-emerald-400/40" },
+  arquivada: { label: "Arquivada", cls: "bg-zinc-500/15 text-zinc-300 border border-zinc-400/30" },
 };
 
 function InspecoesList() {
