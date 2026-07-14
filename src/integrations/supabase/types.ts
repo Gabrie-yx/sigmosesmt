@@ -9786,6 +9786,27 @@ export type Database = {
           },
         ]
       }
+      pte_numero_sequencia: {
+        Row: {
+          ano: number
+          tipo: string
+          ultimo: number
+          updated_at: string
+        }
+        Insert: {
+          ano: number
+          tipo: string
+          ultimo?: number
+          updated_at?: string
+        }
+        Update: {
+          ano?: number
+          tipo?: string
+          ultimo?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ptes: {
         Row: {
           apr_id: string | null
@@ -11976,6 +11997,10 @@ export type Database = {
       pet_status_alerta: { Args: { _pte_id: string }; Returns: Json }
       pode_gerenciar_compras: { Args: { _user_id: string }; Returns: boolean }
       pode_gerir_extra_sabado: { Args: { _user_id: string }; Returns: boolean }
+      proximo_numero_pte: {
+        Args: { _ano: number; _tipo: string }
+        Returns: string
+      }
       pt_title_case: { Args: { s: string }; Returns: string }
       rc_sla_horas: {
         Args: { _urg: Database["public"]["Enums"]["rc_urgencia"] }
