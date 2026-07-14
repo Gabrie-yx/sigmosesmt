@@ -356,7 +356,6 @@ function InspecaoDetail() {
   const baixarPdf = useMutation({
     mutationFn: async () => {
       if (fotos.length === 0) throw new Error("O relatório final exige evidência fotográfica. Reabra a inspeção e anexe as fotos.");
-      if (ncs.length === 0) throw new Error("O relatório final exige pelo menos uma NC registrada com matriz 5x5 e plano de ação.");
       const planosPorNc: Record<string, any[]> = {};
       if (ncs.length > 0) {
         const ids = ncs.map((n: any) => n.id);
@@ -366,7 +365,7 @@ function InspecaoDetail() {
           (planosPorNc[p.nc_id] = planosPorNc[p.nc_id] ?? []).push(p);
         });
         if (ids.some((ncId: string) => !planosPorNc[ncId]?.length)) {
-          throw new Error("O relatório final exige plano de ação PDCA para cada NC.");
+          throw new Error("Cada NC registrada precisa ter plano de ação (PDCA). Abra as NCs sem plano e complete antes de gerar o laudo.");
         }
       }
       await gerarInspecaoPdf({
@@ -378,7 +377,7 @@ function InspecaoDetail() {
         responsavelNome: user?.email ?? null,
       });
     },
-    onError: (e: any) => toast.error(e.message ?? "Erro ao gerar PDF"),
+    onError: (e: any) => setBlockMsg(e?.message ?? "Erro ao gerar PDF"),
   });
 
   if (isLoading || !insp) return <div className="p-6 text-muted-foreground text-sm">Carregando...</div>;
@@ -584,7 +583,7 @@ function InspecaoDetail() {
     <AlertDialog open={!!blockMsg} onOpenChange={(o) => !o && setBlockMsg(null)}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle className="flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-amber-500" /> Não é possível publicar</AlertDialogTitle>
+          <AlertDialogTitle className="flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-amber-500" /> Ação não permitida</AlertDialogTitle>
           <AlertDialogDescription>{blockMsg}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
