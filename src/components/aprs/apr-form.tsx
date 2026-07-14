@@ -6,7 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, ChevronUp, ChevronDown, AlertTriangle, Save, FileText, Printer, Check, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Trash2, ChevronUp, ChevronDown, AlertTriangle, Save, FileText, Printer, Check, ChevronLeft, ChevronRight, X, Search, ShieldAlert, Unlock, Info, Pencil } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { gerarAPR, type APRPdfRisco, type APRPdfAssinatura } from "@/lib/apr-pdf";
@@ -875,6 +878,8 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
   }
 
   const [stepError, setStepError] = useState<string | null>(null);
+  const [riscoEditIdx, setRiscoEditIdx] = useState<number | null>(null);
+  const [execFilter, setExecFilter] = useState("");
 
   function goNext() {
     const err = validateStep(currentStepIdx);
@@ -902,506 +907,702 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
   }
 
   return (
-    <div className="light-paper flex flex-col h-full bg-slate-100">
-      {/* Toolbar com stepper linear */}
-      <div className="p-3 bg-white border-b border-slate-300 space-y-2">
-        <div className="flex items-center gap-2">
+    <TooltipProvider delayDuration={200}>
+    <div className="flex flex-col h-full bg-background text-foreground">
+      {/* ═══════════ HEADER COMPACTO ═══════════ */}
+      <div className="border-b border-border bg-card/40 backdrop-blur-sm shrink-0">
+        <div className="px-5 pt-3 pb-2 flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-red-700 to-rose-950 flex items-center justify-center shadow-[0_0_14px_-4px_rgba(220,38,70,0.6)]">
+              <ShieldAlert className="h-4 w-4 text-red-50" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground leading-none">FOR-SEG-07 · APR</div>
+              <div className="text-sm font-black text-foreground leading-tight truncate">
+                {apr.numero ?? "Nova APR"}
+                {apr.atividade_descricao && <span className="ml-2 font-medium text-muted-foreground">· {apr.atividade_descricao.slice(0, 40)}{apr.atividade_descricao.length > 40 ? "…" : ""}</span>}
+              </div>
+            </div>
+          </div>
+          <div className="ml-auto flex flex-wrap items-center gap-1.5">
+            {categoriasPendentes.length > 0 && (
+              <Button
+                size="sm"
+                onClick={() => { setPteSheetRiscoSugerido(categoriasPendentes[0]?.riscoLabel ?? null); setPteSheetOpen(true); }}
+                className="h-8 px-3 text-[11px] font-black uppercase tracking-wider bg-gradient-to-br from-rose-600 to-rose-900 hover:from-rose-500 hover:to-rose-800 text-rose-50 border border-rose-400/40 shadow-[0_0_12px_-4px_rgba(220,38,70,0.5)]"
+              >
+                <AlertTriangle className="h-3.5 w-3.5 mr-1" />
+                Resolver {categoriasPendentes.length} PTE{categoriasPendentes.length > 1 ? "s" : ""}
+              </Button>
+            )}
+            {categoriasPendentes.length === 0 && todasPtesVinculadas.length > 0 && (
+              <Button size="sm" variant="outline" onClick={() => setPteSheetOpen(true)} className="h-8 px-2.5 text-[11px]">
+                <FileText className="h-3.5 w-3.5 mr-1" /> Gerenciar PTEs
+              </Button>
+            )}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button size="sm" variant="ghost" onClick={handleAbrir} disabled={!apr.id} className="h-8 w-8 p-0"><FileText className="h-4 w-4" /></Button>
+              </TooltipTrigger>
+              <TooltipContent>Abrir PDF</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button size="sm" variant="ghost" onClick={handleImprimir} disabled={!apr.id} className="h-8 w-8 p-0"><Printer className="h-4 w-4" /></Button>
+              </TooltipTrigger>
+              <TooltipContent>Imprimir</TooltipContent>
+            </Tooltip>
+            <Button size="sm" variant="outline" onClick={() => save.mutate(false)} disabled={save.isPending} className="h-8 px-2.5 text-[11px]">
+              <Save className="h-3.5 w-3.5 mr-1" /> Rascunho
+            </Button>
+            <Button
+              size="sm"
+              onClick={emitirDireto}
+              disabled={save.isPending}
+              className="h-8 px-3 text-[11px] font-black uppercase tracking-wider bg-red-700 hover:bg-red-800 text-white shadow-[0_0_12px_-4px_rgba(220,38,70,0.6)]"
+            >
+              <Check className="h-3.5 w-3.5 mr-1" /> Salvar e Emitir
+            </Button>
+            <Button size="sm" variant="ghost" onClick={onClose} className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground">
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Stepper compacto */}
+        <div className="px-5 pb-3 flex items-center gap-1.5 overflow-x-auto">
           {STEPS.map((s, i) => {
             const done = i < currentStepIdx;
             const active = i === currentStepIdx;
             const locked = i > currentStepIdx;
             return (
-              <div key={s.key} className="flex items-center flex-1 min-w-0">
+              <div key={s.key} className="flex items-center gap-1.5 shrink-0">
                 <button
                   type="button"
                   disabled={locked}
                   onClick={() => { if (!locked) { setStepError(null); setTab(s.key as any); } }}
                   className={cn(
-                    "flex items-center gap-2 px-2 py-1 rounded transition",
-                    locked && "opacity-50 cursor-not-allowed",
-                    !locked && "hover:bg-slate-50",
+                    "flex items-center gap-2 pl-1 pr-2.5 py-1 rounded-full transition border",
+                    active && "bg-red-700/15 border-red-500/40 text-red-100",
+                    done && "bg-emerald-500/10 border-emerald-500/30 text-emerald-200 hover:bg-emerald-500/15",
+                    locked && "bg-muted/40 border-border text-muted-foreground/60 cursor-not-allowed",
+                    !active && !done && !locked && "border-border text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                   )}
-                  title={locked ? "Conclua os passos anteriores" : s.label}
                 >
-                  <span
-                    className={cn(
-                      "h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-black shrink-0",
-                      done && "bg-emerald-600 text-white",
-                      active && "text-white",
-                      !done && !active && "bg-slate-200 text-slate-500",
-                    )}
-                    style={active ? { background: APR_RED } : {}}
-                  >
+                  <span className={cn(
+                    "h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0",
+                    active && "bg-red-600 text-white",
+                    done && "bg-emerald-500 text-white",
+                    !active && !done && "bg-muted text-muted-foreground",
+                  )}>
                     {done ? <Check className="h-3 w-3" /> : i + 1}
                   </span>
-                  <span className={cn("text-[11px] font-bold truncate", active ? "text-slate-900" : "text-slate-500")}>
-                    {s.label}
-                  </span>
+                  <span className="text-[11px] font-bold uppercase tracking-wide">{s.label}</span>
                 </button>
                 {i < STEPS.length - 1 && (
-                  <div className={cn("flex-1 h-0.5 mx-1", i < currentStepIdx ? "bg-emerald-600" : "bg-slate-200")} />
+                  <div className={cn("h-px w-6", i < currentStepIdx ? "bg-emerald-500/50" : "bg-border")} />
                 )}
               </div>
             );
           })}
-        </div>
-        <div className="flex flex-wrap gap-2 items-center">
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-            Passo {currentStepIdx + 1} de {STEPS.length}
-          </span>
-          {stepError && <span className="text-[11px] font-bold text-rose-600">⚠ {stepError}</span>}
-          <div className="ml-auto flex gap-2">
-          <Button
-            variant={categoriasPendentes.length > 0 ? "default" : "outline"}
-            size="sm"
-            onClick={() => {
-              setPteSheetRiscoSugerido(categoriasPendentes[0]?.riscoLabel ?? null);
-              setPteSheetOpen(true);
-            }}
-            className={
-              categoriasPendentes.length > 0
-                ? "h-8 px-2.5 text-[11px] bg-gradient-to-br from-rose-700 to-rose-950 hover:from-rose-600 hover:to-rose-900 text-rose-50 border border-rose-400/30 shadow-[0_0_12px_-4px_rgba(220,38,70,0.5)]"
-                : ""
-            }
-            title="Vincular ou criar PTE sem sair da APR"
-          >
-            <FileText className="h-4 w-4 mr-1" />
-            {categoriasPendentes.length > 0
-              ? `Resolver ${categoriasPendentes.length} PTE${categoriasPendentes.length > 1 ? "s" : ""}`
-              : todasPtesVinculadas.length > 0
-              ? "Gerenciar PTEs"
-              : "Vincular/Nova PTE"}
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleAbrir} disabled={!apr.id}><FileText className="h-4 w-4 mr-1" /> Abrir PDF</Button>
-          <Button variant="outline" size="sm" onClick={handleImprimir} disabled={!apr.id}><Printer className="h-4 w-4 mr-1" /> Imprimir</Button>
-          <Button variant="outline" size="sm" onClick={() => save.mutate(false)} disabled={save.isPending}><Save className="h-4 w-4 mr-1" /> Salvar Rascunho</Button>
-          <Button
-            size="sm"
-            onClick={emitirDireto}
-            disabled={save.isPending}
-            style={{ background: APR_RED }}
-            className="text-white font-black uppercase tracking-widest text-[11px] h-8 px-3 shadow-[0_0_12px_-4px_rgba(220,38,70,0.6)]"
-            title="Validar todos os passos e emitir esta APR sem percorrer o wizard"
-          >
-            <Check className="h-4 w-4 mr-1" /> Salvar e Emitir
-          </Button>
-          </div>
+          {stepError && (
+            <span className="ml-auto text-[11px] font-bold text-red-300 flex items-center gap-1 shrink-0">
+              <AlertTriangle className="h-3 w-3" /> {stepError}
+            </span>
+          )}
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4">
-        {/* ============ PÁGINA 1 ============ */}
-        {tab === "p1" && (
-          <div className="bg-white max-w-[1400px] mx-auto shadow border border-slate-300">
-            <PaperFullHeader apr={apr} setApr={setApr} empresa={empresa} casco={casco} enc={enc} tst={tst}
-              employees={employees} companies={companies} pagina={1} />
+      {/* ═══════════ CONTEÚDO ═══════════ */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-5xl mx-auto p-5 space-y-4">
 
-            {/* Painel de cobertura de PTE — design dark/vinho coeso com o sistema */}
+          {/* ══════ PASSO 1 ══════ */}
+          {tab === "p1" && <>
+            {/* Card Identificação */}
+            <section className="rounded-xl border border-border bg-card/60 overflow-hidden">
+              <div className="px-4 py-2.5 border-b border-border flex items-center gap-2 bg-card/40">
+                <div className="h-6 w-6 rounded-md bg-red-700/20 border border-red-500/40 flex items-center justify-center text-[10px] font-black text-red-200">1</div>
+                <h3 className="text-xs font-black uppercase tracking-widest text-foreground">Identificação</h3>
+                <span className="ml-auto text-[10px] font-bold text-muted-foreground">APR Nº {apr.numero ?? "—"} · Página 1 de 4</span>
+              </div>
+              <div className="p-4 grid grid-cols-1 md:grid-cols-12 gap-3">
+                <div className="md:col-span-3">
+                  <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Início</label>
+                  <Input type="date" className="h-9 mt-1" value={apr.data_emissao} onChange={(e) => setApr({ ...apr, data_emissao: e.target.value })} />
+                </div>
+                <div className="md:col-span-3">
+                  <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Fim</label>
+                  <Input type="date" className="h-9 mt-1" value={apr.data_validade ?? ""} onChange={(e) => setApr({ ...apr, data_validade: e.target.value || null })} />
+                </div>
+                <div className="md:col-span-3">
+                  <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Validade</label>
+                  <Select value={String(apr.validade_dias)} onValueChange={(v) => setApr({ ...apr, validade_dias: parseInt(v) })}>
+                    <SelectTrigger className="h-9 mt-1"><SelectValue /></SelectTrigger>
+                    <SelectContent>{[1, 7, 15, 30].map((n) => <SelectItem key={n} value={String(n)}>{n} dia{n > 1 ? "s" : ""}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="md:col-span-3">
+                  <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Casco / Embarcação</label>
+                  <Select value={apr.casco_id ?? "none"} onValueChange={(v) => setApr({ ...apr, casco_id: v === "none" ? null : v })}>
+                    <SelectTrigger className="h-9 mt-1"><SelectValue placeholder="—" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">— Nenhum —</SelectItem>
+                      {cascos.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.numero}{c.nome ? ` · ${c.nome}` : ""}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="md:col-span-6">
+                  <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Elaborado por (TST)</label>
+                  <Select value={apr.tst_id ?? "none"} onValueChange={(v) => setApr({ ...apr, tst_id: v === "none" ? null : v })}>
+                    <SelectTrigger className="h-9 mt-1"><SelectValue placeholder="Selecionar TST..." /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">— Nenhum —</SelectItem>
+                      {(employees ?? []).map((e: any) => <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="md:col-span-6">
+                  <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Responsável / Empresa</label>
+                  <Select value={apr.empresa_id ?? "none"} onValueChange={(v) => setApr({ ...apr, empresa_id: v === "none" ? null : v })}>
+                    <SelectTrigger className="h-9 mt-1"><SelectValue placeholder="Selecionar empresa..." /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">— Nenhuma —</SelectItem>
+                      {(companies ?? []).map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="md:col-span-12">
+                  <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Local da Atividade</label>
+                  <Input className="h-9 mt-1" value={apr.local ?? ""} onChange={(e) => setApr({ ...apr, local: e.target.value })} placeholder="Ex.: Casco 133, deck superior" />
+                </div>
+
+                <div className="md:col-span-8">
+                  <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Atividade Principal *</label>
+                  <Textarea rows={2} className="mt-1 resize-none" value={apr.atividade_descricao} onChange={(e) => setApr({ ...apr, atividade_descricao: e.target.value })} placeholder="Ex.: Pintura e jateamento em altura no costado do casco…" />
+                </div>
+                <div className="md:col-span-4">
+                  <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Serviço Detalhado</label>
+                  <Textarea rows={2} className="mt-1 resize-none" value={apr.observacoes_gerais ?? ""} onChange={(e) => setApr({ ...apr, observacoes_gerais: e.target.value || null })} />
+                </div>
+
+                {/* Dias + horários */}
+                <div className="md:col-span-12">
+                  <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Horário da Atividade</label>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-3">
+                    <div className="flex gap-1">
+                      {DIAS.map((d) => {
+                        const active = (apr.dias_semana ?? []).includes(d);
+                        return (
+                          <button key={d} type="button"
+                            onClick={() => {
+                              const cur = new Set(apr.dias_semana ?? []);
+                              if (cur.has(d)) cur.delete(d); else cur.add(d);
+                              setApr({ ...apr, dias_semana: Array.from(cur) });
+                            }}
+                            className={cn(
+                              "px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider border transition",
+                              active
+                                ? "bg-red-700/25 border-red-500/50 text-red-100"
+                                : "border-border text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                            )}>
+                            {d}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-black uppercase text-muted-foreground">Seg-Qui</span>
+                      <Input type="time" className="h-8 w-24 text-xs" value={apr.hora_inicio ?? ""} onChange={(e) => setApr({ ...apr, hora_inicio: e.target.value })} />
+                      <span className="text-[10px] text-muted-foreground">às</span>
+                      <Input type="time" className="h-8 w-24 text-xs" value={apr.hora_fim ?? ""} onChange={(e) => setApr({ ...apr, hora_fim: e.target.value })} />
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-black uppercase text-muted-foreground">Sexta</span>
+                      <Input type="time" className="h-8 w-24 text-xs" value={apr.hora_inicio_sexta ?? ""} onChange={(e) => setApr({ ...apr, hora_inicio_sexta: e.target.value })} />
+                      <span className="text-[10px] text-muted-foreground">às</span>
+                      <Input type="time" className="h-8 w-24 text-xs" value={apr.hora_fim_sexta ?? ""} onChange={(e) => setApr({ ...apr, hora_fim_sexta: e.target.value })} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Alerta PTE — slim */}
             {coberturaCategorias.length > 0 && (() => {
               const hasPendente = categoriasPendentes.length > 0;
-              const accent = hasPendente
-                ? { border: "border-rose-500/50", glow: "shadow-[0_0_24px_-8px_rgba(220,38,70,0.55)]", chipBg: "bg-rose-500/20", chipText: "text-rose-100", icon: "text-rose-300", title: "text-rose-100" }
-                : { border: "border-emerald-400/30", glow: "shadow-[0_0_24px_-10px_rgba(16,185,129,0.45)]", chipBg: "bg-emerald-500/15", chipText: "text-emerald-200", icon: "text-emerald-300", title: "text-emerald-100" };
               return (
-                <div
-                  className={`relative border-x border-b border-[#7f1d1d]/50 ${accent.glow}`}
-                  style={{ background: "linear-gradient(135deg, rgba(60,10,20,0.92) 0%, rgba(20,5,10,0.96) 100%)" }}
-                >
-                  {/* Faixa de status */}
-                  <div className={`flex items-center gap-3 px-4 py-2.5 border-b border-white/5 ${accent.border} border-l-2`}>
-                    {hasPendente ? (
-                      <AlertTriangle className={`h-4 w-4 ${accent.icon} shrink-0`} />
-                    ) : (
-                      <FileText className={`h-4 w-4 ${accent.icon} shrink-0`} />
-                    )}
-                    <div className={`text-[11px] font-black uppercase tracking-wider ${accent.title}`}>
-                      {hasPendente
-                        ? "PTE obrigatória — cobertura incompleta"
-                        : "PTE — Todas as categorias cobertas"}
+                <section className={cn(
+                  "rounded-xl border overflow-hidden",
+                  hasPendente
+                    ? "border-red-500/40 bg-gradient-to-br from-red-950/60 to-rose-950/30 shadow-[0_0_20px_-8px_rgba(220,38,70,0.4)]"
+                    : "border-emerald-500/30 bg-emerald-950/20"
+                )}>
+                  <div className="px-4 py-2 flex items-center gap-2">
+                    {hasPendente
+                      ? <AlertTriangle className="h-4 w-4 text-red-300 shrink-0" />
+                      : <Check className="h-4 w-4 text-emerald-300 shrink-0" />}
+                    <div className={cn("text-[11px] font-black uppercase tracking-wider", hasPendente ? "text-red-100" : "text-emerald-100")}>
+                      {hasPendente ? "PTE obrigatória — cobertura incompleta" : "PTE — todas categorias cobertas"}
                     </div>
-                    <span className={`ml-auto text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${accent.chipBg} ${accent.chipText} border border-current/20`}>
+                    <Badge variant="outline" className={cn(
+                      "ml-auto text-[10px] font-black",
+                      hasPendente ? "border-red-500/50 text-red-200 bg-red-500/15" : "border-emerald-500/40 text-emerald-200 bg-emerald-500/15"
+                    )}>
                       {categoriasCobertas.length}/{coberturaCategorias.length} cobertas
-                    </span>
+                    </Badge>
                   </div>
-
-                  {/* Lista de categorias */}
-                  <div className="divide-y divide-white/5">
+                  <div className="divide-y divide-white/5 border-t border-white/5">
                     {coberturaCategorias.map((c) => {
                       if (c.pte) {
                         const pte: any = c.pte;
                         return (
-                          <div key={c.categoria} className="flex items-center gap-3 px-4 py-2 hover:bg-white/[0.03]">
-                            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500/90 text-white font-black text-[10px] shrink-0">✓</span>
-                            <div className="min-w-0 flex-1 flex items-center gap-2 flex-wrap">
-                              <span className="text-[11px] font-bold text-emerald-100">{c.categoria}</span>
-                              <span className="text-[10px] text-emerald-200/70">
-                                PTE Nº <b className="text-emerald-100">{pte.numero ?? String(pte.id).slice(0, 8)}</b>
-                                <span className="mx-1 text-emerald-200/40">·</span>
-                                {formatDateBR(pte.data_emissao)}
-                              </span>
-                            </div>
+                          <div key={c.categoria} className="flex items-center gap-3 px-4 py-1.5">
+                            <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                            <span className="text-[11px] font-bold text-emerald-100">{c.categoria}</span>
+                            <span className="text-[10px] text-emerald-200/70 truncate">PTE Nº <b>{pte.numero ?? String(pte.id).slice(0, 8)}</b> · {formatDateBR(pte.data_emissao)}</span>
                           </div>
                         );
                       }
                       if (c.riscoLabel) {
                         return (
-                          <div key={c.categoria} className="flex items-center gap-3 px-4 py-2 hover:bg-white/[0.03]">
-                            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-rose-600 text-white font-black text-[10px] shrink-0">!</span>
+                          <div key={c.categoria} className="flex items-center gap-3 px-4 py-1.5">
+                            <span className="h-4 w-4 rounded-full bg-red-600 text-white text-[9px] font-black flex items-center justify-center shrink-0">!</span>
                             <div className="min-w-0 flex-1">
-                              <div className="text-[11px] font-bold text-rose-100">{c.categoria}</div>
-                              <div className="text-[10px] text-rose-200/70 truncate">{c.motivo}</div>
+                              <div className="text-[11px] font-bold text-red-100">{c.categoria}</div>
+                              <div className="text-[10px] text-red-200/70 truncate">{c.motivo}</div>
                             </div>
-                            <Button
-                              size="sm"
-                              className="h-6 px-2 text-[10px] font-bold uppercase tracking-wide bg-gradient-to-br from-rose-600 to-rose-900 hover:from-rose-500 hover:to-rose-800 text-rose-50 border border-rose-400/30 shadow-[0_0_10px_-3px_rgba(220,38,70,0.5)] shrink-0"
-                              onClick={() => {
-                                setPteSheetRiscoSugerido(c.riscoLabel);
-                                setPteSheetOpen(true);
-                              }}
-                            >
+                            <Button size="sm" onClick={() => { setPteSheetRiscoSugerido(c.riscoLabel); setPteSheetOpen(true); }}
+                              className="h-6 px-2 text-[10px] font-bold uppercase bg-red-700 hover:bg-red-800 text-white shrink-0">
                               Resolver
                             </Button>
                           </div>
                         );
                       }
                       return (
-                        <div key={c.categoria} className="flex items-center gap-3 px-4 py-2">
-                          <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/10 text-white/70 font-black text-[10px] shrink-0">i</span>
-                          <div className="min-w-0 flex-1">
-                            <span className="text-[11px] font-bold text-white/80">{c.categoria}</span>
-                            <span className="text-[10px] text-white/50 ml-2">{c.motivo} (informativo)</span>
-                          </div>
+                        <div key={c.categoria} className="flex items-center gap-3 px-4 py-1.5">
+                          <Info className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                          <span className="text-[11px] font-bold text-muted-foreground">{c.categoria}</span>
+                          <span className="text-[10px] text-muted-foreground/70">{c.motivo} (informativo)</span>
                         </div>
                       );
                     })}
                   </div>
-                </div>
+                </section>
               );
             })()}
 
-            {/* Casco | PTE — Validade subiu para o cabeçalho */}
-            <div className="grid grid-cols-2">
-              <PaperCell label="Casco / Embarcação">
-                <Select value={apr.casco_id ?? "none"} onValueChange={(v) => setApr({ ...apr, casco_id: v === "none" ? null : v })}>
-                  <SelectTrigger className="h-7 text-xs border-0 p-0"><SelectValue placeholder="—" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">— Nenhum —</SelectItem>
-                    {cascos.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.numero}{c.nome ? ` · ${c.nome}` : ""}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </PaperCell>
-              <PaperCell label={`PTE Vinculada${apr.exige_pte ? " *" : ""}`}>
-                <Select value={apr.pte_id ?? "none"} onValueChange={(v) => setApr({ ...apr, pte_id: v === "none" ? null : v })}>
-                  <SelectTrigger className="h-7 text-xs border-0 p-0"><SelectValue placeholder="— Sem PTE —" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">— Sem PTE —</SelectItem>
-                    {ptes.map((p: any) => <SelectItem key={p.id} value={p.id}>{p.numero ?? p.id.slice(0, 8)} · {formatDateBR(p.data_emissao)}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </PaperCell>
-            </div>
-
-            {/* Tabela de riscos com cabeçalho LARANJA */}
-            <div className="border-t-2 border-black">
-              {/* Cabeçalho duplo: super-header AVALIAÇÃO DO RISCO sobre P/S/G */}
-              <div className="grid text-black text-[11px] font-bold text-center" style={{ background: APR_ORANGE, gridTemplateColumns: "1.6fr 1.4fr 1.4fr 1.3fr 2fr 1.2fr 1.2fr 0.7fr" }}>
-                <div className="border border-black px-1 py-1.5 row-span-2 flex items-center justify-center">PASSO A PASSO DA ATIVIDADE</div>
-                <div className="border border-black px-1 py-1.5 row-span-2 flex items-center justify-center">RISCOS IDENTIFICADOS</div>
-                <div className="border border-black px-1 py-1.5 row-span-2 flex items-center justify-center">EFEITOS / DANOS</div>
-                <div className="border border-black px-1 py-1 col-start-4">AVALIAÇÃO DO RISCO</div>
-                <div className="border border-black px-1 py-1.5 row-span-2 flex items-center justify-center col-start-5 row-start-1">AÇÕES PREVENTIVAS DOS RISCOS</div>
-                <div className="border border-black px-1 py-1.5 row-span-2 flex items-center justify-center col-start-6 row-start-1">EPI</div>
-                <div className="border border-black px-1 py-1.5 row-span-2 flex items-center justify-center col-start-7 row-start-1">RESPONSÁVEIS PELAS AÇÕES</div>
-                <div className="border border-black px-1 py-1.5 row-span-2 flex items-center justify-center col-start-8 row-start-1">NRs</div>
-                {/* Sub-cabeçalho P/S/G dentro da coluna AVALIAÇÃO */}
-                <div className="border border-black col-start-4 row-start-2 grid grid-cols-3">
-                  <div className="border-r border-black py-1">P</div>
-                  <div className="border-r border-black py-1">S</div>
-                  <div className="py-1">G</div>
+            {/* Card Riscos — cards clicáveis */}
+            <section className="rounded-xl border border-border bg-card/60 overflow-hidden">
+              <div className="px-4 py-2.5 border-b border-border flex items-center gap-2 bg-card/40 flex-wrap">
+                <div className="h-6 w-6 rounded-md bg-red-700/20 border border-red-500/40 flex items-center justify-center text-[10px] font-black text-red-200">2</div>
+                <h3 className="text-xs font-black uppercase tracking-widest text-foreground">Riscos Identificados</h3>
+                <Badge variant="outline" className="text-[10px] font-black">{riscos.length} risco{riscos.length !== 1 ? "s" : ""}</Badge>
+                {temRiscoGrave && (
+                  <Badge className="text-[10px] font-black bg-red-500/20 text-red-200 border border-red-500/40">
+                    <AlertTriangle className="h-3 w-3 mr-1" /> Alto/Crítico — PTE obrigatória
+                  </Badge>
+                )}
+                <div className="ml-auto flex items-center gap-1.5">
+                  <Select onValueChange={(v) => { addRiscoFromCatalogo(v); setRiscoEditIdx(riscos.length); }}>
+                    <SelectTrigger className="w-[220px] h-8 text-xs"><SelectValue placeholder="+ Do catálogo…" /></SelectTrigger>
+                    <SelectContent className="max-h-[400px]">
+                      {catRiscos.map((c: any) => <SelectItem key={c.id} value={c.id}>[{c.categoria}] {c.nome}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => { addRiscoLivre(); setRiscoEditIdx(riscos.length); }}>
+                    <Plus className="h-3.5 w-3.5 mr-1" /> Manual
+                  </Button>
                 </div>
               </div>
 
               {riscos.length === 0 ? (
-                <div className="text-center text-slate-400 py-6 text-xs border border-black">Nenhum risco. Use o botão abaixo para adicionar.</div>
-              ) : riscos.map((r, idx) => {
-                const nivel = r.probabilidade + r.severidade;
-                const meta = nivelMeta(nivel);
-                return (
-                  <div key={idx} className="grid text-[11px] items-stretch"
-                    style={{ gridTemplateColumns: "1.6fr 1.4fr 1.4fr 0.4fr 0.4fr 0.5fr 2fr 1.2fr 1.2fr 0.7fr" }}>
-                    <div className="border border-black p-1">
-                      <Textarea rows={2} placeholder={`${r.ordem}. Descreva o passo...`}
-                        className="text-[11px] border-0 p-0 resize-none focus-visible:ring-0"
-                        value={r.passo_a_passo ?? ""} onChange={(e) => updateRisco(idx, { passo_a_passo: e.target.value })} />
-                    </div>
-                    <div className="border border-black p-1">
-                      <Select value={r.catalogo_risco_id ?? undefined} onValueChange={(v) => setRiscoFromCatalogo(idx, v)}>
-                        <SelectTrigger className="h-6 text-[11px] border-0 p-0 font-bold"><SelectValue placeholder={r.risco_nome || "Selecionar risco..."} /></SelectTrigger>
-                        <SelectContent className="max-h-[300px]">
-                          {catRiscos.map((c: any) => <SelectItem key={c.id} value={c.id}>[{c.categoria}] {c.nome}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="border border-black p-1">
-                      <Textarea rows={2} className="text-[11px] border-0 p-0 resize-none focus-visible:ring-0" value={r.efeitos_danos ?? ""} onChange={(e) => updateRisco(idx, { efeitos_danos: e.target.value })} />
-                    </div>
-                    <div className="border border-black p-0.5">
-                      <Select value={String(r.probabilidade)} onValueChange={(v) => updateRisco(idx, { probabilidade: parseInt(v) })}>
-                        <SelectTrigger className="h-6 text-[11px] border-0 p-0 justify-center"><SelectValue /></SelectTrigger>
-                        <SelectContent>{[1,2,3].map((n) => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}</SelectContent>
-                      </Select>
-                    </div>
-                    <div className="border border-black p-0.5">
-                      <Select value={String(r.severidade)} onValueChange={(v) => updateRisco(idx, { severidade: parseInt(v) })}>
-                        <SelectTrigger className="h-6 text-[11px] border-0 p-0 justify-center"><SelectValue /></SelectTrigger>
-                        <SelectContent>{[1,2,3].map((n) => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}</SelectContent>
-                      </Select>
-                    </div>
-                    <div className={`border border-black flex items-center justify-center font-black text-white ${meta.cls}`}>{nivel}</div>
-                    <div className="border border-black p-1">
-                      <Textarea rows={2} className="text-[11px] border-0 p-0 resize-none focus-visible:ring-0" value={r.acoes_preventivas ?? ""} onChange={(e) => updateRisco(idx, { acoes_preventivas: e.target.value })} />
-                    </div>
-                    <div className="border border-black p-1">
-                      <Input className="h-6 text-[11px] border-0 p-0" value={(r.epis ?? []).join(", ")} onChange={(e) => updateRisco(idx, { epis: e.target.value.split(",").map((x) => x.trim()).filter(Boolean) })} />
-                    </div>
-                    <div className="border border-black p-1">
-                      <Input className="h-6 text-[11px] border-0 p-0" value={r.responsavel_acoes ?? ""} onChange={(e) => updateRisco(idx, { responsavel_acoes: e.target.value })} />
-                    </div>
-                    <div className="border border-black p-1 flex items-center justify-between gap-0.5">
-                      <Input className="h-6 text-[10px] border-0 p-0 w-12" value={(r.nrs ?? []).join(",")} onChange={(e) => updateRisco(idx, { nrs: e.target.value.split(",").map((x) => x.trim()).filter(Boolean) })} />
-                      <div className="flex flex-col">
-                        <button onClick={() => moveRisco(idx, -1)} className="hover:bg-slate-200 rounded"><ChevronUp className="h-3 w-3" /></button>
-                        <button onClick={() => moveRisco(idx, 1)} className="hover:bg-slate-200 rounded"><ChevronDown className="h-3 w-3" /></button>
+                <div className="p-8 text-center text-muted-foreground text-xs">
+                  Nenhum risco adicionado. Use os botões acima para começar.
+                </div>
+              ) : (
+                <div className="divide-y divide-border">
+                  {riscos.map((r, idx) => {
+                    const nivel = r.probabilidade + r.severidade;
+                    const meta = nivelMeta(nivel);
+                    return (
+                      <div key={idx} className="group px-4 py-2.5 hover:bg-accent/30 transition flex items-start gap-3">
+                        <div className="h-6 w-6 rounded-md bg-muted text-muted-foreground text-[10px] font-black flex items-center justify-center shrink-0 mt-0.5">
+                          {String(r.ordem).padStart(2, "0")}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setRiscoEditIdx(idx)}
+                          className="flex-1 min-w-0 text-left"
+                        >
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-sm font-bold text-foreground truncate">{r.risco_nome || <span className="italic text-muted-foreground">Sem nome — clique para editar</span>}</span>
+                            {r.risco_categoria && <Badge variant="outline" className="text-[9px] font-black">{r.risco_categoria}</Badge>}
+                          </div>
+                          {r.passo_a_passo && (
+                            <div className="text-[11px] text-muted-foreground truncate mt-0.5">{r.passo_a_passo}</div>
+                          )}
+                          <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                            {(r.epis ?? []).slice(0, 3).map((e, i) => (
+                              <Badge key={i} variant="outline" className="text-[9px] font-medium">{e}</Badge>
+                            ))}
+                            {(r.epis ?? []).length > 3 && <span className="text-[9px] text-muted-foreground">+{r.epis.length - 3} EPIs</span>}
+                            {(r.nrs ?? []).slice(0, 3).map((n, i) => (
+                              <Badge key={i} className="text-[9px] font-black bg-red-700/15 text-red-200 border-red-500/40">{n}</Badge>
+                            ))}
+                          </div>
+                        </button>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <div className={cn("h-9 w-9 rounded-md flex items-center justify-center font-black text-white text-sm shrink-0", meta.cls)} title={`P${r.probabilidade}×S${r.severidade}=${nivel} · ${meta.label}`}>
+                            {nivel}
+                          </div>
+                          <div className="flex flex-col opacity-0 group-hover:opacity-100 transition">
+                            <button onClick={() => moveRisco(idx, -1)} className="p-0.5 hover:bg-accent rounded"><ChevronUp className="h-3 w-3" /></button>
+                            <button onClick={() => moveRisco(idx, 1)} className="p-0.5 hover:bg-accent rounded"><ChevronDown className="h-3 w-3" /></button>
+                          </div>
+                          <Button size="sm" variant="ghost" onClick={() => setRiscoEditIdx(idx)} className="h-8 w-8 p-0"><Pencil className="h-3.5 w-3.5" /></Button>
+                          <Button size="sm" variant="ghost" onClick={() => removeRisco(idx)} className="h-8 w-8 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/10"><Trash2 className="h-3.5 w-3.5" /></Button>
+                        </div>
                       </div>
-                      <button onClick={() => removeRisco(idx)} className="text-rose-600 hover:bg-rose-50 rounded p-0.5"><Trash2 className="h-3 w-3" /></button>
-                    </div>
-                  </div>
-                );
-              })}
-
-              <div className="bg-slate-50 p-2 flex flex-wrap gap-2 items-center border border-black border-t-0">
-                <Select onValueChange={addRiscoFromCatalogo}>
-                  <SelectTrigger className="w-[280px] h-8 text-xs"><SelectValue placeholder="+ Adicionar do catálogo..." /></SelectTrigger>
-                  <SelectContent className="max-h-[400px]">
-                    {catRiscos.map((c: any) => <SelectItem key={c.id} value={c.id}>[{c.categoria}] {c.nome}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                <Button variant="outline" size="sm" onClick={addRiscoLivre}><Plus className="h-3.5 w-3.5 mr-1" /> Risco manual</Button>
-                {temRiscoGrave && (
-                  <span className="ml-auto text-xs font-bold text-rose-600 flex items-center gap-1 bg-rose-50 px-2 py-1 rounded border border-rose-200">
-                    <AlertTriangle className="h-3 w-3" /> Risco ALTO/CRÍTICO — PTE obrigatória
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <div className="text-center font-bold text-[11px] text-rose-600 p-2 italic">
-              "NENHUM TRABALHO É TÃO URGENTE OU IMPORTANTE QUE NÃO POSSA SER PLANEJADO E EXECUTADO COM SEGURANÇA"
-            </div>
-          </div>
-        )}
-
-        {/* ============ PÁGINA 2 — GERAIS ============ */}
-        {tab === "p2" && (
-          <div className="bg-white max-w-[1100px] mx-auto shadow border border-slate-300">
-            <PaperFullHeader apr={apr} empresa={empresa} casco={casco} enc={enc} tst={tst} pagina={2} />
-            <div className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="font-black text-base">GERAIS:</h2>
-                <Button type="button" size="sm" variant="ghost" className="h-7 text-xs"
-                  onClick={() => setApr({ ...apr, texto_gerais: DEFAULT_TEXTO_GERAIS })}>Restaurar padrão DMN</Button>
-              </div>
-              <Textarea rows={26} value={apr.texto_gerais ?? ""} onChange={(e) => setApr({ ...apr, texto_gerais: e.target.value })} className="font-mono text-xs leading-relaxed" />
-            </div>
-          </div>
-        )}
-
-        {/* ============ PÁGINA 3 — Avaliação & Assinaturas ============ */}
-        {tab === "p3" && (
-          <div className="bg-white max-w-[1100px] mx-auto shadow border border-slate-300">
-            <PaperFullHeader apr={apr} empresa={empresa} casco={casco} enc={enc} tst={tst} pagina={3} />
-            <div className="p-4 space-y-3">
-              <div className="text-center text-[11px] font-bold text-rose-600 border border-rose-300 bg-rose-50 p-2">
-                ATENÇÃO: AO OBSERVAR OUTRO RISCO NÃO PREVISTO NESTA APR, PARALISAR O TRABALHO IMEDIATAMENTE E COMUNICAR AO SESMT
-              </div>
-
-              <div className="grid grid-cols-2 gap-0">
-                <div className="border border-black p-2 text-xs">
-                  <div className="font-bold mb-1">Riscos Ambientais — Classificar:</div>
-                  <div>1 – Físico   2 – Químico   3 – Biológico   4 – Ergonômico   5 – Mecânico/Acidentes</div>
+                    );
+                  })}
                 </div>
-                <div className="border border-black p-2 text-xs">
-                  <div className="font-bold mb-1">Atender a Hierarquia:</div>
-                  <div>CA – Controles Administrativos / EPC – Equip. de Proteção Coletiva / EPI – Equip. de Proteção Individual</div>
-                </div>
-              </div>
+              )}
 
-              {/* Avaliação do Risco */}
-              <div className="border border-black">
-                <div className="grid grid-cols-[160px_1fr_1fr]">
-                  <div className="border-r border-black p-2 font-black text-xs flex items-center justify-center text-center">AVALIAÇÃO DO RISCO</div>
-                  <div className="border-r border-black">
-                    <div className="border-b border-black p-1 text-center font-bold text-[11px]">PROBABILIDADE (FREQUÊNCIA)</div>
-                    <div className="grid grid-cols-3 text-white font-bold text-[11px]">
-                      <div className="bg-emerald-500 p-2 text-center">BAIXA (1)</div>
-                      <div className="bg-yellow-500 p-2 text-center">MÉDIA (2)</div>
-                      <div className="bg-red-600 p-2 text-center">ALTA (3)</div>
+              <div className="px-4 py-2 border-t border-border bg-card/40 text-center text-[10px] font-black uppercase tracking-widest text-red-300/80 italic">
+                "Nenhum trabalho é tão urgente ou importante que não possa ser planejado e executado com segurança"
+              </div>
+            </section>
+          </>}
+
+          {/* ══════ PASSO 2 GERAIS ══════ */}
+          {tab === "p2" && (
+            <section className="rounded-xl border border-border bg-card/60 overflow-hidden">
+              <div className="px-4 py-2.5 border-b border-border flex items-center gap-2 bg-card/40">
+                <div className="h-6 w-6 rounded-md bg-red-700/20 border border-red-500/40 flex items-center justify-center text-[10px] font-black text-red-200">2</div>
+                <h3 className="text-xs font-black uppercase tracking-widest text-foreground">Gerais</h3>
+                <Button size="sm" variant="ghost" className="ml-auto h-7 text-xs"
+                  onClick={() => setApr({ ...apr, texto_gerais: DEFAULT_TEXTO_GERAIS })}>
+                  Restaurar padrão DMN
+                </Button>
+              </div>
+              <div className="p-4">
+                <Textarea rows={22} value={apr.texto_gerais ?? ""} onChange={(e) => setApr({ ...apr, texto_gerais: e.target.value })} className="font-mono text-xs leading-relaxed resize-none" />
+              </div>
+            </section>
+          )}
+
+          {/* ══════ PASSO 3 AVALIAÇÃO & ASSINATURAS ══════ */}
+          {tab === "p3" && (
+            <>
+              <section className="rounded-xl border border-red-500/30 bg-red-950/20 px-4 py-2 flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-red-300 shrink-0" />
+                <span className="text-[11px] font-black uppercase tracking-wider text-red-100">
+                  Ao observar outro risco não previsto — paralisar imediatamente e comunicar ao SESMT
+                </span>
+              </section>
+
+              <section className="rounded-xl border border-border bg-card/60 overflow-hidden">
+                <div className="px-4 py-2.5 border-b border-border flex items-center gap-2 bg-card/40">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-foreground">Matriz de Avaliação</h3>
+                </div>
+                <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-[10px] font-black uppercase tracking-wider text-muted-foreground mb-2">Probabilidade (frequência)</div>
+                    <div className="grid grid-cols-3 gap-1.5 text-white font-black text-[11px] text-center">
+                      <div className="bg-emerald-600 rounded-md py-2">BAIXA (1)</div>
+                      <div className="bg-amber-500 rounded-md py-2">MÉDIA (2)</div>
+                      <div className="bg-red-600 rounded-md py-2">ALTA (3)</div>
                     </div>
                   </div>
                   <div>
-                    <div className="border-b border-black p-1 text-center font-bold text-[11px]">SEVERIDADE (IMPACTO)</div>
-                    <div className="grid grid-cols-3 text-white font-bold text-[11px]">
-                      <div className="bg-emerald-500 p-2 text-center">BAIXA (1)</div>
-                      <div className="bg-yellow-500 p-2 text-center">MÉDIA (2)</div>
-                      <div className="bg-red-600 p-2 text-center">ALTA (3)</div>
+                    <div className="text-[10px] font-black uppercase tracking-wider text-muted-foreground mb-2">Severidade (impacto)</div>
+                    <div className="grid grid-cols-3 gap-1.5 text-white font-black text-[11px] text-center">
+                      <div className="bg-emerald-600 rounded-md py-2">BAIXA (1)</div>
+                      <div className="bg-amber-500 rounded-md py-2">MÉDIA (2)</div>
+                      <div className="bg-red-600 rounded-md py-2">ALTA (3)</div>
+                    </div>
+                  </div>
+                  <div className="md:col-span-2">
+                    <div className="text-[10px] font-black uppercase tracking-wider text-muted-foreground mb-2">Grau do Risco (P + S)</div>
+                    <div className="grid grid-cols-5 gap-1.5 text-white font-black text-[11px] text-center">
+                      <div className="bg-emerald-600 rounded-md py-2">2 · TRIVIAL</div>
+                      <div className="bg-lime-500 rounded-md py-2">3 · TOLERÁVEL</div>
+                      <div className="bg-amber-500 rounded-md py-2 text-black">4 · MODERADO</div>
+                      <div className="bg-orange-500 rounded-md py-2">5 · SUBSTANCIAL</div>
+                      <div className="bg-red-600 rounded-md py-2">6 · INACEITÁVEL</div>
                     </div>
                   </div>
                 </div>
+              </section>
+
+              <section className="rounded-xl border border-border bg-card/60 overflow-hidden">
+                <div className="px-4 py-2.5 border-b border-border bg-card/40">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-foreground text-center tracking-[0.5em]">A S S I N A T U R A S</h3>
+                </div>
+                <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <SignatureBox title="Técnico em Segurança do Trabalho" nome={tst?.nome ?? "—"}
+                    value={(apr as any).signature_tst ?? null}
+                    height={(apr as any).signature_tst_height ?? 80}
+                    onChange={(v, h) => setApr({ ...apr, ...({ signature_tst: v, signature_tst_height: h } as any) })} />
+                  <SignatureBox title="Responsável pelo Serviço" nome={empresa?.name ?? enc?.nome ?? "—"}
+                    value={(apr as any).signature_enc ?? null}
+                    height={(apr as any).signature_enc_height ?? 80}
+                    onChange={(v, h) => setApr({ ...apr, ...({ signature_enc: v, signature_enc_height: h } as any) })} />
+                </div>
+                <div className="p-4 pt-0 grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Encarregado Responsável (interno)</label>
+                    <Select value={apr.encarregado_id ?? "none"} onValueChange={(v) => setApr({ ...apr, encarregado_id: v === "none" ? null : v })}>
+                      <SelectTrigger className="h-9 mt-1"><SelectValue placeholder="—" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">— Nenhum —</SelectItem>
+                        {employees.map((e: any) => <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Condições Climáticas</label>
+                    <Input className="h-9 mt-1" value={apr.condicoes_climaticas ?? ""} onChange={(e) => setApr({ ...apr, condicoes_climaticas: e.target.value })} />
+                  </div>
+                </div>
+              </section>
+            </>
+          )}
+
+          {/* ══════ PASSO 4 ANEXO I — EXECUTANTES ══════ */}
+          {tab === "p4" && (
+            <section className="rounded-xl border border-border bg-card/60 overflow-hidden">
+              <div className="px-4 py-2.5 border-b border-border flex items-center gap-2 bg-card/40 flex-wrap">
+                <div className="h-6 w-6 rounded-md bg-red-700/20 border border-red-500/40 flex items-center justify-center text-[10px] font-black text-red-200">4</div>
+                <h3 className="text-xs font-black uppercase tracking-widest text-foreground">Anexo I — Executantes</h3>
+                <Badge variant="outline" className="text-[10px] font-black">
+                  {execAtuais.length}/{empresaFuncs.length} selecionados
+                </Badge>
+                {apr.empresa_id && empresaFuncs.length > 0 && (
+                  <div className="ml-auto flex items-center gap-1.5">
+                    <div className="relative">
+                      <Search className="h-3.5 w-3.5 absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                      <Input value={execFilter} onChange={(e) => setExecFilter(e.target.value)}
+                        placeholder="Buscar nome…" className="h-8 pl-7 w-48 text-xs" />
+                    </div>
+                    <Button size="sm" variant="outline" onClick={marcarTodosExecutantes} className="h-8 text-[10px] font-bold">
+                      Marcar todos
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={desmarcarTodosExecutantes} disabled={execAtuais.length === 0} className="h-8 text-[10px] font-bold">
+                      Desmarcar
+                    </Button>
+                  </div>
+                )}
               </div>
 
-              <div className="border border-black">
-                <div className="bg-slate-100 text-center font-bold text-xs p-1 border-b border-black">
-                  GRAU DO RISCO (SOMATÓRIO DA PROBABILIDADE + SEVERIDADE)
-                </div>
-                <div className="grid grid-cols-5 text-white font-black text-xs">
-                  <div className="bg-emerald-500 p-2 text-center">2 = TRIVIAL</div>
-                  <div className="bg-lime-500 p-2 text-center">3 = TOLERÁVEL</div>
-                  <div className="bg-yellow-500 p-2 text-center text-black">4 = MODERADO</div>
-                  <div className="bg-orange-500 p-2 text-center">5 = SUBSTANCIAL</div>
-                  <div className="bg-red-600 p-2 text-center">6 = INACEITÁVEL</div>
-                </div>
-              </div>
-
-              <h3 className="text-center font-black text-base tracking-widest mt-4">A S S I N A T U R A S</h3>
-              <div className="grid grid-cols-2 gap-3">
-                <SignatureBox
-                  title="Técnico em Segurança do Trabalho"
-                  nome={tst?.nome ?? "—"}
-                  value={(apr as any).signature_tst ?? null}
-                  height={(apr as any).signature_tst_height ?? 80}
-                  onChange={(v, h) => setApr({ ...apr, ...({ signature_tst: v, signature_tst_height: h } as any) })}
-                />
-                <SignatureBox
-                  title="Responsável pelo Serviço"
-                  nome={empresa?.name ?? enc?.nome ?? "—"}
-                  value={(apr as any).signature_enc ?? null}
-                  height={(apr as any).signature_enc_height ?? 80}
-                  onChange={(v, h) => setApr({ ...apr, ...({ signature_enc: v, signature_enc_height: h } as any) })}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 pt-2">
-                <div>
-                  <label className="text-xs font-bold">Encarregado Responsável (interno)</label>
-                  <Select value={apr.encarregado_id ?? "none"} onValueChange={(v) => setApr({ ...apr, encarregado_id: v === "none" ? null : v })}>
-                    <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="—" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">— Nenhum —</SelectItem>
-                      {employees.map((e: any) => <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label className="text-xs font-bold">Condições climáticas</label>
-                  <Input className="h-8 text-xs" value={apr.condicoes_climaticas ?? ""} onChange={(e) => setApr({ ...apr, condicoes_climaticas: e.target.value })} />
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ============ PÁGINA 4 — ANEXO I EXECUTANTES ============ */}
-        {tab === "p4" && (
-          <div className="bg-white max-w-[1100px] mx-auto shadow border border-slate-300">
-            <PaperFullHeader apr={apr} empresa={empresa} casco={casco} enc={enc} tst={tst} pagina={4} />
-            <div className="p-4 space-y-3">
-              <h2 className="text-center font-black text-base">ANEXO I – ASSINATURA DOS EXECUTANTES DO SERVIÇO</h2>
               {!apr.empresa_id && (
-                <div className="text-center text-rose-700 bg-rose-50 border border-rose-200 p-2 text-xs font-bold rounded">
-                  Selecione a Empresa em <em>"Responsável pelo Serviço"</em> na Página 1 para listar os funcionários.
+                <div className="p-6 text-center text-xs text-red-200 bg-red-950/30 border-b border-red-500/30">
+                  Selecione a Empresa (Responsável pelo Serviço) no Passo 1 para listar os funcionários.
                 </div>
               )}
               {apr.empresa_id && empresaFuncs.length === 0 && (
-                <div className="text-center text-amber-700 bg-amber-50 border border-amber-200 p-2 text-xs font-bold rounded">
+                <div className="p-6 text-center text-xs text-amber-200 bg-amber-950/20">
                   Nenhum funcionário ATIVO encontrado para esta empresa.
                 </div>
               )}
 
-              <div className="text-xs text-slate-600">
-                Marque/desmarque quem realmente vai executar este serviço. Por padrão, todos os funcionários ativos da empresa vêm marcados.
-              </div>
-
               {apr.empresa_id && empresaFuncs.length > 0 && (
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={marcarTodosExecutantes}
-                    className="h-8 text-xs font-bold"
-                  >
-                    ✓ Marcar todos ({empresaFuncs.length})
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={desmarcarTodosExecutantes}
-                    className="h-8 text-xs font-bold"
-                    disabled={execAtuais.length === 0}
-                  >
-                    ✕ Desmarcar todos
-                  </Button>
+                <div className="divide-y divide-border">
+                  {empresaFuncs
+                    .filter((e: any) => !execFilter.trim() || String(e.nome).toLowerCase().includes(execFilter.toLowerCase()))
+                    .map((e: any, i: number) => {
+                      const checked = !!execAtuais.find((a) => a.employee_id === e.id);
+                      const role = roles.find((r: any) => r.id === e.role_id);
+                      const osOk = ossValidIds.has(e.id) || hasOsOverride(e.id);
+                      return (
+                        <div key={e.id} className={cn(
+                          "flex items-center gap-3 px-4 py-2 hover:bg-accent/30 transition",
+                          !osOk && "bg-red-950/20"
+                        )}>
+                          <span className="text-[10px] font-black text-muted-foreground w-6 text-center shrink-0">
+                            {String(i + 1).padStart(2, "0")}
+                          </span>
+                          <Checkbox checked={checked} disabled={!checked && !osOk} onCheckedChange={() => toggleExecutante(e.id)} />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className={cn("text-sm font-medium truncate", checked ? "text-foreground" : "text-muted-foreground")}>{e.nome}</span>
+                              {!osOk && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Badge className="text-[9px] font-black bg-red-500/20 text-red-200 border border-red-500/40 shrink-0">
+                                      <ShieldAlert className="h-2.5 w-2.5 mr-0.5" /> SEM OS
+                                    </Badge>
+                                  </TooltipTrigger>
+                                  <TooltipContent>OS Assinada vencida ou ausente (NR-01 1.4.1 "c")</TooltipContent>
+                                </Tooltip>
+                              )}
+                            </div>
+                            <div className="text-[10px] text-muted-foreground truncate">{role?.name ?? "—"}</div>
+                          </div>
+                          {!osOk && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button size="sm" variant="outline" disabled={liberarOs.isPending}
+                                  onClick={() => liberarOs.mutate({ empId: e.id, nome: e.nome })}
+                                  className="h-7 px-2 text-[10px] font-black uppercase border-amber-500/50 text-amber-200 hover:bg-amber-500/15 shrink-0">
+                                  <Unlock className="h-3 w-3 mr-1" /> Liberar OS
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Cria liberação ITEM:OS por 30 dias com justificativa</TooltipContent>
+                            </Tooltip>
+                          )}
+                        </div>
+                      );
+                    })}
                 </div>
               )}
+            </section>
+          )}
+        </div>
+      </div>
 
-              <div className="border-2 border-black">
-                <div className="grid grid-cols-[50px_60px_1fr_120px] bg-slate-100 font-bold text-xs border-b border-black">
-                  <div className="border-r border-black p-1.5 text-center">Nº</div>
-                  <div className="border-r border-black p-1.5 text-center">Inclui?</div>
-                  <div className="border-r border-black p-1.5">NOME</div>
-                  <div className="p-1.5">FUNÇÃO</div>
-                </div>
-                {empresaFuncs.map((e: any, i: number) => {
-                  const checked = !!execAtuais.find((a) => a.employee_id === e.id);
-                  const role = roles.find((r: any) => r.id === e.role_id);
-                  const osOk = ossValidIds.has(e.id) || hasOsOverride(e.id);
-                  return (
-                    <div key={e.id} className={`grid grid-cols-[50px_60px_1fr_120px] text-xs border-b border-black ${checked ? "" : osOk ? "bg-slate-50 text-slate-400" : "bg-red-50 text-red-700"}`}>
-                      <div className="border-r border-black p-1.5 text-center font-bold">{String(i + 1).padStart(2, "0")}</div>
-                      <div className="border-r border-black p-1.5 flex items-center justify-center">
-                        <Checkbox checked={checked} disabled={!checked && !osOk} onCheckedChange={() => toggleExecutante(e.id)} />
-                      </div>
-                      <div className="border-r border-black p-1.5 flex items-center gap-2 flex-wrap">
-                        <span>{e.nome}</span>
-                        {!osOk && (
-                          <>
-                            <span className="text-[10px] font-bold uppercase">🚫 Sem OS Assinada</span>
-                            <button
-                              type="button"
-                              disabled={liberarOs.isPending}
-                              onClick={() => liberarOs.mutate({ empId: e.id, nome: e.nome })}
-                              className="ml-auto text-[9px] font-black uppercase tracking-wider bg-amber-500 hover:bg-amber-600 text-white px-2 py-1 rounded shadow-sm disabled:opacity-50"
-                              title="Cria uma liberação ITEM:OS por 30 dias com justificativa"
-                            >
-                              🔓 Liberar OS agora
-                            </button>
-                          </>
-                        )}
-                      </div>
-                      <div className="p-1.5">{role?.name ?? "—"}</div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="text-xs text-slate-600 mt-2">
-                <strong>{execAtuais.length}</strong> executante(s) selecionado(s) — aparecerão na página 5 do PDF.
-              </div>
-            </div>
-          </div>
+      {/* ═══════════ FOOTER NAV ═══════════ */}
+      <div className="flex items-center justify-between gap-2 px-5 py-3 bg-card/40 border-t border-border shrink-0">
+        <Button type="button" variant="outline" onClick={goBack} disabled={currentStepIdx === 0}>
+          <ChevronLeft className="h-4 w-4 mr-1" /> Voltar
+        </Button>
+        <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+          Passo {currentStepIdx + 1} de {STEPS.length} · {STEPS[currentStepIdx].label}
+        </div>
+        {currentStepIdx < STEPS.length - 1 ? (
+          <Button type="button" onClick={goNext} className="bg-red-700 hover:bg-red-800 text-white font-black uppercase tracking-widest text-[11px]">
+            Avançar <ChevronRight className="h-4 w-4 ml-1" />
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            onClick={() => {
+              const err = validateStep(currentStepIdx);
+              if (err) { setStepError(err); toast.error(err); return; }
+              setStepError(null);
+              save.mutate(true);
+            }}
+            disabled={save.isPending}
+            className="bg-red-700 hover:bg-red-800 text-white font-black uppercase tracking-widest text-[11px]"
+          >
+            <Check className="h-4 w-4 mr-1" /> Emitir APR
+          </Button>
         )}
       </div>
+
+      {/* ═══════════ MODAL EDITOR DE RISCO ═══════════ */}
+      <Dialog open={riscoEditIdx !== null} onOpenChange={(o) => !o && setRiscoEditIdx(null)}>
+        <DialogContent className="max-w-2xl bg-popover text-popover-foreground border-border">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <div className="h-7 w-7 rounded-md bg-red-700/20 border border-red-500/40 flex items-center justify-center text-[11px] font-black text-red-200">
+                {riscoEditIdx !== null ? String((riscos[riscoEditIdx]?.ordem ?? riscoEditIdx + 1)).padStart(2, "0") : ""}
+              </div>
+              Editar Risco
+            </DialogTitle>
+            <DialogDescription>Todos os campos do risco em uma tela só — sem scroll horizontal.</DialogDescription>
+          </DialogHeader>
+
+          {riscoEditIdx !== null && (() => {
+            const r = riscos[riscoEditIdx];
+            if (!r) return null;
+            const nivel = r.probabilidade + r.severidade;
+            const meta = nivelMeta(nivel);
+            return (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="md:col-span-2">
+                  <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Passo a Passo da Atividade</label>
+                  <Textarea rows={2} className="mt-1 resize-none" value={r.passo_a_passo ?? ""} onChange={(e) => updateRisco(riscoEditIdx, { passo_a_passo: e.target.value })} placeholder={`${r.ordem}. Descreva o passo…`} />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Risco (catálogo)</label>
+                  <Select value={r.catalogo_risco_id ?? undefined} onValueChange={(v) => setRiscoFromCatalogo(riscoEditIdx, v)}>
+                    <SelectTrigger className="h-9 mt-1"><SelectValue placeholder={r.risco_nome || "Selecionar risco…"} /></SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      {catRiscos.map((c: any) => <SelectItem key={c.id} value={c.id}>[{c.categoria}] {c.nome}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <Input className="h-8 mt-1.5 text-xs" placeholder="Ou digite um nome livre…" value={r.risco_nome} onChange={(e) => updateRisco(riscoEditIdx, { risco_nome: e.target.value })} />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Efeitos / Danos</label>
+                  <Textarea rows={2} className="mt-1 resize-none" value={r.efeitos_danos ?? ""} onChange={(e) => updateRisco(riscoEditIdx, { efeitos_danos: e.target.value })} />
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Probabilidade</label>
+                  <Select value={String(r.probabilidade)} onValueChange={(v) => updateRisco(riscoEditIdx, { probabilidade: parseInt(v) })}>
+                    <SelectTrigger className="h-9 mt-1"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">1 · Baixa</SelectItem>
+                      <SelectItem value="2">2 · Média</SelectItem>
+                      <SelectItem value="3">3 · Alta</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Severidade</label>
+                  <Select value={String(r.severidade)} onValueChange={(v) => updateRisco(riscoEditIdx, { severidade: parseInt(v) })}>
+                    <SelectTrigger className="h-9 mt-1"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">1 · Baixa</SelectItem>
+                      <SelectItem value="2">2 · Média</SelectItem>
+                      <SelectItem value="3">3 · Alta</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="md:col-span-2 flex items-center gap-3 rounded-lg border border-border bg-card/40 p-3">
+                  <div className={cn("h-14 w-14 rounded-lg flex items-center justify-center font-black text-white text-2xl shrink-0", meta.cls)}>
+                    {nivel}
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Grau resultante</div>
+                    <div className="text-lg font-black">{meta.label}</div>
+                    <div className="text-[11px] text-muted-foreground">P{r.probabilidade} × S{r.severidade} = {nivel}</div>
+                  </div>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Ações Preventivas</label>
+                  <Textarea rows={3} className="mt-1 resize-none" value={r.acoes_preventivas ?? ""} onChange={(e) => updateRisco(riscoEditIdx, { acoes_preventivas: e.target.value })} />
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">EPIs (separados por vírgula)</label>
+                  <Input className="h-9 mt-1" value={(r.epis ?? []).join(", ")} onChange={(e) => updateRisco(riscoEditIdx, { epis: e.target.value.split(",").map((x) => x.trim()).filter(Boolean) })} />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">NRs (separadas por vírgula)</label>
+                  <Input className="h-9 mt-1" value={(r.nrs ?? []).join(",")} onChange={(e) => updateRisco(riscoEditIdx, { nrs: e.target.value.split(",").map((x) => x.trim()).filter(Boolean) })} />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Responsável pelas Ações</label>
+                  <Input className="h-9 mt-1" value={r.responsavel_acoes ?? ""} onChange={(e) => updateRisco(riscoEditIdx, { responsavel_acoes: e.target.value })} />
+                </div>
+              </div>
+            );
+          })()}
+
+          <DialogFooter className="gap-2">
+            {riscoEditIdx !== null && (
+              <Button variant="ghost" onClick={() => { removeRisco(riscoEditIdx); setRiscoEditIdx(null); }} className="text-red-400 hover:text-red-300 hover:bg-red-500/10 mr-auto">
+                <Trash2 className="h-4 w-4 mr-1" /> Remover risco
+              </Button>
+            )}
+            <Button variant="outline" onClick={() => setRiscoEditIdx(null)}>Fechar</Button>
+            <Button onClick={() => setRiscoEditIdx(null)} className="bg-red-700 hover:bg-red-800 text-white">
+              <Check className="h-4 w-4 mr-1" /> Concluir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <PteLookupSheet
         open={pteSheetOpen}
@@ -1417,66 +1618,21 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
             : null)
         }
         onPick={(pteId) => {
-          // NÃO sobrescrever apr.pte_id se já houver uma PTE legada vinculada —
-          // ela é a única referência da PTE anterior (que não tem apr_id próprio).
-          // Sobrescrever causa a PTE antiga "sumir" da cobertura e gerar loop.
           setApr((a) => ({ ...a, pte_id: a.pte_id ?? pteId, exige_pte: true }));
-          // Mantém o registro de TODAS as PTEs vinculadas no rascunho — assim a
-          // cobertura por categoria funciona mesmo antes de salvar a APR.
           setDraftPteIds((ids) => (ids.includes(pteId) ? ids : [...ids, pteId]));
-          // Migra a PTE legada para o modelo moderno (apr_id na própria linha),
-          // garantindo que apareça em linkedPtes e a cobertura seja estável.
           (async () => {
             if (currentAprId && apr.pte_id && apr.pte_id !== pteId) {
-              await supabase
-                .from("ptes")
-                .update({ apr_id: currentAprId })
-                .eq("id", apr.pte_id)
-                .is("apr_id", null);
+              await supabase.from("ptes").update({ apr_id: currentAprId }).eq("id", apr.pte_id).is("apr_id", null);
             }
-            // Se a APR já existe, vincula imediatamente a nova PTE também.
             if (currentAprId) {
-              await supabase
-                .from("ptes")
-                .update({ apr_id: currentAprId })
-                .eq("id", pteId)
-                .is("apr_id", null);
+              await supabase.from("ptes").update({ apr_id: currentAprId }).eq("id", pteId).is("apr_id", null);
             }
             qc.invalidateQueries({ queryKey: ["ptes-light"] });
             qc.invalidateQueries({ queryKey: ["ptes-linked-apr", currentAprId] });
           })();
         }}
       />
-
-      {/* Rodapé do wizard */}
-      <div className="flex items-center justify-between gap-2 p-3 bg-white border-t border-slate-300 shrink-0">
-        <Button type="button" variant="outline" onClick={goBack} disabled={currentStepIdx === 0}>
-          <ChevronLeft className="h-4 w-4 mr-1" /> Voltar
-        </Button>
-        <div className="text-[11px] text-slate-500">
-          {STEPS[currentStepIdx].label}
-        </div>
-        {currentStepIdx < STEPS.length - 1 ? (
-          <Button type="button" onClick={goNext} className="bg-[#0f172a] hover:bg-[#7B1E2B] text-white font-black uppercase tracking-widest text-[11px]">
-            Avançar <ChevronRight className="h-4 w-4 ml-1" />
-          </Button>
-        ) : (
-          <Button
-            type="button"
-            onClick={() => {
-              const err = validateStep(currentStepIdx);
-              if (err) { setStepError(err); toast.error(err); return; }
-              setStepError(null);
-              save.mutate(true);
-            }}
-            disabled={save.isPending}
-            style={{ background: APR_RED }}
-            className="text-white font-black uppercase tracking-widest text-[11px]"
-          >
-            <Check className="h-4 w-4 mr-1" /> Emitir APR
-          </Button>
-        )}
-      </div>
     </div>
+    </TooltipProvider>
   );
 }
