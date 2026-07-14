@@ -1079,9 +1079,21 @@ function NcDialog({ inspecaoId, fotos, nrs, rubrica, grauRisco, empresaId, nc, t
   );
 }
 
-function NcPlanos({ ncId, editable, empresaId, prazoSugerido }: { ncId: string; editable: boolean; empresaId: string | null; prazoSugerido: number | null }) {
+function NcPlanos({ ncId, editable, empresaId, prazoSugerido, classeRisco }: { ncId: string; editable: boolean; empresaId: string | null; prazoSugerido: number | null; classeRisco?: string | null }) {
   const { user } = useAuth();
   const qc = useQueryClient();
+  // Fallback de prazo pela classe de risco quando o catálogo não trouxer sugestão explícita
+  const prazoFallback: number | null = (() => {
+    if (prazoSugerido != null) return prazoSugerido;
+    switch (classeRisco) {
+      case "CRITICO": return 1;
+      case "ALTO": return 7;
+      case "MODERADO": return 15;
+      case "BAIXO": return 30;
+      default: return null;
+    }
+  })();
+  const prazoEhFallback = prazoSugerido == null && prazoFallback != null;
   const { data: planos = [] } = useQuery({
     queryKey: ["inspecao-nc-planos", ncId],
     queryFn: async () => {
@@ -1109,9 +1121,9 @@ function NcPlanos({ ncId, editable, empresaId, prazoSugerido }: { ncId: string; 
     },
   });
   const prazoInicial = () => {
-    if (!prazoSugerido) return "";
+    if (!prazoFallback) return "";
     const d = new Date();
-    d.setDate(d.getDate() + prazoSugerido);
+    d.setDate(d.getDate() + prazoFallback);
     return d.toISOString().slice(0, 10);
   };
   const emptyForm = () => ({
@@ -1120,17 +1132,20 @@ function NcPlanos({ ncId, editable, empresaId, prazoSugerido }: { ncId: string; 
     onde: "",
     como: "",
     respId: "",
+    respNome: "",
     prazo: prazoInicial(),
     custo: "",
     prioridade: "MEDIA" as "CRITICA" | "ALTA" | "MEDIA" | "BAIXA" | "VERIFICACAO",
   });
   const [form, setForm] = useState(emptyForm);
   const [openForm, setOpenForm] = useState(false);
+  const [respModo, setRespModo] = useState<"select" | "livre">("select");
   const add = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Sessão expirada");
       if (!form.acao.trim()) throw new Error("O quê (ação) é obrigatório");
       const emp = empregados.find((e: any) => e.id === form.respId);
+      const nomeLivre = form.respNome.trim();
       const { error } = await supabase.from("inspecao_ncs_planos").insert({
         nc_id: ncId,
         acao: form.acao.trim(),
@@ -1138,11 +1153,11 @@ function NcPlanos({ ncId, editable, empresaId, prazoSugerido }: { ncId: string; 
         onde: form.onde.trim() || null,
         como: form.como.trim() || null,
         responsavel_id: form.respId || null,
-        responsavel_nome: emp?.nome ?? null,
+        responsavel_nome: emp?.nome ?? (nomeLivre || null),
         prazo: form.prazo || null,
         custo_estimado: form.custo ? Number(form.custo) : null,
         prioridade: form.prioridade,
-        prazo_dias_sugerido: prazoSugerido ?? null,
+        prazo_dias_sugerido: prazoFallback ?? null,
         criada_por: user.id,
       } as any);
       if (error) throw error;
@@ -1151,6 +1166,7 @@ function NcPlanos({ ncId, editable, empresaId, prazoSugerido }: { ncId: string; 
       toast.success(form.respId ? "Plano criado — responsável notificado" : "Plano criado");
       setForm(emptyForm());
       setOpenForm(false);
+      setRespModo("select");
       qc.invalidateQueries({ queryKey: ["inspecao-nc-planos", ncId] });
       qc.invalidateQueries({ queryKey: ["inspecao-planos-resumo"] });
     },
@@ -1179,10 +1195,14 @@ function NcPlanos({ ncId, editable, empresaId, prazoSugerido }: { ncId: string; 
     <div className="mt-2 border-t pt-2 space-y-2">
       <div className="flex items-center justify-between gap-2">
         <div className="text-[10px] font-black uppercase tracking-wide text-muted-foreground">Plano de ação · 5W2H (PDCA)</div>
-        <span className="text-[10px] text-muted-foreground">{planos.length} plano{planos.length === 1 ? "" : "s"}</span>
+        <Badge className={(planos.length > 0 ? "bg-emerald-500/20 text-emerald-100 border border-emerald-500/50" : "bg-muted text-muted-foreground border border-border") + " text-[10px] font-black"}>
+          {planos.length} plano{planos.length === 1 ? "" : "s"}
+        </Badge>
       </div>
-      {prazoSugerido && (
-        <div className="text-[10px] text-primary">Prazo sugerido pela norma: <b>{prazoSugerido} dias</b> a partir de hoje.</div>
+      {prazoFallback != null && (
+        <div className="text-[10px] text-primary">
+          Prazo sugerido {prazoEhFallback ? <>pela classe <b>{classeRisco}</b></> : <>pela norma</>}: <b>{prazoFallback} dia{prazoFallback === 1 ? "" : "s"}</b> a partir de hoje.
+        </div>
       )}
       {planos.map((p: any, idx: number) => (
         <PlanoCard key={p.id} p={p} idx={idx} editable={editable} onAvancar={() => avancar.mutate(p)} prioCls={PRIO_CLS} />
