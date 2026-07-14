@@ -843,6 +843,46 @@ function PtesPage() {
               </Select>
             </div>
 
+            {/* PTEs IRMÃS — vinculação de PETs simultâneas da mesma manobra */}
+            {(() => {
+              const dataAtual = String(f.data || "").slice(0, 10);
+              const candidatas = (ptes as any[]).filter((p) =>
+                p.id !== editingId &&
+                p.status === "ATIVA" &&
+                String(p.data).slice(0, 10) === dataAtual &&
+                (!f.casco_id || p.casco_id === f.casco_id),
+              );
+              if (candidatas.length === 0) return null;
+              const sel: string[] = f.pts_relacionadas ?? [];
+              return (
+                <div className="rounded-xl border border-fuchsia-400/25 bg-gradient-to-br from-fuchsia-950/40 to-black/40 p-3 space-y-2">
+                  <Label className="text-[10px] font-black text-fuchsia-200 uppercase flex items-center gap-2">
+                    <Link2 className="h-3.5 w-3.5" /> PTEs vinculadas (mesma manobra / mesmo pátio)
+                  </Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5 max-h-40 overflow-y-auto custom-scrollbar">
+                    {candidatas.map((p: any) => {
+                      const on = sel.includes(p.id);
+                      return (
+                        <label key={p.id} className={`flex items-center gap-2 text-[10px] font-bold uppercase rounded-lg px-2 py-1.5 cursor-pointer border ${on ? "bg-fuchsia-500/20 text-fuchsia-50 border-fuchsia-300/50" : "bg-black/40 text-slate-200 border-white/10 hover:border-fuchsia-300/40"}`}>
+                          <Checkbox
+                            checked={on}
+                            onCheckedChange={(v) => {
+                              const next = v ? [...sel, p.id] : sel.filter((x) => x !== p.id);
+                              setF({ ...f, pts_relacionadas: next });
+                            }}
+                          />
+                          <span className="truncate">{p.numero} · {p.tipo_pt} · {p.employee_name ?? "s/ requisitante"}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <p className="text-[9px] font-bold uppercase text-fuchsia-200/70">
+                    Vincule PTEs simultâneas para bloquear ações conflitantes na mesma carga (ex.: içar × pessoal embaixo).
+                  </p>
+                </div>
+              );
+            })()}
+
             {/* APR VINCULADA — OBRIGATÓRIA */}
             <div className="rounded-xl p-4 bg-gradient-to-br from-rose-950/60 to-black/40 border border-rose-500/20 shadow-[inset_0_1px_0_rgba(255,230,235,0.05)]">
               <Label className="text-[10px] font-black text-rose-200 uppercase flex items-center gap-2 mb-2">
