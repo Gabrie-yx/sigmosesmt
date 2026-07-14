@@ -538,17 +538,24 @@ function InspecaoDetail() {
             <div className="text-xs text-muted-foreground">Nenhuma NC registrada.</div>
           ) : (
             <div className="space-y-2">
-              {ncs.map((nc: any) => (
-                <div key={nc.id} className="border rounded p-3 space-y-1 bg-card">
-                  <div className="flex items-center gap-2 flex-wrap justify-between">
+              {ncs.map((nc: any, ncIdx: number) => (
+                <div key={nc.id} className="border rounded p-3 space-y-2 bg-card">
+                  <div className="flex items-center gap-2 flex-wrap justify-between border-b border-border/60 pb-2">
                     <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-black uppercase tracking-wide text-foreground">
+                        NC #{String(ncIdx + 1).padStart(2, "0")}
+                      </span>
+                      <Badge className={CLASSE_CLS[nc.classe_risco] + " text-[10px] font-black"}>
+                        {nc.classe_risco}
+                      </Badge>
+                      <span className="text-[10px] text-muted-foreground">·</span>
                       <Badge variant="outline" className="text-[10px]">{nc.nr_codigo}{nc.nr_item ? ` · ${nc.nr_item}` : ""}</Badge>
                       {(nc.inspecao_nc_nrs_correlatas ?? []).map((c: any) => (
                         <Badge key={c.id} variant="outline" className="text-[10px] border-dashed opacity-80">
                           {c.nr_codigo}{c.nr_item ? ` · ${c.nr_item}` : ""}
                         </Badge>
                       ))}
-                      <Badge className={CLASSE_CLS[nc.classe_risco] + " text-[10px]"}>{nc.classe_risco} · P{nc.probabilidade}×S{nc.severidade}={nc.risco_calculado}</Badge>
+                      <Badge variant="outline" className="text-[10px]">P{nc.probabilidade}×S{nc.severidade}={nc.risco_calculado}</Badge>
                       {nc.gradacao_nr28 && <Badge variant="secondary" className="text-[10px]">NR-28 {nc.gradacao_nr28}: R$ {Number(nc.multa_estimada ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</Badge>}
                     </div>
                     {editable && (
@@ -577,6 +584,7 @@ function InspecaoDetail() {
                     editable={editable}
                     empresaId={insp.empresa_id ?? null}
                     prazoSugerido={nc.catalogo_nrs_itens?.prazo_dias_sugerido ?? null}
+                    classeRisco={nc.classe_risco}
                   />
                 </div>
               ))}
