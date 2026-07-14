@@ -198,7 +198,7 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput): Promise<{ doc: 
   }
 
   // ============= 2. METODOLOGIA E BASE LEGAL =============
-  ensureRoom(doc, y, 60, () => { doc.addPage(); y = M; });
+  ensureRoom(doc, y, 60, () => { y = M; });
   sectionTitle(doc, "2. METODOLOGIA E BASE LEGAL", y);
   y += 6;
   const metodo = [
@@ -212,7 +212,7 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput): Promise<{ doc: 
 
   // ============= 3. QUADRO CONSOLIDADO =============
   y += 4;
-  ensureRoom(doc, y, 40, () => { doc.addPage(); y = M; });
+  ensureRoom(doc, y, 40, () => { y = M; });
   sectionTitle(doc, "3. QUADRO CONSOLIDADO DE NÃO CONFORMIDADES", y);
   y += 4;
 
@@ -264,16 +264,17 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput): Promise<{ doc: 
 
   // ============= 4. DETALHAMENTO POR NC =============
   if (ncs.length > 0) {
-    ensureRoom(doc, y, 40, () => { doc.addPage(); y = M; });
+    ensureRoom(doc, y, 40, () => { y = M; });
     sectionTitle(doc, "4. DETALHAMENTO DAS NÃO CONFORMIDADES", y);
     y += 8;
 
     for (let i = 0; i < ncs.length; i++) {
       const nc = ncs[i];
       const planos = planosPorNc[nc.id] ?? [];
-      // Cada NC começa em página nova (exceto a primeira, que segue após o título da seção)
-      if (i > 0) { doc.addPage(); y = M; }
-      else { ensureRoom(doc, y, 60, () => { doc.addPage(); y = M; }); }
+      // Reserva espaço mínimo p/ o bloco da NC (título + desc + matriz + foto).
+      // Só quebra pra próxima página se realmente não couber — evita páginas
+      // com metade em branco.
+      ensureRoom(doc, y, 130, () => { y = M; });
 
       // Título da NC
       doc.setFillColor(127, 29, 29);
@@ -336,6 +337,7 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput): Promise<{ doc: 
           const fx = M;
           if (String(foto.storage_path).startsWith("cftv://")) {
             const fw = maxW, fh = maxH;
+            ensureRoom(doc, y, fh + 6, () => { y = M; });
             doc.setDrawColor(203, 213, 225).setLineWidth(0.2);
             doc.rect(fx, y, fw, fh);
             doc.setFont("helvetica", "bold").setFontSize(9).setTextColor(80);
@@ -352,10 +354,13 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput): Promise<{ doc: 
                 if (maxW / r <= maxH) { fw = maxW; fh = maxW / r; }
                 else { fh = maxH; fw = maxH * r; }
               }
+              ensureRoom(doc, y, fh + 6, () => { y = M; });
               try {
                 const fmt = dUrl.includes("image/png") ? "PNG" : "JPEG";
                 doc.addImage(dUrl, fmt, fx, y, fw, fh, undefined, "FAST");
               } catch {}
+            } else {
+              ensureRoom(doc, y, fh + 6, () => { y = M; });
             }
             renderFotoMeta(doc, foto, fx + fw + 4, y, W - (fx + fw + 4) - M);
             y += fh + 6;
@@ -421,7 +426,7 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput): Promise<{ doc: 
   ncs.forEach((nc, idx) => (planosPorNc[nc.id] ?? []).forEach((p) => todasAcoes.push({ nc, p, idx: idx + 1 })));
   if (todasAcoes.length > 0) {
     doc.setPage((doc as any).internal.getNumberOfPages());
-    doc.addPage(); y = M;
+    ensureRoom(doc, y, 60, () => { y = M; });
     sectionTitle(doc, "5. PLANO DE AÇÃO CONSOLIDADO", y);
     y += 6;
     todasAcoes.sort((a, b) => String(a.p.prazo ?? "9999").localeCompare(String(b.p.prazo ?? "9999")));
@@ -454,7 +459,7 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput): Promise<{ doc: 
 
   // ============= 6. RUBRICA MATRIZ 5x5 =============
   doc.setPage((doc as any).internal.getNumberOfPages());
-  ensureRoom(doc, y, 90, () => { doc.addPage(); y = M; });
+  ensureRoom(doc, y, 90, () => { y = M; });
   sectionTitle(doc, "ANEXO I — RUBRICA DA MATRIZ DE RISCO 5×5", y);
   y += 6;
   const rP = rubrica.filter((r: any) => r.eixo === "P").map((r: any) => [`P${r.nivel}`, r.rotulo, r.definicao]);
@@ -479,7 +484,7 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput): Promise<{ doc: 
   y = (doc as any).lastAutoTable.finalY + 8;
 
   // ============= 7. PARECER TÉCNICO =============
-  ensureRoom(doc, y, 60, () => { doc.addPage(); y = M; });
+  ensureRoom(doc, y, 60, () => { y = M; });
   sectionTitle(doc, "PARECER TÉCNICO E CONCLUSÃO", y);
   y += 6;
   let parecer = inspecao.parecer_tecnico as string | undefined;
@@ -494,8 +499,12 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput): Promise<{ doc: 
   y = paragraph(doc, parecer, y, W, M);
 
   // ============= 8. ASSINATURAS =============
-  ensureRoom(doc, y, 55, () => { doc.addPage(); y = M; });
-  y += 8;
+  // Ancoradas ao rodapé — se couber na página atual, gruda no pé;
+  // caso contrário, quebra pra próxima página e ancora lá.
+  const ASSIN_BLOCO = 42; // altura total (linha + rótulos + legal)
+  ensureRoom(doc, y, ASSIN_BLOCO, () => { y = M; });
+  // Ancora o bloco no rodapé da página corrente
+  y = Math.max(y + 8, H - ASSIN_BLOCO - 12);
   const sigW = (W - 2 * M - 10) / 3;
   const sigY = y + 18;
   doc.setDrawColor(80).setLineWidth(0.3);
