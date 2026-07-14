@@ -873,10 +873,10 @@ function NcDialog({ inspecaoId, fotos, nrs, rubrica, grauRisco, empresaId, nc, t
       <DialogTrigger asChild>
         {trigger ?? <Button size="sm" className="gap-1"><Plus className="h-3.5 w-3.5" /> Nova NC</Button>}
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100vw-1rem)] sm:w-auto max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>{isEdit ? "Editar não conformidade" : "Registrar não conformidade"}</DialogTitle></DialogHeader>
         <div className="grid gap-3">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <Label>NR *</Label>
               <Select value={nr_codigo} onValueChange={(v) => { setNrCodigo(v); setCatalogoItemId(""); setNrItem(""); }}>
@@ -941,7 +941,7 @@ function NcDialog({ inspecaoId, fotos, nrs, rubrica, grauRisco, empresaId, nc, t
                 ))}
               </div>
             )}
-            <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2">
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-2">
               <Select value={corrNr} onValueChange={(v) => { setCorrNr(v); setCorrItemId(""); }}>
                 <SelectTrigger><SelectValue placeholder="NR correlata..." /></SelectTrigger>
                 <SelectContent className="max-h-72">
