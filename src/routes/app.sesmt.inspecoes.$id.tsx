@@ -626,6 +626,14 @@ function InspecaoDetail() {
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+
+    <PDFPreviewDialog
+      open={!!pdfPreview}
+      onClose={() => setPdfPreview(null)}
+      doc={pdfPreview?.doc ?? null}
+      fileName={pdfPreview?.fileName ?? "laudo.pdf"}
+      title="Laudo Técnico de Inspeção SST"
+    />
     </>
   );
 }
