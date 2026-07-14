@@ -158,13 +158,13 @@ function InspecoesList() {
         </div>
         <div className="flex items-center gap-2">
           {canDelete && (
-            <Button asChild size="sm" variant="outline" className="gap-1 h-9 text-xs">
+            <Button asChild size="sm" variant="outline" className="gap-1 h-9 text-xs border-red-500/40 bg-red-500/10 text-red-100 hover:bg-red-500/20 hover:text-white">
               <Link to="/app/sesmt/vincular-usuarios">Vincular usuários</Link>
             </Button>
           )}
           <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" className="gap-1"><Plus className="h-4 w-4" /> Nova inspeção</Button>
+            <Button size="sm" className="gap-1 h-9 text-xs bg-red-600 hover:bg-red-700 text-white"><Plus className="h-4 w-4" /> Nova inspeção</Button>
           </DialogTrigger>
           <DialogContent className="max-w-lg">
             <DialogHeader>
