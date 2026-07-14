@@ -543,6 +543,11 @@ function InspecaoDetail() {
                   <div className="flex items-center gap-2 flex-wrap justify-between">
                     <div className="flex items-center gap-2 flex-wrap">
                       <Badge variant="outline" className="text-[10px]">{nc.nr_codigo}{nc.nr_item ? ` · ${nc.nr_item}` : ""}</Badge>
+                      {(nc.inspecao_nc_nrs_correlatas ?? []).map((c: any) => (
+                        <Badge key={c.id} variant="outline" className="text-[10px] border-dashed opacity-80">
+                          {c.nr_codigo}{c.nr_item ? ` · ${c.nr_item}` : ""}
+                        </Badge>
+                      ))}
                       <Badge className={CLASSE_CLS[nc.classe_risco] + " text-[10px]"}>{nc.classe_risco} · P{nc.probabilidade}×S{nc.severidade}={nc.risco_calculado}</Badge>
                       {nc.gradacao_nr28 && <Badge variant="secondary" className="text-[10px]">NR-28 {nc.gradacao_nr28}: R$ {Number(nc.multa_estimada ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</Badge>}
                     </div>
