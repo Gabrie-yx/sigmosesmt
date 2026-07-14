@@ -33,6 +33,15 @@ async function fetchImageAsDataUrl(url: string): Promise<string | null> {
   } catch { return null; }
 }
 
+async function imgNaturalDims(src: string): Promise<{ w: number; h: number } | null> {
+  return new Promise((resolve) => {
+    const im = new Image();
+    im.onload = () => resolve({ w: im.naturalWidth, h: im.naturalHeight });
+    im.onerror = () => resolve(null);
+    im.src = src;
+  });
+}
+
 export interface InspecaoPdfInput {
   inspecao: any;
   fotos: any[];
