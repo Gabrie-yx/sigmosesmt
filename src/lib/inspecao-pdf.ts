@@ -416,7 +416,7 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput): Promise<{ doc: 
     }
   }
 
-  // ============= 5. PLANO DE AÇÃO CONSOLIDADO =============
+  console.log("BEFORE_SEC5 pages=", (doc as any).internal.getNumberOfPages(), "y=", y);
   const todasAcoes: Array<{ nc: any; p: any; idx: number }> = [];
   ncs.forEach((nc, idx) => (planosPorNc[nc.id] ?? []).forEach((p) => todasAcoes.push({ nc, p, idx: idx + 1 })));
   if (todasAcoes.length > 0) {
@@ -452,7 +452,7 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput): Promise<{ doc: 
     y = (doc as any).lastAutoTable.finalY + 6;
   }
 
-  // ============= 6. RUBRICA MATRIZ 5x5 =============
+  console.log("BEFORE_SEC6 pages=", (doc as any).internal.getNumberOfPages(), "y=", y);
   doc.setPage((doc as any).internal.getNumberOfPages());
   ensureRoom(doc, y, 80, () => { doc.addPage(); y = M; });
   sectionTitle(doc, "ANEXO I — RUBRICA DA MATRIZ DE RISCO 5×5", y);
