@@ -1192,6 +1192,33 @@ function NcPlanos({ ncId, ncDescricao, ncRecomendacao, ncNorma, editable, empres
     },
     onError: (e: any) => toast.error(e.message ?? "Erro"),
   });
+  const criarSugerido = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error("Sessão expirada");
+      const base = emptyForm();
+      const { error } = await supabase.from("inspecao_ncs_planos").insert({
+        nc_id: ncId,
+        acao: base.acao,
+        por_que: base.por_que,
+        onde: base.onde,
+        como: base.como,
+        responsavel_id: null,
+        responsavel_nome: base.respNome,
+        prazo: base.prazo || null,
+        custo_estimado: null,
+        prioridade: base.prioridade,
+        prazo_dias_sugerido: prazoFallback ?? null,
+        criada_por: user.id,
+      } as any);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("5W2H sugerido criado — revise se quiser ajustar responsável/prazo");
+      qc.invalidateQueries({ queryKey: ["inspecao-nc-planos", ncId] });
+      qc.invalidateQueries({ queryKey: ["inspecao-planos-resumo"] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro"),
+  });
   const avancar = useMutation({
     mutationFn: async (p: any) => {
       const ordem = ["PLAN", "DO", "CHECK", "ACT", "ENCERRADO"];
@@ -1228,9 +1255,14 @@ function NcPlanos({ ncId, ncDescricao, ncRecomendacao, ncNorma, editable, empres
         <PlanoCard key={p.id} p={p} idx={idx} editable={editable} onAvancar={() => avancar.mutate(p)} prioCls={PRIO_CLS} />
       ))}
       {editable && !openForm && (
-        <Button size="sm" variant="outline" className="w-full h-8 gap-1 text-xs border-dashed" onClick={() => setOpenForm(true)}>
-          <Plus className="h-3 w-3" /> Criar 5W2H sugerido
-        </Button>
+        <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-2">
+          <Button size="sm" className="h-8 gap-1 text-xs" onClick={() => criarSugerido.mutate()} disabled={criarSugerido.isPending}>
+            <Plus className="h-3 w-3" /> {criarSugerido.isPending ? "Criando..." : "Criar 5W2H automático"}
+          </Button>
+          <Button size="sm" variant="outline" className="h-8 gap-1 text-xs border-dashed" onClick={() => setOpenForm(true)}>
+            Ajustar antes
+          </Button>
+        </div>
       )}
       {editable && openForm && (
         <div className="rounded-md border border-primary/40 bg-primary/5 p-3 space-y-2">
