@@ -20,6 +20,44 @@ const CLASSE_CLS: Record<string, string> = {
   CRITICO: "bg-red-500/20 text-red-100 border-red-500/50",
 };
 
+const PRAZO_POR_RISCO: Record<string, number> = {
+  CRITICO: 1,
+  ALTO: 7,
+  MODERADO: 15,
+  BAIXO: 30,
+};
+
+const PRIORIDADE_POR_RISCO: Record<string, "CRITICA" | "ALTA" | "MEDIA" | "BAIXA"> = {
+  CRITICO: "CRITICA",
+  ALTO: "ALTA",
+  MODERADO: "MEDIA",
+  BAIXO: "BAIXA",
+};
+
+function dataPrazo(dias: number) {
+  const d = new Date();
+  d.setDate(d.getDate() + dias);
+  return d.toISOString().slice(0, 10);
+}
+
+function montarPlanoSugerido(n: NcSugerida, ncId: string, userId: string) {
+  const dias = PRAZO_POR_RISCO[n.classe_risco] ?? 15;
+  const norma = `${n.nr_codigo}${n.nr_item ? ` ${n.nr_item}` : ""}`.trim();
+  return {
+    nc_id: ncId,
+    acao: (n.recomendacao || `Corrigir a condição identificada: ${n.descricao}`).trim(),
+    por_que: `Eliminar/controlar o risco identificado na NC${norma ? ` (${norma})` : ""}: ${n.descricao}`,
+    onde: "Área evidenciada na foto da inspeção",
+    como: "Comunicar a liderança, controlar ou paralisar a atividade quando aplicável, corrigir a condição, registrar evidência fotográfica e validar a eficácia antes do encerramento.",
+    responsavel_nome: "Encarregado da área / SESMT",
+    prazo: dataPrazo(dias),
+    custo_estimado: null,
+    prioridade: PRIORIDADE_POR_RISCO[n.classe_risco] ?? "MEDIA",
+    prazo_dias_sugerido: dias,
+    criada_por: userId,
+  };
+}
+
 export function AnalisarFotosIA({ inspecaoId, temFotos, disabled }: { inspecaoId: string; temFotos: boolean; disabled?: boolean }) {
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -61,13 +99,19 @@ export function AnalisarFotosIA({ inspecaoId, temFotos, disabled }: { inspecaoId
         recomendacao: n.recomendacao || null,
         criada_por: user.id,
       }));
-      const { error } = await supabase.from("inspecao_ncs").insert(rows);
+      const { data: criadas, error } = await supabase.from("inspecao_ncs").insert(rows).select("id");
       if (error) throw error;
+      const planos = (criadas ?? []).map((nc: any, idx: number) => montarPlanoSugerido(selecionadas[idx], nc.id, user.id));
+      if (planos.length) {
+        const { error: planoError } = await supabase.from("inspecao_ncs_planos").insert(planos as any);
+        if (planoError) throw planoError;
+      }
       return rows.length;
     },
     onSuccess: (n) => {
-      toast.success(`${n} NC(s) criada(s) a partir da análise por IA`);
+      toast.success(`${n} NC(s) criada(s) com 5W2H sugerido`);
       qc.invalidateQueries({ queryKey: ["inspecao-ncs", inspecaoId] });
+      qc.invalidateQueries({ queryKey: ["inspecao-planos-resumo"] });
       setOpen(false);
       setSugestoes([]);
       setParecer("");
@@ -151,7 +195,7 @@ export function AnalisarFotosIA({ inspecaoId, temFotos, disabled }: { inspecaoId
               ))}
             </div>
             <p className="text-[10px] text-muted-foreground">
-              Você ainda precisará abrir cada NC criada e montar o 5W2H (plano PDCA) antes de publicar a inspeção.
+              Ao confirmar, o sistema já cria um 5W2H inicial para cada NC selecionada. Você só revisa responsável, prazo e texto se quiser.
             </p>
           </div>
         )}
