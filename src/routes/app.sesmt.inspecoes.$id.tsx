@@ -94,6 +94,9 @@ function InspecaoDetail() {
   const [blockMsg, setBlockMsg] = useState<string | null>(null);
   const [ncParaExcluir, setNcParaExcluir] = useState<string | null>(null);
   const [pdfPreview, setPdfPreview] = useState<{ doc: jsPDF; fileName: string } | null>(null);
+  const [engSig, setEngSig] = useState<string | null>(null);
+  const [sesmtSig, setSesmtSig] = useState<string | null>(null);
+  const [encSig, setEncSig] = useState<string | null>(null);
 
   const { data: meuProfile } = useQuery({
     queryKey: ["meu-profile-nome", user?.id],
@@ -365,8 +368,7 @@ function InspecaoDetail() {
     onError: (e: any) => toast.error(e.message ?? "Erro"),
   });
 
-  const baixarPdf = useMutation({
-    mutationFn: async () => {
+  const gerarLaudo = async (sigs?: { eng?: string | null; sesmt?: string | null; enc?: string | null }) => {
       if (fotos.length === 0) throw new Error("O relatório final exige evidência fotográfica. Reabra a inspeção e anexe as fotos.");
       const planosPorNc: Record<string, any[]> = {};
       if (ncs.length > 0) {
@@ -389,9 +391,16 @@ function InspecaoDetail() {
         // Usar SEMPRE o nome completo do profile — nunca o e-mail (PII).
         responsavelNome: meuProfile?.full_name ?? null,
         responsavelRegistro: null,
+        assinaturas: {
+          eng: sigs?.eng ?? engSig,
+          sesmt: sigs?.sesmt ?? sesmtSig,
+          enc: sigs?.enc ?? encSig,
+        },
       });
       setPdfPreview(result);
-    },
+  };
+  const baixarPdf = useMutation({
+    mutationFn: () => gerarLaudo(),
     onError: (e: any) => setBlockMsg(e?.message ?? "Erro ao gerar PDF"),
   });
 
@@ -629,10 +638,19 @@ function InspecaoDetail() {
 
     <PDFPreviewDialog
       open={!!pdfPreview}
-      onClose={() => setPdfPreview(null)}
+      onClose={() => { setPdfPreview(null); setEngSig(null); setSesmtSig(null); setEncSig(null); }}
       doc={pdfPreview?.doc ?? null}
       fileName={pdfPreview?.fileName ?? "laudo.pdf"}
       title="Laudo Técnico de Inspeção SST"
+      signable
+      useSignatureGallery
+      signatureLabels={{ eng: "Eng. Segurança", sesmt: "Téc. Segurança", enc: "Encarregado" }}
+      engSig={engSig}
+      sesmtSig={sesmtSig}
+      encSig={encSig}
+      onChangeEngSig={(v) => { setEngSig(v); gerarLaudo({ eng: v, sesmt: sesmtSig, enc: encSig }).catch((e) => toast.error(e?.message ?? "Erro")); }}
+      onChangeSesmtSig={(v) => { setSesmtSig(v); gerarLaudo({ eng: engSig, sesmt: v, enc: encSig }).catch((e) => toast.error(e?.message ?? "Erro")); }}
+      onChangeEncSig={(v) => { setEncSig(v); gerarLaudo({ eng: engSig, sesmt: sesmtSig, enc: v }).catch((e) => toast.error(e?.message ?? "Erro")); }}
     />
     </>
   );

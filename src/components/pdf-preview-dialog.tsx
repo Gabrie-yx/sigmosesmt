@@ -7,21 +7,23 @@ import type jsPDF from "jspdf";
 import { printPdf, renderPdfToImagePagesProgressive } from "@/lib/pdf-print";
 import { SignaturePadDialog } from "@/components/signature-pad-dialog";
 
-export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable, encSig, sesmtSig, onChangeEncSig, onChangeSesmtSig, onRequestSign, hasSignature, signatureLabels, useSignatureGallery }: {
+export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable, engSig, encSig, sesmtSig, onChangeEngSig, onChangeEncSig, onChangeSesmtSig, onRequestSign, hasSignature, signatureLabels, useSignatureGallery }: {
   open: boolean;
   onClose: () => void;
   doc: jsPDF | null;
   fileName: string;
   title?: string;
   signable?: boolean;
+  engSig?: string | null;
   encSig?: string | null;
   sesmtSig?: string | null;
+  onChangeEngSig?: (v: string | null) => void;
   onChangeEncSig?: (v: string | null) => void;
   onChangeSesmtSig?: (v: string | null) => void;
   onRequestSign?: () => void;
   hasSignature?: boolean;
   /** Sobrescreve as labels dos dois slots de assinatura. */
-  signatureLabels?: { enc?: string; sesmt?: string };
+  signatureLabels?: { eng?: string; enc?: string; sesmt?: string };
   /** Quando true, ao clicar em "Assinar" abre o SignaturePadDialog (galeria/desenhar/importar). */
   useSignatureGallery?: boolean;
 }) {
@@ -148,9 +150,10 @@ export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable
           <div className="flex flex-wrap items-center gap-2 rounded p-2 text-xs border border-rose-900/40 bg-gradient-to-r from-[#1a0510] via-[#2a0814] to-[#1a0510] text-rose-100">
             <span className="font-bold uppercase tracking-wide text-rose-300/80">Assinaturas:</span>
             {([
-              { label: signatureLabels?.enc ?? "Encarregado", val: encSig ?? null, set: onChangeEncSig },
+              onChangeEngSig ? { label: signatureLabels?.eng ?? "Engenheiro", val: engSig ?? null, set: onChangeEngSig } : null,
               { label: signatureLabels?.sesmt ?? "SESMT", val: sesmtSig ?? null, set: onChangeSesmtSig },
-            ] as const).map((s) => (
+              { label: signatureLabels?.enc ?? "Encarregado", val: encSig ?? null, set: onChangeEncSig },
+            ].filter(Boolean) as Array<{ label: string; val: string | null; set: ((v: string | null) => void) | undefined }>).map((s) => (
               <div key={s.label} className="flex items-center gap-1.5">
                 <span className="text-rose-200/80">{s.label}:</span>
                 {s.val ? (

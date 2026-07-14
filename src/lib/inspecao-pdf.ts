@@ -43,10 +43,16 @@ export interface InspecaoPdfInput {
   responsavelNome?: string | null;
   /** Registro profissional (MTE / CREA) exibido abaixo da assinatura do TST. */
   responsavelRegistro?: string | null;
+  /** Assinaturas digitais (data URLs PNG) para estampar acima da linha. */
+  assinaturas?: {
+    eng?: string | null;
+    sesmt?: string | null;
+    enc?: string | null;
+  };
 }
 
 export async function gerarInspecaoPdf(input: InspecaoPdfInput): Promise<{ doc: jsPDF; fileName: string }> {
-  const { inspecao, fotos, ncs, planosPorNc, rubrica, responsavelNome, responsavelRegistro } = input;
+  const { inspecao, fotos, ncs, planosPorNc, rubrica, responsavelNome, responsavelRegistro, assinaturas } = input;
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const W = doc.internal.pageSize.getWidth();
   const H = doc.internal.pageSize.getHeight();
@@ -481,18 +487,26 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput): Promise<{ doc: 
   const sigW = (W - 2 * M - 10) / 3;
   const sigY = y + 18;
   doc.setDrawColor(80).setLineWidth(0.3);
-  const sigs: Array<{ label: string; sub: string; nome?: string | null }> = [
-    { label: "Engenheiro de Segurança do Trabalho", sub: "CREA nº ________________________" },
+  const sigs: Array<{ label: string; sub: string; nome?: string | null; img?: string | null }> = [
+    { label: "Engenheiro de Segurança do Trabalho", sub: "CREA nº ________________________", img: assinaturas?.eng ?? null },
     {
       label: "Técnico de Segurança do Trabalho",
       sub: (responsavelRegistro && responsavelRegistro.trim()) || "Registro MTE ________________",
       nome: inspetorLabel !== "—" ? inspetorLabel : null,
+      img: assinaturas?.sesmt ?? null,
     },
-    { label: "Encarregado da Área", sub: "Responsável pela execução das ações" },
+    { label: "Encarregado da Área", sub: "Responsável pela execução das ações", img: assinaturas?.enc ?? null },
   ];
   sigs.forEach((s, i) => {
     const x = M + i * (sigW + 5);
     doc.line(x, sigY, x + sigW, sigY);
+    if (s.img) {
+      try {
+        const imgH = 14;
+        const imgW = Math.min(sigW - 6, 42);
+        doc.addImage(s.img, "PNG", x + (sigW - imgW) / 2, sigY - imgH - 1, imgW, imgH, undefined, "FAST");
+      } catch { /* ignore imagem inválida */ }
+    }
     if (s.nome) {
       doc.setFont("helvetica", "bold").setFontSize(8).setTextColor(15, 23, 42);
       doc.text(s.nome, x + sigW / 2, sigY + 4, { align: "center" });
