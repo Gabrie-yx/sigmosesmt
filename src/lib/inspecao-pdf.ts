@@ -33,6 +33,15 @@ async function fetchImageAsDataUrl(url: string): Promise<string | null> {
   } catch { return null; }
 }
 
+async function imgNaturalDims(src: string): Promise<{ w: number; h: number } | null> {
+  return new Promise((resolve) => {
+    const im = new Image();
+    im.onload = () => resolve({ w: im.naturalWidth, h: im.naturalHeight });
+    im.onerror = () => resolve(null);
+    im.src = src;
+  });
+}
+
 export interface InspecaoPdfInput {
   inspecao: any;
   fotos: any[];
@@ -189,7 +198,7 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput): Promise<{ doc: 
   }
 
   // ============= 2. METODOLOGIA E BASE LEGAL =============
-  doc.addPage(); y = M;
+  ensureRoom(doc, y, 60, () => { doc.addPage(); y = M; });
   sectionTitle(doc, "2. METODOLOGIA E BASE LEGAL", y);
   y += 6;
   const metodo = [
@@ -218,7 +227,7 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput): Promise<{ doc: 
       body: ncs.map((nc, i) => [
         String(i + 1),
         `${nc.nr_codigo}${nc.nr_item ? ` ${nc.nr_item}` : ""}`,
-        String(nc.descricao ?? "").slice(0, 180),
+        String(nc.descricao ?? "—"),
         nc.classe_risco ?? "—",
         `P${nc.probabilidade}×S${nc.severidade}=${nc.risco_calculado}`,
         nc.gradacao_nr28 ?? "—",
@@ -255,14 +264,16 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput): Promise<{ doc: 
 
   // ============= 4. DETALHAMENTO POR NC =============
   if (ncs.length > 0) {
-    doc.addPage(); y = M;
+    ensureRoom(doc, y, 40, () => { doc.addPage(); y = M; });
     sectionTitle(doc, "4. DETALHAMENTO DAS NÃO CONFORMIDADES", y);
     y += 8;
 
     for (let i = 0; i < ncs.length; i++) {
       const nc = ncs[i];
       const planos = planosPorNc[nc.id] ?? [];
-      ensureRoom(doc, y, 90, () => { doc.addPage(); y = M; });
+      // Cada NC começa em página nova (exceto a primeira, que segue após o título da seção)
+      if (i > 0) { doc.addPage(); y = M; }
+      else { ensureRoom(doc, y, 60, () => { doc.addPage(); y = M; }); }
 
       // Título da NC
       doc.setFillColor(127, 29, 29);
@@ -298,7 +309,6 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput): Promise<{ doc: 
       y = paragraph(doc, nc.descricao ?? "—", y, W, M, 8.5);
 
       // Matriz de risco + multa lado a lado
-      ensureRoom(doc, y, 50, () => { doc.addPage(); y = M; });
       const matrixX = M;
       const matrixY = y + 2;
       drawMatriz5x5(doc, matrixX, matrixY, Number(nc.probabilidade), Number(nc.severidade));
@@ -322,42 +332,39 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput): Promise<{ doc: 
       if (nc.foto_id) {
         const foto = fotos.find((f: any) => f.id === nc.foto_id);
         if (foto) {
-          ensureRoom(doc, y, 65, () => { doc.addPage(); y = M; });
-          const fw = 80, fh = 55;
+          const maxW = 80, maxH = 55;
           const fx = M;
           if (String(foto.storage_path).startsWith("cftv://")) {
+            const fw = maxW, fh = maxH;
             doc.setDrawColor(203, 213, 225).setLineWidth(0.2);
             doc.rect(fx, y, fw, fh);
             doc.setFont("helvetica", "bold").setFontSize(9).setTextColor(80);
             doc.text("CFTV", fx + fw / 2, y + fh / 2, { align: "center" });
+            renderFotoMeta(doc, foto, fx + fw + 4, y, W - (fx + fw + 4) - M);
+            y += fh + 6;
           } else {
             const dUrl = await getFotoDataUrl(foto);
+            let fw = maxW, fh = maxH;
             if (dUrl) {
+              const dims = await imgNaturalDims(dUrl);
+              if (dims && dims.w > 0 && dims.h > 0) {
+                const r = dims.w / dims.h;
+                if (maxW / r <= maxH) { fw = maxW; fh = maxW / r; }
+                else { fh = maxH; fw = maxH * r; }
+              }
               try {
                 const fmt = dUrl.includes("image/png") ? "PNG" : "JPEG";
                 doc.addImage(dUrl, fmt, fx, y, fw, fh, undefined, "FAST");
               } catch {}
             }
+            renderFotoMeta(doc, foto, fx + fw + 4, y, W - (fx + fw + 4) - M);
+            y += fh + 6;
           }
-          doc.setFont("helvetica", "normal").setFontSize(7).setTextColor(71, 85, 105);
-          const meta = [
-            `Hash: ${String(foto.hash_sha256 ?? "").slice(0, 16)}`,
-            foto.timestamp_captura ? brDateTime(foto.timestamp_captura) : "sem timestamp",
-            foto.gps_lat && foto.gps_lng ? `GPS ${Number(foto.gps_lat).toFixed(5)}, ${Number(foto.gps_lng).toFixed(5)}` : "",
-          ].filter(Boolean).join(" · ");
-          const metaX = fx + fw + 4;
-          doc.setFont("helvetica", "bold").setFontSize(8).setTextColor(15, 23, 42);
-          doc.text("Evidência fotográfica", metaX, y + 4);
-          doc.setFont("helvetica", "normal").setFontSize(7.5).setTextColor(71, 85, 105);
-          const mt = doc.splitTextToSize(meta, W - metaX - M);
-          doc.text(mt, metaX, y + 9);
-          y += fh + 6;
         }
       }
 
       // Recomendação técnica
       if (nc.recomendacao) {
-        ensureRoom(doc, y, 20, () => { doc.addPage(); y = M; });
         doc.setFont("helvetica", "bold").setFontSize(8.5).setTextColor(15, 23, 42);
         doc.text("Recomendação técnica:", M, y);
         y += 4;
@@ -365,7 +372,6 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput): Promise<{ doc: 
       }
 
       // Plano 5W2H / PDCA
-      ensureRoom(doc, y, 30, () => { doc.addPage(); y = M; });
       doc.setFont("helvetica", "bold").setFontSize(8.5).setTextColor(15, 23, 42);
       doc.text("Plano de ação (PDCA / 5W2H):", M, y);
       y += 3;
@@ -376,34 +382,37 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput): Promise<{ doc: 
       } else {
         autoTable(doc, {
           startY: y + 1,
-          head: [["Fase", "Ação (What)", "Responsável (Who)", "Prazo (When)", "Como (How)"]],
-          body: planos.map((p: any) => [
-            p.fase_pdca ?? "—",
-            p.acao ?? "—",
-            p.responsavel_nome ?? "—",
-            p.prazo ? br(p.prazo) : "—",
-            p.observacoes ?? "—",
-          ]),
-          styles: { fontSize: 7.5, cellPadding: 1.5, valign: "top" },
+          head: [["Campo (5W2H)", "Conteúdo"]],
+          body: planos.flatMap((p: any, pi: number) => {
+            const custo = p.custo_estimado != null
+              ? `R$ ${Number(p.custo_estimado).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`
+              : "—";
+            const rows: string[][] = [
+              ["O QUÊ (What)", p.acao ?? "—"],
+              ["POR QUÊ (Why)", p.por_que ?? "—"],
+              ["ONDE (Where)", p.onde ?? "—"],
+              ["QUANDO (When)", p.prazo ? br(p.prazo) : "—"],
+              ["QUEM (Who)", p.responsavel_nome ?? "—"],
+              ["COMO (How)", p.como ?? "—"],
+              ["QUANTO CUSTA (How Much)", custo],
+              ["Fase PDCA", p.fase_pdca ?? "PLAN"],
+            ];
+            if (planos.length > 1) {
+              rows.unshift([`Plano ${pi + 1}`, ""]);
+            }
+            return rows;
+          }),
+          styles: { fontSize: 8, cellPadding: 2, valign: "top" },
           headStyles: { fillColor: [30, 41, 59], textColor: 255, fontSize: 7.5 },
           columnStyles: {
-            0: { cellWidth: 14, halign: "center" },
-            1: { cellWidth: 55 },
-            2: { cellWidth: 35 },
-            3: { cellWidth: 22, halign: "center" },
-            4: { cellWidth: "auto" },
+            0: { cellWidth: 42, fontStyle: "bold", fillColor: [248, 250, 252] },
+            1: { cellWidth: "auto" },
           },
           margin: { left: M, right: M },
         });
         y = (doc as any).lastAutoTable.finalY + 6;
       }
 
-      // separador entre NCs
-      if (i < ncs.length - 1) {
-        doc.setDrawColor(226, 232, 240).setLineWidth(0.2);
-        doc.line(M, y, W - M, y);
-        y += 4;
-      }
     }
   }
 
@@ -411,30 +420,32 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput): Promise<{ doc: 
   const todasAcoes: Array<{ nc: any; p: any; idx: number }> = [];
   ncs.forEach((nc, idx) => (planosPorNc[nc.id] ?? []).forEach((p) => todasAcoes.push({ nc, p, idx: idx + 1 })));
   if (todasAcoes.length > 0) {
+    doc.setPage((doc as any).internal.getNumberOfPages());
     doc.addPage(); y = M;
     sectionTitle(doc, "5. PLANO DE AÇÃO CONSOLIDADO", y);
     y += 6;
     todasAcoes.sort((a, b) => String(a.p.prazo ?? "9999").localeCompare(String(b.p.prazo ?? "9999")));
     autoTable(doc, {
       startY: y,
-      head: [["NC", "NR", "Ação", "Fase", "Responsável", "Prazo", "Status"]],
+      head: [["NC", "NR", "Ação (What)", "Como (How)", "Fase", "Responsável", "Prazo", "Status"]],
       body: todasAcoes.map(({ nc, p, idx }) => [
         `#${String(idx).padStart(2, "0")}`,
         `${nc.nr_codigo}${nc.nr_item ? ` ${nc.nr_item}` : ""}`,
         p.acao ?? "—",
+        p.como ?? "—",
         p.fase_pdca ?? "—",
-        p.responsavel_nome ?? "—",
+        p.responsavel_nome ?? "A definir",
         p.prazo ? br(p.prazo) : "—",
         p.encerrada_em ? "Concluída" : "Pendente",
       ]),
-      styles: { fontSize: 8, cellPadding: 1.8, valign: "top" },
+      styles: { fontSize: 7.5, cellPadding: 1.5, valign: "top" },
       headStyles: { fillColor: [127, 29, 29], textColor: 255 },
       columnStyles: {
         0: { cellWidth: 12, halign: "center" },
-        1: { cellWidth: 22 },
-        3: { cellWidth: 14, halign: "center" },
-        5: { cellWidth: 20, halign: "center" },
-        6: { cellWidth: 22, halign: "center" },
+        1: { cellWidth: 20 },
+        4: { cellWidth: 12, halign: "center" },
+        6: { cellWidth: 18, halign: "center" },
+        7: { cellWidth: 18, halign: "center" },
       },
       margin: { left: M, right: M },
     });
@@ -442,7 +453,8 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput): Promise<{ doc: 
   }
 
   // ============= 6. RUBRICA MATRIZ 5x5 =============
-  doc.addPage(); y = M;
+  doc.setPage((doc as any).internal.getNumberOfPages());
+  ensureRoom(doc, y, 90, () => { doc.addPage(); y = M; });
   sectionTitle(doc, "ANEXO I — RUBRICA DA MATRIZ DE RISCO 5×5", y);
   y += 6;
   const rP = rubrica.filter((r: any) => r.eixo === "P").map((r: any) => [`P${r.nivel}`, r.rotulo, r.definicao]);
@@ -590,14 +602,30 @@ function ensureRoom(doc: jsPDF, y: number, needed: number, onBreak: () => void) 
   if (y + needed > H - 15) { doc.addPage(); onBreak(); }
 }
 
+function renderFotoMeta(doc: jsPDF, foto: any, x: number, y: number, maxW: number) {
+  const meta = [
+    `Hash: ${String(foto.hash_sha256 ?? "").slice(0, 16)}`,
+    foto.timestamp_captura ? brDateTime(foto.timestamp_captura) : "sem timestamp",
+    foto.gps_lat && foto.gps_lng ? `GPS ${Number(foto.gps_lat).toFixed(5)}, ${Number(foto.gps_lng).toFixed(5)}` : "",
+  ].filter(Boolean).join(" · ");
+  doc.setFont("helvetica", "bold").setFontSize(8).setTextColor(15, 23, 42);
+  doc.text("Evidência fotográfica", x, y + 4);
+  doc.setFont("helvetica", "normal").setFontSize(7.5).setTextColor(71, 85, 105);
+  const mt = doc.splitTextToSize(meta, maxW);
+  doc.text(mt, x, y + 9);
+}
+
 function drawMatriz5x5(doc: jsPDF, x: number, y: number, p: number, s: number) {
   const cell = 8;
   const originX = x + 6;
   const originY = y + 6;
   // rótulos eixos
   doc.setFont("helvetica", "bold").setFontSize(6).setTextColor(15, 23, 42);
-  doc.text("S →", originX + cell * 5 + 1, originY - 1);
-  doc.text("P ↓", x, originY + cell * 5 + 3);
+  doc.text("Severidade", originX + cell * 2.5, originY - 3, { align: "center" });
+  doc.text("P", x + 1, originY + cell * 2.5, { align: "left" });
+  doc.text("r", x + 1, originY + cell * 2.5 + 2.2, { align: "left" });
+  doc.text("o", x + 1, originY + cell * 2.5 + 4.4, { align: "left" });
+  doc.text("b", x + 1, originY + cell * 2.5 + 6.6, { align: "left" });
   // células
   for (let sv = 1; sv <= 5; sv++) {
     for (let pv = 1; pv <= 5; pv++) {

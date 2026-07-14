@@ -140,8 +140,10 @@ export function drawPdfHeader(doc: jsPDF, opts: PdfHeaderOpts): number {
   if (opts.responsavel) meta.push(`Responsável: ${opts.responsavel}`);
   if (opts.filtros && opts.filtros.length) meta.push(...opts.filtros);
   if (meta.length) {
-    doc.text(meta.join("   ·   "), M, y);
-    y += 5;
+    const metaText = meta.join("   ·   ");
+    const metaLines = doc.splitTextToSize(metaText, W - 2 * M);
+    doc.text(metaLines, M, y);
+    y += metaLines.length * 4.5 + 1;
   }
   // destaque só renderiza quando não há KPIs (compat)
   if (opts.destaque && (!opts.kpis || !opts.kpis.length)) {
