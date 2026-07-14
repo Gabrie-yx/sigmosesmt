@@ -760,14 +760,14 @@ function AprsPage() {
       />
 
       {isEditor && selectedIds.size > 0 && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-3 rounded-xl border border-emerald-500/40 bg-gradient-to-br from-[#0a1f15] via-[#0d2a1c] to-[#0a1f15] shadow-[0_8px_40px_-8px_rgba(16,185,129,0.6)] backdrop-blur">
-          <span className="text-sm text-emerald-100 font-semibold">
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-3 rounded-xl border bg-card shadow-lg">
+          <span className="text-sm font-semibold">
             {selectedIds.size} APR(s) selecionada(s)
           </span>
           <Button
             onClick={() => setRevalidarOpen(true)}
             size="sm"
-            className="bg-gradient-to-br from-emerald-600 to-emerald-800 hover:from-emerald-500 hover:to-emerald-700 text-white"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white"
           >
             <ShieldAlert className="h-4 w-4 mr-1" /> Revalidar em lote
           </Button>
@@ -775,7 +775,6 @@ function AprsPage() {
             onClick={() => setSelectedIds(new Set())}
             size="sm"
             variant="outline"
-            className="border-rose-400/40 text-rose-100 bg-white/5 hover:bg-white/10"
           >
             Limpar
           </Button>
@@ -788,20 +787,20 @@ function AprsPage() {
             <DialogTitle>Duplicar APR {dupSource?.numero} para vários cascos</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-muted-foreground">
               Será criada 1 APR (status <b>RASCUNHO</b>) para <b>cada casco</b> marcado, copiando atividade,
               riscos, EPIs, NRs e assinaturas. Cada uma recebe número próprio; a PTE não é copiada.
             </p>
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-bold text-slate-700">Cascos destino</label>
+                <label className="text-xs font-bold">Cascos destino</label>
                 {(() => {
                   const disponiveis = cascos.filter((c: any) => c.id !== dupSource?.casco_id);
                   const todos = disponiveis.length > 0 && disponiveis.every((c: any) => dupCascoIds.includes(c.id));
                   return (
                     <button
                       type="button"
-                      className="text-[10px] font-bold text-[#991b1b] hover:underline"
+                      className="text-[10px] font-bold text-red-700 hover:underline"
                       onClick={() => setDupCascoIds(todos ? [] : disponiveis.map((c: any) => c.id))}
                     >
                       {todos ? "Limpar" : "Marcar todos"}
@@ -818,7 +817,7 @@ function AprsPage() {
                       <label
                         key={c.id}
                         className={`flex items-center gap-2 p-2 rounded border text-xs cursor-pointer ${
-                          marcado ? "bg-[#991b1b]/5 border-[#991b1b]/40" : "bg-white border-slate-200 hover:bg-slate-50"
+                          marcado ? "bg-red-50 border-red-300" : "bg-card hover:bg-muted/40"
                         }`}
                       >
                         <Checkbox
@@ -829,14 +828,14 @@ function AprsPage() {
                         />
                         <div className="min-w-0">
                           <div className="font-bold">CASCO {c.numero}</div>
-                          {c.nome && <div className="text-[10px] text-slate-500 truncate">{c.nome}</div>}
+                          {c.nome && <div className="text-[10px] text-muted-foreground truncate">{c.nome}</div>}
                         </div>
                       </label>
                     );
                   })}
               </div>
               {dupSource?.casco_id && (
-                <p className="text-[11px] text-slate-400 mt-2">
+                <p className="text-[11px] text-muted-foreground mt-2">
                   Origem: casco {cascoMap.get(dupSource.casco_id)?.numero ?? "—"}
                 </p>
               )}
@@ -844,7 +843,7 @@ function AprsPage() {
             <div className="flex justify-end gap-2 pt-2 border-t">
               <Button variant="ghost" onClick={() => { setDupSource(null); setDupCascoIds([]); }}>Cancelar</Button>
               <Button
-                className="bg-gradient-to-br from-rose-600 to-rose-900 hover:from-rose-500 hover:to-rose-800 text-white shadow-[0_0_20px_-4px_rgba(220,38,70,0.7)]"
+                className="bg-red-700 hover:bg-red-800 text-white"
                 disabled={dupCascoIds.length === 0 || duplicate.isPending}
                 onClick={() => dupSource && duplicate.mutate({ srcId: dupSource.id, cascoIds: dupCascoIds })}
               >
