@@ -9,13 +9,6 @@ const InputSchema = z.object({
   contexto: z.string().optional().nullable(),
 });
 
-function mimeFromPath(p: string): string {
-  const ext = p.split(".").pop()?.toLowerCase() ?? "";
-  if (ext === "png") return "image/png";
-  if (ext === "webp") return "image/webp";
-  return "image/jpeg";
-}
-
 export type NcSugerida = {
   foto_id: string | null;
   nr_codigo: string;
@@ -75,13 +68,14 @@ export const analisarFotosInspecao = createServerFn({ method: "POST" })
     if (!fotosFisicas.length) throw new Error("Anexe ao menos uma foto antes de rodar a análise por IA.");
     if (fotosFisicas.length > 10) throw new Error("Máximo 10 fotos por análise. Rode em lotes.");
 
-    // 2) baixa cada foto e converte pra data-url
-    const dataUrls: string[] = [];
+    // 2) gera signed URLs (Gemini via gateway busca direto — evita download+base64 no Worker)
+    const signedUrls: string[] = [];
     for (const f of fotosFisicas) {
-      const { data: blob, error } = await supabase.storage.from(BUCKET).download(f.storage_path);
-      if (error || !blob) throw new Error(`Falha ao baixar foto ${f.id}: ${error?.message ?? "desconhecido"}`);
-      const buf = Buffer.from(await blob.arrayBuffer());
-      dataUrls.push(`data:${mimeFromPath(f.storage_path)};base64,${buf.toString("base64")}`);
+      const { data: signed, error } = await supabase.storage
+        .from(BUCKET)
+        .createSignedUrl(f.storage_path, 60 * 15);
+      if (error || !signed?.signedUrl) throw new Error(`Falha ao assinar foto ${f.id}: ${error?.message ?? "desconhecido"}`);
+      signedUrls.push(signed.signedUrl);
     }
 
     const ctxTexto = data.contexto?.trim() ? `\n\nContexto da inspeção informado pelo TST:\n${data.contexto.trim()}\n` : "";
@@ -100,14 +94,19 @@ export const analisarFotosInspecao = createServerFn({ method: "POST" })
           `4. Descrição em português técnico de TST, sem juízo de valor.\n` +
           `5. Responda APENAS via tool 'registrar_ncs'.`,
       },
-      ...dataUrls.map((url) => ({ type: "image_url", image_url: { url } })),
+      ...signedUrls.map((url) => ({ type: "image_url", image_url: { url } })),
     ];
 
-    const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 90_000);
+    let aiResp: Response;
+    try {
+      aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      signal: controller.signal,
       body: JSON.stringify({
-        model: "google/gemini-2.5-pro",
+        model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: "Você é um TST sênior brasileiro. Rigoroso, factual, cita NR e item. Não inventa." },
           { role: "user", content: userContent },
@@ -122,7 +121,13 @@ export const analisarFotosInspecao = createServerFn({ method: "POST" })
         }],
         tool_choice: { type: "function", function: { name: "registrar_ncs" } },
       }),
-    });
+      });
+    } catch (e: any) {
+      clearTimeout(timeout);
+      if (e?.name === "AbortError") throw new Error("A análise por IA demorou demais (>90s). Tente com menos fotos ou refaça.");
+      throw new Error(`Falha de rede ao chamar IA: ${e?.message ?? e}`);
+    }
+    clearTimeout(timeout);
 
     if (!aiResp.ok) {
       const txt = await aiResp.text();
