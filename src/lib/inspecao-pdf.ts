@@ -1,7 +1,6 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { drawPdfHeader } from "./pdf-header";
-import { printPdf } from "./pdf-print";
 import { supabase } from "@/integrations/supabase/client";
 
 const BUCKET = "inspecoes-fotos";
@@ -40,11 +39,14 @@ export interface InspecaoPdfInput {
   ncs: any[];
   planosPorNc: Record<string, any[]>;
   rubrica: any[];
+  /** Nome completo do inspetor. NUNCA passe e-mail — é PII. */
   responsavelNome?: string | null;
+  /** Registro profissional (MTE / CREA) exibido abaixo da assinatura do TST. */
+  responsavelRegistro?: string | null;
 }
 
-export async function gerarInspecaoPdf(input: InspecaoPdfInput) {
-  const { inspecao, fotos, ncs, planosPorNc, rubrica, responsavelNome } = input;
+export async function gerarInspecaoPdf(input: InspecaoPdfInput): Promise<{ doc: jsPDF; fileName: string }> {
+  const { inspecao, fotos, ncs, planosPorNc, rubrica, responsavelNome, responsavelRegistro } = input;
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const W = doc.internal.pageSize.getWidth();
   const H = doc.internal.pageSize.getHeight();
@@ -84,10 +86,11 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput) {
   }
 
   // ============= CAPA =============
+  const inspetorLabel = responsavelNome && responsavelNome.trim().length > 0 ? responsavelNome : "—";
   let y = drawPdfHeader(doc, {
     titulo: "LAUDO TÉCNICO DE INSPEÇÃO DE SEGURANÇA DO TRABALHO",
     subtitulo: `${laudoNum} · ${empresaNome}`,
-    responsavel: responsavelNome ?? undefined,
+    responsavel: inspetorLabel,
     filtros: [
       `Local: ${inspecao.local_descricao}`,
       `Data da inspeção: ${br(inspecao.data_inspecao)}`,
@@ -129,7 +132,7 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput) {
       ["CNAE / Grau de risco", `${empresa.cnae_principal ?? "—"} · Grau ${grauRisco}`],
       ["Local inspecionado", inspecao.local_descricao || "—"],
       ["Data da inspeção", br(inspecao.data_inspecao)],
-      ["Inspetor responsável", responsavelNome ?? "—"],
+      ["Inspetor responsável", inspetorLabel],
       ["Status", String(inspecao.status ?? "—").toUpperCase()],
       ["Emitido em", brDateTime(new Date().toISOString())],
     ],
@@ -478,20 +481,33 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput) {
   const sigW = (W - 2 * M - 10) / 3;
   const sigY = y + 18;
   doc.setDrawColor(80).setLineWidth(0.3);
-  const sigs = [
+  const sigs: Array<{ label: string; sub: string; nome?: string | null }> = [
     { label: "Engenheiro de Segurança do Trabalho", sub: "CREA nº ________________________" },
-    { label: "Técnico de Segurança do Trabalho", sub: responsavelNome ?? "Registro MTE ________________" },
+    {
+      label: "Técnico de Segurança do Trabalho",
+      sub: (responsavelRegistro && responsavelRegistro.trim()) || "Registro MTE ________________",
+      nome: inspetorLabel !== "—" ? inspetorLabel : null,
+    },
     { label: "Encarregado da Área", sub: "Responsável pela execução das ações" },
   ];
   sigs.forEach((s, i) => {
     const x = M + i * (sigW + 5);
     doc.line(x, sigY, x + sigW, sigY);
-    doc.setFont("helvetica", "bold").setFontSize(8).setTextColor(15, 23, 42);
-    doc.text(s.label, x + sigW / 2, sigY + 4, { align: "center" });
-    doc.setFont("helvetica", "normal").setFontSize(7).setTextColor(100);
-    doc.text(s.sub, x + sigW / 2, sigY + 8, { align: "center" });
+    if (s.nome) {
+      doc.setFont("helvetica", "bold").setFontSize(8).setTextColor(15, 23, 42);
+      doc.text(s.nome, x + sigW / 2, sigY + 4, { align: "center" });
+      doc.setFont("helvetica", "normal").setFontSize(7.5).setTextColor(30, 41, 59);
+      doc.text(s.label, x + sigW / 2, sigY + 8, { align: "center" });
+      doc.setFont("helvetica", "normal").setFontSize(7).setTextColor(100);
+      doc.text(s.sub, x + sigW / 2, sigY + 12, { align: "center" });
+    } else {
+      doc.setFont("helvetica", "bold").setFontSize(8).setTextColor(15, 23, 42);
+      doc.text(s.label, x + sigW / 2, sigY + 4, { align: "center" });
+      doc.setFont("helvetica", "normal").setFontSize(7).setTextColor(100);
+      doc.text(s.sub, x + sigW / 2, sigY + 8, { align: "center" });
+    }
   });
-  y = sigY + 14;
+  y = sigY + 18;
   doc.setFont("helvetica", "italic").setFontSize(7).setTextColor(100);
   const legal = "Documento emitido em conformidade com a NR-01 (GRO/PGR), NR-28 (Fiscalização) e demais Normas Regulamentadoras aplicáveis. As evidências fotográficas anexadas possuem hash SHA-256, timestamp e coordenadas GPS quando disponíveis, garantindo integridade probatória. Multas estimadas conforme Portaria MTP nº 667/2021, considerando o grau de risco da atividade principal da empresa auditada.";
   const legalLines = doc.splitTextToSize(legal, W - 2 * M);
@@ -509,8 +525,8 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput) {
     doc.text(`Página ${i} de ${pages}`, W - M, H - 5, { align: "right" });
   }
 
-  const blob = doc.output("blob");
-  await printPdf(blob, `laudo-${laudoNum.toLowerCase()}-${inspecao.data_inspecao}.pdf`);
+  const fileName = `laudo-${laudoNum.toLowerCase()}-${inspecao.data_inspecao}.pdf`;
+  return { doc, fileName };
 }
 
 // ============= Helpers de layout =============
