@@ -145,18 +145,18 @@ function InspecoesList() {
 
   return (
     <div className="p-4 md:p-6 max-w-6xl mx-auto space-y-4">
-      <Link to="/app" className="text-[10px] font-black uppercase tracking-wider text-slate-500 hover:text-slate-800 flex items-center gap-1">
+      <Link to="/app" className="text-[10px] font-black uppercase tracking-wider text-muted-foreground hover:text-foreground flex items-center gap-1">
         <ChevronLeft className="h-3 w-3" /> Início
       </Link>
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div className="flex items-center gap-2">
-          <Target className="h-6 w-6 text-emerald-700" />
-          <div>
-            <h1 className="text-xl font-black uppercase tracking-tight text-slate-900">Inspeções de Segurança</h1>
-            <p className="text-xs text-slate-500">Registro rastreável de inspeções, NCs e planos de ação (PDCA)</p>
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 sm:flex sm:flex-wrap sm:justify-between">
+        <div className="flex min-w-0 items-center gap-2">
+          <Target className="h-6 w-6 shrink-0 text-primary" />
+          <div className="min-w-0">
+            <h1 className="truncate text-lg sm:text-xl font-black uppercase tracking-tight text-foreground">Inspeções de Segurança</h1>
+            <p className="text-[11px] sm:text-xs text-muted-foreground">Registro rastreável de inspeções, NCs e planos (PDCA)</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="col-span-2 flex flex-wrap items-center gap-2 sm:col-auto">
           {canDelete && (
             <Button asChild size="sm" variant="outline" className="gap-1 h-9 text-xs border-red-500/40 bg-red-500/10 text-red-100 hover:bg-red-500/20 hover:text-white">
               <Link to="/app/sesmt/vincular-usuarios">Vincular usuários</Link>
@@ -166,11 +166,11 @@ function InspecoesList() {
           <DialogTrigger asChild>
             <Button size="sm" className="gap-1 h-9 text-xs bg-red-600 hover:bg-red-700 text-white"><Plus className="h-4 w-4" /> Nova inspeção</Button>
           </DialogTrigger>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="w-[calc(100vw-1rem)] max-w-lg max-h-[92dvh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Nova inspeção (rascunho)</DialogTitle>
             </DialogHeader>
-            <div className="rounded border border-emerald-200 bg-emerald-50 text-emerald-900 text-[11px] p-2 flex gap-2">
+            <div className="rounded border border-emerald-500/40 bg-emerald-500/10 text-emerald-100 text-[11px] p-2 flex gap-2">
               <Info className="h-4 w-4 shrink-0 mt-0.5" />
               <div>
                 Isto cria um <b>rascunho</b>. No próximo passo você vai <b>anexar fotos</b> (celular ou CFTV),
@@ -212,7 +212,7 @@ function InspecoesList() {
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="text-[10px] text-slate-500 mt-1">Ao escolher um GHE, o local é preenchido automaticamente e a inspeção alimenta o inventário de riscos daquele GHE.</p>
+                <p className="text-[10px] text-muted-foreground mt-1">Ao escolher um GHE, o local é preenchido automaticamente e a inspeção alimenta o inventário de riscos daquele GHE.</p>
               </div>
               <div>
                 <Label>Local / área inspecionada *</Label>
@@ -248,39 +248,39 @@ function InspecoesList() {
 
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-black uppercase tracking-wide text-slate-800 flex items-center gap-2">
+          <CardTitle className="text-sm font-black uppercase tracking-wide text-foreground flex items-center gap-2">
             <ClipboardList className="h-4 w-4" /> Inspeções recentes
           </CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="text-sm text-slate-500">Carregando...</div>
+            <div className="text-sm text-muted-foreground">Carregando...</div>
           ) : inspecoes.length === 0 ? (
-            <div className="text-sm text-slate-500 py-8 text-center">Nenhuma inspeção ainda. Clique em "Nova inspeção" para começar.</div>
+            <div className="text-sm text-muted-foreground py-8 text-center">Nenhuma inspeção ainda. Clique em "Nova inspeção" para começar.</div>
           ) : (
             <div className="divide-y">
               {inspecoes.map((it: any) => {
                 const st = STATUS_LABEL[it.status] ?? STATUS_LABEL.rascunho;
                 const podeExcluir = canDelete && (it.status === "rascunho" || it.status === "em_revisao");
                 return (
-                  <div key={it.id} className="flex items-center gap-2 py-3 hover:bg-slate-50 -mx-2 px-2 rounded">
-                    <Link to="/app/sesmt/inspecoes/$id" params={{ id: it.id }} className="flex items-center gap-3 flex-1 min-w-0">
+                  <div key={it.id} className="flex items-center gap-2 py-3 hover:bg-accent/50 -mx-2 px-2 rounded">
+                    <Link to="/app/sesmt/inspecoes/$id" params={{ id: it.id }} className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-semibold text-slate-800 truncate">{it.local_descricao}</div>
-                        <div className="text-[11px] text-slate-500 flex gap-2 flex-wrap">
+                        <div className="text-sm font-semibold text-foreground truncate">{it.local_descricao}</div>
+                        <div className="text-[11px] text-muted-foreground flex gap-1.5 flex-wrap">
                           <span>{format(new Date(it.data_inspecao + "T00:00:00"), "dd/MM/yyyy")}</span>
                           {it.companies && <span>· {it.companies.nome_fantasia ?? it.companies.name}</span>}
                           {it.tipo_local && <span>· {it.tipo_local}</span>}
                         </div>
                       </div>
-                      <Badge className={st.cls + " text-[10px]"}>{st.label}</Badge>
-                      <ChevronRight className="h-4 w-4 text-slate-400" />
+                      <Badge className={st.cls + " text-[10px] shrink-0"}>{st.label}</Badge>
+                      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
                     </Link>
                     {podeExcluir && (
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="h-8 w-8 text-red-600 hover:bg-red-50"
+                        className="h-8 w-8 shrink-0 text-red-400 hover:text-red-300 hover:bg-red-500/15"
                         title="Excluir inspeção"
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); setExcluir({ id: it.id, local: it.local_descricao }); }}
                       >
@@ -298,27 +298,27 @@ function InspecoesList() {
       {notifs.length > 0 && (
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-black uppercase tracking-wide text-orange-700 flex items-center gap-2">
+            <CardTitle className="text-sm font-black uppercase tracking-wide text-amber-300 flex items-center gap-2">
               <Bell className="h-4 w-4" /> Minhas pendências ({notifs.length})
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             {notifs.map((n: any) => (
-              <div key={n.id} className="flex items-start gap-2 border rounded p-2 bg-orange-50/40">
+              <div key={n.id} className="flex items-start gap-2 border border-amber-500/30 rounded p-2 bg-amber-500/10">
                 <div className="flex-1 min-w-0">
-                  <div className="text-xs font-semibold text-slate-800">{n.titulo}</div>
-                  {n.corpo && <div className="text-[11px] text-slate-600 whitespace-pre-line">{n.corpo}</div>}
-                  <div className="text-[10px] text-slate-500 mt-0.5">
+                  <div className="text-xs font-semibold text-foreground">{n.titulo}</div>
+                  {n.corpo && <div className="text-[11px] text-muted-foreground whitespace-pre-line break-words">{n.corpo}</div>}
+                  <div className="text-[10px] text-muted-foreground mt-0.5">
                     {n.prazo && <>Prazo: {format(new Date(n.prazo + "T00:00:00"), "dd/MM/yyyy")} · </>}
                     {format(new Date(n.created_at), "dd/MM/yyyy HH:mm")}
                   </div>
                 </div>
                 {n.link && (
-                  <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => navigate({ to: n.link })}>
+                  <Button size="sm" variant="outline" className="h-7 shrink-0 text-[11px]" onClick={() => navigate({ to: n.link })}>
                     Abrir
                   </Button>
                 )}
-                <Button size="icon" variant="ghost" className="h-7 w-7 text-emerald-700" title="Marcar como lida" onClick={() => marcarLida.mutate(n.id)}>
+                <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0 text-emerald-300 hover:text-emerald-200" title="Marcar como lida" onClick={() => marcarLida.mutate(n.id)}>
                   <CheckCheck className="h-4 w-4" />
                 </Button>
               </div>
@@ -329,27 +329,27 @@ function InspecoesList() {
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-[11px] font-black uppercase tracking-wide text-slate-600 flex items-center gap-2">
+          <CardTitle className="text-[11px] font-black uppercase tracking-wide text-muted-foreground flex items-center gap-2">
             <Info className="h-3.5 w-3.5" /> Como funciona
           </CardTitle>
         </CardHeader>
-        <CardContent className="grid md:grid-cols-3 gap-3 text-[11px] text-slate-600">
-          <div className="flex gap-2"><Camera className="h-4 w-4 text-emerald-700 shrink-0" /><div><b>1. Rascunho + evidências.</b> Crie a inspeção e anexe fotos (celular/CFTV). Cada foto guarda hash, timestamp e GPS.</div></div>
-          <div className="flex gap-2"><ShieldAlert className="h-4 w-4 text-orange-600 shrink-0" /><div><b>2. NCs + PDCA.</b> Registre não conformidades por NR, classifique risco (matriz 5x5) e crie plano de ação.</div></div>
-          <div className="flex gap-2"><FileText className="h-4 w-4 text-slate-700 shrink-0" /><div><b>3. Publicar.</b> Em rascunho, tudo é editável/excluível. Após publicar, vira registro rastreável.</div></div>
+        <CardContent className="grid sm:grid-cols-2 md:grid-cols-3 gap-3 text-[11px] text-muted-foreground">
+          <div className="flex gap-2"><Camera className="h-4 w-4 text-emerald-300 shrink-0 mt-0.5" /><div><b className="text-foreground">1. Rascunho + evidências.</b> Crie a inspeção e anexe fotos (celular/CFTV). Cada foto guarda hash, timestamp e GPS.</div></div>
+          <div className="flex gap-2"><ShieldAlert className="h-4 w-4 text-amber-300 shrink-0 mt-0.5" /><div><b className="text-foreground">2. NCs + PDCA.</b> Registre não conformidades por NR, classifique risco (matriz 5x5) e crie plano de ação.</div></div>
+          <div className="flex gap-2"><FileText className="h-4 w-4 text-primary shrink-0 mt-0.5" /><div><b className="text-foreground">3. Publicar.</b> Em rascunho, tudo é editável/excluível. Após publicar, vira registro rastreável.</div></div>
         </CardContent>
       </Card>
 
       <Dialog open={!!excluir} onOpenChange={(v) => !v && setExcluir(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="w-[calc(100vw-1rem)] max-w-md">
           <DialogHeader><DialogTitle>Excluir inspeção?</DialogTitle></DialogHeader>
-          <div className="text-sm text-slate-700">
+          <div className="text-sm text-muted-foreground break-words">
             Vai remover permanentemente a inspeção <b>{excluir?.local}</b> junto com todas as fotos, NCs e planos vinculados.
             Essa ação não pode ser desfeita.
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setExcluir(null)}>Cancelar</Button>
-            <Button variant="destructive" onClick={() => excluir && remover.mutate(excluir.id)} disabled={remover.isPending}>Excluir</Button>
+            <Button className="bg-red-700 hover:bg-red-800 text-white" onClick={() => excluir && remover.mutate(excluir.id)} disabled={remover.isPending}>Excluir</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
