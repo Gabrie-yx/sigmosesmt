@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, lazy, Suspense } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,11 @@ import { PteLookupSheet } from "@/components/aprs/pte-lookup-sheet";
 import { hasGlobalOverride, type SafetyOverride } from "@/lib/safety-overrides";
 import { useAuth } from "@/hooks/use-auth";
 import { printPdf } from "@/lib/pdf-print";
+import type jsPDF from "jspdf";
+
+const PDFPreviewDialog = lazy(() =>
+  import("@/components/pdf-preview-dialog").then((m) => ({ default: m.PDFPreviewDialog })),
+);
 
 /* ---------- tipos ---------- */
 type APR = {
