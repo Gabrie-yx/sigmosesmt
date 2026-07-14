@@ -578,6 +578,17 @@ function PtesPage() {
       equipe_lista: Array.isArray(d.equipe_lista) ? d.equipe_lista : [],
       assinatura_encarregado_nome: d.assinatura_encarregado_nome ?? "",
       assinatura_gerente_nome: d.assinatura_gerente_nome ?? "",
+      parecer_tst_clima: d.parecer_tst_clima ?? "",
+      rigging: {
+        guindaste: d.rigging?.guindaste ?? "",
+        moitão: d.rigging?.moitao ?? d.rigging?.["moitão"] ?? "",
+        peso_kg: d.rigging?.peso_kg != null ? String(d.rigging.peso_kg) : "",
+        raio_m: d.rigging?.raio_m != null ? String(d.rigging.raio_m) : "",
+        angulo_graus: d.rigging?.angulo_graus != null ? String(d.rigging.angulo_graus) : "",
+        capacidade_kg: d.rigging?.capacidade_kg != null ? String(d.rigging.capacidade_kg) : "",
+        art_numero: d.rigging?.art_numero ?? "",
+      },
+      pts_relacionadas: (p.pts_relacionadas as string[] | null) ?? [],
     });
   }
   function cancelEdit() {
