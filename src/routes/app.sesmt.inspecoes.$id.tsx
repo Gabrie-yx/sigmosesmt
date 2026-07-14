@@ -436,6 +436,9 @@ function InspecaoDetail() {
             </div>
             <div className="flex items-center gap-2">
               <Badge>{insp.status}</Badge>
+              {editable && canManage && (
+                <EditarCabecalhoDialog insp={insp} />
+              )}
               <Button size="sm" variant="outline" className="gap-1" onClick={() => baixarPdf.mutate()} disabled={baixarPdf.isPending}>
                 <FileDown className="h-3.5 w-3.5" /> {baixarPdf.isPending ? "Gerando..." : "Baixar PDF"}
               </Button>
