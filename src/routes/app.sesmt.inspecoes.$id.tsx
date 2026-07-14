@@ -17,6 +17,8 @@ import { ChevronLeft, Camera, Upload, Plus, Trash2, AlertTriangle, ShieldAlert, 
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { gerarInspecaoPdf } from "@/lib/inspecao-pdf";
+import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
+import type jsPDF from "jspdf";
 
 export const Route = createFileRoute("/app/sesmt/inspecoes/$id")({
   component: InspecaoDetail,
@@ -91,6 +93,16 @@ function InspecaoDetail() {
   const canManage = roles?.some((r) => r === "admin" || r === "tst");
   const [blockMsg, setBlockMsg] = useState<string | null>(null);
   const [ncParaExcluir, setNcParaExcluir] = useState<string | null>(null);
+  const [pdfPreview, setPdfPreview] = useState<{ doc: jsPDF; fileName: string } | null>(null);
+
+  const { data: meuProfile } = useQuery({
+    queryKey: ["meu-profile-nome", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("full_name").eq("id", user!.id).maybeSingle();
+      return data;
+    },
+  });
 
   const { data: insp, isLoading } = useQuery({
     queryKey: ["inspecao", id],
@@ -368,14 +380,17 @@ function InspecaoDetail() {
           throw new Error("Cada NC registrada precisa ter plano de ação (PDCA). Abra as NCs sem plano e complete antes de gerar o laudo.");
         }
       }
-      await gerarInspecaoPdf({
+      const result = await gerarInspecaoPdf({
         inspecao: insp,
         fotos,
         ncs,
         planosPorNc,
         rubrica,
-        responsavelNome: user?.email ?? null,
+        // Usar SEMPRE o nome completo do profile — nunca o e-mail (PII).
+        responsavelNome: meuProfile?.full_name ?? null,
+        responsavelRegistro: null,
       });
+      setPdfPreview(result);
     },
     onError: (e: any) => setBlockMsg(e?.message ?? "Erro ao gerar PDF"),
   });
