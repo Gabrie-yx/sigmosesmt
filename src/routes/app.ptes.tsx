@@ -1216,6 +1216,19 @@ function PtesPage() {
               {f.riscos_potenciais?.outros && (
                 <Input value={f.outros_risco_texto} onChange={(e) => setF({ ...f, outros_risco_texto: e.target.value })} placeholder="Outros riscos" className="bg-black/30 border-white/10 text-rose-50 placeholder:text-slate-400/70 text-xs font-bold uppercase" />
               )}
+              {(f.atv_movimentacao_cargas || f.tipo_pt === "PTI") && f.riscos_potenciais?.condicoes_climaticas && (
+                <div className="rounded-xl border border-amber-400/40 bg-amber-500/10 p-3 space-y-2">
+                  <Label className="text-[10px] font-black text-amber-100 uppercase flex items-center gap-2">
+                    <AlertTriangle className="h-3.5 w-3.5" /> Parecer do TST — clima × içamento (obrigatório)
+                  </Label>
+                  <Textarea
+                    value={f.parecer_tst_clima}
+                    onChange={(e) => setF({ ...f, parecer_tst_clima: e.target.value })}
+                    placeholder="Descreva a análise do TST autorizando o içamento com condições climáticas desfavoráveis (vento, chuva, visibilidade). Mín. 10 caracteres."
+                    className="bg-black/40 border-amber-300/30 text-amber-50 placeholder:text-amber-200/40 text-xs min-h-[80px]"
+                  />
+                </div>
+              )}
             </div>
           </div>
 
