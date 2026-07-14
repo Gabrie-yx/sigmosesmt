@@ -1,7 +1,6 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { drawPdfHeader } from "./pdf-header";
-import { printPdf } from "./pdf-print";
 import { supabase } from "@/integrations/supabase/client";
 
 const BUCKET = "inspecoes-fotos";
@@ -40,11 +39,14 @@ export interface InspecaoPdfInput {
   ncs: any[];
   planosPorNc: Record<string, any[]>;
   rubrica: any[];
+  /** Nome completo do inspetor. NUNCA passe e-mail — é PII. */
   responsavelNome?: string | null;
+  /** Registro profissional (MTE / CREA) exibido abaixo da assinatura do TST. */
+  responsavelRegistro?: string | null;
 }
 
-export async function gerarInspecaoPdf(input: InspecaoPdfInput) {
-  const { inspecao, fotos, ncs, planosPorNc, rubrica, responsavelNome } = input;
+export async function gerarInspecaoPdf(input: InspecaoPdfInput): Promise<{ doc: jsPDF; fileName: string }> {
+  const { inspecao, fotos, ncs, planosPorNc, rubrica, responsavelNome, responsavelRegistro } = input;
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const W = doc.internal.pageSize.getWidth();
   const H = doc.internal.pageSize.getHeight();
