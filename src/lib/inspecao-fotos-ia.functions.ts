@@ -66,7 +66,8 @@ export const analisarFotosInspecao = createServerFn({ method: "POST" })
     if (fErr) throw new Error(fErr.message);
     const fotosFisicas = (fotos ?? []).filter((f: any) => f.fonte !== "cftv" || !String(f.storage_path).startsWith("cftv://"));
     if (!fotosFisicas.length) throw new Error("Anexe ao menos uma foto antes de rodar a análise por IA.");
-    if (fotosFisicas.length > 10) throw new Error("Máximo 10 fotos por análise. Rode em lotes.");
+    // Cap em 6: acima disso o Worker Cloudflare estoura wall-time antes do gateway devolver.
+    if (fotosFisicas.length > 6) throw new Error("Máximo 6 fotos por análise. Rode em lotes menores — o servidor tem limite de tempo por chamada.");
 
     // 2) gera signed URLs (Gemini via gateway busca direto — evita download+base64 no Worker)
     const signedUrls: string[] = [];
@@ -98,7 +99,8 @@ export const analisarFotosInspecao = createServerFn({ method: "POST" })
     ];
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 90_000);
+    // Worker CF tem wall-time curto (~60s). Abortamos em 55s pra devolver mensagem clara antes do Worker ser derrubado.
+    const timeout = setTimeout(() => controller.abort(), 55_000);
     let aiResp: Response;
     try {
       aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -124,7 +126,7 @@ export const analisarFotosInspecao = createServerFn({ method: "POST" })
       });
     } catch (e: any) {
       clearTimeout(timeout);
-      if (e?.name === "AbortError") throw new Error("A análise por IA demorou demais (>90s). Tente com menos fotos ou refaça.");
+      if (e?.name === "AbortError") throw new Error("A análise por IA demorou demais (>55s). Reduza o número de fotos (ideal 3-4) e tente novamente.");
       throw new Error(`Falha de rede ao chamar IA: ${e?.message ?? e}`);
     }
     clearTimeout(timeout);
