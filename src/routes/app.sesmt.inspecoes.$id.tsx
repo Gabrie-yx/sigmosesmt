@@ -638,10 +638,19 @@ function InspecaoDetail() {
 
     <PDFPreviewDialog
       open={!!pdfPreview}
-      onClose={() => setPdfPreview(null)}
+      onClose={() => { setPdfPreview(null); setEngSig(null); setSesmtSig(null); setEncSig(null); }}
       doc={pdfPreview?.doc ?? null}
       fileName={pdfPreview?.fileName ?? "laudo.pdf"}
       title="Laudo Técnico de Inspeção SST"
+      signable
+      useSignatureGallery
+      signatureLabels={{ eng: "Eng. Segurança", sesmt: "Téc. Segurança", enc: "Encarregado" }}
+      engSig={engSig}
+      sesmtSig={sesmtSig}
+      encSig={encSig}
+      onChangeEngSig={(v) => { setEngSig(v); gerarLaudo({ eng: v, sesmt: sesmtSig, enc: encSig }).catch((e) => toast.error(e?.message ?? "Erro")); }}
+      onChangeSesmtSig={(v) => { setSesmtSig(v); gerarLaudo({ eng: engSig, sesmt: v, enc: encSig }).catch((e) => toast.error(e?.message ?? "Erro")); }}
+      onChangeEncSig={(v) => { setEncSig(v); gerarLaudo({ eng: engSig, sesmt: sesmtSig, enc: v }).catch((e) => toast.error(e?.message ?? "Erro")); }}
     />
     </>
   );
