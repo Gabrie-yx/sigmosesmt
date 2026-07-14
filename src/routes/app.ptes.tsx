@@ -1283,6 +1283,47 @@ function PtesPage() {
                 <HardHat className="h-4 w-4 text-amber-100/80/75" /> Movimentação e Içamento de Carga
               </h3>
               <PdfCheckboxGroup title="Precauções" group="precaucao_carga" items={PTE_PRECAUCOES_CARGA} />
+              {(f.atv_movimentacao_cargas || f.tipo_pt === "PTI") && (
+                <div className="mt-3 rounded-xl border border-lime-300/30 bg-black/40 p-3 space-y-3">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-lime-200 flex items-center gap-2">
+                    <HardHat className="h-3.5 w-3.5" /> Plano de Rigging (obrigatório em içamento)
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    {[
+                      { k: "guindaste", l: "Guindaste (modelo/tag)", ph: "Ex.: LTM 1050" },
+                      { k: "moitão", l: "Moitão / cabo", ph: "Ex.: 4t / 12mm" },
+                      { k: "peso_kg", l: "Peso da peça (kg) *", ph: "0", type: "number" },
+                      { k: "raio_m", l: "Raio de operação (m) *", ph: "0", type: "number" },
+                      { k: "angulo_graus", l: "Ângulo da lança (°)", ph: "0", type: "number" },
+                      { k: "capacidade_kg", l: "Capacidade no raio (kg) *", ph: "0", type: "number" },
+                      { k: "art_numero", l: "Nº ART (>5t)", ph: "ART-XXXX" },
+                    ].map((c) => (
+                      <div key={c.k} className="space-y-1">
+                        <Label className="text-[9px] font-black uppercase tracking-wider text-slate-200/80">{c.l}</Label>
+                        <Input
+                          type={c.type as any}
+                          value={f.rigging?.[c.k] ?? ""}
+                          onChange={(e) => setF({ ...f, rigging: { ...(f.rigging ?? {}), [c.k]: e.target.value } })}
+                          placeholder={c.ph}
+                          className="bg-black/50 border-white/10 text-lime-50 placeholder:text-slate-500 text-xs font-bold"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  {(() => {
+                    const p = Number(f.rigging?.peso_kg ?? 0);
+                    const c = Number(f.rigging?.capacidade_kg ?? 0);
+                    if (p > 0 && c > 0 && p > c) {
+                      return (
+                        <div className="rounded-lg border border-rose-400/40 bg-rose-500/10 px-3 py-2 text-[10px] font-black uppercase text-rose-100 flex items-center gap-2">
+                          <AlertTriangle className="h-3.5 w-3.5" /> Bloqueio: peso ({p} kg) excede capacidade no raio ({c} kg).
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+                </div>
+              )}
             </div>
             <div className="rounded-xl border border-lime-300/25 bg-gradient-to-br from-lime-500/5 via-black/40 to-black/40 p-3.5 space-y-4">
               <h3 className="text-sm font-black uppercase tracking-wider text-lime-100 border-b border-lime-300/20 pb-2 flex items-center gap-2">
