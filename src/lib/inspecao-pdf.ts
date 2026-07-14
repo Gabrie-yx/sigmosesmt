@@ -384,22 +384,31 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput): Promise<{ doc: 
       } else {
         autoTable(doc, {
           startY: y + 1,
-          head: [["Fase", "Ação (What)", "Responsável (Who)", "Prazo (When)", "Como (How)"]],
-          body: planos.map((p: any) => [
-            p.fase_pdca ?? "—",
-            p.acao ?? "—",
-            p.responsavel_nome ?? "—",
-            p.prazo ? br(p.prazo) : "—",
-            p.observacoes ?? "—",
-          ]),
-          styles: { fontSize: 7.5, cellPadding: 1.5, valign: "top" },
+          head: [["Campo (5W2H)", "Conteúdo"]],
+          body: planos.flatMap((p: any, pi: number) => {
+            const custo = p.custo_estimado != null
+              ? `R$ ${Number(p.custo_estimado).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`
+              : "—";
+            const rows: string[][] = [
+              ["O QUÊ (What)", p.acao ?? "—"],
+              ["POR QUÊ (Why)", p.por_que ?? "—"],
+              ["ONDE (Where)", p.onde ?? "—"],
+              ["QUANDO (When)", p.prazo ? br(p.prazo) : "—"],
+              ["QUEM (Who)", p.responsavel_nome ?? "—"],
+              ["COMO (How)", p.como ?? "—"],
+              ["QUANTO CUSTA (How Much)", custo],
+              ["Fase PDCA", p.fase_pdca ?? "PLAN"],
+            ];
+            if (planos.length > 1) {
+              rows.unshift([`Plano ${pi + 1}`, ""]);
+            }
+            return rows;
+          }),
+          styles: { fontSize: 8, cellPadding: 2, valign: "top" },
           headStyles: { fillColor: [30, 41, 59], textColor: 255, fontSize: 7.5 },
           columnStyles: {
-            0: { cellWidth: 14, halign: "center" },
-            1: { cellWidth: 55 },
-            2: { cellWidth: 35 },
-            3: { cellWidth: 22, halign: "center" },
-            4: { cellWidth: "auto" },
+            0: { cellWidth: 42, fontStyle: "bold", fillColor: [248, 250, 252] },
+            1: { cellWidth: "auto" },
           },
           margin: { left: M, right: M },
         });
