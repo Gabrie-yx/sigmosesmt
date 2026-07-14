@@ -281,6 +281,44 @@ function PtesPage() {
         if (!f.supervisor_entrada_id) throw new Error("Supervisor de Entrada é obrigatório em PET (NR-33).");
       }
 
+      // Blindagens FOR-SEG-04 (7 pontos):
+      // (2) Campos obrigatórios do papel — encarregado, hora fim e ≥1 risco marcado
+      if (!(f.encarregado_nome ?? "").trim()) {
+        throw new Error("Nome do Encarregado (FOR-SEG-04) é obrigatório.");
+      }
+      if (!f.hora_fim) {
+        throw new Error("Hora fim é obrigatória.");
+      }
+      const _algumRisco = Object.values(f.riscos_potenciais ?? {}).some(Boolean);
+      if (!_algumRisco) {
+        throw new Error("Marque ao menos 1 risco potencial no bloco Riscos.");
+      }
+
+      // (4) Sanidade risco × atividade — chuva/clima + içamento exige parecer explícito do TST
+      const _eIcamento = !!f.atv_movimentacao_cargas || f.tipo_pt === "PTI";
+      const _climaRuim = !!(f.riscos_potenciais?.condicoes_climaticas);
+      if (_eIcamento && _climaRuim && (f.parecer_tst_clima ?? "").trim().length < 10) {
+        throw new Error("Içamento com 'Condições climáticas desfavoráveis' marcado exige parecer explícito do TST (mín. 10 caracteres) autorizando a manobra.");
+      }
+
+      // (7) PTE de içamento deve puxar dados de equipamentos (rigging)
+      if (_eIcamento) {
+        const r = f.rigging ?? {};
+        const _falta = !((r.guindaste ?? "").toString().trim()) ||
+                       !(r.peso_kg && Number(r.peso_kg) > 0) ||
+                       !(r.raio_m && Number(r.raio_m) > 0) ||
+                       !(r.capacidade_kg && Number(r.capacidade_kg) > 0);
+        if (_falta) {
+          throw new Error("Plano de Rigging incompleto — guindaste, peso da peça, raio e capacidade no raio são obrigatórios em içamento.");
+        }
+        if (Number(r.peso_kg) > Number(r.capacidade_kg)) {
+          throw new Error(`Bloqueio: peso da peça (${r.peso_kg} kg) excede a capacidade do guindaste no raio informado (${r.capacidade_kg} kg).`);
+        }
+        if (Number(r.peso_kg) > 5000 && !((r.art_numero ?? "").toString().trim())) {
+          throw new Error("Içamento acima de 5.000 kg exige nº da ART do plano de rigging.");
+        }
+      }
+
       const requisitante = emps.find((x: any) => x.id === f.requisitante_id);
 
       // Regra de ouro: APR obrigatória (exceto emergência justificada)
