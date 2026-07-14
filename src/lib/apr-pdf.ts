@@ -73,7 +73,7 @@ export type APRPdfParams = {
 
 // Cores fixas (modelo homologado)
 const C_HEADER = [220, 53, 69] as const;       // vermelho DMN
-const C_TBL_HEAD = [74, 124, 58] as const;     // verde-musgo (APR homologada)
+const C_TBL_HEAD = [244, 246, 228] as const;   // verde-claro #F4F6E4 (APR homologada)
 const C_SUB = [254, 240, 217] as const;        // bege bandas
 const C_BORDER = [0, 0, 0] as const;
 
