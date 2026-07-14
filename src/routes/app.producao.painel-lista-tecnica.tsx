@@ -198,6 +198,27 @@ function PainelListaTecnicaPage() {
   const ordemAtivaId = ordemSel ?? (mb51Ordens as any[])[0]?.id ?? null;
   const ordemAtiva = (mb51Ordens as any[]).find((o) => o.id === ordemAtivaId) ?? null;
 
+  // ===== Aplicado (FERRO/KG) por Ordem — para a barra de progresso das pills =====
+  const { data: aplicadoFerroPorOrdem = new Map<string, number>() } = useQuery({
+    queryKey: ["mb51-aplicado-ferro-por-ordem", (mb51Ordens as any[]).length, baseMpMap.size],
+    enabled: (mb51Ordens as any[]).length > 0,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("producao_mb51_movimentos")
+        .select("ordem_id, codigo, quantidade, unidade")
+        .eq("unidade", "KG");
+      if (error) throw error;
+      const map = new Map<string, number>();
+      (data ?? []).forEach((m: any) => {
+        const tipo = baseMpMap.get(String(m.codigo));
+        if (tipo !== "FERRO") return;
+        const cur = map.get(m.ordem_id) ?? 0;
+        map.set(m.ordem_id, cur + Number(m.quantidade ?? 0));
+      });
+      return map;
+    },
+  });
+
   const { data: movimentos = [], isFetching } = useQuery({
     queryKey: ["mb51-movimentos", ordemAtivaId],
     enabled: !!ordemAtivaId,
@@ -980,18 +1001,36 @@ function PainelListaTecnicaPage() {
                     : (o.texto_documento ?? "—");
                   const sap = String(o.numero_sap).startsWith("PEND") ? "PEND" : o.numero_sap;
                   const isActive = ordemAtivaId === o.id;
+                  const planKg = o.casco_id
+                    ? Number(listaPorCasco.get(o.casco_id)?.peso_total_real ?? listaPorCasco.get(o.casco_id)?.peso_total_estimado ?? 0)
+                    : 0;
+                  const aplKg = Number((aplicadoFerroPorOrdem as Map<string, number>).get(o.id) ?? 0);
+                  const pctRaw = planKg > 0 ? (aplKg / planKg) * 100 : 0;
+                  const pct = Math.max(0, Math.min(100, pctRaw));
                   return (
                     <button
                       key={o.id}
                       type="button"
                       onClick={() => { setOrdemSel(o.id); limparFiltros(); }}
-                      className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all duration-200 whitespace-nowrap ${
+                      className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all duration-200 whitespace-nowrap flex items-center gap-2 ${
                         isActive
                           ? "bg-primary text-primary-foreground border-primary shadow-[0_0_14px_2px_hsl(var(--primary)/0.55)]"
                           : "bg-slate-950/60 text-white/90 border-primary/30 shadow-[0_0_6px_0_hsl(var(--primary)/0.25)] hover:border-primary/70 hover:shadow-[0_0_12px_2px_hsl(var(--primary)/0.45)] hover:bg-slate-900"
                       }`}
+                      title={planKg > 0
+                        ? `Aplicado ${fmt(aplKg, 0)} kg / Planejado ${fmt(planKg, 0)} kg — ${pctRaw.toFixed(1)}%`
+                        : "Sem lista técnica (B51) importada — progresso indisponível"}
                     >
-                      SAP {sap} · {label}
+                      <span>SAP {sap} · {label}</span>
+                      <span className="relative inline-block h-1.5 w-16 rounded-full bg-white/15 overflow-hidden shrink-0">
+                        <span
+                          className="absolute inset-y-0 left-0 rounded-full bg-amber-400 shadow-[0_0_6px_0_rgba(251,191,36,0.7)] transition-all duration-500"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </span>
+                      <span className={`tabular-nums text-[10px] font-black ${isActive ? "text-primary-foreground" : "text-amber-300"}`}>
+                        {planKg > 0 ? `${pct.toFixed(0)}%` : "—"}
+                      </span>
                     </button>
                   );
                 })}
