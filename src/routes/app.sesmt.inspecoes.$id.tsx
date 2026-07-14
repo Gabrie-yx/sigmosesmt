@@ -1106,28 +1106,43 @@ function NcPlanos({ ncId, editable, empresaId, prazoSugerido }: { ncId: string; 
     d.setDate(d.getDate() + prazoSugerido);
     return d.toISOString().slice(0, 10);
   };
-  const [acao, setAcao] = useState("");
-  const [respId, setRespId] = useState<string>("");
-  const [prazo, setPrazo] = useState<string>(prazoInicial);
+  const emptyForm = () => ({
+    acao: "",
+    por_que: "",
+    onde: "",
+    como: "",
+    respId: "",
+    prazo: prazoInicial(),
+    custo: "",
+    prioridade: "MEDIA" as "CRITICA" | "ALTA" | "MEDIA" | "BAIXA" | "VERIFICACAO",
+  });
+  const [form, setForm] = useState(emptyForm);
+  const [openForm, setOpenForm] = useState(false);
   const add = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Sessão expirada");
-      if (!acao.trim()) throw new Error("Ação obrigatória");
-      const emp = empregados.find((e: any) => e.id === respId);
+      if (!form.acao.trim()) throw new Error("O quê (ação) é obrigatório");
+      const emp = empregados.find((e: any) => e.id === form.respId);
       const { error } = await supabase.from("inspecao_ncs_planos").insert({
         nc_id: ncId,
-        acao: acao.trim(),
-        responsavel_id: respId || null,
+        acao: form.acao.trim(),
+        por_que: form.por_que.trim() || null,
+        onde: form.onde.trim() || null,
+        como: form.como.trim() || null,
+        responsavel_id: form.respId || null,
         responsavel_nome: emp?.nome ?? null,
-        prazo: prazo || null,
+        prazo: form.prazo || null,
+        custo_estimado: form.custo ? Number(form.custo) : null,
+        prioridade: form.prioridade,
         prazo_dias_sugerido: prazoSugerido ?? null,
         criada_por: user.id,
-      });
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success(respId ? "Plano criado — responsável notificado" : "Plano criado");
-      setAcao(""); setRespId(""); setPrazo(prazoInicial());
+      toast.success(form.respId ? "Plano criado — responsável notificado" : "Plano criado");
+      setForm(emptyForm());
+      setOpenForm(false);
       qc.invalidateQueries({ queryKey: ["inspecao-nc-planos", ncId] });
       qc.invalidateQueries({ queryKey: ["inspecao-planos-resumo"] });
     },
@@ -1145,36 +1160,131 @@ function NcPlanos({ ncId, editable, empresaId, prazoSugerido }: { ncId: string; 
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["inspecao-nc-planos", ncId] }),
   });
+  const PRIO_CLS: Record<string, string> = {
+    CRITICA: "bg-red-500/20 text-red-100 border border-red-500/50",
+    ALTA: "bg-orange-500/15 text-orange-200 border border-orange-500/40",
+    MEDIA: "bg-yellow-500/15 text-yellow-200 border border-yellow-500/40",
+    BAIXA: "bg-emerald-500/15 text-emerald-200 border border-emerald-500/40",
+    VERIFICACAO: "bg-sky-500/15 text-sky-200 border border-sky-500/40",
+  };
   return (
-    <div className="mt-2 border-t pt-2 space-y-1">
-      <div className="text-[10px] font-black uppercase tracking-wide text-muted-foreground">Plano de ação (PDCA)</div>
+    <div className="mt-2 border-t pt-2 space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-[10px] font-black uppercase tracking-wide text-muted-foreground">Plano de ação · 5W2H (PDCA)</div>
+        <span className="text-[10px] text-muted-foreground">{planos.length} plano{planos.length === 1 ? "" : "s"}</span>
+      </div>
       {prazoSugerido && (
         <div className="text-[10px] text-primary">Prazo sugerido pela norma: <b>{prazoSugerido} dias</b> a partir de hoje.</div>
       )}
-      {planos.map((p: any) => (
-        <div key={p.id} className="flex items-center gap-2 text-xs">
-          <Badge variant="outline" className="text-[9px]">{p.fase_pdca}</Badge>
-          <span className="flex-1">{p.acao}</span>
-          {(p.employees?.nome || p.responsavel_nome) && <span className="text-muted-foreground">{p.employees?.nome ?? p.responsavel_nome}</span>}
-          {p.prazo && <span className="text-muted-foreground">{format(new Date(p.prazo + "T00:00:00"), "dd/MM/yy")}</span>}
-          {editable && p.fase_pdca !== "ENCERRADO" && <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]" onClick={() => avancar.mutate(p)}>avançar</Button>}
-        </div>
+      {planos.map((p: any, idx: number) => (
+        <PlanoCard key={p.id} p={p} idx={idx} editable={editable} onAvancar={() => avancar.mutate(p)} prioCls={PRIO_CLS} />
       ))}
-      {editable && (
-        <div className="flex gap-2 items-end pt-1 flex-wrap">
-          <Input placeholder="Nova ação..." value={acao} onChange={(e) => setAcao(e.target.value)} className="h-7 text-xs flex-1 min-w-[160px]" />
-          <Select value={respId} onValueChange={setRespId}>
-            <SelectTrigger className="h-7 text-xs w-40"><SelectValue placeholder="Responsável" /></SelectTrigger>
-            <SelectContent position="popper" side="top" align="end" sideOffset={4} avoidCollisions={false} className="max-h-60 z-[100]">
-              {empregados.length === 0 ? (
-                <div className="px-2 py-1.5 text-xs text-muted-foreground">Sem funcionários ativos nesta empresa.</div>
-              ) : (
-                empregados.map((e: any) => (<SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>))
-              )}
-            </SelectContent>
-          </Select>
-          <Input type="date" value={prazo} onChange={(e) => setPrazo(e.target.value)} className="h-7 text-xs w-36" />
-          <Button size="sm" variant="outline" className="h-7" onClick={() => add.mutate()}><Plus className="h-3 w-3" /></Button>
+      {editable && !openForm && (
+        <Button size="sm" variant="outline" className="w-full h-8 gap-1 text-xs border-dashed" onClick={() => setOpenForm(true)}>
+          <Plus className="h-3 w-3" /> Adicionar plano 5W2H
+        </Button>
+      )}
+      {editable && openForm && (
+        <div className="rounded-md border border-primary/40 bg-primary/5 p-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="text-[11px] font-black uppercase text-primary">Novo plano 5W2H #{planos.length + 1}</div>
+            <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => { setOpenForm(false); setForm(emptyForm()); }}>
+              <ChevronUp className="h-3 w-3" />
+            </Button>
+          </div>
+          <div>
+            <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">O quê · <span className="text-primary">What</span> *</Label>
+            <Input placeholder="Ex.: Interditar atividade em altura sem SPCQ" value={form.acao} onChange={(e) => setForm((f) => ({ ...f, acao: e.target.value }))} className="h-8 text-xs" />
+          </div>
+          <div>
+            <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Por quê · <span className="text-primary">Why</span></Label>
+            <Textarea rows={2} placeholder="Justificativa: risco iminente de queda — descumpre NR-35.5.1" value={form.por_que} onChange={(e) => setForm((f) => ({ ...f, por_que: e.target.value }))} className="text-xs" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2">
+            <div>
+              <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Onde · <span className="text-primary">Where</span></Label>
+              <Input placeholder="Local exato (deck, casco, área)" value={form.onde} onChange={(e) => setForm((f) => ({ ...f, onde: e.target.value }))} className="h-8 text-xs" />
+            </div>
+            <div>
+              <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Quem · <span className="text-primary">Who</span></Label>
+              <Select value={form.respId} onValueChange={(v) => setForm((f) => ({ ...f, respId: v }))}>
+                <SelectTrigger className="h-8 text-xs w-full min-w-0"><SelectValue placeholder="Responsável" /></SelectTrigger>
+                <SelectContent position="popper" className="max-h-60 z-[100]">
+                  {empregados.length === 0 ? (
+                    <div className="px-2 py-1.5 text-xs text-muted-foreground">Sem funcionários ativos.</div>
+                  ) : (
+                    empregados.map((e: any) => (<SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div>
+            <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Como · <span className="text-primary">How</span></Label>
+            <Textarea rows={2} placeholder="Método: comunicar líder, ATA, isolar área com fita zebrada" value={form.como} onChange={(e) => setForm((f) => ({ ...f, como: e.target.value }))} className="text-xs" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+            <div>
+              <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Quando · <span className="text-primary">When</span></Label>
+              <Input type="date" value={form.prazo} onChange={(e) => setForm((f) => ({ ...f, prazo: e.target.value }))} className="h-8 text-xs w-full" />
+            </div>
+            <div>
+              <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Custo · <span className="text-primary">How much</span></Label>
+              <Input type="number" step="0.01" placeholder="R$" value={form.custo} onChange={(e) => setForm((f) => ({ ...f, custo: e.target.value }))} className="h-8 text-xs w-full" />
+            </div>
+            <div>
+              <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Prioridade</Label>
+              <Select value={form.prioridade} onValueChange={(v: any) => setForm((f) => ({ ...f, prioridade: v }))}>
+                <SelectTrigger className="h-8 text-xs w-full min-w-0"><SelectValue /></SelectTrigger>
+                <SelectContent position="popper" className="z-[100]">
+                  <SelectItem value="CRITICA">🔴 Crítica</SelectItem>
+                  <SelectItem value="ALTA">🟠 Alta</SelectItem>
+                  <SelectItem value="MEDIA">🟡 Média</SelectItem>
+                  <SelectItem value="BAIXA">🟢 Baixa</SelectItem>
+                  <SelectItem value="VERIFICACAO">🔵 Verificação</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-1">
+            <Button size="sm" variant="ghost" className="h-8" onClick={() => { setOpenForm(false); setForm(emptyForm()); }}>Cancelar</Button>
+            <Button size="sm" className="h-8 gap-1" onClick={() => add.mutate()} disabled={add.isPending || !form.acao.trim()}>
+              <Plus className="h-3 w-3" /> Salvar plano
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PlanoCard({ p, idx, editable, onAvancar, prioCls }: { p: any; idx: number; editable: boolean; onAvancar: () => void; prioCls: Record<string, string> }) {
+  const [open, setOpen] = useState(false);
+  const prio = p.prioridade ?? "MEDIA";
+  return (
+    <div className="rounded-md border border-border/60 bg-card/50 p-2 space-y-1">
+      <div className="flex items-center gap-2 text-xs">
+        <span className="text-[10px] font-black text-muted-foreground w-6 shrink-0">#{idx + 1}</span>
+        <Badge variant="outline" className="text-[9px] shrink-0">{p.fase_pdca}</Badge>
+        <Badge className={"text-[9px] shrink-0 " + (prioCls[prio] ?? "")}>{prio}</Badge>
+        <span className="flex-1 min-w-0 truncate font-medium">{p.acao}</span>
+        {p.prazo && <span className="text-[10px] text-muted-foreground shrink-0">{format(new Date(p.prazo + "T00:00:00"), "dd/MM/yy")}</span>}
+        <Button size="icon" variant="ghost" className="h-6 w-6 shrink-0" onClick={() => setOpen((v) => !v)}>
+          {open ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+        </Button>
+      </div>
+      {open && (
+        <div className="pl-8 pr-1 space-y-1 text-[11px] text-muted-foreground border-t border-border/40 pt-1">
+          {p.por_que && <div><span className="font-black text-primary/80">Por quê:</span> {p.por_que}</div>}
+          {p.onde && <div><span className="font-black text-primary/80">Onde:</span> {p.onde}</div>}
+          {(p.employees?.nome || p.responsavel_nome) && <div><span className="font-black text-primary/80">Quem:</span> {p.employees?.nome ?? p.responsavel_nome}</div>}
+          {p.como && <div><span className="font-black text-primary/80">Como:</span> {p.como}</div>}
+          {p.custo_estimado != null && <div><span className="font-black text-primary/80">Custo:</span> R$ {Number(p.custo_estimado).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>}
+          {editable && p.fase_pdca !== "ENCERRADO" && (
+            <div className="pt-1">
+              <Button size="sm" variant="outline" className="h-6 px-2 text-[10px]" onClick={onAvancar}>Avançar PDCA →</Button>
+            </div>
+          )}
         </div>
       )}
     </div>
