@@ -1,83 +1,57 @@
+## Novo Laudo Técnico de Inspeção SST (13-14 páginas)
 
-# Módulo `/app/sesmt/inspecoes` — Plano de Ataque
+Reescrita do `src/lib/inspecao-pdf.ts` mantendo a assinatura da função `gerarInspecaoPdf` (nenhuma tela precisa mudar), e ajustes pontuais no `PDFPreviewDialog` para 3 assinaturas.
 
-Substituto interno do "laudo SafeAI", com rastreabilidade real, base legal correta e IA como acelerador opcional (nunca no caminho crítico).
+### Decisões confirmadas
+- **Assinaturas**: Engenheiro de Segurança, Técnico de Segurança (usuário logado), Encarregado da área. Três slots.
+- **Multa NR-28**: valor **exato por faixa legal** conforme Portaria MTP 667/2021 (Anexo I e II da NR-28), usando `companies.numero_empregados` × grau de risco da NR infringida × gradação (I1-I4). O valor sai da tabela oficial, não da faixa "de-até". Notinha explicando base legal.
+- **QR code**: **não** incluir.
 
-## Decisões já travadas
+### Estrutura do PDF
 
-- **Quem abre:** SESMT + Líder + Encarregado (líder abre rascunho → SESMT valida/publica)
-- **Fotos:** upload de celular **+** import de CFTV/câmera fixa (URL)
-- **IA:** híbrido — núcleo determinístico + botão opcional "sugerir NCs" (só rascunho)
-- **Matriz:** 5x5 com rubrica documentada e impressa no PDF
-- **Grau de risco DMN:** 3 (para cálculo NR-28)
+1. **Capa (pág. 1)** — Cabeçalho vinho DMN, título "LAUDO TÉCNICO DE INSPEÇÃO DE SEGURANÇA DO TRABALHO", empresa/CNPJ/local/data/inspetor, big numbers (NCs, Críticas, Multa total NR-28), nº do laudo (`INSP-{id-curto}-{ano}`), marca d'água "PRÉVIA" se rascunho.
 
-## Fases
+2. **Sumário Executivo (pág. 2)** — Parágrafo introdutório automático + tabela consolidada (NCs por classe de risco, NCs por NR, exposição financeira NR-28).
 
-### Fase 1 — Núcleo determinístico (MVP)
-1. Tabelas no banco (`inspecoes`, `inspecao_fotos`, `inspecao_ncs`, `inspecao_ncs_planos`, `nr28_valores`, `matriz_risco_rubrica`)
-2. Tela de abertura de inspeção (`/app/sesmt/inspecoes/nova`) — local, data, escopo, participantes
-3. Upload de fotos (celular) com hash SHA-256, timestamp, GPS quando disponível
-4. Import de foto CFTV via URL + metadados manuais (câmera, timestamp)
-5. Cadastro de NC via **catálogo pré-mapeado** de NRs/itens (dropdown NR → item → texto oficial) — reusa `catalogo_nrs` existente
-6. Matriz 5x5 com rubrica clicável (P1-P5 e S1-S5 com definições)
-7. Cálculo automático de multa NR-28 (grau 3 × nº empregados × gradação I1-I4 × valor Portaria vigente)
-8. Plano de ação por NC (responsável, prazo, PDCA, evidência de encerramento)
-9. Fluxo de aprovação: líder abre rascunho → SESMT revisa → publica (RLS + estado)
+3. **Metodologia e Base Legal (pág. 3)** — NR-01 (GRO/PGR), NR-28 (fiscalização/gradação), matriz 5×5, critérios de severidade/probabilidade, escopo declarado. Blindagem jurídica.
 
-### Fase 2 — PDF profissional + integrações
-10. PDF do relatório com header DMN, ART (campo assinatura), rubrica da matriz no rodapé, hash das fotos, texto legal, PDCA
-11. NC publicada vira registro em `nao_conformidades` (tabela existente) e alimenta indicadores
-12. Notificação ao responsável do plano de ação
+4. **Quadro Consolidado de NCs (pág. 4)** — Tabela: #, NR-Item, Descrição resumida, Classe, P×S, Gradação NR-28, Multa R$.
 
-### Fase 3 — IA opcional (acelerador)
-13. Botão "Sugerir NCs com IA" nas fotos → preenche rascunho de NCs no formulário (usuário confirma cada uma antes de salvar)
-14. Nunca grava direto no relatório final — segue filosofia `sigmo-resiliencia-sem-ia`
+5. **Detalhamento por NC (págs. 5-N, uma por página quando possível)** — Para cada NC:
+   - Cabeçalho: "NC #X — NR-YY item Z.z"
+   - Texto oficial do item normativo (do `catalogo_nrs_itens.texto_oficial`)
+   - Descrição da não conformidade (do inspetor)
+   - Foto(s) associada(s) com legenda (hash, timestamp, GPS)
+   - Matriz 5×5 SVG desenhada em vetor, célula ativa destacada
+   - Recomendação técnica
+   - Plano 5W2H (What/Why/Who/Where/When/How/HowMuch) extraído dos `planos_acao`
+   - Multa NR-28 calculada com base + fórmula
 
-## Tabelas novas (resumo)
+6. **Plano de Ação Consolidado (pág. N+1)** — Tabela com todas as ações de todas as NCs ordenadas por prazo, status PDCA.
 
-```text
-inspecoes
-  id, empresa_id, local, data_inspecao, escopo, tipo_local,
-  aberta_por (uuid), status (rascunho|em_revisao|publicada|arquivada),
-  revisada_por, publicada_em, created_at
+7. **Rubrica Matriz 5×5 (pág. N+2)** — Tabelas de P e S com definições.
 
-inspecao_fotos
-  id, inspecao_id, fonte (celular|cftv), storage_path, hash_sha256,
-  timestamp_captura, gps_lat, gps_lng, camera_ref, tirada_por
+8. **Parecer Técnico e Conclusão (pág. N+3)** — Parecer do inspetor (usa `inspecao.parecer_tecnico` se existir; senão gera texto padrão), classificação geral do risco, urgência.
 
-inspecao_ncs
-  id, inspecao_id, foto_id (nullable), nr_codigo, nr_item,
-  descricao, probabilidade (1-5), severidade (1-5), risco_calculado,
-  gradacao_nr28 (I1..I4), multa_estimada, criada_por, criada_em
+9. **Assinaturas (última pág.)** — 3 slots: Engenheiro de Segurança, Técnico de Segurança do Trabalho (nome + CREA/registro do usuário), Encarregado da Área. Base legal ao pé.
 
-inspecao_ncs_planos
-  id, nc_id, acao, responsavel_id, prazo, status_pdca,
-  evidencia_path, encerrada_em
+10. **Rodapé em todas as páginas**: `LAUDO INSP-xxx · Página X/Y · Emitido em DD/MM/YYYY HH:MM`.
 
-nr28_valores  (seed com portaria vigente)
-  gradacao, grau_risco, valor_base, portaria_ref, vigencia_inicio
+### Cálculo de multa NR-28 (Portaria MTP 667/2021)
 
-matriz_risco_rubrica  (seed, referência única)
-  eixo (P|S), nivel (1-5), definicao, exemplo
-```
+Valor U (UFIR-like) por gradação I1..I4 × faixa de empregados (Anexo II). Vou criar um helper `src/lib/nr28-multa.ts` com a matriz completa oficial e função `calcularMultaNR28({ gradacao: 'I1'|'I2'|'I3'|'I4', numeroEmpregados: number })`. O cálculo já existe hoje via `inspecao_nr28_valores` — vou consultar essa tabela para não duplicar, e só fazer fallback pro helper caso vazia.
 
-## Guardrails
+### Ajustes no dialog
+`PDFPreviewDialog` hoje aceita 2 slots (`encSig`/`sesmtSig`). Preciso estender para 3: adicionar `engSig`/`onChangeEngSig` (opcional, retrocompatível). No `app.sesmt.inspecoes.$id.tsx` passar os 3 handlers.
 
-- **Sem IA no caminho crítico** — Fase 3 é acelerador, nunca dependência
-- **RLS**: líder/encarregado só vê inspeções da própria frente; SESMT vê tudo
-- **Grants**: `SELECT/INSERT/UPDATE` para `authenticated`, sem `anon`
-- **PDF**: usa `drawPdfHeader` (`EMPRESA_INFO`) — consistência com resto do SIGMO
-- **NC publicada** alimenta a tabela `nao_conformidades` existente — não cria silo
+### Arquivos afetados
+- `src/lib/inspecao-pdf.ts` — reescrita completa (~600 linhas)
+- `src/lib/nr28-multa.ts` — novo, helper de fallback
+- `src/components/pdf-preview-dialog.tsx` — 3º slot de assinatura
+- `src/routes/app.sesmt.inspecoes.$id.tsx` — passar 3 assinaturas e labels ("Engenheiro de Segurança", "Técnico de Segurança", "Encarregado da Área"), buscar CREA do TST logado se disponível
 
-## O que NÃO vai ter (por design)
-
-- Sem check constraint com `now()` (usa triggers)
-- Sem foto sem hash/timestamp
-- Sem multa NR-28 chutada (só via tabela `nr28_valores` versionada)
-- Sem "laudo" — o documento se chama **Relatório de Inspeção de Segurança** (inspeção ≠ laudo, laudo exige ART)
-
-## Ordem de execução sugerida
-
-Começo pela **Fase 1 itens 1-6** (banco + tela de abertura + upload celular + catálogo NR + matriz 5x5). É o esqueleto que já entrega valor. CFTV, NR-28 e PDF vêm em seguida.
-
-**Confirma que começo por aí?** Ou prefere que eu inclua CFTV já no primeiro round?
+### Fora de escopo
+- Rota pública `/laudo/{hash}` (usuário dispensou)
+- QR code
+- Anotação em fotos (bounding boxes) — fica para uma iteração seguinte, é complexo e não bloqueia legalidade
+- Gráfico Gantt do plano de ação (tabela ordenada por prazo já cumpre)
