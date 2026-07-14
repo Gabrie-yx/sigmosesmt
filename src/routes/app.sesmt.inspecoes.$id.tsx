@@ -320,6 +320,38 @@ function InspecaoDetail() {
     onError: (e: any) => toast.error(e.message ?? "Erro"),
   });
 
+  // Valida antes de publicar; se falhar, abre modal centralizado (não toast).
+  async function tentarPublicar() {
+    if (fotos.length === 0) {
+      setBlockMsg("Antes de publicar, anexe ao menos uma foto como evidência da inspeção.");
+      return;
+    }
+    if (ncs.length > 0) {
+      const ids = ncs.map((n: any) => n.id);
+      const { data: planos, error } = await supabase.from("inspecao_ncs_planos").select("nc_id").in("nc_id", ids);
+      if (error) { toast.error(error.message); return; }
+      const comPlano = new Set((planos ?? []).map((p: any) => p.nc_id));
+      if (ids.some((ncId: string) => !comPlano.has(ncId))) {
+        setBlockMsg("Cada NC registrada precisa de pelo menos uma ação PDCA (responsável/prazo). Adicione o plano ou remova a NC.");
+        return;
+      }
+    }
+    alterarStatus.mutate("publicada");
+  }
+
+  const removerNc = useMutation({
+    mutationFn: async (ncId: string) => {
+      await supabase.from("inspecao_ncs_planos").delete().eq("nc_id", ncId);
+      const { error } = await supabase.from("inspecao_ncs").delete().eq("id", ncId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("NC excluída");
+      qc.invalidateQueries({ queryKey: ["inspecao-ncs", id] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro"),
+  });
+
   const baixarPdf = useMutation({
     mutationFn: async () => {
       if (fotos.length === 0) throw new Error("O relatório final exige evidência fotográfica. Reabra a inspeção e anexe as fotos.");
