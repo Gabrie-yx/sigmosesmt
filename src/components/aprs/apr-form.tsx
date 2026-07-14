@@ -1638,6 +1638,15 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
           })();
         }}
       />
+      <Suspense fallback={null}>
+        <PDFPreviewDialog
+          open={!!previewDoc}
+          onClose={() => setPreviewDoc(null)}
+          doc={previewDoc}
+          fileName={`${apr.numero ?? "apr"}.pdf`}
+          title="APR"
+        />
+      </Suspense>
     </div>
     </TooltipProvider>
   );
