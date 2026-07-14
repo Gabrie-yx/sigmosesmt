@@ -873,14 +873,15 @@ function NcDialog({ inspecaoId, fotos, nrs, rubrica, grauRisco, empresaId, nc, t
       <DialogTrigger asChild>
         {trigger ?? <Button size="sm" className="gap-1"><Plus className="h-3.5 w-3.5" /> Nova NC</Button>}
       </DialogTrigger>
-      <DialogContent className="w-[calc(100vw-1rem)] sm:w-auto max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>{isEdit ? "Editar não conformidade" : "Registrar não conformidade"}</DialogTitle></DialogHeader>
+      <DialogContent className="flex max-h-[92dvh] w-[calc(100vw-1rem)] max-w-3xl flex-col overflow-hidden p-0">
+        <DialogHeader className="shrink-0 px-4 pt-4 sm:px-6 sm:pt-6"><DialogTitle>{isEdit ? "Editar não conformidade" : "Registrar não conformidade"}</DialogTitle></DialogHeader>
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3 sm:px-6">
         <div className="grid gap-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3">
             <div>
               <Label>NR *</Label>
               <Select value={nr_codigo} onValueChange={(v) => { setNrCodigo(v); setCatalogoItemId(""); setNrItem(""); }}>
-                <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                <SelectTrigger className="w-full min-w-0"><SelectValue placeholder="Selecione..." /></SelectTrigger>
                 <SelectContent className="max-h-72">
                   {nrs.map((n: any) => (<SelectItem key={n.codigo} value={n.codigo}>{n.codigo} — {n.titulo}</SelectItem>))}
                 </SelectContent>
@@ -900,7 +901,7 @@ function NcDialog({ inspecaoId, fotos, nrs, rubrica, grauRisco, empresaId, nc, t
                 }}
                 disabled={!nr_codigo}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full min-w-0">
                   <SelectValue placeholder={nr_codigo ? (nrItens.length ? "Selecione o item oficial" : "Sem itens cadastrados") : "Escolha a NR antes"} />
                 </SelectTrigger>
                 <SelectContent className="max-h-72">
@@ -941,9 +942,9 @@ function NcDialog({ inspecaoId, fotos, nrs, rubrica, grauRisco, empresaId, nc, t
                 ))}
               </div>
             )}
-            <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-2">
+            <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] gap-2">
               <Select value={corrNr} onValueChange={(v) => { setCorrNr(v); setCorrItemId(""); }}>
-                <SelectTrigger><SelectValue placeholder="NR correlata..." /></SelectTrigger>
+                <SelectTrigger className="w-full min-w-0"><SelectValue placeholder="NR correlata..." /></SelectTrigger>
                 <SelectContent className="max-h-72">
                   {nrs.filter((n: any) => n.codigo !== nr_codigo).map((n: any) => (
                     <SelectItem key={n.codigo} value={n.codigo}>{n.codigo} — {n.titulo}</SelectItem>
@@ -951,7 +952,7 @@ function NcDialog({ inspecaoId, fotos, nrs, rubrica, grauRisco, empresaId, nc, t
                 </SelectContent>
               </Select>
               <Select value={corrItemId} onValueChange={setCorrItemId} disabled={!corrNr}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full min-w-0">
                   <SelectValue placeholder={corrNr ? (corrItens.length ? "Item oficial" : "Sem itens") : "Escolha a NR"} />
                 </SelectTrigger>
                 <SelectContent className="max-h-72">
@@ -964,6 +965,7 @@ function NcDialog({ inspecaoId, fotos, nrs, rubrica, grauRisco, empresaId, nc, t
                 type="button"
                 size="sm"
                 variant="outline"
+                className="w-full md:w-auto"
                 disabled={!corrNr || !corrItemId}
                 onClick={() => {
                   const it = corrItens.find((i: any) => i.id === corrItemId);
@@ -991,7 +993,7 @@ function NcDialog({ inspecaoId, fotos, nrs, rubrica, grauRisco, empresaId, nc, t
           <div>
             <Label>Foto vinculada</Label>
             <Select value={foto_id} onValueChange={setFotoId}>
-              <SelectTrigger><SelectValue placeholder="Nenhuma" /></SelectTrigger>
+              <SelectTrigger className="w-full min-w-0"><SelectValue placeholder="Nenhuma" /></SelectTrigger>
               <SelectContent>
                 {fotos.map((f: any) => (<SelectItem key={f.id} value={f.id}>{f.fonte} · {f.hash_sha256.slice(0, 8)} · {f.camera_ref ?? "—"}</SelectItem>))}
               </SelectContent>
@@ -1002,11 +1004,11 @@ function NcDialog({ inspecaoId, fotos, nrs, rubrica, grauRisco, empresaId, nc, t
 
           <div className="border rounded p-3 bg-muted/40 space-y-2">
             <div className="text-xs font-black uppercase tracking-wide text-foreground">Matriz de risco 5x5</div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3">
               <div>
                 <Label>Probabilidade</Label>
                 <Select value={String(probabilidade)} onValueChange={(v) => setP(Number(v))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="w-full min-w-0"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {rP.map((r) => (<SelectItem key={r.id} value={String(r.nivel)}>P{r.nivel} — {r.rotulo}</SelectItem>))}
                   </SelectContent>
@@ -1015,7 +1017,7 @@ function NcDialog({ inspecaoId, fotos, nrs, rubrica, grauRisco, empresaId, nc, t
               <div>
                 <Label>Severidade</Label>
                 <Select value={String(severidade)} onValueChange={(v) => setS(Number(v))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="w-full min-w-0"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {rS.map((r) => (<SelectItem key={r.id} value={String(r.nivel)}>S{r.nivel} — {r.rotulo}</SelectItem>))}
                   </SelectContent>
@@ -1027,11 +1029,11 @@ function NcDialog({ inspecaoId, fotos, nrs, rubrica, grauRisco, empresaId, nc, t
 
           <div className="border rounded p-3 bg-muted/40 space-y-2">
             <div className="text-xs font-black uppercase tracking-wide text-foreground">Multa estimada NR-28 (grau {grauRisco})</div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3">
               <div>
                 <Label>Gradação</Label>
                 <Select value={gradacao} onValueChange={setGradacao}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="w-full min-w-0"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="I1">I1 — Leve</SelectItem>
                     <SelectItem value="I2">I2 — Média</SelectItem>
@@ -1059,7 +1061,8 @@ function NcDialog({ inspecaoId, fotos, nrs, rubrica, grauRisco, empresaId, nc, t
             </div>
           </div>
         </div>
-        <DialogFooter>
+        </div>
+        <DialogFooter className="shrink-0 border-t border-border bg-background/95 px-4 py-3 sm:px-6">
           <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
           <Button onClick={() => salvar.mutate()} disabled={salvar.isPending}>Salvar NC</Button>
         </DialogFooter>
