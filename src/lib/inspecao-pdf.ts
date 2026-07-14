@@ -43,10 +43,16 @@ export interface InspecaoPdfInput {
   responsavelNome?: string | null;
   /** Registro profissional (MTE / CREA) exibido abaixo da assinatura do TST. */
   responsavelRegistro?: string | null;
+  /** Assinaturas digitais (data URLs PNG) para estampar acima da linha. */
+  assinaturas?: {
+    eng?: string | null;
+    sesmt?: string | null;
+    enc?: string | null;
+  };
 }
 
 export async function gerarInspecaoPdf(input: InspecaoPdfInput): Promise<{ doc: jsPDF; fileName: string }> {
-  const { inspecao, fotos, ncs, planosPorNc, rubrica, responsavelNome, responsavelRegistro } = input;
+  const { inspecao, fotos, ncs, planosPorNc, rubrica, responsavelNome, responsavelRegistro, assinaturas } = input;
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const W = doc.internal.pageSize.getWidth();
   const H = doc.internal.pageSize.getHeight();
