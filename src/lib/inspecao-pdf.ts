@@ -271,7 +271,9 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput): Promise<{ doc: 
     for (let i = 0; i < ncs.length; i++) {
       const nc = ncs[i];
       const planos = planosPorNc[nc.id] ?? [];
-      ensureRoom(doc, y, 90, () => { doc.addPage(); y = M; });
+      // Cada NC começa em página nova (exceto a primeira, que segue após o título da seção)
+      if (i > 0) { doc.addPage(); y = M; }
+      else { ensureRoom(doc, y, 60, () => { doc.addPage(); y = M; }); }
 
       // Título da NC
       doc.setFillColor(127, 29, 29);
@@ -307,7 +309,6 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput): Promise<{ doc: 
       y = paragraph(doc, nc.descricao ?? "—", y, W, M, 8.5);
 
       // Matriz de risco + multa lado a lado
-      ensureRoom(doc, y, 50, () => { doc.addPage(); y = M; });
       const matrixX = M;
       const matrixY = y + 2;
       drawMatriz5x5(doc, matrixX, matrixY, Number(nc.probabilidade), Number(nc.severidade));
@@ -331,7 +332,6 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput): Promise<{ doc: 
       if (nc.foto_id) {
         const foto = fotos.find((f: any) => f.id === nc.foto_id);
         if (foto) {
-          ensureRoom(doc, y, 65, () => { doc.addPage(); y = M; });
           const maxW = 80, maxH = 55;
           const fx = M;
           if (String(foto.storage_path).startsWith("cftv://")) {
@@ -365,7 +365,6 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput): Promise<{ doc: 
 
       // Recomendação técnica
       if (nc.recomendacao) {
-        ensureRoom(doc, y, 20, () => { doc.addPage(); y = M; });
         doc.setFont("helvetica", "bold").setFontSize(8.5).setTextColor(15, 23, 42);
         doc.text("Recomendação técnica:", M, y);
         y += 4;
@@ -373,7 +372,6 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput): Promise<{ doc: 
       }
 
       // Plano 5W2H / PDCA
-      ensureRoom(doc, y, 30, () => { doc.addPage(); y = M; });
       doc.setFont("helvetica", "bold").setFontSize(8.5).setTextColor(15, 23, 42);
       doc.text("Plano de ação (PDCA / 5W2H):", M, y);
       y += 3;
@@ -415,12 +413,6 @@ export async function gerarInspecaoPdf(input: InspecaoPdfInput): Promise<{ doc: 
         y = (doc as any).lastAutoTable.finalY + 6;
       }
 
-      // separador entre NCs
-      if (i < ncs.length - 1) {
-        doc.setDrawColor(226, 232, 240).setLineWidth(0.2);
-        doc.line(M, y, W - M, y);
-        y += 4;
-      }
     }
   }
 
