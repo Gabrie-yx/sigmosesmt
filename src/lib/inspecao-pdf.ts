@@ -626,8 +626,11 @@ function drawMatriz5x5(doc: jsPDF, x: number, y: number, p: number, s: number) {
   const originY = y + 6;
   // rótulos eixos
   doc.setFont("helvetica", "bold").setFontSize(6).setTextColor(15, 23, 42);
-  doc.text("S →", originX + cell * 5 + 1, originY - 1);
-  doc.text("P ↓", x, originY + cell * 5 + 3);
+  doc.text("Severidade", originX + cell * 2.5, originY - 3, { align: "center" });
+  doc.text("P", x + 1, originY + cell * 2.5, { align: "left" });
+  doc.text("r", x + 1, originY + cell * 2.5 + 2.2, { align: "left" });
+  doc.text("o", x + 1, originY + cell * 2.5 + 4.4, { align: "left" });
+  doc.text("b", x + 1, originY + cell * 2.5 + 6.6, { align: "left" });
   // células
   for (let sv = 1; sv <= 5; sv++) {
     for (let pv = 1; pv <= 5; pv++) {
