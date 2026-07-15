@@ -133,9 +133,12 @@ export function PdfSignerDialog({
   const qc = useQueryClient();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const overlayRef = useRef<HTMLDivElement | null>(null);
+  const viewerBoxRef = useRef<HTMLDivElement | null>(null);
   const pdfDocRef = useRef<any>(null);
   const bytesRef = useRef<Uint8Array | null>(null);
+  const renderTokenRef = useRef(0);
 
+  const [pdfReady, setPdfReady] = useState(0); // bump to trigger re-render
   const [pageNum, setPageNum] = useState(1);
   const [numPages, setNumPages] = useState(0);
   const [pageSize, setPageSize] = useState({ w: 0, h: 0 }); // PDF points
@@ -182,19 +185,25 @@ export function PdfSignerDialog({
     setLoadError(null);
     setPlacements([]);
     setPageNum(1);
+    setNumPages(0);
+    pdfDocRef.current = null;
 
     const loadData = async () => {
       try {
         setActiveDocumentId(documentId);
+        console.log("[PdfSigner] fetching bytes…");
         const bytes = await fetchBytes(source);
         if (cancelled) return;
         bytesRef.current = bytes;
+        console.log("[PdfSigner] loading pdfjs…", bytes.byteLength, "bytes");
         const pdfjsLib = await loadPdfJs();
         const loadingTask = pdfjsLib.getDocument({ data: bytes.slice(0) });
         const pdf = await loadingTask.promise;
         if (cancelled) return;
         pdfDocRef.current = pdf;
+        console.log("[PdfSigner] pdf loaded, pages:", pdf.numPages);
         setNumPages(pdf.numPages);
+        setPdfReady((n) => n + 1);
       } catch (e: any) {
         console.error("[PdfSigner] load error", e);
         setLoadError(e?.message ?? "Falha ao carregar PDF");
@@ -213,21 +222,35 @@ export function PdfSignerDialog({
     const pdf = pdfDocRef.current;
     const canvas = canvasRef.current;
     if (!pdf || !canvas) return;
+    const token = ++renderTokenRef.current;
     const page = await pdf.getPage(pageNum);
-    const viewport = page.getViewport({ scale: renderScale });
+    if (token !== renderTokenRef.current) return;
+    // Auto-fit scale to container width so the PDF fills the viewer.
+    const ptVpBase = page.getViewport({ scale: 1 });
+    const containerW = viewerBoxRef.current?.clientWidth ?? 0;
+    const fitScale = containerW > 0 ? (containerW - 32) / ptVpBase.width : 1;
+    const effectiveScale = Math.max(0.5, renderScale * fitScale);
+    const viewport = page.getViewport({ scale: effectiveScale });
     canvas.width = viewport.width;
     canvas.height = viewport.height;
+    canvas.style.width = viewport.width + "px";
+    canvas.style.height = viewport.height + "px";
     const ctx = canvas.getContext("2d")!;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    await page.render({ canvasContext: ctx, viewport, canvas }).promise;
-    const ptVp = page.getViewport({ scale: 1 });
-    setPageSize({ w: ptVp.width, h: ptVp.height });
+    try {
+      await page.render({ canvasContext: ctx, viewport, canvas }).promise;
+    } catch (e: any) {
+      if (e?.name !== "RenderingCancelledException") console.error("[PdfSigner] render error", e);
+      return;
+    }
+    if (token !== renderTokenRef.current) return;
+    setPageSize({ w: ptVpBase.width, h: ptVpBase.height });
     setPageRotation(((page.rotate ?? 0) % 360 + 360) % 360);
   }, [pageNum, renderScale]);
 
   useEffect(() => {
     if (open && pdfDocRef.current) renderPage();
-  }, [open, renderPage, numPages]);
+  }, [open, renderPage, numPages, pdfReady]);
 
   function handleCanvasClick(e: React.MouseEvent<HTMLDivElement>) {
     if (!pendingSig) {
