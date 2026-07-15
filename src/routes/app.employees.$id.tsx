@@ -3059,16 +3059,9 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
                 </div>
                 <div className="mt-1 flex items-center gap-2 flex-wrap">
                   {e.assinatura_snapshot ? (
-                    <div className="flex items-center gap-1.5">
-                      <img
-                        src={e.assinatura_snapshot}
-                        alt="Assinatura do funcionário"
-                        className="h-6 max-w-[110px] object-contain bg-white/90 rounded px-1 py-0.5 border border-white/20"
-                      />
-                      <Badge className="bg-emerald-700/70 text-emerald-50 text-[9px] ring-1 ring-emerald-300/40">
-                        ASSINADO {e.assinatura_data ? `· ${formatDateBR(e.assinatura_data)}` : ""}
-                      </Badge>
-                    </div>
+                    <Badge className="bg-emerald-700/70 text-emerald-50 text-[9px] ring-1 ring-emerald-300/40">
+                      ASSINADO {e.assinatura_data ? `· ${formatDateBR(e.assinatura_data)}` : ""}
+                    </Badge>
                   ) : (
                     <>
                       <Badge className="bg-amber-800/70 text-amber-50 text-[9px] ring-1 ring-amber-300/40">
