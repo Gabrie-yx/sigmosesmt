@@ -36,6 +36,7 @@ async function loadPdfLibs() {
 import dmnLogo from "@/assets/dmn-logo.png";
 import { EstoqueLookupSheet, type PickedItem } from "@/components/estoque-lookup-sheet";
 import { RequisicaoMedicamentosDialog } from "@/components/sesmt/requisicao-medicamentos-dialog";
+import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import { SignatureGallery } from "@/components/signature-gallery";
 import { Wizard, type WizardStep } from "@/components/wizard";
 import { useDraftAutosave } from "@/hooks/use-draft-autosave";
@@ -819,8 +820,8 @@ async function loadMedItemsForPdf(reqId: string) {
 }
 
 function MedPdfBtns({ req }: { req: Req }) {
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [busy, setBusy] = useState<null | "print" | "pdf">(null);
+  const [previewDoc, setPreviewDoc] = useState<jsPDF | null>(null);
+  const [busy, setBusy] = useState<null | "pdf">(null);
 
   async function build() {
     const [{ buildRequisicaoMedicamentosPdf }] = await Promise.all([
@@ -838,23 +839,11 @@ function MedPdfBtns({ req }: { req: Req }) {
     });
   }
 
-  async function imprimir() {
-    try {
-      setBusy("print");
-      const doc = await build();
-      const url = doc.output("bloburl") as unknown as string;
-      const w = window.open(url, "_blank");
-      if (w) setTimeout(() => { try { w.print(); } catch {} }, 400);
-    } catch (e: any) {
-      toast.error(e?.message ?? "Falha ao imprimir");
-    } finally { setBusy(null); }
-  }
-
   async function visualizar() {
     try {
       setBusy("pdf");
       const doc = await build();
-      setPreviewUrl(doc.output("bloburl") as unknown as string);
+      setPreviewDoc(doc);
     } catch (e: any) {
       toast.error(e?.message ?? "Falha ao gerar PDF");
     } finally { setBusy(null); }
@@ -862,22 +851,16 @@ function MedPdfBtns({ req }: { req: Req }) {
 
   return (
     <>
-      <Button size="sm" variant="outline" onClick={imprimir} disabled={busy !== null}>
-        <Printer className="h-3.5 w-3.5 mr-1" /> Imprimir
-      </Button>
       <Button size="sm" variant="outline" onClick={visualizar} disabled={busy !== null}>
         <Printer className="h-3.5 w-3.5 mr-1" /> PDF
       </Button>
-      {previewUrl && (
-        <Dialog open={!!previewUrl} onOpenChange={(o) => !o && setPreviewUrl(null)}>
-          <DialogContent className="max-w-5xl h-[85vh] p-0 overflow-hidden">
-            <DialogHeader className="px-4 py-2 border-b">
-              <DialogTitle>Requisição de Medicamentos — Nº {req.numero}</DialogTitle>
-            </DialogHeader>
-            <iframe src={previewUrl} className="w-full h-full" title="PDF" />
-          </DialogContent>
-        </Dialog>
-      )}
+      <PDFPreviewDialog
+        open={!!previewDoc}
+        onClose={() => setPreviewDoc(null)}
+        doc={previewDoc}
+        fileName={`requisicao-medicamentos-${req.numero.replace(/\//g, "-")}.pdf`}
+        title={`Requisição de Medicamentos — Nº ${req.numero}`}
+      />
     </>
   );
 }
