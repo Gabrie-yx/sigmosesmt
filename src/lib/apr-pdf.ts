@@ -294,6 +294,50 @@ function drawRiscosTable(doc: jsPDF, p: APRPdfParams, yStart: number) {
   });
 }
 
+// Desenha SOMENTE a barra verde (cabeçalho da tabela de riscos) — sem body —
+// para reaproveitar no topo das demais páginas (GERAIS, LEGENDA, ANEXO).
+// Retorna o Y (mm) logo abaixo da barra, para o conteúdo seguinte iniciar ali.
+function drawGreenBarHeader(doc: jsPDF, yStart: number): number {
+  const head = [
+    [
+      { content: "PASSO A PASSO DA ATIVIDADE", rowSpan: 2 },
+      { content: "RISCOS IDENTIFICADOS", rowSpan: 2 },
+      { content: "EFEITOS / DANOS", rowSpan: 2 },
+      { content: "AVALIAÇÃO DO RISCO", colSpan: 3 },
+      { content: "AÇÕES PREVENTIVAS DOS RISCOS", rowSpan: 2 },
+      { content: "EPI", rowSpan: 2 },
+      { content: "RESPONSÁVEIS PELAS AÇÕES", rowSpan: 2 },
+      { content: "NRs", rowSpan: 2 },
+    ],
+    ["P", "S", "G"],
+  ];
+  autoTable(doc, {
+    head: head as any,
+    body: [],
+    startY: yStart,
+    margin: { left: MARGIN, right: MARGIN },
+    theme: "grid",
+    styles: { fontSize: 7, cellPadding: 1.4, valign: "middle", lineColor: [0, 0, 0], lineWidth: 0.15, textColor: 0 },
+    headStyles: {
+      fillColor: [C_TBL_HEAD[0], C_TBL_HEAD[1], C_TBL_HEAD[2]],
+      textColor: 0, fontStyle: "bold", fontSize: 7.5, halign: "center", lineColor: [0, 0, 0], lineWidth: 0.3,
+    },
+    columnStyles: {
+      0: { cellWidth: 38 },
+      1: { cellWidth: 30, halign: "center" },
+      2: { cellWidth: 28 },
+      3: { cellWidth: 6, halign: "center" },
+      4: { cellWidth: 6, halign: "center" },
+      5: { cellWidth: 8, halign: "center", fontStyle: "bold" },
+      6: { cellWidth: 65 },
+      7: { cellWidth: 30 },
+      8: { cellWidth: 30 },
+      9: { cellWidth: "auto", halign: "center" },
+    },
+  });
+  return (doc as any).lastAutoTable?.finalY ?? yStart;
+}
+
 function drawFooter(doc: jsPDF) {
   doc.setFont("helvetica", "bold").setFontSize(8);
   doc.setTextColor(220, 38, 38);
@@ -313,10 +357,13 @@ function drawFullChrome(doc: jsPDF, p: APRPdfParams) {
 
 function drawGeraisPage(doc: jsPDF, p: APRPdfParams) {
   doc.addPage();
+  let bodyTop = CONTENT_TOP;
   const chrome = () => {
     drawFullChrome(doc, p);
+    const barBottom = drawGreenBarHeader(doc, CONTENT_TOP);
+    bodyTop = barBottom + 4;
     doc.setFont("helvetica", "bold").setFontSize(11).setTextColor(0, 0, 0);
-    doc.text("GERAIS:", MARGIN, CONTENT_TOP + 2);
+    doc.text("GERAIS:", MARGIN, bodyTop);
   };
   chrome();
 
@@ -324,8 +371,8 @@ function drawGeraisPage(doc: jsPDF, p: APRPdfParams) {
   // Cada linha numerada como uma row da tabela (sem bordas) para auto-paginar com cabeçalho.
   const items = txt.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
   autoTable(doc, {
-    startY: CONTENT_TOP + 6,
-    margin: { left: MARGIN, right: MARGIN, top: CONTENT_TOP + 6 },
+    startY: bodyTop + 4,
+    margin: { left: MARGIN, right: MARGIN, top: bodyTop + 4 },
     body: items.map((t) => [t]),
     theme: "plain",
     styles: { fontSize: 9, cellPadding: { top: 1, bottom: 1, left: 1, right: 1 }, textColor: 0 },
@@ -356,8 +403,9 @@ function drawGeraisPage(doc: jsPDF, p: APRPdfParams) {
 function drawLegendaAssinaturas(doc: jsPDF, p: APRPdfParams) {
   doc.addPage();
   drawFullChrome(doc, p);
+  const barBottom = drawGreenBarHeader(doc, CONTENT_TOP);
 
-  let y = CONTENT_TOP + 2;
+  let y = barBottom + 3;
   doc.setFont("helvetica", "bold").setFontSize(8.5).setTextColor(220, 38, 38);
   doc.text("ATENÇÃO: AO OBSERVAR OUTRO RISCO NÃO PREVISTO NESTA APR, PARALISAR O TRABALHO IMEDIATAMENTE E COMUNICAR AO SESMT", PAGE_W / 2, y, { align: "center" });
   doc.setTextColor(0, 0, 0);
@@ -541,10 +589,15 @@ function drawLegendaAssinaturas(doc: jsPDF, p: APRPdfParams) {
 
 function drawAnexoExecutantes(doc: jsPDF, p: APRPdfParams) {
   doc.addPage();
+  let titleY = CONTENT_TOP + 3;
+  let tableTop = CONTENT_TOP + 7;
   const chrome = () => {
     drawFullChrome(doc, p);
+    const barBottom = drawGreenBarHeader(doc, CONTENT_TOP);
+    titleY = barBottom + 5;
+    tableTop = titleY + 4;
     doc.setFont("helvetica", "bold").setFontSize(13).setTextColor(0, 0, 0);
-    doc.text("ANEXO I – ASSINATURA DOS EXECUTANTES DO SERVIÇO", PAGE_W / 2, CONTENT_TOP + 3, { align: "center" });
+    doc.text("ANEXO I – ASSINATURA DOS EXECUTANTES DO SERVIÇO", PAGE_W / 2, titleY, { align: "center" });
   };
   chrome();
 
@@ -562,8 +615,8 @@ function drawAnexoExecutantes(doc: jsPDF, p: APRPdfParams) {
   }
 
   autoTable(doc, {
-    startY: CONTENT_TOP + 7,
-    margin: { left: MARGIN, right: MARGIN, top: CONTENT_TOP + 7 },
+    startY: tableTop,
+    margin: { left: MARGIN, right: MARGIN, top: tableTop },
     head: [["Nº", "NOME", "ASSINATURA"]],
     body,
     theme: "grid",
