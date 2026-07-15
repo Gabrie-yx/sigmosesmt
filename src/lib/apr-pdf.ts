@@ -437,7 +437,7 @@ function drawLegendaAssinaturas(doc: jsPDF, p: APRPdfParams) {
   const probW = unit * 3;
   const sevW = unit * 3;
   const grauW = unit * 5;
-  const HEADER_H = 5;
+  const HEADER_H = 8;
   const PILL_H = 8;
   const TOTAL_H = HEADER_H + PILL_H;
 
@@ -459,10 +459,15 @@ function drawLegendaAssinaturas(doc: jsPDF, p: APRPdfParams) {
   doc.rect(xSev, y, sevW, HEADER_H, "F");
   doc.rect(xGrau, y, grauW, HEADER_H, "F");
   doc.setTextColor(0, 0, 0).setFont("helvetica", "bold").setFontSize(7);
-  doc.text("PROBABILIDADE (FREQUÊNCIA)", xProb + probW / 2, y + 3.4, { align: "center" });
-  doc.text("SEVERIDADE (IMPACTO)", xSev + sevW / 2, y + 3.4, { align: "center" });
+  // PROBABILIDADE em 2 linhas
+  doc.text("PROBABILIDADE", xProb + probW / 2, y + 3.2, { align: "center" });
+  doc.text("(FREQUÊNCIA)", xProb + probW / 2, y + 6.4, { align: "center" });
+  // SEVERIDADE em 2 linhas
+  doc.text("SEVERIDADE", xSev + sevW / 2, y + 3.2, { align: "center" });
+  doc.text("(IMPACTO)", xSev + sevW / 2, y + 6.4, { align: "center" });
+  // GRAU DO RISCO — mantém 1 linha, centralizado verticalmente
   doc.setFontSize(6.5);
-  doc.text("GRAU DO RISCO (SOMATÓRIO DA PROBABILIDADE + SEVERIDADE)", xGrau + grauW / 2, y + 3.4, { align: "center" });
+  doc.text("GRAU DO RISCO (SOMATÓRIO DA PROBABILIDADE + SEVERIDADE)", xGrau + grauW / 2, y + HEADER_H / 2 + 1.2, { align: "center" });
   doc.setTextColor(0, 0, 0);
 
   // Pills PROBABILIDADE e SEVERIDADE (3 cada: BAIXA/MÉDIA/ALTA)
