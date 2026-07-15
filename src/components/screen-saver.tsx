@@ -35,12 +35,12 @@ function SplitFlapDigit({ value }: { value: string }) {
 
   return (
     <div className="ss-digit">
-      <div className="ss-digit-top">{display}</div>
-      <div className="ss-digit-bottom">{display}</div>
+      <div className="ss-digit-top"><span className="ss-glyph">{display}</span></div>
+      <div className="ss-digit-bottom"><span className="ss-glyph">{display}</span></div>
       <div className="ss-digit-hinge" />
       <div className={`ss-digit-flap ${flipping ? "ss-flipping" : ""}`}>
-        <div className="ss-digit-flap-front">{display}</div>
-        <div className="ss-digit-flap-back">{value}</div>
+        <div className="ss-digit-flap-front"><span className="ss-glyph">{display}</span></div>
+        <div className="ss-digit-flap-back"><span className="ss-glyph ss-glyph-bottom">{value}</span></div>
       </div>
     </div>
   );
