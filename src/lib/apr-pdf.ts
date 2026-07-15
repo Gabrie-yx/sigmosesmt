@@ -441,24 +441,24 @@ function drawLegendaAssinaturas(doc: jsPDF, p: APRPdfParams) {
   const PILL_H = 8;
   const TOTAL_H = HEADER_H + PILL_H;
 
-  // AVALIAÇÃO DO RISCO — célula preta com texto branco (fusão vertical)
-  doc.setFillColor(0, 0, 0);
+  // AVALIAÇÃO DO RISCO — célula cinza clara (#e1e1e1) com texto preto (fusão vertical)
+  doc.setFillColor(225, 225, 225);
   doc.rect(MARGIN, y, AVAL_W, TOTAL_H, "F");
   doc.rect(MARGIN, y, AVAL_W, TOTAL_H);
-  doc.setTextColor(255, 255, 255).setFont("helvetica", "bold").setFontSize(7.5);
+  doc.setTextColor(0, 0, 0).setFont("helvetica", "bold").setFontSize(7.5);
   doc.text("AVALIAÇÃO", MARGIN + AVAL_W / 2, y + TOTAL_H / 2 - 1, { align: "center" });
   doc.text("DO RISCO", MARGIN + AVAL_W / 2, y + TOTAL_H / 2 + 2.5, { align: "center" });
   doc.setTextColor(0, 0, 0);
 
-  // Cabeçalhos pretos: PROBABILIDADE | SEVERIDADE | GRAU DO RISCO
+  // Cabeçalhos cinza claro (#e1e1e1): PROBABILIDADE | SEVERIDADE | GRAU DO RISCO
   const xProb = MARGIN + AVAL_W;
   const xSev = xProb + probW;
   const xGrau = xSev + sevW;
-  doc.setFillColor(0, 0, 0);
+  doc.setFillColor(225, 225, 225);
   doc.rect(xProb, y, probW, HEADER_H, "F");
   doc.rect(xSev, y, sevW, HEADER_H, "F");
   doc.rect(xGrau, y, grauW, HEADER_H, "F");
-  doc.setTextColor(255, 255, 255).setFont("helvetica", "bold").setFontSize(7);
+  doc.setTextColor(0, 0, 0).setFont("helvetica", "bold").setFontSize(7);
   doc.text("PROBABILIDADE (FREQUÊNCIA)", xProb + probW / 2, y + 3.4, { align: "center" });
   doc.text("SEVERIDADE (IMPACTO)", xSev + sevW / 2, y + 3.4, { align: "center" });
   doc.setFontSize(6.5);
