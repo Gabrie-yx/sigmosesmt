@@ -3046,6 +3046,36 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
                     <> • Devolvido em: <span className="text-amber-300">{formatDateBR(e.data_devolucao)}</span></>
                   )}
                 </div>
+                <div className="mt-1 flex items-center gap-2 flex-wrap">
+                  {e.assinatura_snapshot ? (
+                    <div className="flex items-center gap-1.5">
+                      <img
+                        src={e.assinatura_snapshot}
+                        alt="Assinatura do funcionário"
+                        className="h-6 max-w-[110px] object-contain bg-white/90 rounded px-1 py-0.5 border border-white/20"
+                      />
+                      <Badge className="bg-emerald-700/70 text-emerald-50 text-[9px] ring-1 ring-emerald-300/40">
+                        ASSINADO {e.assinatura_data ? `· ${formatDateBR(e.assinatura_data)}` : ""}
+                      </Badge>
+                    </div>
+                  ) : (
+                    <>
+                      <Badge className="bg-amber-800/70 text-amber-50 text-[9px] ring-1 ring-amber-300/40">
+                        ASSINATURA PENDENTE
+                      </Badge>
+                      {canEdit && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-6 px-2 text-[10px] border-amber-400/40 bg-black/30 text-amber-100 hover:bg-amber-900/30"
+                          onClick={() => setSignCollect({ deliveryId: e.id, item: e.item, retro: true })}
+                        >
+                          Coletar assinatura
+                        </Button>
+                      )}
+                    </>
+                  )}
+                </div>
                 {e.data_devolucao && e.observacoes && (
                   <div className="text-[11px] text-amber-200/80 mt-0.5 normal-case">{e.observacoes}</div>
                 )}
