@@ -4710,6 +4710,10 @@ export type Database = {
       }
       epi_deliveries: {
         Row: {
+          assinatura_data: string | null
+          assinatura_responsavel_cargo: string | null
+          assinatura_responsavel_nome: string | null
+          assinatura_snapshot: string | null
           ca: string | null
           created_at: string
           data_devolucao: string | null
@@ -4725,6 +4729,10 @@ export type Database = {
           valor_unitario: number | null
         }
         Insert: {
+          assinatura_data?: string | null
+          assinatura_responsavel_cargo?: string | null
+          assinatura_responsavel_nome?: string | null
+          assinatura_snapshot?: string | null
           ca?: string | null
           created_at?: string
           data_devolucao?: string | null
@@ -4740,6 +4748,10 @@ export type Database = {
           valor_unitario?: number | null
         }
         Update: {
+          assinatura_data?: string | null
+          assinatura_responsavel_cargo?: string | null
+          assinatura_responsavel_nome?: string | null
+          assinatura_snapshot?: string | null
           ca?: string | null
           created_at?: string
           data_devolucao?: string | null
