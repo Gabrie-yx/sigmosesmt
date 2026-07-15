@@ -232,26 +232,14 @@ export function buildEpiFichaPdf(opts: {
         const cell = data.cell;
         const pad = 1.2;
         const maxW = cell.width - pad * 2;
-        const maxH = Math.max(6, cell.height - 4); // reserva ~4mm para a data embaixo
+        const maxH = Math.max(6, cell.height - pad * 2);
         // Preserva proporção estimada 3:1 (assinatura larga e baixa)
         let imgW = maxW;
         let imgH = imgW / 3;
         if (imgH > maxH) { imgH = maxH; imgW = imgH * 3; }
         const imgX = cell.x + (cell.width - imgW) / 2;
-        const imgY = cell.y + pad;
+        const imgY = cell.y + (cell.height - imgH) / 2;
         doc.addImage(sig.img, "PNG", imgX, imgY, imgW, imgH);
-        if (sig.when) {
-          doc.setFont("helvetica", "normal");
-          doc.setFontSize(6);
-          doc.setTextColor(80);
-          doc.text(
-            brDate(sig.when),
-            cell.x + cell.width / 2,
-            cell.y + cell.height - 1.2,
-            { align: "center" },
-          );
-          doc.setTextColor(0);
-        }
       } catch { /* imagem inválida — ignora, mantém célula vazia */ }
     },
   });

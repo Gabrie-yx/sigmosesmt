@@ -3072,10 +3072,17 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
                           size="sm"
                           variant="outline"
                           className="h-6 px-2 text-[10px] border-amber-400/40 bg-black/30 text-amber-100 hover:bg-amber-900/30"
-                          onClick={() => {
+                          onClick={async () => {
                             const ficha = (emp as any)?.assinatura_url ?? null;
                             if (ficha) {
-                              saveSignature.mutate({ deliveryId: e.id, dataUrl: ficha, retro: true });
+                              try {
+                                const { fetchSignatureAsCleanDataUrl } = await import("@/lib/signature-utils");
+                                const clean = await fetchSignatureAsCleanDataUrl(ficha);
+                                if (!clean) throw new Error("Não consegui carregar a assinatura da ficha");
+                                saveSignature.mutate({ deliveryId: e.id, dataUrl: clean, retro: true });
+                              } catch (err: any) {
+                                toast.error(err?.message ?? "Falha ao puxar assinatura da ficha");
+                              }
                             } else {
                               setSignCollect({ deliveryId: e.id, item: e.item, retro: true });
                             }
