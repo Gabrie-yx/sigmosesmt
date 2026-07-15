@@ -2354,6 +2354,10 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
     if (rpcErr) throw rpcErr;
     // 2) registro na ficha do colaborador
     const valor = f.valor_unitario ? Number(String(f.valor_unitario).replace(",", ".")) : null;
+    // NR-06 item 6.7: a assinatura do colaborador é puxada automaticamente da
+    // ficha dele (assinatura_url). Só cai no fluxo de "coletar" se ele ainda
+    // não tiver assinatura cadastrada no perfil.
+    const assinaturaFicha = (emp as any)?.assinatura_url ?? null;
     const { data: inserted, error } = await supabase.from("epi_deliveries").insert({
       employee_id: empId,
       item: selected.nome_material,
@@ -2366,7 +2370,9 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
         ? f.data_devolucao_prevista : null,
       valor_unitario: valor,
       observacoes: f.observacoes || null,
-    } as any).select("id, item").single();
+      assinatura_snapshot: assinaturaFicha,
+      assinatura_data: assinaturaFicha ? new Date().toISOString() : null,
+    } as any).select("id, item, assinatura_snapshot").single();
     if (error) throw error;
 
     // 3) Se for perda/extravio, gera termo de responsabilidade automaticamente
@@ -2384,7 +2390,7 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
       // Em vez de openFileViewer, usamos o PdfSignerDialog para ver e poder salvar
       setSignerSrc({ bytes, name: fname, modulo: "termo_perda", referenciaId: undefined });
     }
-    return inserted as { id: string; item: string } | null;
+    return inserted as { id: string; item: string; assinatura_snapshot: string | null } | null;
   }
 
   const create = useMutation({
@@ -2394,10 +2400,15 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
       qc.invalidateQueries({ queryKey: ["estoque_epi"] });
       qc.invalidateQueries({ queryKey: ["historico_entregas_all"] });
       resetForm();
-      toast.success("Entrega registrada e estoque atualizado");
-      // Abre pad para o funcionário assinar a entrega (NR-06 item 6.7).
-      if (inserted?.id) {
-        setSignCollect({ deliveryId: inserted.id, item: inserted.item ?? "EPI", retro: false });
+      // Assinatura puxada automaticamente da ficha do colaborador (perfil).
+      // Só abre o pad se o funcionário ainda não tiver assinatura cadastrada.
+      if (inserted?.assinatura_snapshot) {
+        toast.success("Entrega registrada · assinatura da ficha aplicada");
+      } else {
+        toast.success("Entrega registrada — colaborador sem assinatura na ficha");
+        if (inserted?.id) {
+          setSignCollect({ deliveryId: inserted.id, item: inserted.item ?? "EPI", retro: false });
+        }
       }
     },
     onError: (e: any) => toast.error(e.message),
@@ -3068,9 +3079,17 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
                           size="sm"
                           variant="outline"
                           className="h-6 px-2 text-[10px] border-amber-400/40 bg-black/30 text-amber-100 hover:bg-amber-900/30"
-                          onClick={() => setSignCollect({ deliveryId: e.id, item: e.item, retro: true })}
+                          onClick={() => {
+                            const ficha = (emp as any)?.assinatura_url ?? null;
+                            if (ficha) {
+                              saveSignature.mutate({ deliveryId: e.id, dataUrl: ficha, retro: true });
+                            } else {
+                              setSignCollect({ deliveryId: e.id, item: e.item, retro: true });
+                            }
+                          }}
+                          title={(emp as any)?.assinatura_url ? "Puxar assinatura da ficha do colaborador" : "Colaborador sem assinatura na ficha — abrir pad"}
                         >
-                          Coletar assinatura
+                          {(emp as any)?.assinatura_url ? "Puxar da ficha" : "Coletar assinatura"}
                         </Button>
                       )}
                     </>
