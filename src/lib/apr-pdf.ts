@@ -465,7 +465,7 @@ function drawLegendaAssinaturas(doc: jsPDF, p: APRPdfParams) {
   const headerH = 6;
 
   // Header
-  doc.setFillColor(219, 234, 247);
+  doc.setFillColor(C_TBL_HEAD[0], C_TBL_HEAD[1], C_TBL_HEAD[2]);
   doc.rect(MARGIN, y, colLeftW, headerH, "F");
   doc.rect(MARGIN + colLeftW, y, colRightW, headerH, "F");
   doc.rect(MARGIN, y, colLeftW, headerH);
@@ -568,7 +568,7 @@ function drawAnexoExecutantes(doc: jsPDF, p: APRPdfParams) {
     body,
     theme: "grid",
     styles: { fontSize: 8, cellPadding: { top: 0.6, bottom: 0.6, left: 1.2, right: 1.2 }, minCellHeight: 5.5, lineColor: [0, 0, 0], lineWidth: 0.2, valign: "middle" },
-    headStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: "bold", halign: "center", lineColor: [0, 0, 0], lineWidth: 0.3 },
+    headStyles: { fillColor: [C_TBL_HEAD[0], C_TBL_HEAD[1], C_TBL_HEAD[2]], textColor: 0, fontStyle: "bold", halign: "center", lineColor: [0, 0, 0], lineWidth: 0.3 },
     columnStyles: {
       0: { cellWidth: 12, halign: "center", fontStyle: "bold" },
       1: { cellWidth: 130 },
