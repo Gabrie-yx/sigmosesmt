@@ -565,7 +565,7 @@ export function PdfSignerDialog({
               </div>
 
               <ScrollArea className="flex-1">
-                <div className="p-4 flex justify-center">
+                <div ref={viewerBoxRef} className="p-4 flex justify-center">
                   {loadError ? (
                     <div className="text-sm text-rose-300 p-8">Erro ao carregar PDF: {loadError}</div>
                   ) : (
