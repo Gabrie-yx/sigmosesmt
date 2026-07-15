@@ -61,6 +61,7 @@ export function ScreenSaver() {
   const [idle, setIdle] = useState(false);
   const [now, setNow] = useState(() => new Date());
   const [colonOn, setColonOn] = useState(true);
+  const idleRef = useRef(false);
 
   const optedOut = OPT_OUT_PREFIXES.some((p) => pathname.startsWith(p));
 
@@ -68,13 +69,20 @@ export function ScreenSaver() {
   useEffect(() => {
     if (optedOut) {
       setIdle(false);
+      idleRef.current = false;
       return;
     }
     let timer: ReturnType<typeof setTimeout>;
     const reset = () => {
       clearTimeout(timer);
-      if (idle) setIdle(false);
-      timer = setTimeout(() => setIdle(true), IDLE_MS);
+      if (idleRef.current) {
+        idleRef.current = false;
+        setIdle(false);
+      }
+      timer = setTimeout(() => {
+        idleRef.current = true;
+        setIdle(true);
+      }, IDLE_MS);
     };
     const events = ["mousemove", "mousedown", "keydown", "scroll", "touchstart", "wheel"];
     events.forEach((e) => window.addEventListener(e, reset, { passive: true }));
@@ -83,7 +91,7 @@ export function ScreenSaver() {
       clearTimeout(timer);
       events.forEach((e) => window.removeEventListener(e, reset));
     };
-  }, [idle, optedOut]);
+  }, [optedOut]);
 
   // Enquanto ativo, atualiza relógio a cada segundo. Fora disso, dorme.
   useEffect(() => {
