@@ -2309,6 +2309,15 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
   const MOTIVOS_DEV = ["Danificado", "Desgaste Natural", "Extravio", "Mal Uso", "Furto", "Uso Temporário"];
   const [substitution, setSubstitution] = useState<{ prev: any; candidates: any[]; motivo: string; data: string; obs: string } | null>(null);
 
+  // Coleta de assinatura do funcionário na entrega do EPI (NR-06 item 6.7).
+  // Aberto automaticamente após uma nova entrega e também sob demanda
+  // (botão "Coletar assinatura") para linhas antigas ainda pendentes.
+  const [signCollect, setSignCollect] = useState<{
+    deliveryId: string;
+    item: string;
+    retro: boolean;
+  } | null>(null);
+
   // Alerta de reincidência: mesmo EPI entregue ao colaborador nos últimos 30 dias
   const reincidencia = (() => {
     if (!selected) return null;
@@ -2345,7 +2354,7 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
     if (rpcErr) throw rpcErr;
     // 2) registro na ficha do colaborador
     const valor = f.valor_unitario ? Number(String(f.valor_unitario).replace(",", ".")) : null;
-    const { error } = await supabase.from("epi_deliveries").insert({
+    const { data: inserted, error } = await supabase.from("epi_deliveries").insert({
       employee_id: empId,
       item: selected.nome_material,
       ca: (f.ca || selected.ca) || null,
@@ -2357,7 +2366,7 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
         ? f.data_devolucao_prevista : null,
       valor_unitario: valor,
       observacoes: f.observacoes || null,
-    } as any);
+    } as any).select("id, item").single();
     if (error) throw error;
 
     // 3) Se for perda/extravio, gera termo de responsabilidade automaticamente
@@ -2375,16 +2384,41 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
       // Em vez de openFileViewer, usamos o PdfSignerDialog para ver e poder salvar
       setSignerSrc({ bytes, name: fname, modulo: "termo_perda", referenciaId: undefined });
     }
+    return inserted as { id: string; item: string } | null;
   }
 
   const create = useMutation({
     mutationFn: insertNewDelivery,
-    onSuccess: () => {
+    onSuccess: (inserted) => {
       qc.invalidateQueries({ queryKey: ["epis", empId] });
       qc.invalidateQueries({ queryKey: ["estoque_epi"] });
       qc.invalidateQueries({ queryKey: ["historico_entregas_all"] });
       resetForm();
       toast.success("Entrega registrada e estoque atualizado");
+      // Abre pad para o funcionário assinar a entrega (NR-06 item 6.7).
+      if (inserted?.id) {
+        setSignCollect({ deliveryId: inserted.id, item: inserted.item ?? "EPI", retro: false });
+      }
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  // Persiste a assinatura (nova ou retroativa) na linha da entrega.
+  const saveSignature = useMutation({
+    mutationFn: async (payload: { deliveryId: string; dataUrl: string; retro: boolean }) => {
+      const { error } = await supabase
+        .from("epi_deliveries")
+        .update({
+          assinatura_snapshot: payload.dataUrl,
+          assinatura_data: new Date().toISOString(),
+        } as any)
+        .eq("id", payload.deliveryId);
+      if (error) throw error;
+      return payload.retro;
+    },
+    onSuccess: (retro) => {
+      qc.invalidateQueries({ queryKey: ["epis", empId] });
+      toast.success(retro ? "Assinatura registrada (retroativa)" : "Assinatura do funcionário registrada");
     },
     onError: (e: any) => toast.error(e.message),
   });
