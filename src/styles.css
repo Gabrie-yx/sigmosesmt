@@ -1509,15 +1509,14 @@
   position: absolute;
   inset: 0;
   display: flex;
-  align-items: flex-end;
   justify-content: center;
-  padding-bottom: 2px;
+  overflow: hidden;
   background: linear-gradient(180deg, #2a2a2e 0%, #1a1a1e 100%);
   backface-visibility: hidden;
-  overflow: hidden;
 }
 .ss-digit-flap-back {
   transform: rotateX(180deg);
+  background: linear-gradient(180deg, #1a1a1e 0%, #0e0e12 100%);
 }
 
 /* Dois pontos amarelos entre HH:MM:SS */
