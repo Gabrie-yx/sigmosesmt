@@ -421,84 +421,107 @@ function drawLegendaAssinaturas(doc: jsPDF, p: APRPdfParams) {
   doc.text("Riscos Ambientais - Classificar:", MARGIN + 1.5, y + 4);
   doc.text("Atender a Hierarquia:", MARGIN + colW + 1.5, y + 4);
   doc.setFont("helvetica", "normal").setFontSize(7.5);
-  doc.text("1 – Físico   2 – Químico   3 – Biológico   4 – Ergonômico   5 – Mecânico/Acidentes.", MARGIN + 1.5, y + 9);
+  doc.text("1. Físico  2. Químico  3. Biológico  4. Ergonômico  5. De Acidentes.", MARGIN + 1.5, y + 9);
   doc.text("CA - Controles Administrativos / EPC - Equipamentos de Proteção Coletivas /", MARGIN + colW + 1.5, y + 8);
   doc.text("EPI - Equipamentos de Proteção Individual.", MARGIN + colW + 1.5, y + 11.5);
   y += blockH;
 
-  // Avaliação do risco — escala P+S
-  doc.rect(MARGIN, y, 50, 16);
-  doc.setFont("helvetica", "bold").setFontSize(8);
-  doc.text("AVALIAÇÃO DO RISCO", MARGIN + 25, y + 9, { align: "center" });
+  // ==================================================================
+  // AVALIAÇÃO DO RISCO — layout ORIGINAL SIGMO (tudo em uma linha)
+  // AVAL | PROBABILIDADE (3 pills) | SEVERIDADE (3 pills) | GRAU DO RISCO (5 pills)
+  // ==================================================================
+  const AVAL_W = 30;
+  const RIGHT_W = CONTENT_W - AVAL_W;
+  // 3 + 3 + 5 = 11 pills à direita
+  const unit = RIGHT_W / 11;
+  const probW = unit * 3;
+  const sevW = unit * 3;
+  const grauW = unit * 5;
+  const HEADER_H = 5;
+  const PILL_H = 8;
+  const TOTAL_H = HEADER_H + PILL_H;
 
-  const subW = (CONTENT_W - 50) / 2;
-  // PROBABILIDADE
-  doc.rect(MARGIN + 50, y, subW, 5);
-  doc.setFontSize(7).setFont("helvetica", "bold");
-  doc.text("PROBABILIDADE (FREQUÊNCIA)", MARGIN + 50 + subW / 2, y + 3.5, { align: "center" });
-  // SEVERIDADE
-  doc.rect(MARGIN + 50 + subW, y, subW, 5);
-  doc.text("SEVERIDADE (IMPACTO)", MARGIN + 50 + subW + subW / 2, y + 3.5, { align: "center" });
-
-  // sub-células P (Baixa/Média/Alta)
-  const pillW = subW / 3;
-  const pills = [
-    { l: "BAIXA (1)", c: [16, 185, 129] },
-    { l: "MÉDIA (2)", c: [234, 179, 8] },
-    { l: "ALTA (3)", c: [220, 38, 38] },
-  ];
-  pills.forEach((pl, i) => {
-    doc.setFillColor(pl.c[0], pl.c[1], pl.c[2]);
-    doc.rect(MARGIN + 50 + i * pillW, y + 5, pillW, 11, "F");
-    doc.rect(MARGIN + 50 + i * pillW, y + 5, pillW, 11);
-    doc.setTextColor(255, 255, 255).setFont("helvetica", "bold").setFontSize(8);
-    doc.text(pl.l, MARGIN + 50 + i * pillW + pillW / 2, y + 11, { align: "center" });
-  });
-  pills.forEach((pl, i) => {
-    doc.setFillColor(pl.c[0], pl.c[1], pl.c[2]);
-    doc.rect(MARGIN + 50 + subW + i * pillW, y + 5, pillW, 11, "F");
-    doc.rect(MARGIN + 50 + subW + i * pillW, y + 5, pillW, 11);
-    doc.text(pl.l, MARGIN + 50 + subW + i * pillW + pillW / 2, y + 11, { align: "center" });
-  });
+  // AVALIAÇÃO DO RISCO — célula preta com texto branco (fusão vertical)
+  doc.setFillColor(0, 0, 0);
+  doc.rect(MARGIN, y, AVAL_W, TOTAL_H, "F");
+  doc.rect(MARGIN, y, AVAL_W, TOTAL_H);
+  doc.setTextColor(255, 255, 255).setFont("helvetica", "bold").setFontSize(7.5);
+  doc.text("AVALIAÇÃO", MARGIN + AVAL_W / 2, y + TOTAL_H / 2 - 1, { align: "center" });
+  doc.text("DO RISCO", MARGIN + AVAL_W / 2, y + TOTAL_H / 2 + 2.5, { align: "center" });
   doc.setTextColor(0, 0, 0);
-  y += 16;
 
-  // Grau do risco — somatório P+S
-  doc.setFillColor(245, 245, 245);
-  doc.rect(MARGIN, y, CONTENT_W, 5, "F");
-  doc.rect(MARGIN, y, CONTENT_W, 5);
-  doc.setFont("helvetica", "bold").setFontSize(8);
-  doc.text("GRAU DO RISCO: (SOMATÓRIO DA PROBABILIDADE + SEVERIDADE)", MARGIN + CONTENT_W / 2, y + 3.5, { align: "center" });
-  y += 5;
-  const graus = [
-    { v: 2, l: "TRIVIAL", c: [16, 185, 129] },
-    { v: 3, l: "TOLERÁVEL", c: [132, 204, 22] },
-    { v: 4, l: "MODERADO", c: [234, 179, 8] },
-    { v: 5, l: "SUBSTANCIAL", c: [249, 115, 22] },
-    { v: 6, l: "INACEITÁVEL", c: [220, 38, 38] },
+  // Cabeçalhos pretos: PROBABILIDADE | SEVERIDADE | GRAU DO RISCO
+  const xProb = MARGIN + AVAL_W;
+  const xSev = xProb + probW;
+  const xGrau = xSev + sevW;
+  doc.setFillColor(0, 0, 0);
+  doc.rect(xProb, y, probW, HEADER_H, "F");
+  doc.rect(xSev, y, sevW, HEADER_H, "F");
+  doc.rect(xGrau, y, grauW, HEADER_H, "F");
+  doc.setTextColor(255, 255, 255).setFont("helvetica", "bold").setFontSize(7);
+  doc.text("PROBABILIDADE (FREQUÊNCIA)", xProb + probW / 2, y + 3.4, { align: "center" });
+  doc.text("SEVERIDADE (IMPACTO)", xSev + sevW / 2, y + 3.4, { align: "center" });
+  doc.setFontSize(6.5);
+  doc.text("GRAU DO RISCO (SOMATÓRIO DA PROBABILIDADE + SEVERIDADE)", xGrau + grauW / 2, y + 3.4, { align: "center" });
+  doc.setTextColor(0, 0, 0);
+
+  // Pills PROBABILIDADE e SEVERIDADE (3 cada: BAIXA/MÉDIA/ALTA)
+  const psPills = [
+    { l: "BAIXA (1)", c: [16, 185, 129], white: true },
+    { l: "MÉDIA (2)", c: [234, 179, 8], white: false },
+    { l: "ALTA (3)", c: [220, 38, 38], white: true },
   ];
-  const gw = CONTENT_W / 5;
+  const psY = y + HEADER_H;
+  const psW = unit;
+  psPills.forEach((pl, i) => {
+    // Probabilidade
+    doc.setFillColor(pl.c[0], pl.c[1], pl.c[2]);
+    doc.rect(xProb + i * psW, psY, psW, PILL_H, "F");
+    doc.rect(xProb + i * psW, psY, psW, PILL_H);
+    // Severidade
+    doc.setFillColor(pl.c[0], pl.c[1], pl.c[2]);
+    doc.rect(xSev + i * psW, psY, psW, PILL_H, "F");
+    doc.rect(xSev + i * psW, psY, psW, PILL_H);
+    doc.setTextColor(pl.white ? 255 : 0, pl.white ? 255 : 0, pl.white ? 255 : 0);
+    doc.setFont("helvetica", "bold").setFontSize(8);
+    doc.text(pl.l, xProb + i * psW + psW / 2, psY + PILL_H / 2 + 1.5, { align: "center" });
+    doc.text(pl.l, xSev + i * psW + psW / 2, psY + PILL_H / 2 + 1.5, { align: "center" });
+  });
+
+  // Pills GRAU DO RISCO (5): TRIVIAL/TOLERÁVEL verde, MODERADO/SUBSTANCIAL amarelo, INACEITÁVEL vermelho
+  const graus = [
+    { v: 2, l: "TRIVIAL", c: [16, 185, 129], white: true },
+    { v: 3, l: "TOLERÁVEL", c: [16, 185, 129], white: true },
+    { v: 4, l: "MODERADO", c: [234, 179, 8], white: false },
+    { v: 5, l: "SUBSTANCIAL", c: [234, 179, 8], white: false },
+    { v: 6, l: "INACEITÁVEL", c: [220, 38, 38], white: true },
+  ];
+  const gPillW = unit;
   graus.forEach((g, i) => {
     doc.setFillColor(g.c[0], g.c[1], g.c[2]);
-    doc.rect(MARGIN + i * gw, y, gw, 8, "F");
-    doc.rect(MARGIN + i * gw, y, gw, 8);
-    doc.setTextColor(g.v >= 4 ? 255 : 0, g.v >= 4 ? 255 : 0, g.v >= 4 ? 255 : 0);
-    doc.setFont("helvetica", "bold").setFontSize(9);
-    doc.text(`${g.v} = ${g.l}`, MARGIN + i * gw + gw / 2, y + 5.5, { align: "center" });
+    doc.rect(xGrau + i * gPillW, psY, gPillW, PILL_H, "F");
+    doc.rect(xGrau + i * gPillW, psY, gPillW, PILL_H);
+    doc.setTextColor(g.white ? 255 : 0, g.white ? 255 : 0, g.white ? 255 : 0);
+    doc.setFont("helvetica", "bold").setFontSize(7);
+    doc.text(`${g.v} = ${g.l}`, xGrau + i * gPillW + gPillW / 2, psY + PILL_H / 2 + 1.5, { align: "center" });
   });
   doc.setTextColor(0, 0, 0);
-  y += 12;
+  y += TOTAL_H;
 
-  // Frase de segurança em vermelho
-  doc.setFont("helvetica", "bold").setFontSize(8.5).setTextColor(220, 38, 38);
+  // Frase de segurança em vermelho, com moldura vermelha
+  const fraseH = 8;
+  doc.setDrawColor(220, 38, 38).setLineWidth(0.5);
+  doc.rect(MARGIN, y, CONTENT_W, fraseH);
+  doc.setDrawColor(0, 0, 0).setLineWidth(0.3);
+  doc.setFont("helvetica", "bolditalic").setFontSize(9).setTextColor(220, 38, 38);
   doc.text(
-    "“NENHUM TRABALHO É TÃO URGENTE OU IMPORTANTE QUE NÃO POSSA SER PLANEJADO E EXECUTADO COM SEGURANÇA”",
+    '"NENHUM TRABALHO É TÃO URGENTE OU IMPORTANTE QUE NÃO POSSA SER PLANEJADO E EXECUTADO COM SEGURANÇA"',
     PAGE_W / 2,
-    y + 4,
+    y + fraseH / 2 + 1.5,
     { align: "center" },
   );
   doc.setTextColor(0, 0, 0);
-  y += 7;
+  y += fraseH + 3;
 
   // Cabeçalho "RELAÇÃO DOS ENVOLVIDOS:"
   doc.setLineWidth(0.3);
