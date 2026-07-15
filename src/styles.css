@@ -1433,16 +1433,14 @@
   text-shadow: 0 2px 4px rgba(0,0,0,0.8);
 }
 
-/* Metade de cima estática */
+/* Metade de cima estática — mostra o TOPO do glyph */
 .ss-digit-top {
   position: absolute;
   inset: 0 0 50% 0;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding-bottom: 2px;
-  background: linear-gradient(180deg, #2a2a2e 0%, #1a1a1e 100%);
   overflow: hidden;
+  background: linear-gradient(180deg, #2a2a2e 0%, #1a1a1e 100%);
+  display: flex;
+  justify-content: center;
 }
 .ss-digit-top::after {
   content: '';
@@ -1450,27 +1448,34 @@
   inset: 0;
   background: linear-gradient(180deg, rgba(255,255,255,0.06), transparent 60%);
   pointer-events: none;
+  z-index: 1;
 }
-
-/* Metade de baixo estática */
+/* Metade de baixo estática — mostra a BASE do glyph */
 .ss-digit-bottom {
   position: absolute;
   inset: 50% 0 0 0;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding-top: 2px;
-  background: linear-gradient(180deg, #1a1a1e 0%, #0e0e12 100%);
   overflow: hidden;
-  transform: translateY(-50%);
-  line-height: 1;
+  background: linear-gradient(180deg, #1a1a1e 0%, #0e0e12 100%);
+  display: flex;
+  justify-content: center;
 }
-/* Truque: mostrar só a metade de baixo do glyph */
-.ss-digit-bottom {
-  transform: none;
-  padding-top: 0;
+
+/* Glyph — sempre altura total (104px) para as duas metades mostrarem o pedaço certo */
+.ss-glyph {
+  display: block;
+  height: 104px;
+  line-height: 104px;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
 }
-.ss-digit-bottom > * { }
+.ss-digit-bottom .ss-glyph {
+  margin-top: -52px;  /* empurra pra cima pra mostrar só a base */
+}
+.ss-digit-flap-back .ss-glyph-bottom {
+  margin-top: -52px;
+}
 
 /* Linha central da "dobradiça" */
 .ss-digit-hinge {
