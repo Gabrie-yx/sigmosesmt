@@ -465,7 +465,7 @@ function drawLegendaAssinaturas(doc: jsPDF, p: APRPdfParams) {
   const headerH = 6;
 
   // Header
-  doc.setFillColor(219, 234, 247);
+  doc.setFillColor(C_TBL_HEAD[0], C_TBL_HEAD[1], C_TBL_HEAD[2]);
   doc.rect(MARGIN, y, colLeftW, headerH, "F");
   doc.rect(MARGIN + colLeftW, y, colRightW, headerH, "F");
   doc.rect(MARGIN, y, colLeftW, headerH);
