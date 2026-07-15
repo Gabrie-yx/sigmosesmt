@@ -472,6 +472,11 @@ function drawLegendaAssinaturas(doc: jsPDF, p: APRPdfParams) {
   doc.text("GRAU DO RISCO (SOMATÓRIO DA PROBABILIDADE + SEVERIDADE)", xGrau + grauW / 2, y + HEADER_H / 2 + 1.2, { align: "center" });
   doc.setTextColor(0, 0, 0);
 
+  // Linha vertical preta dividindo PROBABILIDADE | SEVERIDADE (header + pills)
+  doc.setDrawColor(0, 0, 0).setLineWidth(0.6);
+  doc.line(xSev, y, xSev, y + TOTAL_H);
+  doc.setLineWidth(0.2);
+
   // Pills PROBABILIDADE e SEVERIDADE (3 cada: BAIXA/MÉDIA/ALTA)
   const psPills = [
     { l: "BAIXA (1)", c: [16, 185, 129], white: true },
