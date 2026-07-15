@@ -1257,18 +1257,22 @@
 }
 
 .pdf-dialog {
-  background: #ffffff !important;
-  color: rgb(15 23 42) !important;
-  border-color: rgb(226 232 240) !important;
-  backdrop-filter: none !important;
+  /* Chrome do dialog (header/sidebar/footer) segue o tema escuro SIGMO.
+     Apenas a área da folha (canvas / page image) fica branca — abaixo. */
+  background: linear-gradient(180deg, #1a0608 0%, #0f0405 100%) !important;
+  color: rgb(245 225 225 / 0.92) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+  backdrop-filter: blur(14px) !important;
 }
 .pdf-dialog.dialog-glass-shine::after {
   display: none !important;
 }
 .pdf-dialog .bg-slate-200 {
-  background-color: rgb(226 232 240) !important;
+  /* fundo do scroller onde as páginas ficam apoiadas — cinza-vinho escuro */
+  background-color: rgba(0, 0, 0, 0.35) !important;
 }
 .pdf-dialog .bg-white {
+  /* preserva o BRANCO real só para a folha do PDF (canvas / img da página) */
   background-color: #ffffff !important;
   backdrop-filter: none !important;
 }

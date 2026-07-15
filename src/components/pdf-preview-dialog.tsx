@@ -142,29 +142,29 @@ export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="pdf-dialog light-paper max-w-6xl w-[95vw] h-[90vh] flex flex-col bg-white text-slate-900 border-slate-200 shadow-2xl">
+      <DialogContent className="pdf-dialog max-w-6xl w-[95vw] h-[90vh] flex flex-col text-foreground shadow-2xl">
         <DialogHeader>
-          <DialogTitle>{title ?? "Visualizar PDF"} — {fileName}</DialogTitle>
+          <DialogTitle className="text-foreground">{title ?? "Visualizar PDF"} — {fileName}</DialogTitle>
         </DialogHeader>
         {signable && (
-          <div className="flex flex-wrap items-center gap-2 rounded p-2 text-xs border border-rose-900/40 bg-gradient-to-r from-[#1a0510] via-[#2a0814] to-[#1a0510] text-rose-100">
-            <span className="font-bold uppercase tracking-wide text-rose-300/80">Assinaturas:</span>
+          <div className="flex flex-wrap items-center gap-2 rounded p-2 text-xs border border-red-500/30 bg-red-500/10 text-foreground">
+            <span className="font-bold uppercase tracking-wide text-red-200/90">Assinaturas:</span>
             {([
               onChangeEngSig ? { label: signatureLabels?.eng ?? "Engenheiro", val: engSig ?? null, set: onChangeEngSig } : null,
               { label: signatureLabels?.sesmt ?? "SESMT", val: sesmtSig ?? null, set: onChangeSesmtSig },
               { label: signatureLabels?.enc ?? "Encarregado", val: encSig ?? null, set: onChangeEncSig },
             ].filter(Boolean) as Array<{ label: string; val: string | null; set: ((v: string | null) => void) | undefined }>).map((s) => (
               <div key={s.label} className="flex items-center gap-1.5">
-                <span className="text-rose-200/80">{s.label}:</span>
+                <span className="text-muted-foreground">{s.label}:</span>
                 {s.val ? (
                   <>
-                    <img src={s.val} alt={s.label} className="h-7 border border-rose-900/40 bg-white object-contain px-1 rounded" />
-                    <Button type="button" variant="ghost" size="sm" className="text-rose-200 hover:text-rose-50 hover:bg-rose-900/40" onClick={() => s.set?.(null)}>
+                    <img src={s.val} alt={s.label} className="h-7 border border-white/15 bg-white object-contain px-1 rounded" />
+                    <Button type="button" variant="ghost" size="sm" className="text-foreground hover:bg-accent hover:text-accent-foreground" onClick={() => s.set?.(null)}>
                       <X className="h-3.5 w-3.5" />
                     </Button>
                   </>
                 ) : (
-                  <Button type="button" variant="outline" size="sm" className="border-rose-500/50 bg-rose-950/40 text-rose-100 hover:bg-rose-900/60 hover:text-rose-50" onClick={() => s.set && pickSignature(s.set)}>
+                  <Button type="button" variant="outline" size="sm" className="border-red-500/40 bg-red-500/10 text-foreground hover:bg-red-500/20" onClick={() => s.set && pickSignature(s.set)}>
                     <PenLine className="h-3.5 w-3.5 mr-1" />Assinar
                   </Button>
                 )}
@@ -172,7 +172,7 @@ export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable
             ))}
           </div>
         )}
-        <div className="flex-1 min-h-0 border rounded overflow-y-auto bg-slate-200">
+        <div className="flex-1 min-h-0 border border-white/10 rounded overflow-y-auto bg-slate-200">
           {loadError ? (
             <div className="h-full flex items-center justify-center text-sm text-destructive px-6 text-center">
               Não foi possível exibir a pré-visualização ({loadError}). Use "Baixar PDF" para abrir o arquivo.
@@ -184,7 +184,7 @@ export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable
                   key={i}
                   src={p}
                   alt={`Página ${i + 1}`}
-                  className="w-full max-w-[860px] bg-white shadow-md border border-slate-300"
+                  className="w-full max-w-[860px] bg-white shadow-lg ring-1 ring-black/20"
                 />
               ))}
             </div>
@@ -197,7 +197,7 @@ export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}><X className="h-4 w-4 mr-1" />Fechar</Button>
           {onRequestSign && (
-            <Button variant="outline" onClick={onRequestSign} className="border-rose-300 text-rose-700 hover:bg-rose-50">
+            <Button variant="outline" onClick={onRequestSign} className="border-red-500/40 bg-red-500/10 text-foreground hover:bg-red-500/20">
               <PenLine className="h-4 w-4 mr-1" />{hasSignature ? "Refazer assinatura" : "Assinar agora"}
             </Button>
           )}
