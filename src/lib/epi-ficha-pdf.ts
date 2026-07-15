@@ -17,6 +17,8 @@ type EpiRow = {
   data_entrega?: string | null;
   data_devolucao?: string | null;
   observacoes?: string | null;
+  assinatura_snapshot?: string | null;
+  assinatura_data?: string | null;
 };
 
 function brDate(s?: string | null) {
@@ -201,18 +203,56 @@ export function buildEpiFichaPdf(opts: {
   const targetRows = 22;
   while (body.length < targetRows) body.push(["", "", "", "", "", "", "", "", ""]);
 
+  // Row-indexed signature data (for didDrawCell) — pad rows have no signature.
+  const rowSignatures: Array<{ img: string | null; when: string | null }> = epis.map((e) => ({
+    img: e.assinatura_snapshot ?? null,
+    when: e.assinatura_data ?? null,
+  }));
+  while (rowSignatures.length < targetRows) rowSignatures.push({ img: null, when: null });
+  const hasAnySig = rowSignatures.some((r) => !!r.img);
+
   autoTable(doc, {
     startY: y2,
     head,
     body,
     theme: "grid",
     margin: { left: M, right: M },
-    styles: { fontSize: 8, halign: "center", valign: "middle", lineColor: [0, 0, 0], lineWidth: 0.2, minCellHeight: 6 },
+    styles: { fontSize: 8, halign: "center", valign: "middle", lineColor: [0, 0, 0], lineWidth: 0.2, minCellHeight: hasAnySig ? 14 : 6 },
     headStyles: { fillColor: [220, 230, 241], textColor: 0, fontStyle: "bold", lineWidth: 0.2 },
     columnStyles: {
       0: { cellWidth: 14 }, 1: { cellWidth: 14 }, 2: { cellWidth: 65, halign: "left" },
       3: { cellWidth: 22 }, 4: { cellWidth: 55 }, 5: { cellWidth: 22 },
       6: { cellWidth: 30 }, 7: { cellWidth: 22 }, 8: { cellWidth: 35 },
+    },
+    didDrawCell: (data) => {
+      if (data.section !== "body" || data.column.index !== 4) return;
+      const sig = rowSignatures[data.row.index];
+      if (!sig || !sig.img) return;
+      try {
+        const cell = data.cell;
+        const pad = 1.2;
+        const maxW = cell.width - pad * 2;
+        const maxH = Math.max(6, cell.height - 4); // reserva ~4mm para a data embaixo
+        // Preserva proporção estimada 3:1 (assinatura larga e baixa)
+        let imgW = maxW;
+        let imgH = imgW / 3;
+        if (imgH > maxH) { imgH = maxH; imgW = imgH * 3; }
+        const imgX = cell.x + (cell.width - imgW) / 2;
+        const imgY = cell.y + pad;
+        doc.addImage(sig.img, "PNG", imgX, imgY, imgW, imgH);
+        if (sig.when) {
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(6);
+          doc.setTextColor(80);
+          doc.text(
+            brDate(sig.when),
+            cell.x + cell.width / 2,
+            cell.y + cell.height - 1.2,
+            { align: "center" },
+          );
+          doc.setTextColor(0);
+        }
+      } catch { /* imagem inválida — ignora, mantém célula vazia */ }
     },
   });
 
