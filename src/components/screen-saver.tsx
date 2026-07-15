@@ -73,23 +73,38 @@ export function ScreenSaver() {
       return;
     }
     let timer: ReturnType<typeof setTimeout>;
-    const reset = () => {
+    const armTimer = () => {
       clearTimeout(timer);
-      if (idleRef.current) {
-        idleRef.current = false;
-        setIdle(false);
-      }
       timer = setTimeout(() => {
         idleRef.current = true;
         setIdle(true);
       }, IDLE_MS);
     };
-    const events = ["mousemove", "mousedown", "keydown", "scroll", "touchstart", "wheel"];
-    events.forEach((e) => window.addEventListener(e, reset, { passive: true }));
-    reset();
+    // Enquanto NÃO está ocioso: qualquer atividade reinicia a contagem.
+    // Quando fica ocioso, só o ESC dispensa o screensaver.
+    const onActivity = () => {
+      if (idleRef.current) return;
+      armTimer();
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (idleRef.current) {
+        if (e.key === "Escape") {
+          idleRef.current = false;
+          setIdle(false);
+          armTimer();
+        }
+        return;
+      }
+      armTimer();
+    };
+    const activityEvents = ["mousemove", "mousedown", "scroll", "touchstart", "wheel"];
+    activityEvents.forEach((ev) => window.addEventListener(ev, onActivity, { passive: true }));
+    window.addEventListener("keydown", onKey);
+    armTimer();
     return () => {
       clearTimeout(timer);
-      events.forEach((e) => window.removeEventListener(e, reset));
+      activityEvents.forEach((ev) => window.removeEventListener(ev, onActivity));
+      window.removeEventListener("keydown", onKey);
     };
   }, [optedOut]);
 
@@ -149,7 +164,7 @@ export function ScreenSaver() {
             <SplitFlapGroup text={yy} />
           </div>
         </div>
-        <div className="ss-hint">Mova o mouse ou toque em qualquer tecla para continuar</div>
+        <div className="ss-hint">Pressione ESC para continuar</div>
       </div>
     </div>
   );
