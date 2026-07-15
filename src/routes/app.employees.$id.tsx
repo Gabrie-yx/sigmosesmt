@@ -3266,6 +3266,30 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
           />
         </Suspense>
       )}
+      {signCollect && (
+        <Suspense fallback={null}>
+          <SignaturePadDialog
+            open={!!signCollect}
+            onClose={() => setSignCollect(null)}
+            onConfirm={(r) => {
+              const target = signCollect;
+              setSignCollect(null);
+              if (target) {
+                saveSignature.mutate({
+                  deliveryId: target.deliveryId,
+                  dataUrl: r.dataUrl,
+                  retro: target.retro,
+                });
+              }
+            }}
+            title={
+              signCollect.retro
+                ? `Coletar assinatura (retroativa) — ${signCollect.item}`
+                : `Assinatura do funcionário — ${signCollect.item}`
+            }
+          />
+        </Suspense>
+      )}
     </div>
   );
 }
