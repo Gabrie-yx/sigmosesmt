@@ -820,7 +820,7 @@ async function loadMedItemsForPdf(reqId: string) {
 }
 
 function MedPdfBtns({ req }: { req: Req }) {
-  const [previewDoc, setPreviewDoc] = useState<import("jspdf").default | null>(null);
+  const [previewDoc, setPreviewDoc] = useState<jsPDF | null>(null);
   const [busy, setBusy] = useState<null | "pdf">(null);
 
   async function build() {
