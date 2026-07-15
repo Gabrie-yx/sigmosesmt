@@ -421,11 +421,12 @@ function drawLegendaAssinaturas(doc: jsPDF, p: APRPdfParams) {
   doc.text("Riscos Ambientais - Classificar:", MARGIN + colW / 2, y + 6, { align: "center" });
   doc.setFont("helvetica", "bold").setFontSize(10.5);
   doc.text("1. Físico / 2. Químico / 3. Biológico / 4. Ergonômico / 5. De Acidentes.", MARGIN + colW / 2, y + 13, { align: "center" });
-  doc.setFont("helvetica", "bold").setFontSize(8);
-  doc.text("Atender a Hierarquia:", MARGIN + colW + 1.5, y + 4);
-  doc.setFont("helvetica", "normal").setFontSize(7.5);
-  doc.text("CA - Controles Administrativos / EPC - Equipamentos de Proteção Coletivas /", MARGIN + colW + 1.5, y + 8);
-  doc.text("EPI - Equipamentos de Proteção Individual.", MARGIN + colW + 1.5, y + 11.5);
+  const cxR = MARGIN + colW + colW / 2;
+  doc.setFont("helvetica", "bold").setFontSize(10);
+  doc.text("Atender a Hierarquia:", cxR, y + 5, { align: "center" });
+  doc.setFont("helvetica", "bold").setFontSize(9.5);
+  doc.text("CA - Controles Administrativos / EPC - Equipamentos de Proteção Coletivas /", cxR, y + 10, { align: "center" });
+  doc.text("EPI - Equipamentos de Proteção Individual.", cxR, y + 14, { align: "center" });
   y += blockH;
 
   // ==================================================================
