@@ -1358,3 +1358,203 @@
   0%, 100% { box-shadow: 0 0 8px -2px rgba(244,63,94,0.35); }
   50%      { box-shadow: 0 0 16px -1px rgba(244,63,94,0.7); }
 }
+
+/* ============================================================
+ * SCREEN SAVER — Split-Flap Clock (estilo painel de aeroporto)
+ * ============================================================ */
+.ss-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  background: radial-gradient(ellipse at center, rgba(10,10,14,0.92) 0%, rgba(0,0,0,0.98) 100%);
+  backdrop-filter: blur(6px) saturate(120%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: ss-fade-in 500ms ease-out;
+  cursor: none;
+}
+@keyframes ss-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.ss-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  padding: 40px 56px;
+  user-select: none;
+}
+
+.ss-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 20px;
+}
+.ss-row-date { gap: 32px; }
+
+.ss-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.ss-label {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  color: rgba(255,255,255,0.55);
+  text-transform: uppercase;
+}
+
+/* Dígito individual — placa dupla com dobradiça central */
+.ss-digit {
+  position: relative;
+  width: 72px;
+  height: 104px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #2a2a2e 0%, #1a1a1e 50%, #1a1a1e 50%, #0e0e12 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    inset 0 -1px 0 rgba(0,0,0,0.6),
+    0 4px 12px rgba(0,0,0,0.6),
+    0 0 0 1px rgba(0,0,0,0.8);
+  overflow: hidden;
+  perspective: 400px;
+  font-family: 'Inter', 'Helvetica Neue', sans-serif;
+  font-weight: 800;
+  font-size: 68px;
+  color: #f5f5f7;
+  line-height: 1;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+}
+
+/* Metade de cima estática */
+.ss-digit-top {
+  position: absolute;
+  inset: 0 0 50% 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 2px;
+  background: linear-gradient(180deg, #2a2a2e 0%, #1a1a1e 100%);
+  overflow: hidden;
+}
+.ss-digit-top::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), transparent 60%);
+  pointer-events: none;
+}
+
+/* Metade de baixo estática */
+.ss-digit-bottom {
+  position: absolute;
+  inset: 50% 0 0 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 2px;
+  background: linear-gradient(180deg, #1a1a1e 0%, #0e0e12 100%);
+  overflow: hidden;
+  transform: translateY(-50%);
+  line-height: 1;
+}
+/* Truque: mostrar só a metade de baixo do glyph */
+.ss-digit-bottom {
+  transform: none;
+  padding-top: 0;
+}
+.ss-digit-bottom > * { }
+
+/* Linha central da "dobradiça" */
+.ss-digit-hinge {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 2px;
+  transform: translateY(-1px);
+  background: linear-gradient(180deg, rgba(0,0,0,0.9), rgba(0,0,0,0.6));
+  box-shadow: 0 1px 0 rgba(255,255,255,0.04);
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* Flap animado (metade de cima que gira pra baixo) */
+.ss-digit-flap {
+  position: absolute;
+  inset: 0 0 50% 0;
+  transform-origin: bottom;
+  transform: rotateX(0deg);
+  transition: transform 250ms cubic-bezier(0.55, 0.05, 0.5, 1);
+  z-index: 2;
+  pointer-events: none;
+}
+.ss-digit-flap.ss-flipping {
+  transform: rotateX(-90deg);
+}
+.ss-digit-flap-front,
+.ss-digit-flap-back {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 2px;
+  background: linear-gradient(180deg, #2a2a2e 0%, #1a1a1e 100%);
+  backface-visibility: hidden;
+  overflow: hidden;
+}
+.ss-digit-flap-back {
+  transform: rotateX(180deg);
+}
+
+/* Dois pontos amarelos entre HH:MM:SS */
+.ss-colon {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 18px;
+  height: 104px;
+  padding-top: 22px; /* alinhar com dígitos (compensar label acima) */
+}
+.ss-colon span {
+  display: block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #f5c518;
+  box-shadow: 0 0 12px rgba(245,197,24,0.6);
+  opacity: 0.25;
+  transition: opacity 200ms;
+}
+.ss-colon.on span { opacity: 1; }
+
+.ss-hint {
+  margin-top: 8px;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+  animation: ss-hint-pulse 2.4s ease-in-out infinite;
+}
+@keyframes ss-hint-pulse {
+  0%, 100% { opacity: 0.35; }
+  50%      { opacity: 0.75; }
+}
+
+@media (max-width: 640px) {
+  .ss-digit { width: 44px; height: 68px; font-size: 44px; }
+  .ss-colon { height: 68px; gap: 12px; padding-top: 22px; }
+  .ss-colon span { width: 8px; height: 8px; }
+  .ss-panel { padding: 24px; gap: 24px; }
+  .ss-row { gap: 10px; }
+  .ss-row-date { gap: 18px; }
+}
