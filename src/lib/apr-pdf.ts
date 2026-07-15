@@ -467,14 +467,16 @@ function drawLegendaAssinaturas(doc: jsPDF, p: APRPdfParams) {
   // SEVERIDADE em 2 linhas
   doc.text("SEVERIDADE", xSev + sevW / 2, y + 3.2, { align: "center" });
   doc.text("(IMPACTO)", xSev + sevW / 2, y + 6.4, { align: "center" });
-  // GRAU DO RISCO — mantém 1 linha, centralizado verticalmente
+  // GRAU DO RISCO em 2 linhas (título + subtítulo)
+  doc.text("GRAU DO RISCO", xGrau + grauW / 2, y + 3.2, { align: "center" });
   doc.setFontSize(6.5);
-  doc.text("GRAU DO RISCO (SOMATÓRIO DA PROBABILIDADE + SEVERIDADE)", xGrau + grauW / 2, y + HEADER_H / 2 + 1.2, { align: "center" });
+  doc.text("(SOMATÓRIO DA PROBABILIDADE + SEVERIDADE)", xGrau + grauW / 2, y + 6.4, { align: "center" });
   doc.setTextColor(0, 0, 0);
 
-  // Linha vertical preta dividindo PROBABILIDADE | SEVERIDADE (header + pills)
+  // Linhas verticais pretas dividindo PROBABILIDADE | SEVERIDADE | GRAU DO RISCO
   doc.setDrawColor(0, 0, 0).setLineWidth(0.6);
   doc.line(xSev, y, xSev, y + TOTAL_H);
+  doc.line(xGrau, y, xGrau, y + TOTAL_H);
   doc.setLineWidth(0.2);
 
   // Pills PROBABILIDADE e SEVERIDADE (3 cada: BAIXA/MÉDIA/ALTA)
