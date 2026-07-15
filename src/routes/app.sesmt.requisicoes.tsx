@@ -36,6 +36,7 @@ async function loadPdfLibs() {
 import dmnLogo from "@/assets/dmn-logo.png";
 import { EstoqueLookupSheet, type PickedItem } from "@/components/estoque-lookup-sheet";
 import { RequisicaoMedicamentosDialog } from "@/components/sesmt/requisicao-medicamentos-dialog";
+import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import { SignatureGallery } from "@/components/signature-gallery";
 import { Wizard, type WizardStep } from "@/components/wizard";
 import { useDraftAutosave } from "@/hooks/use-draft-autosave";
