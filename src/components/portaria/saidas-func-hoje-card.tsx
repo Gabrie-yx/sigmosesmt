@@ -55,8 +55,8 @@ export function SaidasFuncHojeCard({ limit = 5, showLink = true }: { limit?: num
           <UserCheck className="h-3.5 w-3.5" /> Funcionários que saíram hoje
         </div>
         {showLink && (
-          <Link to="/app/portaria/saidas-hoje" className="text-[10px] font-black uppercase tracking-wider text-primary inline-flex items-center gap-0.5">
-            Ver todas <ChevronRight className="h-3 w-3" />
+          <Link to="/app/portaria/saidas" className="text-[10px] font-black uppercase tracking-wider text-primary inline-flex items-center gap-0.5">
+            Ver painel <ChevronRight className="h-3 w-3" />
           </Link>
         )}
       </div>
