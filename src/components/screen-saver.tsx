@@ -164,7 +164,7 @@ export function ScreenSaver() {
             <SplitFlapGroup text={yy} />
           </div>
         </div>
-        <div className="ss-hint">Mova o mouse ou toque em qualquer tecla para continuar</div>
+        <div className="ss-hint">Pressione ESC para continuar</div>
       </div>
     </div>
   );
