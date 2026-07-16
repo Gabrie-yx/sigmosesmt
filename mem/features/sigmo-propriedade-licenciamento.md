@@ -5,6 +5,8 @@ type: feature
 ---
 **STATUS: BLOQUEANTE — trava migração pro servidor DMN até resolver.**
 
+**ATUALIZAÇÃO 16/07/2026:** Usuário decidiu ir "tudo agora" — migração dos dados operacionais pro servidor interno DMN em paralelo à negociação do contrato. Supabase self-hosted já rodando em 172.18.0.50:8000. Dois documentos preparados em `/mnt/documents/sigmo-proposta-dmn/`: e-mail para Anderson/Henrique/Leianderson + proposta comercial com 3 alternativas (A-Venda R$480k / B-Licenciamento anual R$45k setup + R$8.5k/mês / C-Cessão parcial 40%DMN-60%Autor com royalties + D-contraproposta aberta). Pronto pra reunião.
+
 **Contexto:** Fabiano é Coordenador SESMT (CLT), não desenvolvedor. Construiu SIGMO na conta Lovable pessoal. Por Lei 9.609/98 + CLT art. 4º, software criado fora da função contratada é do autor. Hoje SIGMO é DELE; DMN é usuária.
 
 **Risco se migrar sem contrato:** DMN pode alegar obra por encomenda, demitir e continuar usando, pedir código-fonte, tirar alavanca de negociação.
