@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouterState } from "@tanstack/react-router";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const IDLE_MS = 60_000;
 
@@ -58,12 +59,14 @@ function SplitFlapGroup({ text }: { text: string }) {
 
 export function ScreenSaver() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isMobile = useIsMobile();
   const [idle, setIdle] = useState(false);
   const [now, setNow] = useState(() => new Date());
   const [colonOn, setColonOn] = useState(true);
   const idleRef = useRef(false);
 
-  const optedOut = OPT_OUT_PREFIXES.some((p) => pathname.startsWith(p));
+  const optedOut =
+    isMobile || OPT_OUT_PREFIXES.some((p) => pathname.startsWith(p));
 
   // Timer de inatividade: reset em qualquer evento de atividade.
   useEffect(() => {
