@@ -40,6 +40,9 @@ type Row = {
   status: "PENDENTE" | "ASSINADA";
   arquivo_path: string | null;
   arquivo_bucket?: "epi-fichas-mensais" | "sesmt-docs" | null;
+  desatualizada?: boolean;
+  ultimaMovimentacao?: number;
+  assinadaEm?: number;
 };
 
 function periodoKey(ano: number, mes: number) {
@@ -68,7 +71,7 @@ export function FichasMensaisPanel({ embedded = false }: { embedded?: boolean })
         supabase.from("roles").select("id, name"),
         supabase
           .from("documentos_assinados")
-          .select("referencia_id, pdf_assinado_path, updated_at")
+          .select("referencia_id, pdf_assinado_path, updated_at, created_at")
           .eq("modulo", "ficha-epi-mensal")
           .order("updated_at", { ascending: false }),
       ]);
@@ -101,15 +104,16 @@ export function FichasMensaisPanel({ embedded = false }: { embedded?: boolean })
       if (!docsMap.has(d.referencia_id)) docsMap.set(d.referencia_id, d);
     }
 
-    const buckets = new Map<string, { emp_id: string; ano: number; mes: number; total: number }>();
+    const buckets = new Map<string, { emp_id: string; ano: number; mes: number; total: number; ultima: number }>();
     for (const e of data.entregas as any[]) {
       if (!e.data_entrega) continue;
       const d = new Date(e.data_entrega);
       if (isNaN(d.getTime())) continue;
       const key = `${e.employee_id}_${d.getFullYear()}_${d.getMonth() + 1}`;
+      const t = d.getTime();
       const b = buckets.get(key);
-      if (b) b.total++;
-      else buckets.set(key, { emp_id: e.employee_id, ano: d.getFullYear(), mes: d.getMonth() + 1, total: 1 });
+      if (b) { b.total++; if (t > b.ultima) b.ultima = t; }
+      else buckets.set(key, { emp_id: e.employee_id, ano: d.getFullYear(), mes: d.getMonth() + 1, total: 1, ultima: t });
     }
 
     const result: Row[] = [];
@@ -123,6 +127,8 @@ export function FichasMensaisPanel({ embedded = false }: { embedded?: boolean })
       const doc = docsMap.get(refKey);
       const assinadoPath = ficha?.arquivo_assinado_path ?? doc?.pdf_assinado_path ?? null;
       const assinadoBucket = ficha?.arquivo_assinado_path ? "epi-fichas-mensais" : (doc ? "sesmt-docs" : null);
+      const assinadaEm = doc ? new Date(doc.updated_at ?? doc.created_at ?? 0).getTime() : 0;
+      const desatualizada = !!assinadoPath && assinadaEm > 0 && b.ultima > assinadaEm;
       result.push({
         employee_id: b.emp_id,
         nome: emp.nome,
@@ -137,6 +143,9 @@ export function FichasMensaisPanel({ embedded = false }: { embedded?: boolean })
         status: assinadoPath ? "ASSINADA" : "PENDENTE",
         arquivo_path: assinadoPath,
         arquivo_bucket: assinadoBucket,
+        desatualizada,
+        ultimaMovimentacao: b.ultima,
+        assinadaEm,
       });
     });
 
@@ -182,8 +191,8 @@ export function FichasMensaisPanel({ embedded = false }: { embedded?: boolean })
 
   const baixarPdf = useMutation({
     mutationFn: async (r: Row) => {
-      // Se já tem ficha assinada, baixa do storage
-      if (r.arquivo_path) {
+      // Se já tem ficha assinada E está atualizada, baixa do storage
+      if (r.arquivo_path && !r.desatualizada) {
         const bucket = r.arquivo_bucket ?? "epi-fichas-mensais";
         const { data, error } = await supabase.storage
           .from(bucket)
@@ -191,6 +200,10 @@ export function FichasMensaisPanel({ embedded = false }: { embedded?: boolean })
         if (error) throw error;
         window.open(data.signedUrl, "_blank");
         return;
+      }
+      // Assinada porém desatualizada → avisa e regenera com todas as entregas do mês
+      if (r.arquivo_path && r.desatualizada) {
+        toast.info("Ficha assinada está desatualizada (novas entregas no mês). Gerando ficha atualizada — assine novamente.");
       }
       // senão gera no modelo homologado (epi-ficha-pdf)
       const epis = await buscarEntregas(r);
@@ -304,16 +317,20 @@ export function FichasMensaisPanel({ embedded = false }: { embedded?: boolean })
                 <TableCell className="text-center">{r.total}</TableCell>
                 <TableCell>
                   {r.status === "ASSINADA" ? (
-                    <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">Assinada (homologada)</Badge>
+                    r.desatualizada ? (
+                      <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100">Assinada (desatualizada — reassinar)</Badge>
+                    ) : (
+                      <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">Assinada (homologada)</Badge>
+                    )
                   ) : (
                     <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100">Pendente</Badge>
                   )}
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-1">
-                    {isEditor && r.status !== "ASSINADA" && (
+                    {isEditor && (r.status !== "ASSINADA" || r.desatualizada) && (
                       <Button size="sm" variant="default" onClick={() => abrirAssinador.mutate(r)} disabled={abrirAssinador.isPending}>
-                        <FileSignature className="h-4 w-4 mr-1" /> Assinar
+                        <FileSignature className="h-4 w-4 mr-1" /> {r.desatualizada ? "Reassinar" : "Assinar"}
                       </Button>
                     )}
                     <Button size="sm" variant="outline" onClick={() => baixarPdf.mutate(r)} disabled={baixarPdf.isPending}>
