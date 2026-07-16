@@ -2642,9 +2642,22 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
       toast.error("Sem entregas registradas — nada a assinar.");
       return;
     }
+    const episAtuais = [...(epis ?? [])].sort((a: any, b: any) => {
+      const da = new Date(a.data_entrega ?? a.created_at ?? 0).getTime();
+      const db = new Date(b.data_entrega ?? b.created_at ?? 0).getTime();
+      return da - db;
+    });
+    const ultimaMovimentacaoEpi = Math.max(
+      ...episAtuais
+        .map((e: any) => Math.max(
+          new Date(e.created_at ?? 0).getTime(),
+          new Date(e.data_entrega ?? 0).getTime(),
+        ))
+        .filter((n) => Number.isFinite(n)),
+    );
     const { data: existing, error: existingErr } = await supabase
       .from("documentos_assinados")
-      .select("id, pdf_assinado_path, nome_arquivo")
+      .select("id, pdf_assinado_path, nome_arquivo, created_at, updated_at")
       .eq("modulo", "ficha-epi")
       .eq("referencia_id", empId)
       .not("pdf_assinado_path", "is", null)
@@ -2655,7 +2668,9 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
       toast.error("Falha ao consultar ficha assinada: " + existingErr.message);
       return;
     }
-    if (existing?.pdf_assinado_path) {
+    const fichaAssinadaEm = existing ? new Date(existing.updated_at ?? existing.created_at ?? 0).getTime() : 0;
+    const fichaAssinadaAtualizada = !!existing?.pdf_assinado_path && fichaAssinadaEm >= ultimaMovimentacaoEpi;
+    if (existing?.pdf_assinado_path && fichaAssinadaAtualizada) {
       setSignerSrc({
         bytes: existing.pdf_assinado_path,
         name: existing.nome_arquivo ?? `Ficha_EPI_${(emp?.nome ?? "colaborador").replace(/\s+/g, "_")}.pdf`,
@@ -2665,10 +2680,13 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
       });
       return;
     }
+    if (existing?.pdf_assinado_path && !fichaAssinadaAtualizada) {
+      toast.info("Ficha assinada antiga encontrada; gerei uma ficha atualizada com todos os EPIs registrados.");
+    }
     if (!docsOk) {
       toast.warning(`Atenção: documentação pendente (${(missingDocs ?? []).join(", ")}). Ficha emitida mesmo assim.`);
     }
-    const doc = buildEpiFichaPdf({ emp, company, role, epis });
+    const doc = buildEpiFichaPdf({ emp, company, role, epis: episAtuais });
     const bytes = new Uint8Array(doc.output("arraybuffer"));
     const fname = `Ficha_EPI_${(emp?.nome ?? "colaborador").replace(/\s+/g, "_")}.pdf`;
     setSignerSrc({ bytes, name: fname, modulo: "ficha-epi", referenciaId: empId });
