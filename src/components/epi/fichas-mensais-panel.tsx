@@ -171,7 +171,7 @@ export function FichasMensaisPanel({ embedded = false }: { embedded?: boolean })
     const last = new Date(r.ano, r.mes, 0).toISOString().slice(0, 10);
     const { data: ents, error } = await supabase
       .from("epi_deliveries")
-      .select("qtd, item, tamanho, ca, data_entrega, data_devolucao, observacoes")
+      .select("qtd, item, tamanho, ca, data_entrega, data_devolucao, observacoes, assinatura_snapshot, assinatura_data")
       .eq("employee_id", r.employee_id)
       .gte("data_entrega", first)
       .lte("data_entrega", last)
