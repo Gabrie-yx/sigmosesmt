@@ -260,7 +260,7 @@ export function DDSFormularioSemanalDialog({ open, onClose }: { open: boolean; o
               {temas.map((t: any) => {
                 const checked = temaIds.includes(t.id);
                 return (
-                  <label key={t.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50 cursor-pointer text-sm">
+                  <label key={t.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-accent hover:text-accent-foreground cursor-pointer text-sm">
                     <Checkbox checked={checked} onCheckedChange={() => setTemaIds(checked ? temaIds.filter((x) => x !== t.id) : [...temaIds, t.id])} />
                     <span className="flex-1 truncate">{t.codigo ? `${t.codigo}. ` : ""}{t.titulo}</span>
                   </label>

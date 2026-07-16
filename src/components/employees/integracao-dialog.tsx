@@ -307,7 +307,7 @@ export function IntegracaoDialog({
                 const checked = sel.has(e.id);
                 const hasSig = !!e.assinatura_url;
                 return (
-                  <label key={e.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50 cursor-pointer text-sm">
+                  <label key={e.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-accent hover:text-accent-foreground cursor-pointer text-sm">
                     <Checkbox checked={checked} onCheckedChange={() => toggle(e.id)} />
                     <span className="flex-1 truncate">{e.nome}</span>
                     <span className="text-[10px] text-muted-foreground truncate max-w-[160px]">{e.companies?.name ?? "—"}</span>

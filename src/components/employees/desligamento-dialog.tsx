@@ -168,7 +168,7 @@ export function DesligamentoDialog({ emp, open, onClose }: Props) {
               <Label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">Checklist de saída</Label>
             <div className="rounded-lg border border-slate-200 divide-y divide-slate-100">
               {CHECKLIST_ITEMS.map((it) => (
-                <label key={it.key} className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-slate-50">
+                <label key={it.key} className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-accent hover:text-accent-foreground">
                   <Checkbox checked={!!checklist[it.key]} onCheckedChange={(v) => setChecklist((c) => ({ ...c, [it.key]: !!v }))} />
                   <span className="text-sm">{it.label}</span>
                 </label>

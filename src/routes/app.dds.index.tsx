@@ -155,7 +155,7 @@ function DDSPage() {
             const t: any = d.tema_id ? temaMap[d.tema_id] : null;
             const g: any = d.gestor_id ? gestorMap[d.gestor_id] : null;
             return (
-              <div key={d.id} className="grid grid-cols-12 px-4 py-2.5 items-center text-sm hover:bg-slate-50">
+              <div key={d.id} className="grid grid-cols-12 px-4 py-2.5 items-center text-sm hover:bg-accent hover:text-accent-foreground">
                 <div className="col-span-2">
                   <div className="font-semibold">{new Date(d.data + "T00:00").toLocaleDateString("pt-BR")}</div>
                   <div className="text-xs text-muted-foreground">{d.hora?.slice(0, 5) ?? ""}</div>
@@ -470,7 +470,7 @@ function DDSDetail({ dds, temaMap, gestorMap }: { dds: DDS; temaMap: any; gestor
             {(allCompanies as any[]).map((c) => {
               const checked = prepCompanyIds.includes(c.id);
               return (
-                <label key={c.id} className="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer text-sm">
+                <label key={c.id} className="flex items-center gap-2 px-3 py-2 hover:bg-accent hover:text-accent-foreground cursor-pointer text-sm">
                   <Checkbox checked={checked} onCheckedChange={() => {
                     const next = new Set(prepCompanyIds);
                     if (checked) next.delete(c.id); else next.add(c.id);
@@ -722,7 +722,7 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
                 {companies.map((c: any) => {
                   const checked = companyIds.includes(c.id);
                   return (
-                    <label key={c.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50 cursor-pointer text-sm">
+                    <label key={c.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-accent hover:text-accent-foreground cursor-pointer text-sm">
                       <Checkbox checked={checked} onCheckedChange={() => setCompanyIds(checked ? companyIds.filter((x) => x !== c.id) : [...companyIds, c.id])} />
                       <span className="flex-1 truncate">{c.name}</span>
                     </label>
@@ -799,7 +799,7 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
                 .map((t) => {
                   const checked = temaIds.includes(t.id);
                   return (
-                    <label key={t.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50 cursor-pointer text-sm">
+                    <label key={t.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-accent hover:text-accent-foreground cursor-pointer text-sm">
                       <Checkbox checked={checked} onCheckedChange={() => setTemaIds(checked ? temaIds.filter((x) => x !== t.id) : [...temaIds, t.id])} />
                       <span className="flex-1 truncate">{t.codigo ? `${t.codigo}. ` : ""}{t.titulo}</span>
                       <Badge variant="outline" className="text-[9px] py-0">{t.criticidade}</Badge>
@@ -840,7 +840,7 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
             <Input placeholder="Buscar funcionário..." value={empSearch} onChange={(e) => setEmpSearch(e.target.value)} className="mb-2" />
             <div className="border rounded max-h-56 overflow-auto divide-y">
               {filteredEmp.map((e) => (
-                <label key={e.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50 cursor-pointer text-sm">
+                <label key={e.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-accent hover:text-accent-foreground cursor-pointer text-sm">
                   <Checkbox checked={presentes.has(e.id)} onCheckedChange={() => toggleEmp(e.id)} />
                   <span className="flex-1">{e.nome}</span>
                   {e.cpf && <span className="text-xs text-muted-foreground">{e.cpf}</span>}
@@ -1014,7 +1014,7 @@ function EditDDSDialog({ open, dds, temas, gestores, onClose, onSaved }: {
                 .map((t) => {
                   const checked = temaIds.includes(t.id);
                   return (
-                    <label key={t.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50 cursor-pointer text-sm">
+                    <label key={t.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-accent hover:text-accent-foreground cursor-pointer text-sm">
                       <Checkbox checked={checked} onCheckedChange={() => setTemaIds(checked ? temaIds.filter((x) => x !== t.id) : [...temaIds, t.id])} />
                       <span className="flex-1 truncate">{t.codigo ? `${t.codigo}. ` : ""}{t.titulo}</span>
                     </label>

@@ -222,7 +222,7 @@ function DDSHistoricoPage() {
                 <div className="mt-2 pl-20 flex flex-wrap gap-1">
                   {evs.map((e: any) => (
                     <button key={e.id} onClick={() => abrir(e.file_path)}
-                      className="text-xs px-2 py-1 border rounded hover:bg-slate-50 flex items-center gap-1">
+                      className="text-xs px-2 py-1 border rounded hover:bg-accent hover:text-accent-foreground flex items-center gap-1">
                       <FileText className="h-3 w-3" />{e.descricao ?? e.file_path.split("/").pop()}
                     </button>
                   ))}
