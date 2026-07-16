@@ -132,7 +132,7 @@ export function DDSAttendeesEditor({
         {filtrados.map((a) => {
           const checked = presentes.has(a.id);
           return (
-            <label key={a.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50 cursor-pointer text-sm">
+            <label key={a.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-accent hover:text-accent-foreground cursor-pointer text-sm">
               <Checkbox checked={checked} onCheckedChange={() => toggle(a.id)} />
               <span className="flex-1 truncate">{a.employees?.nome ?? "—"}</span>
               <span className={`text-[10px] font-bold ${checked ? "text-emerald-600" : "text-red-600"}`}>
@@ -253,7 +253,7 @@ function AddAttendeesDialog({
               {disponiveis.slice(0, 300).map((e) => {
                 const checked = sel.has(e.id);
                 return (
-                  <label key={e.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50 cursor-pointer text-sm">
+                  <label key={e.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-accent hover:text-accent-foreground cursor-pointer text-sm">
                     <Checkbox checked={checked} onCheckedChange={() => toggle(e.id)} />
                     <span className="flex-1 truncate">{e.nome}</span>
                     <span className="text-[10px] text-muted-foreground truncate max-w-[140px]">{e.companies?.name ?? ""}</span>
