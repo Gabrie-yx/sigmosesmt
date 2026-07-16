@@ -520,7 +520,6 @@ function TstPanel() {
   const treinamentosNR = useMemo(() => {
     const courses = ((data as any)?.trainCourses ?? []) as any[];
     const entries = ((data as any)?.trainEntries ?? []) as any[];
-    const totalEmps = (data?.employees ?? []).filter((e: any) => e.ativo !== false).length || 1;
     // foca em NRs (categoria começando com "NR" ou código tipo NR-XX)
     const nrCourses = courses.filter((c) => {
       const tag = `${c.categoria ?? ""} ${c.codigo ?? ""}`.toUpperCase();
@@ -530,16 +529,20 @@ function TstPanel() {
       const meses = periodicidadeMeses(c.periodicidade);
       const limiteVal = today.getTime();
       const validEmps = new Set<string>();
+      const previstosEmps = new Set<string>();
       entries.filter((en) => en.course_id === c.id).forEach((en) => {
+        if (en.employee_id) previstosEmps.add(en.employee_id);
         if (!en.data_realizacao) return;
         const dr = new Date(en.data_realizacao + "T00:00").getTime();
         const validade = meses >= 9999 ? Infinity : dr + meses * 30 * dayMs;
         if (validade >= limiteVal) validEmps.add(en.employee_id);
       });
-      const pct = Math.round((validEmps.size / totalEmps) * 100);
+      // Denominador = matriz aplicável (NR-01 1.5.7): só quem o cargo exige o curso
+      const previstos = previstosEmps.size || 1;
+      const pct = Math.round((validEmps.size / previstos) * 100);
       const code = c.codigo || c.nome;
       const name = code.length > 12 ? code.slice(0, 12) + "…" : code;
-      return { name, value: Math.min(100, pct), abs: validEmps.size };
+      return { name, value: Math.min(100, pct), abs: validEmps.size, previstos: previstosEmps.size };
     }).filter((c) => c.abs > 0 || c.value > 0).sort((a, b) => b.value - a.value).slice(0, 6);
     return out;
   }, [data]);
