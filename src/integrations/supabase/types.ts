@@ -12114,6 +12114,7 @@ export type Database = {
         | "almoxarifado"
         | "eletrica"
         | "mecanica"
+        | "cozinha"
       app_role:
         | "admin"
         | "tst"
@@ -12324,6 +12325,7 @@ export const Constants = {
         "almoxarifado",
         "eletrica",
         "mecanica",
+        "cozinha",
       ],
       app_role: [
         "admin",
