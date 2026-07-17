@@ -21,6 +21,7 @@ const PATH_TO_MODULE: { prefix: string; module: AppModule }[] = [
   { prefix: "/app/almoxarifado", module: "almoxarifado" },
   { prefix: "/app/users", module: "usuarios" },
   { prefix: "/app/audit", module: "usuarios" },
+  { prefix: "/app/cozinha", module: "cozinha" },
 ];
 
 const MODULE_ROLE_BYPASS: Partial<Record<AppModule, AppRole[]>> = {

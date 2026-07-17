@@ -95,8 +95,8 @@ export const MENU_CATALOG: MenuEntry[] = [
   { key: "/app/users", label: "Usuários", module: "usuarios" },
   { key: "/app/audit", label: "Auditoria do Sistema", module: "usuarios" },
 
-  // ----- COZINHA (sem módulo próprio — libera via user_menu_access) -----
-  { key: "/app/cozinha", label: "Cozinha — Refeições do dia", module: "administrativo" },
+  // ----- COZINHA -----
+  { key: "/app/cozinha", label: "Cozinha — Refeições do dia", module: "cozinha" },
 ];
 
 export const MENU_BY_KEY: Record<string, MenuEntry> = Object.fromEntries(
