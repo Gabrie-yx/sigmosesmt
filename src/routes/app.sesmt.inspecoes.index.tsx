@@ -261,7 +261,7 @@ function InspecoesList() {
             <div className="divide-y">
               {inspecoes.map((it: any) => {
                 const st = STATUS_LABEL[it.status] ?? STATUS_LABEL.rascunho;
-                const podeExcluir = canDelete && (it.status === "rascunho" || it.status === "em_revisao");
+                const podeExcluir = canDelete;
                 return (
                   <div key={it.id} className="flex items-center gap-2 py-3 hover:bg-accent/50 -mx-2 px-2 rounded">
                     <Link to="/app/sesmt/inspecoes/$id" params={{ id: it.id }} className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
