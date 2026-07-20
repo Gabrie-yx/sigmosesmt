@@ -976,7 +976,12 @@ export function ReqFormDialog({
   const [signature, setSignature] = useState<string | null>(() => {
     return existing?.signature_solicitante || localStorage.getItem("sigmo:last-user-signature") || null;
   });
-  const [signatureHeight, setSignatureHeight] = useState<number>(existing?.signature_solicitante_height ?? 80);
+  const [signatureHeight, setSignatureHeight] = useState<number>(() => {
+    const stored = existing?.signature_solicitante_height;
+    if (!stored) return 80;
+    // Compat: valores <=25 são mm (novo formato); >25 são px legados do slider.
+    return stored <= 25 ? Math.round(20 + ((stored - 4) / 16) * 120) : stored;
+  });
 
   // === Autosave de rascunho (somente em modo de criação) ===
   const DRAFT_KEY = draftKey ?? "requisicao-nova";
