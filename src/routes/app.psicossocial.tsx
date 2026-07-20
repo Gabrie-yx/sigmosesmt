@@ -1033,6 +1033,76 @@ function InstrumentoTab() {
 
 /* ============ Helpers ============ */
 
+function EstratificacaoDemografica({ linhas }: { linhas: any[] }) {
+  const dimensoes = Object.keys(DIMENSAO_LABEL);
+  const faixas = Array.from(new Set(linhas.map((l) => l.faixa_etaria).filter(Boolean))) as string[];
+  faixas.sort();
+
+  // matriz: faixa × dim → { soma, n }
+  const matriz: Record<string, Record<string, { s: number; n: number }>> = {};
+  for (const f of faixas) {
+    matriz[f] = {};
+    for (const d of dimensoes) matriz[f][d] = { s: 0, n: 0 };
+  }
+  for (const r of linhas) {
+    if (!r.faixa_etaria || !matriz[r.faixa_etaria]?.[r.dimensao]) continue;
+    matriz[r.faixa_etaria][r.dimensao].s += Number(r.valor) || 0;
+    matriz[r.faixa_etaria][r.dimensao].n += 1;
+  }
+
+  const corMedia = (m: number) => {
+    if (m < 2) return "bg-emerald-500/80 text-white";
+    if (m < 3) return "bg-amber-400/80 text-slate-900";
+    if (m < 4) return "bg-orange-500/90 text-white";
+    return "bg-rose-600 text-white";
+  };
+
+  return (
+    <Card className="p-4 overflow-x-auto border-rose-500/20 bg-gradient-to-br from-rose-950/40 to-slate-950/60">
+      <div className="flex items-center gap-2 mb-3">
+        <BarChart3 className="h-4 w-4 text-rose-300" />
+        <h3 className="font-bold text-rose-50">Estratificação demográfica — Faixa etária × Dimensão</h3>
+      </div>
+      <p className="text-[11px] text-rose-100/60 mb-3">
+        Média de score por faixa etária (agrega respostas por dimensão). Ajuda a detectar grupos vulneráveis
+        conforme NR-01 item 1.5.4.4.6.1.
+      </p>
+      <table className="w-full text-xs">
+        <thead>
+          <tr>
+            <th className="text-left p-2 border-b border-rose-500/20 text-rose-100">Faixa etária</th>
+            {dimensoes.map((d) => (
+              <th key={d} className="text-center p-2 border-b border-rose-500/20 text-[10px] text-rose-100">
+                {DIMENSAO_LABEL[d as keyof typeof DIMENSAO_LABEL]}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {faixas.map((f) => (
+            <tr key={f}>
+              <td className="p-2 border-b border-rose-500/10 text-rose-100/90 font-semibold">{f}</td>
+              {dimensoes.map((d) => {
+                const c = matriz[f][d];
+                if (c.n === 0) return <td key={d} className="p-2 border-b border-rose-500/10 text-center text-rose-100/30">—</td>;
+                const m = c.s / c.n;
+                return (
+                  <td key={d} className="p-1 border-b border-rose-500/10 text-center">
+                    <span className={`inline-block px-2 py-1 rounded font-bold text-[11px] ${corMedia(m)}`}>
+                      {m.toFixed(1)}
+                    </span>
+                    <div className="text-[9px] text-rose-100/40 mt-0.5">n={c.n}</div>
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </Card>
+  );
+}
+
 function statusColor(s: string) {
   switch (s) {
     case "ATIVA": return "bg-emerald-500/20 text-emerald-200 border-emerald-500/30";
