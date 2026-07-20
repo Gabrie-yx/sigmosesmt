@@ -1229,7 +1229,36 @@ function TstPanel() {
               return tone(pct, metas.inspPct);
             })()}
             ncPrefill={{ codigo: "IND-07", indicador: "Inspeção/Recarga de Extintores", mesRef: mesRefAtual }}>
-            <div className="h-64">
+            {(() => {
+              const inspecionados = Math.max(0, extMetrics.ativos - extMetrics.semInspecao);
+              const pctInsp = extMetrics.ativos > 0
+                ? Math.round((inspecionados / extMetrics.ativos) * 100)
+                : 0;
+              const cor = extMetrics.vencidos > 0
+                ? "#f43f5e"
+                : pctInsp >= metas.inspPct ? "#10b981" : pctInsp >= 70 ? "#fbbf24" : "#f43f5e";
+              return (
+                <div className="mb-2 rounded-lg border border-slate-800/80 bg-slate-900/40 p-3">
+                  <div className="flex items-end justify-between gap-3">
+                    <div>
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Inspecionados no mês</div>
+                      <div className="text-xs text-slate-300 mt-0.5">
+                        <span className="font-bold text-slate-100">{inspecionados}</span>
+                        <span className="text-slate-500"> / {extMetrics.ativos} ativos</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-3xl font-black leading-none" style={{ color: cor }}>{pctInsp}%</div>
+                      <div className="text-[10px] font-semibold text-slate-500 mt-0.5">Meta ≥ {metas.inspPct}%</div>
+                    </div>
+                  </div>
+                  <div className="mt-2 h-2 w-full rounded-full bg-slate-800 overflow-hidden">
+                    <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(100, pctInsp)}%`, backgroundColor: cor }} />
+                  </div>
+                </div>
+              );
+            })()}
+            <div className="h-52">
               <ResponsiveContainer>
                 <BarChart data={extintoresBars} margin={{ top: 20, right: 8, left: -25, bottom: 0 }}>
                   <defs>
