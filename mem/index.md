@@ -47,3 +47,4 @@ Aline Farias saiu; TST atual é Francisco Bandeira Almeida. Todo import (CAL/PGR
 
 - [TST não controla ponto](mem://features/tst-nao-controla-ponto.md) — Base legal (CLT 74, Port. MTP 671/2021, NR-04, CBO 3516-05): controle de entrada/saída é do empregador/RH/DP/Portaria, NÃO do TST. Desvio de função quando exigido.
 - [Plano de Ações — lapidação pendente](mem://features/plano-acoes-lapidacao-pendente.md) — NC-inspeção↔5W2H entregue (trigger+backfill+cards compactos/clicáveis). Falta chip "Origem: Inspeção" com link, validar em prod, revisar cores da tela da inspeção, decidir edição bidirecional.
+- [Multi-tenant SIGMO (futuro)](mem://features/multi-tenant-futuro.md) — Grupo Atem cogita usar SIGMO em outras empresas do grupo; opção A (multi-tenant real) escolhida, mas só implementar quando 1º cliente do grupo fechar acesso oficial.
