@@ -106,6 +106,8 @@ function PsicoPublicPage() {
   const [faixaEtaria, setFaixaEtaria] = useState<string>("");
   const [faixaTempo, setFaixaTempo] = useState<string>("");
   const [respostas, setRespostas] = useState<Record<string, number>>({});
+  const [relatoAberto, setRelatoAberto] = useState("");
+  const [relatoCategoria, setRelatoCategoria] = useState<"POSITIVO" | "MELHORIA" | "DENUNCIA" | "OUTRO">("MELHORIA");
   const [hidratou, setHidratou] = useState(false);
   const consentId = `psico-consent-${token.slice(0, 8)}`;
 
@@ -145,6 +147,8 @@ function PsicoPublicPage() {
       versao_termo: "v1.2026-07",
       faixa_etaria: faixaEtaria || null,
       faixa_tempo_casa: faixaTempo || null,
+      relato_aberto: relatoAberto.trim() || null,
+      relato_categoria: relatoAberto.trim() ? relatoCategoria : null,
       respostas: PSICO_ITEMS.map((it) => ({
         item_codigo: it.codigo,
         dimensao: it.dimensao,
