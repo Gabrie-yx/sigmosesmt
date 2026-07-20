@@ -109,6 +109,7 @@ import { Route as AppAdministrativoRequisicoesRecebidasRouteImport } from './rou
 import { Route as AppAdministrativoMarcadoresHoraExtraRouteImport } from './routes/app.administrativo.marcadores-hora-extra'
 import { Route as AppAdministrativoHoraExtraRecebidaRouteImport } from './routes/app.administrativo.hora-extra-recebida'
 import { Route as AppAdministrativoGestaoPontoRouteImport } from './routes/app.administrativo.gestao-ponto'
+import { Route as ApiPublicDenunciaRouteImport } from './routes/api/public/denuncia'
 import { Route as AppSesmtInspecoesIndexRouteImport } from './routes/app.sesmt.inspecoes.index'
 import { Route as AppSesmtCatalogosIndexRouteImport } from './routes/app.sesmt.catalogos.index'
 import { Route as AppAdministrativoGestaoPontoIndexRouteImport } from './routes/app.administrativo.gestao-ponto.index'
@@ -651,6 +652,11 @@ const AppAdministrativoGestaoPontoRoute =
     path: '/gestao-ponto',
     getParentRoute: () => AppAdministrativoRoute,
   } as any)
+const ApiPublicDenunciaRoute = ApiPublicDenunciaRouteImport.update({
+  id: '/api/public/denuncia',
+  path: '/api/public/denuncia',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppSesmtInspecoesIndexRoute = AppSesmtInspecoesIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -810,6 +816,7 @@ export interface FileRoutesByFullPath {
   '/psico/$token': typeof PsicoTokenRoute
   '/rc/$token': typeof RcTokenRoute
   '/app/': typeof AppIndexRoute
+  '/api/public/denuncia': typeof ApiPublicDenunciaRoute
   '/app/administrativo/gestao-ponto': typeof AppAdministrativoGestaoPontoRouteWithChildren
   '/app/administrativo/hora-extra-recebida': typeof AppAdministrativoHoraExtraRecebidaRoute
   '/app/administrativo/marcadores-hora-extra': typeof AppAdministrativoMarcadoresHoraExtraRoute
@@ -930,6 +937,7 @@ export interface FileRoutesByTo {
   '/psico/$token': typeof PsicoTokenRoute
   '/rc/$token': typeof RcTokenRoute
   '/app': typeof AppIndexRoute
+  '/api/public/denuncia': typeof ApiPublicDenunciaRoute
   '/app/administrativo/hora-extra-recebida': typeof AppAdministrativoHoraExtraRecebidaRoute
   '/app/administrativo/marcadores-hora-extra': typeof AppAdministrativoMarcadoresHoraExtraRoute
   '/app/administrativo/requisicoes-recebidas': typeof AppAdministrativoRequisicoesRecebidasRoute
@@ -1052,6 +1060,7 @@ export interface FileRoutesById {
   '/psico/$token': typeof PsicoTokenRoute
   '/rc/$token': typeof RcTokenRoute
   '/app/': typeof AppIndexRoute
+  '/api/public/denuncia': typeof ApiPublicDenunciaRoute
   '/app/administrativo/gestao-ponto': typeof AppAdministrativoGestaoPontoRouteWithChildren
   '/app/administrativo/hora-extra-recebida': typeof AppAdministrativoHoraExtraRecebidaRoute
   '/app/administrativo/marcadores-hora-extra': typeof AppAdministrativoMarcadoresHoraExtraRoute
@@ -1177,6 +1186,7 @@ export interface FileRouteTypes {
     | '/psico/$token'
     | '/rc/$token'
     | '/app/'
+    | '/api/public/denuncia'
     | '/app/administrativo/gestao-ponto'
     | '/app/administrativo/hora-extra-recebida'
     | '/app/administrativo/marcadores-hora-extra'
@@ -1297,6 +1307,7 @@ export interface FileRouteTypes {
     | '/psico/$token'
     | '/rc/$token'
     | '/app'
+    | '/api/public/denuncia'
     | '/app/administrativo/hora-extra-recebida'
     | '/app/administrativo/marcadores-hora-extra'
     | '/app/administrativo/requisicoes-recebidas'
@@ -1418,6 +1429,7 @@ export interface FileRouteTypes {
     | '/psico/$token'
     | '/rc/$token'
     | '/app/'
+    | '/api/public/denuncia'
     | '/app/administrativo/gestao-ponto'
     | '/app/administrativo/hora-extra-recebida'
     | '/app/administrativo/marcadores-hora-extra'
@@ -1512,6 +1524,7 @@ export interface RootRouteChildren {
   ApiSigmoChatRoute: typeof ApiSigmoChatRoute
   PsicoTokenRoute: typeof PsicoTokenRoute
   RcTokenRoute: typeof RcTokenRoute
+  ApiPublicDenunciaRoute: typeof ApiPublicDenunciaRoute
   ApiPublicPsicoHashRoute: typeof ApiPublicPsicoHashRoute
   ApiPublicPsicoSubmitRoute: typeof ApiPublicPsicoSubmitRoute
 }
@@ -2218,6 +2231,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdministrativoGestaoPontoRouteImport
       parentRoute: typeof AppAdministrativoRoute
     }
+    '/api/public/denuncia': {
+      id: '/api/public/denuncia'
+      path: '/api/public/denuncia'
+      fullPath: '/api/public/denuncia'
+      preLoaderRoute: typeof ApiPublicDenunciaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/sesmt/inspecoes/': {
       id: '/app/sesmt/inspecoes/'
       path: '/'
@@ -2674,6 +2694,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSigmoChatRoute: ApiSigmoChatRoute,
   PsicoTokenRoute: PsicoTokenRoute,
   RcTokenRoute: RcTokenRoute,
+  ApiPublicDenunciaRoute: ApiPublicDenunciaRoute,
   ApiPublicPsicoHashRoute: ApiPublicPsicoHashRoute,
   ApiPublicPsicoSubmitRoute: ApiPublicPsicoSubmitRoute,
 }
