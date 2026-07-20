@@ -311,6 +311,32 @@ function RequisicoesPage() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  // Preview in-app do PDF (com opção de assinar direto na visualização).
+  const [previewState, setPreviewState] = useState<{
+    doc: jsPDF;
+    req: Req;
+    itens: Item[];
+  } | null>(null);
+
+  const updateSolicitanteSig = useMutation({
+    mutationFn: async (p: { id: string; signature: string | null }) => {
+      const heightMm = p.signature ? 18 : null;
+      const { error } = await supabase
+        .from("purchase_requisitions")
+        .update({
+          signature_solicitante: p.signature,
+          signature_solicitante_height: heightMm,
+        })
+        .eq("id", p.id);
+      if (error) throw error;
+    },
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ["purchase-reqs"] });
+      toast.success("Assinatura atualizada");
+    },
+    onError: (e: any) => toast.error(e.message ?? "Falha ao salvar assinatura"),
+  });
+
   async function emitirPdf(r: Req, mode: PrintMode = "download") {
     const { data } = await supabase
       .from("purchase_requisition_items")
@@ -328,7 +354,18 @@ function RequisicoesPage() {
     const itens = savedItems.length >= minimumRows.length
       ? savedItems
       : minimumRows.map((d) => savedItems.find((x) => x.item_numero === d.item_numero) ?? d);
+    if (mode === "preview") {
+      const doc = await gerarPdfRequisicaoDoc(r as unknown as RcPdfReq, itens);
+      setPreviewState({ doc, req: r, itens });
+      return;
+    }
     await gerarPdfRequisicao(r, itens, mode);
+  }
+
+  async function regeneratePreview(nextReq: Req) {
+    if (!previewState) return;
+    const doc = await gerarPdfRequisicaoDoc(nextReq as unknown as RcPdfReq, previewState.itens);
+    setPreviewState({ doc, req: nextReq, itens: previewState.itens });
   }
 
   function periodoLabel() {
@@ -563,6 +600,28 @@ function RequisicoesPage() {
           </Tabs>
         </CardContent>
       </Card>
+      {previewState && (
+        <PDFPreviewDialog
+          open={!!previewState}
+          onClose={() => setPreviewState(null)}
+          doc={previewState.doc}
+          fileName={rcPdfFileName(previewState.req)}
+          title={`Requisição de Compra — Nº ${previewState.req.numero}`}
+          signable={isEditor}
+          useSignatureGallery
+          signatureLabels={{ eng: "Solicitante", sesmt: "Supervisor Geral", enc: "Analista de Compras" }}
+          engSig={previewState.req.signature_solicitante ?? null}
+          onChangeEngSig={async (v) => {
+            await updateSolicitanteSig.mutateAsync({ id: previewState.req.id, signature: v });
+            const nextReq = {
+              ...previewState.req,
+              signature_solicitante: v,
+              signature_solicitante_height: v ? 18 : null,
+            } as Req;
+            await regeneratePreview(nextReq);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -976,7 +1035,12 @@ export function ReqFormDialog({
   const [signature, setSignature] = useState<string | null>(() => {
     return existing?.signature_solicitante || localStorage.getItem("sigmo:last-user-signature") || null;
   });
-  const [signatureHeight, setSignatureHeight] = useState<number>(existing?.signature_solicitante_height ?? 80);
+  const [signatureHeight, setSignatureHeight] = useState<number>(() => {
+    const stored = existing?.signature_solicitante_height;
+    if (!stored) return 80;
+    // Compat: valores <=25 são mm (novo formato); >25 são px legados do slider.
+    return stored <= 25 ? Math.round(20 + ((stored - 4) / 16) * 120) : stored;
+  });
 
   // === Autosave de rascunho (somente em modo de criação) ===
   const DRAFT_KEY = draftKey ?? "requisicao-nova";
@@ -1126,7 +1190,10 @@ export function ReqFormDialog({
         pagina: form.pagina,
         observacoes: form.observacoes.trim() || null,
         signature_solicitante: signature,
-        signature_solicitante_height: signature ? signatureHeight : null,
+        // Converte o slider (20-140 px de preview) para altura em mm no PDF (4-20 mm).
+        signature_solicitante_height: signature
+          ? Math.round(4 + Math.max(0, Math.min(120, signatureHeight - 20)) / 120 * 16)
+          : null,
         urgencia: form.urgencia,
       };
 

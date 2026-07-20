@@ -71,6 +71,8 @@ export type RcPdfReq = {
   status: RcPdfStatus;
   motivo_indeferimento?: string | null;
   signature_solicitante?: string | null;
+  /** Altura desejada da assinatura do solicitante em mm (clampada ao box). */
+  signature_solicitante_height?: number | null;
   // Decisão do Supervisor Geral (Sprint 2)
   decidido_por_nome?: string | null;
   decidido_assinatura_url?: string | null;
@@ -265,7 +267,7 @@ export async function gerarPdfRequisicaoDoc(
     finalY = M;
   }
   const colW = (W - 2 * M) / 3;
-  const sigH = 22;
+  const sigH = 30;
 
   let sigDims: { w: number; h: number } | null = null;
   if (req.signature_solicitante) {
@@ -288,19 +290,28 @@ export async function gerarPdfRequisicaoDoc(
     doc.text(label, x + colW / 2, finalY + 4, { align: "center" });
     doc.line(x, finalY + sigH - 6, x + colW, finalY + sigH - 6);
     doc.text("DATA:", x + 1.5, finalY + sigH - 1);
-    const drawSig = (sigUrl: string, dims: { w: number; h: number } | null, dataStr: string, nome?: string | null) => {
+    const drawSig = (
+      sigUrl: string,
+      dims: { w: number; h: number } | null,
+      dataStr: string,
+      nome?: string | null,
+      targetHeightMm?: number | null,
+    ) => {
       doc.setFont("helvetica", "normal");
       doc.text(dataStr, x + 13, finalY + sigH - 1);
       try {
         const areaX = x + 2;
-        const areaY = finalY + 5;
+        const areaY = finalY + 6;
         const areaW = colW - 4;
-        const areaH = sigH - 11;
+        const areaH = sigH - 10;
         let drawW = areaW;
         let drawH = areaH;
         if (dims && dims.w > 0 && dims.h > 0) {
           const ratio = dims.w / dims.h;
-          drawH = areaH;
+          // Se o usuário definiu altura alvo (em mm), respeita — clampada ao box.
+          drawH = targetHeightMm && targetHeightMm > 0
+            ? Math.max(4, Math.min(areaH, targetHeightMm))
+            : areaH;
           drawW = drawH * ratio;
           if (drawW > areaW) {
             drawW = areaW;
@@ -322,7 +333,13 @@ export async function gerarPdfRequisicaoDoc(
     };
 
     if (idx === 0 && req.signature_solicitante) {
-      drawSig(req.signature_solicitante, sigDims, fmtBR(req.data_requisicao), req.solicitante);
+      drawSig(
+        req.signature_solicitante,
+        sigDims,
+        fmtBR(req.data_requisicao),
+        req.solicitante,
+        req.signature_solicitante_height ?? null,
+      );
     } else if (idx === 1 && req.decidido_assinatura_url) {
       drawSig(
         req.decidido_assinatura_url,
