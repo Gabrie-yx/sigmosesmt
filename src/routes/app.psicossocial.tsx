@@ -676,11 +676,44 @@ function DiagnosticoTab() {
   });
 
   const { data: planoAcao } = useQuery({
-    queryKey: ["pgr-plano-acao-diag"],
+    queryKey: ["psico-plano-acao-diag", campanhaId],
     queryFn: async () => {
-      const { data } = await sb.from("pgr_plano_acao").select("o_que, por_que, onde, quem, quando, como, status").order("quando", { ascending: true });
+      if (!campanhaId) return [];
+      const { data } = await sb
+        .from("psico_planos_acao")
+        .select("what, why, where_, who, when_, how, status, nr01_item_ref, dimensao, classificacao")
+        .eq("campanha_id", campanhaId)
+        .order("classificacao", { ascending: false });
+      // Mapeia para o shape que o gerador de PDF espera
+      return (data ?? []).map((p: any) => ({
+        o_que: p.what,
+        por_que: p.why,
+        onde: p.where_,
+        quem: p.who,
+        quando: p.when_,
+        como: p.how,
+        status: p.status,
+        nr01_item_ref: p.nr01_item_ref,
+        dimensao: p.dimensao,
+        classificacao: p.classificacao,
+      }));
+    },
+    enabled: !!campanhaId,
+  });
+
+  // Estratificação demográfica: faixa etária × dimensão (média)
+  const { data: demografico } = useQuery({
+    queryKey: ["psico-demografico", campanhaId],
+    queryFn: async () => {
+      if (!campanhaId) return [];
+      const { data } = await sb
+        .from("psico_respostas")
+        .select("faixa_etaria, dimensao, valor")
+        .eq("campanha_id", campanhaId)
+        .not("faixa_etaria", "is", null);
       return (data ?? []) as any[];
     },
+    enabled: !!campanhaId,
   });
 
   const campanhaSel = (campanhas ?? []).find((c: any) => c.id === campanhaId);
@@ -761,6 +794,10 @@ function DiagnosticoTab() {
           linhas={agregado ?? []}
           minRespondentes={(campanhas ?? []).find((c: any) => c.id === campanhaId)?.min_respondentes ?? 5}
         />
+      )}
+
+      {campanhaId && (demografico ?? []).length > 0 && (
+        <EstratificacaoDemografica linhas={demografico ?? []} />
       )}
 
       <PDFPreviewDialog
