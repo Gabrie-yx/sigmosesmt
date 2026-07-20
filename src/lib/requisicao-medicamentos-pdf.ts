@@ -132,6 +132,7 @@ export async function buildRequisicaoMedicamentosPdf(
     pagina: "01/01",
     status: "PENDENTE",
     signature_solicitante: opts.assinaturaSolicitanteDataUrl ?? null,
+    signature_solicitante_height: opts.assinaturaSolicitanteHeightMm ?? 18,
     cotador_nome: opts.responsavelAprovador ?? null,
   };
 
