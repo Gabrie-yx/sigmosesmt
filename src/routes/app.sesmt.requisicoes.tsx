@@ -320,7 +320,7 @@ function RequisicoesPage() {
 
   const updateSolicitanteSig = useMutation({
     mutationFn: async (p: { id: string; signature: string | null }) => {
-      const heightMm = p.signature ? 18 : null;
+      const heightMm = p.signature ? 20 : null;
       const { error } = await supabase
         .from("purchase_requisitions")
         .update({
@@ -616,9 +616,10 @@ function RequisicoesPage() {
             const nextReq = {
               ...previewState.req,
               signature_solicitante: v,
-              signature_solicitante_height: v ? 18 : null,
+              signature_solicitante_height: v ? 20 : null,
             } as Req;
             await regeneratePreview(nextReq);
+            toast.success(v ? "Assinatura aplicada no PDF" : "Assinatura removida");
           }}
         />
       )}
