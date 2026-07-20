@@ -43,6 +43,9 @@ export type PlanoAcaoItem = {
   quando: string | null;
   como: string | null;
   status: string | null;
+  nr01_item_ref?: string | null;
+  dimensao?: string | null;
+  classificacao?: string | null;
 };
 
 export type ParecerPsicoOpts = {
@@ -204,11 +207,11 @@ export function gerarParecerPsicossocialPdf(opts: ParecerPsicoOpts): jsPDF {
   y = ensureSpace(y, 40);
   y = sectionTitle(doc, "5. NÃO CONFORMIDADES IDENTIFICADAS", y);
   const nc: string[] = [];
-  if (criticas > 0) nc.push(`${criticas} recorte(s) em nível CRÍTICO — exigem ação imediata (NR-01 1.5.5).`);
-  if (altas > 0) nc.push(`${altas} recorte(s) em nível ALTO — exigem plano de ação com prazo (NR-01 1.5.5.2).`);
+  if (criticas > 0) nc.push(`${criticas} recorte(s) em nível CRÍTICO — exigem ação imediata (NR-01 item 1.5.5.1 / 1.5.5.2 · ISO 45003 §8.1.4).`);
+  if (altas > 0) nc.push(`${altas} recorte(s) em nível ALTO — exigem plano de ação com prazo (NR-01 item 1.5.5.2 · 1.5.4.4.6.1).`);
   const violCrit = validas.filter((l) => l.dimensao === "VIOLENCIA" && Number(l.media) >= 1.5).length;
-  if (violCrit > 0) nc.push(`${violCrit} recorte(s) com sinais de violência/assédio — tolerância zero (ISO 45003).`);
-  if (pctAdesao < 40) nc.push(`Adesão baixa (${pctAdesao}%) — reforçar comunicação e reaplicar campanha.`);
+  if (violCrit > 0) nc.push(`${violCrit} recorte(s) com sinais de violência/assédio — tolerância zero (Lei 14.457/2022 Art. 23 · ISO 45003 §8.3).`);
+  if (pctAdesao < 40) nc.push(`Adesão baixa (${pctAdesao}%) — reforçar comunicação e reaplicar campanha (NR-01 item 1.5.3.2).`);
   if (nc.length === 0) nc.push("Não foram identificadas não conformidades relevantes nesta campanha.");
   for (const item of nc) { y = bullet(doc, item, y); }
   y += 3;
@@ -232,24 +235,41 @@ export function gerarParecerPsicossocialPdf(opts: ParecerPsicoOpts): jsPDF {
       styles: { fontSize: 8, cellPadding: 1.6, lineColor: [203, 213, 225], lineWidth: 0.2, valign: "top", overflow: "linebreak" },
       headStyles: { fillColor: [15, 23, 42], textColor: 255, fontStyle: "bold", fontSize: 8 },
       columnStyles: {
-        0: { cellWidth: 44 }, // o quê
-        1: { cellWidth: 34 }, // por quê
-        2: { cellWidth: 26 }, // onde
-        3: { cellWidth: 28 }, // quem
-        4: { cellWidth: 18, halign: "center" }, // quando
-        5: { cellWidth: 32, halign: "center" }, // status
+        0: { cellWidth: 40 }, // o quê
+        1: { cellWidth: 30 }, // por quê
+        2: { cellWidth: 22 }, // onde
+        3: { cellWidth: 24 }, // quem
+        4: { cellWidth: 16, halign: "center" }, // quando
+        5: { cellWidth: 22, halign: "center" }, // NR-01
+        6: { cellWidth: 28, halign: "center" }, // status
       },
-      head: [["O quê", "Por quê", "Onde", "Quem", "Quando", "Status"]],
+      head: [["O quê", "Por quê", "Onde", "Quem", "Quando", "NR-01", "Status"]],
       body: opts.planoAcao.map((p) => [
         p.o_que ?? "—",
         p.por_que ?? "—",
         p.onde ?? "—",
         p.quem ?? "—",
         p.quando ? fmtBR(p.quando) : "—",
+        p.nr01_item_ref ?? "—",
         formatStatus(p.status),
       ]),
     });
     y = (doc as any).lastAutoTable.finalY + 6;
+
+    // Rodapé de referências normativas (mostra os itens únicos citados)
+    const refs = Array.from(
+      new Set(opts.planoAcao.map((p) => p.nr01_item_ref).filter(Boolean) as string[]),
+    );
+    if (refs.length > 0) {
+      y = ensureSpace(y, 10);
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(7.5);
+      doc.setTextColor(71, 85, 105);
+      doc.text(`Fundamentação NR-01: itens ${refs.join(" · ")}`, M, y);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(15, 23, 42);
+      y += 4;
+    }
   }
 
   // ============== 7. CONCLUSÃO E ASSINATURAS ==============
