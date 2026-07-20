@@ -366,6 +366,23 @@ export function InspecaoManualDialog({
                 onChange={(e) => setRespRegistro(e.target.value)}
               />
             </div>
+            <div className="md:col-span-2">
+              <Label className="text-xs">
+                Data da inspeção *{" "}
+                {dataInspecao && dataInspecao < hojeISO && (
+                  <span className="text-amber-400 font-semibold">· RETROATIVA</span>
+                )}
+              </Label>
+              <Input
+                type="date"
+                max={hojeISO}
+                value={dataInspecao}
+                onChange={(e) => setDataInspecao(e.target.value)}
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Use para lançar inspeções de meses anteriores (ex.: maio, junho). Não é possível registrar data futura.
+              </p>
+            </div>
           </div>
 
           {/* Checklist */}
