@@ -156,6 +156,8 @@ export function InspecaoManualDialog({
   const [observacoes, setObservacoes] = useState("");
   const [respNome, setRespNome] = useState(userNome ?? "");
   const [respRegistro, setRespRegistro] = useState("");
+  const hojeISO = new Date().toISOString().slice(0, 10);
+  const [dataInspecao, setDataInspecao] = useState<string>(hojeISO);
 
   useEffect(() => {
     setRespNome((prev) => prev || userNome || "");
@@ -169,6 +171,7 @@ export function InspecaoManualDialog({
       setObservacoes("");
       setRespNome(userNome ?? "");
       setRespRegistro("");
+      setDataInspecao(new Date().toISOString().slice(0, 10));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, userNome]);
@@ -252,7 +255,8 @@ export function InspecaoManualDialog({
       }
 
       if (!extintor) throw new Error("Extintor não selecionado");
-      const hoje = new Date().toISOString().slice(0, 10);
+      if (!dataInspecao) throw new Error("Informe a data da inspeção");
+      if (dataInspecao > hojeISO) throw new Error("Data da inspeção não pode ser futura");
 
       // Upload das fotos de evidência por NC
       const fotosUrls: Record<string, string[]> = {};
@@ -286,7 +290,7 @@ export function InspecaoManualDialog({
 
       const { error } = await supabase.from("extintor_inspecoes").insert({
         extintor_id: extintor.id,
-        data_inspecao: hoje,
+        data_inspecao: dataInspecao,
         conforme,
         nao_conformidade: ncResumo,
         observacoes: observacoes || null,
@@ -361,6 +365,23 @@ export function InspecaoManualDialog({
                 value={respRegistro}
                 onChange={(e) => setRespRegistro(e.target.value)}
               />
+            </div>
+            <div className="md:col-span-2">
+              <Label className="text-xs">
+                Data da inspeção *{" "}
+                {dataInspecao && dataInspecao < hojeISO && (
+                  <span className="text-amber-400 font-semibold">· RETROATIVA</span>
+                )}
+              </Label>
+              <Input
+                type="date"
+                max={hojeISO}
+                value={dataInspecao}
+                onChange={(e) => setDataInspecao(e.target.value)}
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Use para lançar inspeções de meses anteriores (ex.: maio, junho). Não é possível registrar data futura.
+              </p>
             </div>
           </div>
 
