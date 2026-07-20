@@ -43,7 +43,7 @@ function TstPanel() {
   const since = fmt(new Date(today.getTime() - dias * dayMs));
 
   const { data, isLoading } = useQuery({
-    queryKey: ["sesmt-painel", since],
+    queryKey: ["sesmt-painel-v2", since],
     queryFn: async () => {
       const since6m = fmt(new Date(today.getTime() - 180 * dayMs));
       const since12m = fmt(new Date(today.getTime() - 365 * dayMs));
@@ -80,6 +80,9 @@ function TstPanel() {
         .select("meta_dds_semana,meta_dds_dias_semana,meta_inspecoes_pct,meta_treinamentos_pct,meta_aso_pct,meta_acidentes_taxa_max_pct,meta_dias_perdidos_max_mes")
         .limit(1)
         .maybeSingle();
+      if (extintores.error) throw extintores.error;
+      if (extInspecoes.error) throw extInspecoes.error;
+
       return {
         employees: emps.data ?? [],
         companies: comps.data ?? [],
@@ -253,7 +256,7 @@ function TstPanel() {
       if (!e.proxima_recarga) return;
       const t = new Date(e.proxima_recarga + "T00:00").getTime();
       if (t >= today.getTime() && t <= limit) {
-        items.push({ date: e.proxima_recarga, tipo: "EXT", titulo: "Recarga de extintor", sub: e.numero_identificacao ? `Nº ${e.numero_identificacao}` : "Extintor", severity: "crit" });
+        items.push({ date: e.proxima_recarga, tipo: "EXT", titulo: "Recarga de extintor", sub: e.numero ? `Nº ${e.numero}` : "Extintor", severity: "crit" });
       }
     });
     (data.aprs ?? []).forEach((a: any) => {
