@@ -311,6 +311,32 @@ function RequisicoesPage() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  // Preview in-app do PDF (com opção de assinar direto na visualização).
+  const [previewState, setPreviewState] = useState<{
+    doc: jsPDF;
+    req: Req;
+    itens: Item[];
+  } | null>(null);
+
+  const updateSolicitanteSig = useMutation({
+    mutationFn: async (p: { id: string; signature: string | null }) => {
+      const heightMm = p.signature ? 18 : null;
+      const { error } = await supabase
+        .from("purchase_requisitions")
+        .update({
+          signature_solicitante: p.signature,
+          signature_solicitante_height: heightMm,
+        })
+        .eq("id", p.id);
+      if (error) throw error;
+    },
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ["purchase-reqs"] });
+      toast.success("Assinatura atualizada");
+    },
+    onError: (e: any) => toast.error(e.message ?? "Falha ao salvar assinatura"),
+  });
+
   async function emitirPdf(r: Req, mode: PrintMode = "download") {
     const { data } = await supabase
       .from("purchase_requisition_items")
@@ -328,7 +354,18 @@ function RequisicoesPage() {
     const itens = savedItems.length >= minimumRows.length
       ? savedItems
       : minimumRows.map((d) => savedItems.find((x) => x.item_numero === d.item_numero) ?? d);
+    if (mode === "preview") {
+      const doc = await gerarPdfRequisicaoDoc(r as unknown as RcPdfReq, itens);
+      setPreviewState({ doc, req: r, itens });
+      return;
+    }
     await gerarPdfRequisicao(r, itens, mode);
+  }
+
+  async function regeneratePreview(nextReq: Req) {
+    if (!previewState) return;
+    const doc = await gerarPdfRequisicaoDoc(nextReq as unknown as RcPdfReq, previewState.itens);
+    setPreviewState({ doc, req: nextReq, itens: previewState.itens });
   }
 
   function periodoLabel() {
