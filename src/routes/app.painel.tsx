@@ -59,7 +59,7 @@ function TstPanel() {
         supabase.from("aprs").select("id,status,data_emissao,data_validade").gte("data_emissao", since),
         supabase.from("ptes").select("id,status,data,risco").gte("data", since),
         supabase.from("controle_documentos").select("*"),
-        supabase.from("extintores").select("id,status,proxima_recarga,proximo_teste_hidrostatico,numero_identificacao"),
+        supabase.from("extintores").select("id,status,proxima_recarga,proximo_teste_hidrostatico,numero"),
         supabase.from("extintor_inspecoes").select("extintor_id,data_inspecao,conforme"),
         supabase.from("plano_acoes").select("id,status,quando,data_conclusao,created_at"),
         supabase.from("training_matrix_courses").select("id,codigo,nome,categoria,periodicidade,ativo").eq("ativo", true),
