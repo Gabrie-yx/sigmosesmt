@@ -6,7 +6,11 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Sparkles, ListChecks } from "lucide-react";
+import { Loader2, Sparkles, ListChecks, Pencil, Trash2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { gerarPlanoAcaoPsico } from "@/lib/psico-actions.functions";
 import { DIMENSAO_LABEL } from "@/lib/psico-instrument";
@@ -18,6 +22,8 @@ export function PlanoAcaoTab() {
   const qc = useQueryClient();
   const [campanhaId, setCampanhaId] = useState("");
   const gerarFn = useServerFn(gerarPlanoAcaoPsico);
+  const [editando, setEditando] = useState<any | null>(null);
+  const [excluindo, setExcluindo] = useState<any | null>(null);
 
   const { data: campanhas } = useQuery({
     queryKey: ["psico-camp-plano"],
@@ -49,6 +55,33 @@ export function PlanoAcaoTab() {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["psico-planos"] }),
+  });
+
+  const salvarEdicao = useMutation({
+    mutationFn: async (patch: any) => {
+      const { id, ...rest } = patch;
+      const { error } = await sb.from("psico_planos_acao").update({ ...rest, origem: "MANUAL" }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Ação atualizada");
+      qc.invalidateQueries({ queryKey: ["psico-planos"] });
+      setEditando(null);
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Falha ao salvar"),
+  });
+
+  const excluir = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await sb.from("psico_planos_acao").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Ação removida");
+      qc.invalidateQueries({ queryKey: ["psico-planos"] });
+      setExcluindo(null);
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Falha ao excluir"),
   });
 
   return (
@@ -121,19 +154,94 @@ export function PlanoAcaoTab() {
                   <div className="col-span-2 md:col-span-4"><Info k="Como" v={p.how} /></div>
                 </div>
               </div>
-              <Select value={p.status} onValueChange={(v) => atualizarStatus.mutate({ id: p.id, status: v })}>
-                <SelectTrigger className="w-40 h-9"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="PLANEJADO">Planejado</SelectItem>
-                  <SelectItem value="EM_ANDAMENTO">Em andamento</SelectItem>
-                  <SelectItem value="CONCLUIDO">Concluído</SelectItem>
-                  <SelectItem value="CANCELADO">Cancelado</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex flex-col gap-2 shrink-0">
+                <Select value={p.status} onValueChange={(v) => atualizarStatus.mutate({ id: p.id, status: v })}>
+                  <SelectTrigger className="w-40 h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="PLANEJADO">Planejado</SelectItem>
+                    <SelectItem value="EM_ANDAMENTO">Em andamento</SelectItem>
+                    <SelectItem value="CONCLUIDO">Concluído</SelectItem>
+                    <SelectItem value="CANCELADO">Cancelado</SelectItem>
+                  </SelectContent>
+                </Select>
+                <div className="flex gap-1">
+                  <Button size="sm" variant="outline" className="h-8 flex-1" onClick={() => setEditando({ ...p })}>
+                    <Pencil className="h-3.5 w-3.5 mr-1" /> Editar
+                  </Button>
+                  <Button size="sm" variant="outline" className="h-8 border-rose-500/40 text-rose-300 hover:bg-rose-950" onClick={() => setExcluindo(p)}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
             </div>
           </Card>
         ))}
       </div>
+
+      <Dialog open={!!editando} onOpenChange={(o) => !o && setEditando(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar ação 5W2H</DialogTitle>
+          </DialogHeader>
+          {editando && (
+            <div className="space-y-3">
+              <Field label="O quê (What)"><Input value={editando.what ?? ""} onChange={(e) => setEditando({ ...editando, what: e.target.value })} /></Field>
+              <Field label="Por quê (Why)"><Textarea rows={2} value={editando.why ?? ""} onChange={(e) => setEditando({ ...editando, why: e.target.value })} /></Field>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Onde (Where)"><Input value={editando.where_ ?? ""} onChange={(e) => setEditando({ ...editando, where_: e.target.value })} /></Field>
+                <Field label="Quem (Who)"><Input value={editando.who ?? ""} onChange={(e) => setEditando({ ...editando, who: e.target.value })} /></Field>
+                <Field label="Quando (When)"><Input type="date" value={(editando.when_ ?? "").slice(0, 10)} onChange={(e) => setEditando({ ...editando, when_: e.target.value })} /></Field>
+                <Field label="NR-01 item"><Input value={editando.nr01_item_ref ?? ""} onChange={(e) => setEditando({ ...editando, nr01_item_ref: e.target.value })} placeholder="1.5.4.4.6" /></Field>
+              </div>
+              <Field label="Como (How)"><Textarea rows={3} value={editando.how ?? ""} onChange={(e) => setEditando({ ...editando, how: e.target.value })} /></Field>
+              <Field label="Quanto custa (How much) — opcional"><Input value={editando.how_much ?? ""} onChange={(e) => setEditando({ ...editando, how_much: e.target.value })} /></Field>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditando(null)}>Cancelar</Button>
+            <Button
+              className="bg-rose-600 hover:bg-rose-700 text-white"
+              disabled={salvarEdicao.isPending}
+              onClick={() => salvarEdicao.mutate({
+                id: editando.id,
+                what: editando.what, why: editando.why, where_: editando.where_,
+                who: editando.who, when_: editando.when_, how: editando.how,
+                how_much: editando.how_much, nr01_item_ref: editando.nr01_item_ref,
+              })}
+            >
+              {salvarEdicao.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!excluindo} onOpenChange={(o) => !o && setExcluindo(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir ação?</AlertDialogTitle>
+            <AlertDialogDescription>
+              A ação "{excluindo?.what}" será removida permanentemente. Se ela foi gerada automaticamente, um novo clique em "Gerar 5W2H automático" pode recriá-la.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction className="bg-rose-600 hover:bg-rose-700" onClick={(e) => { e.preventDefault(); if (excluindo) excluir.mutate(excluindo.id); }}>
+              {excluir.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="text-xs font-bold text-slate-300">{label}</label>
+      <div className="mt-1">{children}</div>
     </div>
   );
 }
