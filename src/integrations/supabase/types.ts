@@ -1879,6 +1879,8 @@ export type Database = {
           fonte_tipica: string | null
           id: string
           iso45003_ref: string | null
+          nr01_item_ref: string | null
+          nr01_item_texto: string | null
           ordem: number
           perigo: string
           updated_at: string
@@ -1893,6 +1895,8 @@ export type Database = {
           fonte_tipica?: string | null
           id?: string
           iso45003_ref?: string | null
+          nr01_item_ref?: string | null
+          nr01_item_texto?: string | null
           ordem?: number
           perigo: string
           updated_at?: string
@@ -1907,6 +1911,8 @@ export type Database = {
           fonte_tipica?: string | null
           id?: string
           iso45003_ref?: string | null
+          nr01_item_ref?: string | null
+          nr01_item_texto?: string | null
           ordem?: number
           perigo?: string
           updated_at?: string
@@ -9487,8 +9493,178 @@ export type Database = {
         }
         Relationships: []
       }
+      psico_acoes_realizadas: {
+        Row: {
+          campanha_id: string
+          created_at: string
+          criado_por: string | null
+          data_realizacao: string
+          descricao: string
+          dimensao_atacada: string | null
+          eficacia_percebida: string | null
+          evidencia_url: string | null
+          ghe_id: string | null
+          id: string
+          n_participantes: number | null
+          plano_acao_id: string | null
+          publico_alvo: string | null
+          responsavel: string | null
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          campanha_id: string
+          created_at?: string
+          criado_por?: string | null
+          data_realizacao: string
+          descricao: string
+          dimensao_atacada?: string | null
+          eficacia_percebida?: string | null
+          evidencia_url?: string | null
+          ghe_id?: string | null
+          id?: string
+          n_participantes?: number | null
+          plano_acao_id?: string | null
+          publico_alvo?: string | null
+          responsavel?: string | null
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          campanha_id?: string
+          created_at?: string
+          criado_por?: string | null
+          data_realizacao?: string
+          descricao?: string
+          dimensao_atacada?: string | null
+          eficacia_percebida?: string | null
+          evidencia_url?: string | null
+          ghe_id?: string | null
+          id?: string
+          n_participantes?: number | null
+          plano_acao_id?: string | null
+          publico_alvo?: string | null
+          responsavel?: string | null
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "psico_acoes_realizadas_campanha_id_fkey"
+            columns: ["campanha_id"]
+            isOneToOne: false
+            referencedRelation: "psico_campanhas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "psico_acoes_realizadas_ghe_id_fkey"
+            columns: ["ghe_id"]
+            isOneToOne: false
+            referencedRelation: "pgr_ghe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "psico_acoes_realizadas_ghe_id_fkey"
+            columns: ["ghe_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["ghe_id"]
+          },
+          {
+            foreignKeyName: "psico_acoes_realizadas_plano_acao_id_fkey"
+            columns: ["plano_acao_id"]
+            isOneToOne: false
+            referencedRelation: "psico_planos_acao"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      psico_assinatura_parecer: {
+        Row: {
+          assinado_em: string
+          assinado_por: string | null
+          assinatura_data_url: string | null
+          campanha_id: string
+          created_at: string
+          id: string
+          pdf_hash: string
+          responsavel_cargo: string | null
+          responsavel_nome: string
+          responsavel_registro: string
+        }
+        Insert: {
+          assinado_em?: string
+          assinado_por?: string | null
+          assinatura_data_url?: string | null
+          campanha_id: string
+          created_at?: string
+          id?: string
+          pdf_hash: string
+          responsavel_cargo?: string | null
+          responsavel_nome: string
+          responsavel_registro: string
+        }
+        Update: {
+          assinado_em?: string
+          assinado_por?: string | null
+          assinatura_data_url?: string | null
+          campanha_id?: string
+          created_at?: string
+          id?: string
+          pdf_hash?: string
+          responsavel_cargo?: string | null
+          responsavel_nome?: string
+          responsavel_registro?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "psico_assinatura_parecer_campanha_id_fkey"
+            columns: ["campanha_id"]
+            isOneToOne: false
+            referencedRelation: "psico_campanhas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      psico_benchmark_cnae: {
+        Row: {
+          ano_referencia: number | null
+          cnae_secao: string
+          cnae_secao_desc: string
+          created_at: string
+          dimensao: string
+          faixa_classificacao: string
+          fonte: string | null
+          id: string
+          score_medio_setorial: number
+        }
+        Insert: {
+          ano_referencia?: number | null
+          cnae_secao: string
+          cnae_secao_desc: string
+          created_at?: string
+          dimensao: string
+          faixa_classificacao: string
+          fonte?: string | null
+          id?: string
+          score_medio_setorial: number
+        }
+        Update: {
+          ano_referencia?: number | null
+          cnae_secao?: string
+          cnae_secao_desc?: string
+          created_at?: string
+          dimensao?: string
+          faixa_classificacao?: string
+          fonte?: string | null
+          id?: string
+          score_medio_setorial?: number
+        }
+        Relationships: []
+      }
       psico_campanhas: {
         Row: {
+          cnae_referencia: string | null
           created_at: string
           criado_por: string | null
           data_fim: string
@@ -9498,6 +9674,9 @@ export type Database = {
           id: string
           instrumento: string
           min_respondentes: number
+          perguntas_abertas_habilitado: boolean
+          responsavel_tecnico_nome: string | null
+          responsavel_tecnico_registro: string | null
           status: string
           titulo: string
           total_respostas: number
@@ -9505,6 +9684,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cnae_referencia?: string | null
           created_at?: string
           criado_por?: string | null
           data_fim: string
@@ -9514,6 +9694,9 @@ export type Database = {
           id?: string
           instrumento?: string
           min_respondentes?: number
+          perguntas_abertas_habilitado?: boolean
+          responsavel_tecnico_nome?: string | null
+          responsavel_tecnico_registro?: string | null
           status?: string
           titulo: string
           total_respostas?: number
@@ -9521,6 +9704,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cnae_referencia?: string | null
           created_at?: string
           criado_por?: string | null
           data_fim?: string
@@ -9530,6 +9714,9 @@ export type Database = {
           id?: string
           instrumento?: string
           min_respondentes?: number
+          perguntas_abertas_habilitado?: boolean
+          responsavel_tecnico_nome?: string | null
+          responsavel_tecnico_registro?: string | null
           status?: string
           titulo?: string
           total_respostas?: number
@@ -9573,6 +9760,291 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "psico_campanhas"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      psico_cronograma: {
+        Row: {
+          alerta_dias: number
+          campanha_id: string
+          created_at: string
+          frequencia_meses: number
+          ghe_id: string | null
+          id: string
+          observacoes: string | null
+          proxima_avaliacao: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          alerta_dias?: number
+          campanha_id: string
+          created_at?: string
+          frequencia_meses?: number
+          ghe_id?: string | null
+          id?: string
+          observacoes?: string | null
+          proxima_avaliacao: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          alerta_dias?: number
+          campanha_id?: string
+          created_at?: string
+          frequencia_meses?: number
+          ghe_id?: string | null
+          id?: string
+          observacoes?: string | null
+          proxima_avaliacao?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "psico_cronograma_campanha_id_fkey"
+            columns: ["campanha_id"]
+            isOneToOne: false
+            referencedRelation: "psico_campanhas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "psico_cronograma_ghe_id_fkey"
+            columns: ["ghe_id"]
+            isOneToOne: false
+            referencedRelation: "pgr_ghe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "psico_cronograma_ghe_id_fkey"
+            columns: ["ghe_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["ghe_id"]
+          },
+        ]
+      }
+      psico_denuncias: {
+        Row: {
+          categoria: string
+          company_id: string | null
+          concluida_em: string | null
+          contato_retorno: string | null
+          created_at: string
+          data_aproximada: string | null
+          id: string
+          ip_hash: string | null
+          local_ocorrencia: string | null
+          parecer_final: string | null
+          protocolo: string
+          quer_retorno: boolean
+          relato: string
+          responsavel_apuracao: string | null
+          status: string
+          ua_hash: string | null
+          updated_at: string
+        }
+        Insert: {
+          categoria: string
+          company_id?: string | null
+          concluida_em?: string | null
+          contato_retorno?: string | null
+          created_at?: string
+          data_aproximada?: string | null
+          id?: string
+          ip_hash?: string | null
+          local_ocorrencia?: string | null
+          parecer_final?: string | null
+          protocolo?: string
+          quer_retorno?: boolean
+          relato: string
+          responsavel_apuracao?: string | null
+          status?: string
+          ua_hash?: string | null
+          updated_at?: string
+        }
+        Update: {
+          categoria?: string
+          company_id?: string | null
+          concluida_em?: string | null
+          contato_retorno?: string | null
+          created_at?: string
+          data_aproximada?: string | null
+          id?: string
+          ip_hash?: string | null
+          local_ocorrencia?: string | null
+          parecer_final?: string | null
+          protocolo?: string
+          quer_retorno?: boolean
+          relato?: string
+          responsavel_apuracao?: string | null
+          status?: string
+          ua_hash?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "psico_denuncias_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "psico_denuncias_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "v_contratada_dossie_status"
+            referencedColumns: ["company_id"]
+          },
+        ]
+      }
+      psico_planos_acao: {
+        Row: {
+          campanha_id: string
+          classificacao: string
+          created_at: string
+          criado_por: string | null
+          dimensao: string
+          gerado_automatico: boolean
+          ghe_id: string | null
+          how: string | null
+          how_much: number | null
+          id: string
+          nr01_item_ref: string | null
+          observacoes: string | null
+          score_medio: number | null
+          status: string
+          updated_at: string
+          what: string
+          when_: string | null
+          where_: string | null
+          who: string | null
+          why: string
+        }
+        Insert: {
+          campanha_id: string
+          classificacao: string
+          created_at?: string
+          criado_por?: string | null
+          dimensao: string
+          gerado_automatico?: boolean
+          ghe_id?: string | null
+          how?: string | null
+          how_much?: number | null
+          id?: string
+          nr01_item_ref?: string | null
+          observacoes?: string | null
+          score_medio?: number | null
+          status?: string
+          updated_at?: string
+          what: string
+          when_?: string | null
+          where_?: string | null
+          who?: string | null
+          why: string
+        }
+        Update: {
+          campanha_id?: string
+          classificacao?: string
+          created_at?: string
+          criado_por?: string | null
+          dimensao?: string
+          gerado_automatico?: boolean
+          ghe_id?: string | null
+          how?: string | null
+          how_much?: number | null
+          id?: string
+          nr01_item_ref?: string | null
+          observacoes?: string | null
+          score_medio?: number | null
+          status?: string
+          updated_at?: string
+          what?: string
+          when_?: string | null
+          where_?: string | null
+          who?: string | null
+          why?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "psico_planos_acao_campanha_id_fkey"
+            columns: ["campanha_id"]
+            isOneToOne: false
+            referencedRelation: "psico_campanhas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "psico_planos_acao_ghe_id_fkey"
+            columns: ["ghe_id"]
+            isOneToOne: false
+            referencedRelation: "pgr_ghe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "psico_planos_acao_ghe_id_fkey"
+            columns: ["ghe_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["ghe_id"]
+          },
+        ]
+      }
+      psico_relatos_abertos: {
+        Row: {
+          campanha_id: string
+          categoria: string | null
+          created_at: string
+          faixa_etaria: string | null
+          faixa_tempo_casa: string | null
+          ghe_id: string | null
+          id: string
+          relato: string
+          token_hash: string
+        }
+        Insert: {
+          campanha_id: string
+          categoria?: string | null
+          created_at?: string
+          faixa_etaria?: string | null
+          faixa_tempo_casa?: string | null
+          ghe_id?: string | null
+          id?: string
+          relato: string
+          token_hash: string
+        }
+        Update: {
+          campanha_id?: string
+          categoria?: string | null
+          created_at?: string
+          faixa_etaria?: string | null
+          faixa_tempo_casa?: string | null
+          ghe_id?: string | null
+          id?: string
+          relato?: string
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "psico_relatos_abertos_campanha_id_fkey"
+            columns: ["campanha_id"]
+            isOneToOne: false
+            referencedRelation: "psico_campanhas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "psico_relatos_abertos_ghe_id_fkey"
+            columns: ["ghe_id"]
+            isOneToOne: false
+            referencedRelation: "pgr_ghe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "psico_relatos_abertos_ghe_id_fkey"
+            columns: ["ghe_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["ghe_id"]
           },
         ]
       }

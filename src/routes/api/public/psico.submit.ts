@@ -12,6 +12,8 @@ const SubmitSchema = z.object({
   versao_termo: z.string().max(32).default("v1.2026-07"),
   faixa_etaria: z.string().max(16).nullable().optional(),
   faixa_tempo_casa: z.string().max(16).nullable().optional(),
+  relato_aberto: z.string().max(2000).nullable().optional(),
+  relato_categoria: z.enum(["POSITIVO", "MELHORIA", "DENUNCIA", "OUTRO"]).nullable().optional(),
   respostas: z
     .array(
       z.object({
@@ -86,7 +88,20 @@ export const Route = createFileRoute("/api/public/psico/submit")({
           return Response.json({ ok: false, error: "db" }, { status: 500 });
         }
 
-        // 5) invalida token (single-use)
+        // 5) relato aberto (opcional, sem user_id) — armazenado em tabela separada
+        if (payload.relato_aberto && payload.relato_aberto.trim().length >= 10) {
+          await supabaseAdmin.from("psico_relatos_abertos").insert({
+            campanha_id: tok.campanha_id,
+            token_hash: hash,
+            ghe_id: tok.ghe_id,
+            categoria: payload.relato_categoria ?? "OUTRO",
+            relato: payload.relato_aberto.trim(),
+            faixa_etaria: payload.faixa_etaria ?? null,
+            faixa_tempo_casa: payload.faixa_tempo_casa ?? null,
+          });
+        }
+
+        // 6) invalida token (single-use)
         await supabaseAdmin
           .from("psico_tokens")
           .update({ usado_em: new Date().toISOString() })
