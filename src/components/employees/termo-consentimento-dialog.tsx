@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { ShieldCheck, ShieldAlert, FileSignature, Eye } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { gerarTermoConsentimentoPDF } from "@/lib/termo-consentimento-pdf";
 import { fetchSignatureAsCleanDataUrl } from "@/lib/signature-utils";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
@@ -48,6 +49,10 @@ export function TermoConsentimentoDialog({
   const { data: emp, isLoading } = useQuery({
     queryKey: ["termo-emp", employeeId],
     enabled: open && !!employeeId,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("employees")
@@ -62,6 +67,8 @@ export function TermoConsentimentoDialog({
   const { data: termoExistente } = useQuery({
     queryKey: ["termo-existente", emp?.termo_consentimento_id],
     enabled: !!emp?.termo_consentimento_id,
+    staleTime: 0,
+    refetchOnMount: "always",
     queryFn: async () => {
       const { data } = await supabase
         .from("assinaturas_termos_consentimento")
@@ -155,6 +162,42 @@ export function TermoConsentimentoDialog({
       ]);
     },
     onError: (e: any) => toast.error(e.message ?? "Erro ao registrar termo"),
+  });
+
+  const reemitir = useMutation({
+    mutationFn: async () => {
+      if (!emp || !termoExistente) throw new Error("Nada a reemitir");
+      // Apaga PDF arquivado no Storage (se existir)
+      if (termoExistente.pdf_path) {
+        try {
+          await supabase.storage.from("termos-consentimento").remove([termoExistente.pdf_path]);
+        } catch (e) {
+          console.warn("Falha ao remover PDF antigo do Storage:", e);
+        }
+      }
+      // Desvincula da ficha ANTES de deletar (FK)
+      const { error: upErr } = await supabase
+        .from("employees")
+        .update({ termo_consentimento_id: null, termo_consentimento_data: null })
+        .eq("id", emp.id);
+      if (upErr) throw upErr;
+      // Remove o registro do termo antigo
+      const { error: delErr } = await supabase
+        .from("assinaturas_termos_consentimento")
+        .delete()
+        .eq("id", termoExistente.id);
+      if (delErr) throw delErr;
+    },
+    onSuccess: async () => {
+      toast.success("Termo anterior invalidado. Clique em 'Registrar' para emitir novo com os dados atualizados.");
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["employee"] }),
+        qc.invalidateQueries({ queryKey: ["termo-emp"] }),
+        qc.invalidateQueries({ queryKey: ["termo-existente"] }),
+        qc.invalidateQueries({ queryKey: ["termos-status"] }),
+      ]);
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro ao reemitir termo"),
   });
 
   const visualizar = async () => {
@@ -325,6 +368,20 @@ export function TermoConsentimentoDialog({
               className="border-emerald-400/50 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20 hover:text-white"
             >
               <Eye className="h-4 w-4 mr-1" /> {termoExistente?.pdf_path ? "Visualizar / Baixar PDF" : "Visualizar e arquivar"}
+            </Button>
+          )}
+          {status === "BLINDADO" && (
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (confirm("Reemitir invalida o termo atual (PDF antigo será apagado) e volta o funcionário para PENDENTE, permitindo gerar um novo termo com os dados atualizados (CPF, RG, cargo, empresa). Prosseguir?")) {
+                  reemitir.mutate();
+                }
+              }}
+              disabled={reemitir.isPending}
+              className="border-amber-400/50 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20 hover:text-white"
+            >
+              <RefreshCw className="h-4 w-4 mr-1" /> {reemitir.isPending ? "Invalidando…" : "Reemitir termo"}
             </Button>
           )}
           {status === "PENDENTE" && (
