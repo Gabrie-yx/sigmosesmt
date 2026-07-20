@@ -600,6 +600,28 @@ function RequisicoesPage() {
           </Tabs>
         </CardContent>
       </Card>
+      {previewState && (
+        <PDFPreviewDialog
+          open={!!previewState}
+          onClose={() => setPreviewState(null)}
+          doc={previewState.doc}
+          fileName={rcPdfFileName(previewState.req)}
+          title={`Requisição de Compra — Nº ${previewState.req.numero}`}
+          signable={isEditor}
+          useSignatureGallery
+          signatureLabels={{ eng: "Solicitante", sesmt: "Supervisor Geral", enc: "Analista de Compras" }}
+          engSig={previewState.req.signature_solicitante ?? null}
+          onChangeEngSig={async (v) => {
+            await updateSolicitanteSig.mutateAsync({ id: previewState.req.id, signature: v });
+            const nextReq = {
+              ...previewState.req,
+              signature_solicitante: v,
+              signature_solicitante_height: v ? 18 : null,
+            } as Req;
+            await regeneratePreview(nextReq);
+          }}
+        />
+      )}
     </div>
   );
 }
