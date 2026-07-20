@@ -364,6 +364,50 @@ function PsicoPublicPage() {
             </div>
           </Panel>
         ))}
+
+        <Panel>
+          <div className="flex items-center gap-2 pb-2 border-b border-rose-100">
+            <div className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+            <h2 className="text-[11px] font-bold text-[#4c0519] uppercase tracking-wider">
+              Relato aberto (opcional)
+            </h2>
+          </div>
+          <p className="text-xs text-slate-600 mt-2">
+            Quer contar algo que as perguntas não cobriram? Continua <b>100% anônimo</b>.
+          </p>
+          <div className="grid grid-cols-4 gap-1 mt-3">
+            {([
+              ["POSITIVO", "Elogio"],
+              ["MELHORIA", "Melhoria"],
+              ["DENUNCIA", "Denúncia"],
+              ["OUTRO", "Outro"],
+            ] as const).map(([v, l]) => {
+              const active = relatoCategoria === v;
+              return (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => setRelatoCategoria(v)}
+                  className={`h-9 rounded-lg border text-[10px] font-semibold transition ${
+                    active
+                      ? "bg-gradient-to-r from-[#7f1d3a] to-[#e11d48] text-white border-[#4c0519]"
+                      : "bg-white border-rose-200 text-slate-600 hover:border-rose-400"
+                  }`}
+                >
+                  {l}
+                </button>
+              );
+            })}
+          </div>
+          <textarea
+            value={relatoAberto}
+            onChange={(e) => setRelatoAberto(e.target.value.slice(0, 2000))}
+            rows={4}
+            placeholder="Se quiser, descreva. Mínimo 10 caracteres para ser considerado."
+            className="mt-3 w-full rounded border border-rose-200 bg-white px-3 py-2 text-sm text-slate-800"
+          />
+          <p className="text-[10px] text-slate-400 mt-1 text-right">{relatoAberto.length}/2000</p>
+        </Panel>
       </main>
 
       <footer className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-[#7f1d3a] p-3 shadow-[0_-4px_12px_rgba(127,29,58,0.08)]">

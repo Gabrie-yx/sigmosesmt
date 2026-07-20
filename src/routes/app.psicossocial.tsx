@@ -26,6 +26,12 @@ import { DIMENSAO_LABEL, PSICO_ITEMS } from "@/lib/psico-instrument";
 import { gerarParecerPsicossocialPdf } from "@/lib/psico-parecer-pdf";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import type jsPDF from "jspdf";
+import { PlanoAcaoTab } from "@/components/psicossocial/plano-acao-tab";
+import { CronogramaTab } from "@/components/psicossocial/cronograma-tab";
+import { AcoesRealizadasTab } from "@/components/psicossocial/acoes-tab";
+import { DenunciasTab } from "@/components/psicossocial/denuncias-tab";
+import { SinalCruzadoTab } from "@/components/psicossocial/sinal-cruzado-tab";
+import { Calendar, Activity, ShieldAlert, CheckCheck } from "lucide-react";
 
 export const Route = createFileRoute("/app/psicossocial")({
   component: PsicossocialPage,
@@ -60,12 +66,22 @@ function PsicossocialPage() {
             <TabsTrigger value="campanhas"><Users className="h-4 w-4 mr-1" />Campanhas</TabsTrigger>
             <TabsTrigger value="diagnostico"><BarChart3 className="h-4 w-4 mr-1" />Diagnóstico</TabsTrigger>
             <TabsTrigger value="instrumento"><ClipboardList className="h-4 w-4 mr-1" />Instrumento</TabsTrigger>
+            <TabsTrigger value="plano"><ListChecks className="h-4 w-4 mr-1" />Plano 5W2H</TabsTrigger>
+            <TabsTrigger value="cronograma"><Calendar className="h-4 w-4 mr-1" />Cronograma</TabsTrigger>
+            <TabsTrigger value="acoes"><CheckCheck className="h-4 w-4 mr-1" />Ações</TabsTrigger>
+            <TabsTrigger value="sinais"><Activity className="h-4 w-4 mr-1" />Sinais Cruzados</TabsTrigger>
+            <TabsTrigger value="denuncias"><ShieldAlert className="h-4 w-4 mr-1" />Denúncias</TabsTrigger>
           </TabsList>
 
           <TabsContent value="catalogo" className="mt-4"><CatalogoTab /></TabsContent>
           <TabsContent value="campanhas" className="mt-4"><CampanhasTab /></TabsContent>
           <TabsContent value="diagnostico" className="mt-4"><DiagnosticoTab /></TabsContent>
           <TabsContent value="instrumento" className="mt-4"><InstrumentoTab /></TabsContent>
+          <TabsContent value="plano" className="mt-4"><PlanoAcaoTab /></TabsContent>
+          <TabsContent value="cronograma" className="mt-4"><CronogramaTab /></TabsContent>
+          <TabsContent value="acoes" className="mt-4"><AcoesRealizadasTab /></TabsContent>
+          <TabsContent value="sinais" className="mt-4"><SinalCruzadoTab /></TabsContent>
+          <TabsContent value="denuncias" className="mt-4"><DenunciasTab /></TabsContent>
         </Tabs>
       </div>
     </div>
