@@ -14,6 +14,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PrivacidadeRouteImport } from './routes/privacidade'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ExtraSabadoRouteImport } from './routes/extra-sabado'
+import { Route as DenunciaRouteImport } from './routes/denuncia'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
@@ -155,6 +156,11 @@ const LoginRoute = LoginRouteImport.update({
 const ExtraSabadoRoute = ExtraSabadoRouteImport.update({
   id: '/extra-sabado',
   path: '/extra-sabado',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DenunciaRoute = DenunciaRouteImport.update({
+  id: '/denuncia',
+  path: '/denuncia',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRoute = AppRouteImport.update({
@@ -777,6 +783,7 @@ const AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/denuncia': typeof DenunciaRoute
   '/extra-sabado': typeof ExtraSabadoRoute
   '/login': typeof LoginRoute
   '/privacidade': typeof PrivacidadeRoute
@@ -900,6 +907,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/denuncia': typeof DenunciaRoute
   '/extra-sabado': typeof ExtraSabadoRoute
   '/login': typeof LoginRoute
   '/privacidade': typeof PrivacidadeRoute
@@ -1021,6 +1029,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/denuncia': typeof DenunciaRoute
   '/extra-sabado': typeof ExtraSabadoRoute
   '/login': typeof LoginRoute
   '/privacidade': typeof PrivacidadeRoute
@@ -1147,6 +1156,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/app'
+    | '/denuncia'
     | '/extra-sabado'
     | '/login'
     | '/privacidade'
@@ -1270,6 +1280,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/denuncia'
     | '/extra-sabado'
     | '/login'
     | '/privacidade'
@@ -1390,6 +1401,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/app'
+    | '/denuncia'
     | '/extra-sabado'
     | '/login'
     | '/privacidade'
@@ -1515,6 +1527,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
+  DenunciaRoute: typeof DenunciaRoute
   ExtraSabadoRoute: typeof ExtraSabadoRoute
   LoginRoute: typeof LoginRoute
   PrivacidadeRoute: typeof PrivacidadeRoute
@@ -1564,6 +1577,13 @@ declare module '@tanstack/react-router' {
       path: '/extra-sabado'
       fullPath: '/extra-sabado'
       preLoaderRoute: typeof ExtraSabadoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/denuncia': {
+      id: '/denuncia'
+      path: '/denuncia'
+      fullPath: '/denuncia'
+      preLoaderRoute: typeof DenunciaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app': {
@@ -2685,6 +2705,7 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
+  DenunciaRoute: DenunciaRoute,
   ExtraSabadoRoute: ExtraSabadoRoute,
   LoginRoute: LoginRoute,
   PrivacidadeRoute: PrivacidadeRoute,
