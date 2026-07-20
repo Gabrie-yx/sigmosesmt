@@ -1126,7 +1126,10 @@ export function ReqFormDialog({
         pagina: form.pagina,
         observacoes: form.observacoes.trim() || null,
         signature_solicitante: signature,
-        signature_solicitante_height: signature ? signatureHeight : null,
+        // Converte o slider (20-140 px de preview) para altura em mm no PDF (4-20 mm).
+        signature_solicitante_height: signature
+          ? Math.round(4 + Math.max(0, Math.min(120, signatureHeight - 20)) / 120 * 16)
+          : null,
         urgencia: form.urgencia,
       };
 
