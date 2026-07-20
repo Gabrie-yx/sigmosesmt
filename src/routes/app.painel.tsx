@@ -435,10 +435,10 @@ function TstPanel() {
 
   // === Extintores: barras por status ===
   const extintoresBars = [
-    { name: "Ativos", value: extMetrics.ativos, fill: "#10b981" },
-    { name: "Vence 30d", value: extMetrics.vencendo, fill: "#fbbf24" },
-    { name: "Vencidos", value: extMetrics.vencidos, fill: "#f43f5e" },
-    { name: "S/ Insp.", value: extMetrics.semInspecao, fill: "#22d3ee" },
+    { name: "Ativos", value: extMetrics.ativos, fill: "#f59e0b" },      // âmbar (fogo controlado)
+    { name: "Vence 30d", value: extMetrics.vencendo, fill: "#facc15" }, // amarelo alerta
+    { name: "Vencidos", value: extMetrics.vencidos, fill: "#ea580c" },  // laranja queimado
+    { name: "S/ Insp.", value: extMetrics.semInspecao, fill: "#fbbf24" }, // amarelo claro
   ];
 
   // === Documentos: Abertos x Resolvidos por mês (últimos 6 meses) ===
