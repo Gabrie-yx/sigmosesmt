@@ -1,6 +1,5 @@
 import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-import { drawPdfHeader } from "./pdf-header";
+import { gerarPdfRequisicaoDoc, type RcPdfReq, type RcPdfItem } from "./requisicao-compra-pdf";
 
 export type MedItem = {
   descricao: string;
@@ -107,113 +106,60 @@ export type RequisicaoMedicamentosOpts = {
   assinaturaSolicitanteDataUrl?: string;
 };
 
-function hoje(): string {
-  return new Date().toLocaleDateString("pt-BR");
+/**
+ * Gera o PDF da Requisição de Medicamentos usando EXATAMENTE o mesmo layout
+ * homologado FOR-COMP-03 (padrão ISO 9001) das demais requisições de compra.
+ * Isso mantém uma única forma de documento para material, serviço e medicamentos.
+ */
+export async function buildRequisicaoMedicamentosPdf(
+  opts: RequisicaoMedicamentosOpts,
+): Promise<jsPDF> {
+  const hojeIso = new Date().toISOString().slice(0, 10);
+  const req: RcPdfReq = {
+    id: "med",
+    numero: opts.numero ?? "",
+    titulo: "REQUISIÇÃO DE MEDICAMENTOS / INSUMOS DE AMBULATÓRIO",
+    data_requisicao: hojeIso,
+    classificacao: "MEDICAMENTOS",
+    solicitante: opts.solicitante,
+    setor: opts.setor ?? "SESMT — Ambulatório",
+    fornecedor: null,
+    obra_construcao: null,
+    obra_manutencao: null,
+    codigo_formulario: "03",
+    revisao: "01",
+    data_revisao: hojeIso,
+    pagina: "01/01",
+    status: "PENDENTE",
+    signature_solicitante: opts.assinaturaSolicitanteDataUrl ?? null,
+    cotador_nome: opts.responsavelAprovador ?? null,
+  };
+
+  const itens: RcPdfItem[] = opts.itens.map((it, idx) => {
+    const descCompleta = it.apresentacao
+      ? `${it.descricao} — ${it.apresentacao}`
+      : it.descricao;
+    const obsBase = it.justificativa?.trim() || "Reposição de estoque";
+    return {
+      item_numero: idx + 1,
+      descricao: descCompleta,
+      quantidade: it.quantidade,
+      unidade: it.unidade,
+      observacao: obsBase,
+    };
+  });
+
+  return gerarPdfRequisicaoDoc(req, itens, []);
 }
 
-export function buildRequisicaoMedicamentosPdf(opts: RequisicaoMedicamentosOpts): jsPDF {
-  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-  const W = doc.internal.pageSize.getWidth();
-  const H = doc.internal.pageSize.getHeight();
-  const M = 12;
-
-  const totalItens = opts.itens.length;
-  const totalUnid = opts.itens.reduce((a, i) => a + Number(i.quantidade || 0), 0);
-
-  const y = drawPdfHeader(doc, {
-    titulo: "Requisição de Medicamentos",
-    subtitulo: "Ambulatório SESMT — Reposição de uso diário (NR-07 / PCMSO)",
-    responsavel: opts.solicitante,
-    filtros: [
-      opts.numero ? `Nº ${opts.numero}` : "Nº ____/2026",
-      `Data: ${hoje()}`,
-      opts.setor ? `Setor: ${opts.setor}` : "Setor: SESMT",
-    ],
-    kpis: [
-      { label: "Itens", value: totalItens, tone: "neutral" },
-      { label: "Unidades totais", value: totalUnid, tone: "success" },
-    ],
-  });
-
-  const rows = opts.itens.map((it, idx) => [
-    String(idx + 1),
-    it.descricao,
-    it.apresentacao,
-    it.unidade,
-    String(it.quantidade ?? ""),
-    it.justificativa ?? "Reposição de estoque",
-    "", // recebido (preenchido manual)
-  ]);
-
-  autoTable(doc, {
-    startY: y + 1,
-    margin: { left: M, right: M, bottom: 40 },
-    head: [["#", "Medicamento / Insumo", "Apresentação", "Unidade", "Qtd", "Justificativa", "Recebido"]],
-    body: rows,
-    styles: { font: "helvetica", fontSize: 7.5, cellPadding: 1.0, lineColor: [200, 200, 200], lineWidth: 0.1, valign: "middle", minCellHeight: 4.6 },
-    headStyles: { fillColor: [127, 29, 29], textColor: 255, fontStyle: "bold", halign: "center", fontSize: 7.5, cellPadding: 1.2 },
-    columnStyles: {
-      0: { halign: "center", cellWidth: 8 },
-      1: { cellWidth: 64, fontStyle: "bold" },
-      2: { cellWidth: 28 },
-      3: { cellWidth: 18, halign: "center" },
-      4: { cellWidth: 12, halign: "center", fontStyle: "bold" },
-      5: { cellWidth: 37 },
-      6: { cellWidth: 19 },
-    },
-    didDrawPage: () => {
-      const page = doc.getNumberOfPages();
-      doc.setFontSize(7);
-      doc.setTextColor(120);
-      doc.text(`SIGMO · Requisição de Medicamentos · página ${page}`, W / 2, H - 6, { align: "center" });
-      doc.setTextColor(0);
-    },
-  });
-
-  let cy = (doc as any).lastAutoTable?.finalY ?? y;
-  cy += 4;
-
-  // Observações
-  if (cy > H - 40) { doc.addPage(); cy = M + 10; }
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
-  doc.text("Observações:", M, cy);
-  cy += 3.2;
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7.5);
-  const obs = opts.observacoes?.trim() || "Itens de uso diário do ambulatório, sem medicação controlada (Portaria SVS/MS 344/98). Validade mínima exigida: 12 meses na entrega.";
-  const lines = doc.splitTextToSize(obs, W - 2 * M);
-  doc.text(lines, M, cy);
-  cy += lines.length * 3.2 + 3;
-
-  // Assinaturas
-  if (cy > H - 26) { doc.addPage(); cy = M + 10; }
-  const colW = (W - 2 * M - 10) / 3;
-  const sy = cy + 12;
-  [0, 1, 2].forEach((i) => {
-    const x = M + i * (colW + 5);
-    doc.line(x, sy, x + colW, sy);
-  });
-  // Estampa assinatura do solicitante (se houver) logo acima da linha
-  if (opts.assinaturaSolicitanteDataUrl) {
-    try {
-      doc.addImage(opts.assinaturaSolicitanteDataUrl, "PNG", M + 2, sy - 12, colW - 4, 11, undefined, "FAST");
-    } catch { /* ignora falha de imagem */ }
-  }
-  doc.setFontSize(7.5);
-  doc.text(`Solicitante\n${opts.solicitante}`, M, sy + 3.2);
-  doc.text(`TST Responsável\n${opts.responsavelTST ?? ""}`, M + colW + 5, sy + 3.2);
-  doc.text(`Aprovação / Compras\n${opts.responsavelAprovador ?? ""}`, M + 2 * (colW + 5), sy + 3.2);
-
-  return doc;
-}
-
-export function downloadRequisicaoMedicamentosPdf(opts: RequisicaoMedicamentosOpts) {
-  const doc = buildRequisicaoMedicamentosPdf(opts);
+export async function downloadRequisicaoMedicamentosPdf(opts: RequisicaoMedicamentosOpts) {
+  const doc = await buildRequisicaoMedicamentosPdf(opts);
   doc.save(`requisicao-medicamentos-${new Date().toISOString().slice(0, 10)}.pdf`);
 }
 
-export function previewRequisicaoMedicamentosPdf(opts: RequisicaoMedicamentosOpts): string {
-  const doc = buildRequisicaoMedicamentosPdf(opts);
+export async function previewRequisicaoMedicamentosPdf(
+  opts: RequisicaoMedicamentosOpts,
+): Promise<string> {
+  const doc = await buildRequisicaoMedicamentosPdf(opts);
   return doc.output("dataurlstring");
 }
