@@ -167,14 +167,15 @@ export function RequisicaoMedicamentosDialog({
     return true;
   };
 
-  const baixar = () => {
+  const baixar = async () => {
     if (!validar()) return;
-    downloadRequisicaoMedicamentosPdf({ numero, solicitante, setor, responsavelTST, observacoes, itens, assinaturaSolicitanteDataUrl: assinaturaSolicitante ?? undefined });
+    await downloadRequisicaoMedicamentosPdf({ numero, solicitante, setor, responsavelTST, observacoes, itens, assinaturaSolicitanteDataUrl: assinaturaSolicitante ?? undefined });
     toast.success("PDF gerado");
   };
-  const visualizar = () => {
+  const visualizar = async () => {
     if (!validar()) return;
-    setPreviewDoc(buildRequisicaoMedicamentosPdf({ numero, solicitante, setor, responsavelTST, observacoes, itens, assinaturaSolicitanteDataUrl: assinaturaSolicitante ?? undefined }));
+    const doc = await buildRequisicaoMedicamentosPdf({ numero, solicitante, setor, responsavelTST, observacoes, itens, assinaturaSolicitanteDataUrl: assinaturaSolicitante ?? undefined });
+    setPreviewDoc(doc);
   };
 
   async function gerarNumero(): Promise<string> {
