@@ -55,7 +55,15 @@ export function DenunciasTab() {
     onError: (e: any) => toast.error(e?.message ?? "Falha"),
   });
 
-  const linkPublico = typeof window !== "undefined" ? `${window.location.origin}/denuncia` : "";
+  // Link público estável (published). window.location.origin dentro do editor
+  // do Lovable aponta pro domínio do editor e cai na tela de login.
+  const linkPublico = (() => {
+    if (typeof window === "undefined") return "https://sigmosesmt.lovable.app/denuncia";
+    const host = window.location.hostname;
+    const isPreviewOuProd = host.endsWith(".lovable.app") || host.endsWith(".dmnestaleiro.com.br") || host === "localhost" || host.startsWith("172.") || host.startsWith("192.");
+    if (isPreviewOuProd) return `${window.location.origin}/denuncia`;
+    return "https://sigmosesmt.lovable.app/denuncia";
+  })();
 
   return (
     <div className="space-y-3">
