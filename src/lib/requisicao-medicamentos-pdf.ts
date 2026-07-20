@@ -104,6 +104,7 @@ export type RequisicaoMedicamentosOpts = {
   observacoes?: string;
   itens: MedItem[];
   assinaturaSolicitanteDataUrl?: string;
+  assinaturaSolicitanteHeightMm?: number;
 };
 
 /**
