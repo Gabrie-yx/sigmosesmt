@@ -1234,9 +1234,9 @@ function TstPanel() {
               const pctInsp = extMetrics.ativos > 0
                 ? Math.round((inspecionados / extMetrics.ativos) * 100)
                 : 0;
-              const cor = extMetrics.vencidos > 0
-                ? "#f43f5e"
-                : pctInsp >= metas.inspPct ? "#10b981" : pctInsp >= 70 ? "#fbbf24" : "#f43f5e";
+              const cor = pctInsp >= metas.inspPct
+                ? "#10b981"
+                : pctInsp >= 70 ? "#fbbf24" : "#f43f5e";
               return (
                 <div className="mb-2 rounded-lg border border-slate-800/80 bg-slate-900/40 p-3">
                   <div className="flex items-end justify-between gap-3">
