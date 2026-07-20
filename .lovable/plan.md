@@ -1,57 +1,46 @@
-## Novo Laudo Técnico de Inspeção SST (13-14 páginas)
+Chico, esse pacote é grande (mexe em banco, backend, formulário público e dashboard). Antes de sair codando, deixa eu alinhar o escopo pra não sair coisa que você não pediu.
 
-Reescrita do `src/lib/inspecao-pdf.ts` mantendo a assinatura da função `gerarInspecaoPdf` (nenhuma tela precisa mudar), e ajustes pontuais no `PDFPreviewDialog` para 3 assinaturas.
+## Escopo (10 frentes, tudo menos "integrar ao Inventário PGR")
 
-### Decisões confirmadas
-- **Assinaturas**: Engenheiro de Segurança, Técnico de Segurança (usuário logado), Encarregado da área. Três slots.
-- **Multa NR-28**: valor **exato por faixa legal** conforme Portaria MTP 667/2021 (Anexo I e II da NR-28), usando `companies.numero_empregados` × grau de risco da NR infringida × gradação (I1-I4). O valor sai da tabela oficial, não da faixa "de-até". Notinha explicando base legal.
-- **QR code**: **não** incluir.
+### Banco (1 migration só)
+- `psico_planos_acao` — 5W2H automático a partir de dimensões classificadas Alto/Muito Alto por campanha.
+- `psico_cronograma` — próxima reavaliação por GHE (anual por padrão, +alerta 30d).
+- `psico_acoes_realizadas` — registro de ações pós-diagnóstico (data, responsável, evidência, dimensão atacada).
+- `psico_denuncias` (Lei 14.457/2022) — canal anônimo: hash do relato, categoria (assédio moral / sexual / discriminação / outro), status (recebida → em apuração → concluída), sem user_id.
+- `psico_assinatura_parecer` — trilha do responsável técnico (TST/Eng. Segurança) por campanha: hash do PDF, data, CREA/registro, assinatura eletrônica.
+- Adicionar `campanha.perguntas_abertas_habilitado` (bool) + tabela `psico_relatos_abertos` (respostas livres, anônimas, opcionais, hash do token).
+- Seed de benchmarks CNAE (baseline HSE-IT BR por seção CNAE — começo com 5 setores: C-Indústria, F-Construção, H-Transporte, Q-Saúde, O-Adm Pública; expandimos depois).
+- Enriquecer `catalogo_perigos_psicossociais` com `nr01_item_ref` (ex: "1.5.3.2", "1.5.4.4.6") pra citar item exato no parecer.
 
-### Estrutura do PDF
+### Backend (server functions)
+- `gerarPlanoAcao5W2H(campanhaId)` — cria linhas em `psico_planos_acao` pras dimensões Alto/Muito Alto, com What/Why/Where/Who/When (90d)/How/HowMuch defaults editáveis.
+- `criarCronograma(campanhaId)` — calcula próxima reavaliação e agenda notificação.
+- `registrarAcaoRealizada(...)` — CRUD acoes.
+- `receberDenuncia(...)` — endpoint público `/api/public/denuncia-assedio` sem token (Lei 14.457 exige anônimo).
+- `assinarParecerPsicossocial(campanhaId)` — grava hash do PDF + assinatura do TST.
+- `cruzarSaudeAbsenteismo(campanhaId)` — cruza campanha × `employee_atestados` (CID F*) × `hora_extra_*` × `acidentes_trabalho` no GHE, retorna "sinal cruzado".
 
-1. **Capa (pág. 1)** — Cabeçalho vinho DMN, título "LAUDO TÉCNICO DE INSPEÇÃO DE SEGURANÇA DO TRABALHO", empresa/CNPJ/local/data/inspetor, big numbers (NCs, Críticas, Multa total NR-28), nº do laudo (`INSP-{id-curto}-{ano}`), marca d'água "PRÉVIA" se rascunho.
+### Frontend
+- `/app/psicossocial` ganha 4 abas novas: **Plano de Ação**, **Cronograma**, **Ações Realizadas**, **Sinal Cruzado**.
+- Aba **Diagnóstico** passa a estratificar por faixa etária / tempo de casa (charts) e mostrar comparação vs. benchmark CNAE.
+- Aba **Instrumento** ganha toggle "habilitar perguntas abertas" na criação de campanha.
+- Nova página pública `/denuncia/:empresa` — canal anônimo Lei 14.457.
+- `psico-parecer-pdf.ts` passa a citar item NR-01 exato em cada achado + bloco de assinatura do responsável técnico + QR de verificação.
+- Formulário público (`/psico/$token`) ganha seção opcional "quer relatar algo em texto livre? (100% anônimo)" ao final.
 
-2. **Sumário Executivo (pág. 2)** — Parágrafo introdutório automático + tabela consolidada (NCs por classe de risco, NCs por NR, exposição financeira NR-28).
+### Menu
+- Adicionar item "Canal de Denúncia (Lei 14.457)" no menu-catalog público (link compartilhável).
 
-3. **Metodologia e Base Legal (pág. 3)** — NR-01 (GRO/PGR), NR-28 (fiscalização/gradação), matriz 5×5, critérios de severidade/probabilidade, escopo declarado. Blindagem jurídica.
+## Fora do escopo (fica registrado)
+- Integração `psico ↔ pgr_inventario_riscos` (aguardando PGR Rev.06 conforme sua orientação).
+- Widget de sinal cruzado no `/app/painel` (fica só na aba do módulo por enquanto — se quiser depois eu subo pro painel geral).
+- Notificação por e-mail (SIGMO ainda não tem SMTP configurado — o alerta vai por card na `/app/hoje`).
 
-4. **Quadro Consolidado de NCs (pág. 4)** — Tabela: #, NR-Item, Descrição resumida, Classe, P×S, Gradação NR-28, Multa R$.
+## Ordem de execução
+1. Migration única (todas as tabelas + colunas + seed benchmark + item NR-01)
+2. Server functions
+3. Rotas públicas (denúncia)
+4. UI (4 abas novas + toggle perguntas abertas + estratificação + benchmark)
+5. PDF do parecer (item NR-01 + assinatura + QR)
 
-5. **Detalhamento por NC (págs. 5-N, uma por página quando possível)** — Para cada NC:
-   - Cabeçalho: "NC #X — NR-YY item Z.z"
-   - Texto oficial do item normativo (do `catalogo_nrs_itens.texto_oficial`)
-   - Descrição da não conformidade (do inspetor)
-   - Foto(s) associada(s) com legenda (hash, timestamp, GPS)
-   - Matriz 5×5 SVG desenhada em vetor, célula ativa destacada
-   - Recomendação técnica
-   - Plano 5W2H (What/Why/Who/Where/When/How/HowMuch) extraído dos `planos_acao`
-   - Multa NR-28 calculada com base + fórmula
-
-6. **Plano de Ação Consolidado (pág. N+1)** — Tabela com todas as ações de todas as NCs ordenadas por prazo, status PDCA.
-
-7. **Rubrica Matriz 5×5 (pág. N+2)** — Tabelas de P e S com definições.
-
-8. **Parecer Técnico e Conclusão (pág. N+3)** — Parecer do inspetor (usa `inspecao.parecer_tecnico` se existir; senão gera texto padrão), classificação geral do risco, urgência.
-
-9. **Assinaturas (última pág.)** — 3 slots: Engenheiro de Segurança, Técnico de Segurança do Trabalho (nome + CREA/registro do usuário), Encarregado da Área. Base legal ao pé.
-
-10. **Rodapé em todas as páginas**: `LAUDO INSP-xxx · Página X/Y · Emitido em DD/MM/YYYY HH:MM`.
-
-### Cálculo de multa NR-28 (Portaria MTP 667/2021)
-
-Valor U (UFIR-like) por gradação I1..I4 × faixa de empregados (Anexo II). Vou criar um helper `src/lib/nr28-multa.ts` com a matriz completa oficial e função `calcularMultaNR28({ gradacao: 'I1'|'I2'|'I3'|'I4', numeroEmpregados: number })`. O cálculo já existe hoje via `inspecao_nr28_valores` — vou consultar essa tabela para não duplicar, e só fazer fallback pro helper caso vazia.
-
-### Ajustes no dialog
-`PDFPreviewDialog` hoje aceita 2 slots (`encSig`/`sesmtSig`). Preciso estender para 3: adicionar `engSig`/`onChangeEngSig` (opcional, retrocompatível). No `app.sesmt.inspecoes.$id.tsx` passar os 3 handlers.
-
-### Arquivos afetados
-- `src/lib/inspecao-pdf.ts` — reescrita completa (~600 linhas)
-- `src/lib/nr28-multa.ts` — novo, helper de fallback
-- `src/components/pdf-preview-dialog.tsx` — 3º slot de assinatura
-- `src/routes/app.sesmt.inspecoes.$id.tsx` — passar 3 assinaturas e labels ("Engenheiro de Segurança", "Técnico de Segurança", "Encarregado da Área"), buscar CREA do TST logado se disponível
-
-### Fora de escopo
-- Rota pública `/laudo/{hash}` (usuário dispensou)
-- QR code
-- Anotação em fotos (bounding boxes) — fica para uma iteração seguinte, é complexo e não bloqueia legalidade
-- Gráfico Gantt do plano de ação (tabela ordenada por prazo já cumpre)
+Se topar, saio codando na sequência. Alguma frente eu tirei/adicionei sem alinhar?
