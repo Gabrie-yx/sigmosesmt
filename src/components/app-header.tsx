@@ -9,7 +9,7 @@ import { exportBackup, importBackup } from "@/lib/backup";
 import { toast } from "sonner";
 import { useRef, useState } from "react";
 import dmnLogo from "@/assets/dmn-logo-branco.png";
-import sigmoLogoFull from "@/assets/sigmo-logo-full.png.asset.json";
+import sigmoLogoFull from "@/assets/sigmo-logo-full-white.png.asset.json";
 import { PendenciasBadge } from "@/components/pendencias-badge";
 import { useSidebar } from "@/components/ui/sidebar";
 import {
