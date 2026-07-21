@@ -232,7 +232,7 @@ function RequisicoesPage() {
       // Limpa a URL para não reabrir ao navegar de volta
       window.history.replaceState({}, "", window.location.pathname);
     }
-  }, [location.search.draft]);
+  }, [(location.search as any).draft]);
   const [tab, setTab] = useState<"todas" | Status>("todas");
 
   // Aceita ?tab=COTADA vindo do badge do header
