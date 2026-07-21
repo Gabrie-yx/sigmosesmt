@@ -3,17 +3,27 @@
   "short_name": "SIGMO",
   "id": "/app",
   "description": "Sistema Integrado de Gestão Modular do Estaleiro DMN.",
-  "start_url": "/app",
+  "start_url": "/app?src=pwa",
   "scope": "/",
   "display": "standalone",
-  "orientation": "portrait",
+  "display_override": ["standalone", "minimal-ui", "browser"],
+  "orientation": "any",
   "background_color": "#0F172A",
   "theme_color": "#0F172A",
   "lang": "pt-BR",
+  "dir": "ltr",
+  "categories": ["business", "productivity"],
+  "prefer_related_applications": false,
   "icons": [
-    { "src": "/icon-192.png", "type": "image/png", "sizes": "192x192", "purpose": "any" },
-    { "src": "/icon-512.png", "type": "image/png", "sizes": "512x512", "purpose": "any" },
-    { "src": "/icon-192-maskable.png", "type": "image/png", "sizes": "192x192", "purpose": "maskable" },
-    { "src": "/icon-512-maskable.png", "type": "image/png", "sizes": "512x512", "purpose": "maskable" }
+    { "src": "/icon-192.png?v=8", "type": "image/png", "sizes": "192x192", "purpose": "any" },
+    { "src": "/icon-512.png?v=8", "type": "image/png", "sizes": "512x512", "purpose": "any" },
+    { "src": "/icon-192-maskable.png?v=8", "type": "image/png", "sizes": "192x192", "purpose": "maskable" },
+    { "src": "/icon-512-maskable.png?v=8", "type": "image/png", "sizes": "512x512", "purpose": "maskable" },
+    { "src": "/apple-touch-icon.png?v=8", "type": "image/png", "sizes": "180x180", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "Painel", "short_name": "Painel", "url": "/app/painel", "icons": [{ "src": "/icon-192.png?v=8", "sizes": "192x192" }] },
+    { "name": "SESMT", "short_name": "SESMT", "url": "/app/sesmt", "icons": [{ "src": "/icon-192.png?v=8", "sizes": "192x192" }] },
+    { "name": "Assinador", "short_name": "Assinador", "url": "/app/assinador", "icons": [{ "src": "/icon-192.png?v=8", "sizes": "192x192" }] }
   ]
 }
