@@ -116,6 +116,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap",
       },
     ],
+    scripts: [
+      {
+        children:
+          "(function(){try{window.__sigmoBIP=null;window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__sigmoBIP=e;window.dispatchEvent(new Event('sigmo:bip-ready'));},{once:false});}catch(e){}})();",
+      },
+    ],
   }),
   shellComponent: RootShell,
   component: RootComponent,
