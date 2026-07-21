@@ -65,7 +65,7 @@ export function QuickActionsBar() {
             title="Abrir upload dos modelos oficiais FOR-SEG"
           >
             <FileUp className="h-3.5 w-3.5" />
-            Upload FOR-SEG
+            Upload de formulários
           </Link>
         )}
 
