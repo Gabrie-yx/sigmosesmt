@@ -74,7 +74,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { title: "SIGMO — Sistema Integrado de Gestão Modular | Estaleiro DMN" },
       { name: "description", content: "SIGMO: plataforma de SST, produção e compras do Estaleiro DMN da Amazônia. Gestão integrada de NR-33/34/35, PGR, PCMSO, APRs, PETs e requisições de compra." },
       { name: "author", content: "Estaleiro DMN" },
