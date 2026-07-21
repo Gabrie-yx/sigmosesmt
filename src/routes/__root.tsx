@@ -96,7 +96,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: appCss,
       },
       { rel: "manifest", href: "/manifest.webmanifest" },
-      { rel: "icon", type: "image/png", href: "/favicon.png?v=6" },
+      { rel: "icon", type: "image/png", href: "/favicon.png?v=7" },
       { rel: "icon", type: "image/png", sizes: "192x192", href: "/icon-192.png?v=6" },
       { rel: "icon", type: "image/png", sizes: "512x512", href: "/icon-512.png?v=6" },
       { rel: "apple-touch-icon", href: "/icon-192.png?v=6" },
