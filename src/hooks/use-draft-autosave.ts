@@ -17,10 +17,21 @@ export function useDraftAutosave<T>(
   const firstRun = useRef(true);
   const suppressUntilChange = useRef(false);
   const lastSerialized = useRef<string | null>(null);
+  const pendingSave = useRef<ReturnType<typeof setTimeout> | null>(null);
   const serialized = JSON.stringify(data);
 
+  const clearPendingSave = () => {
+    if (pendingSave.current) {
+      clearTimeout(pendingSave.current);
+      pendingSave.current = null;
+    }
+  };
+
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled) {
+      clearPendingSave();
+      return;
+    }
     // não salva no mount inicial pra evitar gravar valores default vazios
     if (firstRun.current) {
       firstRun.current = false;
@@ -34,11 +45,17 @@ export function useDraftAutosave<T>(
       if (serialized === lastSerialized.current) return;
       suppressUntilChange.current = false;
     }
+    clearPendingSave();
     const t = setTimeout(() => {
       saveDraft(key, label, route, data);
       lastSerialized.current = serialized;
+      if (pendingSave.current === t) pendingSave.current = null;
     }, delay);
-    return () => clearTimeout(t);
+    pendingSave.current = t;
+    return () => {
+      clearTimeout(t);
+      if (pendingSave.current === t) pendingSave.current = null;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [serialized, enabled, key, label, route, delay]);
 
@@ -49,7 +66,11 @@ export function useDraftAutosave<T>(
     const onChange = () => {
       try {
         const exists = window.localStorage.getItem("sigmo:draft:" + key) !== null;
-        if (!exists) suppressUntilChange.current = true;
+        if (!exists) {
+          clearPendingSave();
+          suppressUntilChange.current = true;
+          lastSerialized.current = serialized;
+        }
       } catch {
         /* ignore */
       }
