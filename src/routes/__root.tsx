@@ -74,7 +74,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { title: "SIGMO — Sistema Integrado de Gestão Modular | Estaleiro DMN" },
       { name: "description", content: "SIGMO: plataforma de SST, produção e compras do Estaleiro DMN da Amazônia. Gestão integrada de NR-33/34/35, PGR, PCMSO, APRs, PETs e requisições de compra." },
       { name: "author", content: "Estaleiro DMN" },
@@ -114,6 +114,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap",
+      },
+    ],
+    scripts: [
+      {
+        children:
+          "(function(){try{window.__sigmoBIP=null;window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__sigmoBIP=e;window.dispatchEvent(new Event('sigmo:bip-ready'));},{once:false});}catch(e){}})();",
       },
     ],
   }),

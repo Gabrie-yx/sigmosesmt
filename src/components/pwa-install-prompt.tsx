@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Download, Share, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useRouterState } from "@tanstack/react-router";
 
 type BIPEvent = Event & {
   prompt: () => Promise<void>;
@@ -22,7 +23,13 @@ function isStandalone() {
 function isIOS() {
   if (typeof navigator === "undefined") return false;
   const ua = navigator.userAgent;
-  return /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream;
+  const legacy = /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream;
+  // iPadOS 13+ se apresenta como Mac com touch — detectar via maxTouchPoints
+  const ipadOS =
+    /Mac/.test(ua) &&
+    typeof navigator !== "undefined" &&
+    (navigator as any).maxTouchPoints > 1;
+  return legacy || ipadOS;
 }
 
 function wasRecentlyDismissed() {
@@ -39,6 +46,12 @@ export function PWAInstallPrompt() {
   const [deferred, setDeferred] = useState<BIPEvent | null>(null);
   const [visible, setVisible] = useState(false);
   const [showIOSHint, setShowIOSHint] = useState(false);
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  // Não mostrar em rotas públicas/anônimas
+  const isPublicRoute =
+    pathname === "/login" ||
+    pathname === "/reset-password" ||
+    pathname.startsWith("/denuncia");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -55,6 +68,21 @@ export function PWAInstallPrompt() {
       setDeferred(null);
     };
 
+    // Se o evento já foi capturado pelo script inline antes do React montar,
+    // recupera aqui em vez de perder para sempre.
+    const early = (window as any).__sigmoBIP as BIPEvent | null | undefined;
+    if (early) {
+      setDeferred(early);
+      setVisible(true);
+    }
+    const onBIPReady = () => {
+      const ev = (window as any).__sigmoBIP as BIPEvent | null | undefined;
+      if (ev) {
+        setDeferred(ev);
+        setVisible(true);
+      }
+    };
+    window.addEventListener("sigmo:bip-ready", onBIPReady);
     window.addEventListener("beforeinstallprompt", onBIP as EventListener);
     window.addEventListener("appinstalled", onInstalled);
 
@@ -68,12 +96,14 @@ export function PWAInstallPrompt() {
       }, 4000);
       return () => {
         clearTimeout(t);
+        window.removeEventListener("sigmo:bip-ready", onBIPReady);
         window.removeEventListener("beforeinstallprompt", onBIP as EventListener);
         window.removeEventListener("appinstalled", onInstalled);
       };
     }
 
     return () => {
+      window.removeEventListener("sigmo:bip-ready", onBIPReady);
       window.removeEventListener("beforeinstallprompt", onBIP as EventListener);
       window.removeEventListener("appinstalled", onInstalled);
     };
@@ -96,6 +126,7 @@ export function PWAInstallPrompt() {
   }
 
   if (!visible) return null;
+  if (isPublicRoute) return null;
 
   return (
     <div className="fixed bottom-4 left-1/2 z-[100] w-[calc(100%-1.5rem)] max-w-sm -translate-x-1/2 rounded-2xl border border-white/15 bg-slate-900/95 p-4 text-white shadow-2xl backdrop-blur-xl">
@@ -138,6 +169,18 @@ export function PWAInstallPrompt() {
                 className="h-8 text-slate-300 hover:bg-white/10 hover:text-white"
               >
                 Agora não
+              </Button>
+            </div>
+          )}
+          {showIOSHint && (
+            <div className="mt-3 flex gap-2">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={dismiss}
+                className="h-8 text-slate-300 hover:bg-white/10 hover:text-white"
+              >
+                Entendi
               </Button>
             </div>
           )}
