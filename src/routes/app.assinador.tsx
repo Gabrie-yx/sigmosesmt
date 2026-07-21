@@ -54,6 +54,7 @@ function AssinadorPage() {
       const { data, error } = await (supabase as any)
         .from("documentos_assinados")
         .select("*")
+        .eq("modulo", "avulso")
         .order("created_at", { ascending: false })
         .limit(200);
       if (error) throw error;
@@ -66,6 +67,14 @@ function AssinadorPage() {
     if (!f) return;
     if (f.type !== "application/pdf") {
       toast.error("Selecione um arquivo PDF.");
+      return;
+    }
+
+    // Trava: OS/OSS têm fluxo oficial no módulo OSS (vinculado à ficha do funcionário).
+    const nomeUpper = f.name.toUpperCase();
+    if (/^OSS?[-_ ]/.test(nomeUpper) || nomeUpper.includes("ORDEM DE SERVIÇO") || nomeUpper.includes("ORDEM DE SERVICO")) {
+      toast.error("Ordens de Serviço (OS) devem ser emitidas pelo módulo OSS, não pelo Assinador avulso.");
+      e.target.value = "";
       return;
     }
 
