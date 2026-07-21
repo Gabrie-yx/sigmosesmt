@@ -11,7 +11,6 @@ import {
 import appCss from "../styles.css?url";
 import { Toaster } from "@/components/ui/sonner";
 import { useEffect } from "react";
-import { ScreenSaver } from "@/components/screen-saver";
 
 function NotFoundComponent() {
   return (
@@ -153,7 +152,6 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <Outlet />
       <Toaster />
-      <ScreenSaver />
     </QueryClientProvider>
   );
 }
