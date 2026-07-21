@@ -12,4 +12,9 @@ export default defineConfig({
   tanstackStart: {
     server: { entry: "server" },
   },
+  vite: {
+    server: {
+      allowedHosts: ["sigmo.dmnestaleiro.com.br", "172.18.0.50", "localhost"],
+    },
+  },
 });
