@@ -11,6 +11,7 @@ import {
 import appCss from "../styles.css?url";
 import { Toaster } from "@/components/ui/sonner";
 import { useEffect } from "react";
+import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 
 function NotFoundComponent() {
   return (
@@ -160,6 +161,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <Outlet />
       <Toaster />
+      <PWAInstallPrompt />
     </QueryClientProvider>
   );
 }
