@@ -9,6 +9,7 @@ import { exportBackup, importBackup } from "@/lib/backup";
 import { toast } from "sonner";
 import { useRef, useState } from "react";
 import dmnLogo from "@/assets/dmn-logo-branco.png";
+import sigmoLogoFull from "@/assets/sigmo-logo-full.png.asset.json";
 import { PendenciasBadge } from "@/components/pendencias-badge";
 import { useSidebar } from "@/components/ui/sidebar";
 import {
@@ -66,6 +67,11 @@ export function AppHeader() {
 
         <Link to="/app" className="flex items-center gap-2 hover:opacity-90 transition-opacity shrink-0 min-w-0">
           <img src={dmnLogo} alt="DMN Estaleiro" className="h-9 w-auto object-contain shrink-0" />
+          <img
+            src={sigmoLogoFull.url}
+            alt="SIGMO — Sistema Integrado de Gestão Modulado"
+            className="h-9 w-auto object-contain shrink-0 sm:hidden"
+          />
           <div className="flex items-baseline gap-2 whitespace-nowrap hidden sm:flex">
             <h1 className="text-[15px] font-black uppercase tracking-tight text-white">
               SIGMO
