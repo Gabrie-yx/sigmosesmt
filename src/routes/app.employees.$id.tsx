@@ -3050,12 +3050,13 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
           {epis.map((e: any) => (
             <div
               key={e.id}
-              className={`flex items-center gap-3 p-3 rounded-xl border transition backdrop-blur-md ${e.data_devolucao ? "border-amber-400/25 bg-gradient-to-br from-amber-950/40 via-rose-950/40 to-black/60" : "border-rose-400/20 bg-gradient-to-br from-rose-950/50 via-[#1a0810]/70 to-black/70 hover:from-rose-900/60 hover:to-rose-950/70 hover:border-rose-400/40 hover:shadow-[0_0_20px_rgba(244,80,110,0.25)]"}`}
+              className={`p-3 rounded-xl border transition backdrop-blur-md ${e.data_devolucao ? "border-amber-400/25 bg-gradient-to-br from-amber-950/40 via-rose-950/40 to-black/60" : "border-rose-400/20 bg-gradient-to-br from-rose-950/50 via-[#1a0810]/70 to-black/70 hover:from-rose-900/60 hover:to-rose-950/70 hover:border-rose-400/40 hover:shadow-[0_0_20px_rgba(244,80,110,0.25)]"}`}
             >
-              <div className="h-10 w-10 rounded-lg bg-black/40 border border-rose-400/20 flex items-center justify-center shrink-0 shadow-[0_0_12px_rgba(244,80,110,0.25)_inset]">
-                <HardHat className="h-5 w-5 text-rose-300 drop-shadow-[0_0_6px_rgba(244,80,110,0.7)]" />
-              </div>
-              <div className="flex-1 min-w-0">
+              <div className="flex items-start gap-3">
+                <div className="h-10 w-10 rounded-lg bg-black/40 border border-rose-400/20 flex items-center justify-center shrink-0 shadow-[0_0_12px_rgba(244,80,110,0.25)_inset]">
+                  <HardHat className="h-5 w-5 text-rose-300 drop-shadow-[0_0_6px_rgba(244,80,110,0.7)]" />
+                </div>
+                <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-black text-sm text-rose-50 uppercase">{e.item}</span>
                   {e.tamanho && <span className="text-xs text-rose-200/70">({e.tamanho})</span>}
@@ -3071,7 +3072,7 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
                     <Badge className="bg-gradient-to-br from-rose-600/80 to-rose-950/80 text-rose-50 text-[10px] ring-1 ring-rose-300/40 shadow-[0_0_10px_rgba(244,80,110,0.45)]">EM USO</Badge>
                   )}
                 </div>
-                <div className="text-[11px] font-bold uppercase tracking-widest text-rose-200/60 mt-0.5">
+                <div className="text-[11px] font-bold uppercase tracking-wide text-rose-200/60 mt-1 break-words">
                   C.A.: {e.ca ?? "N/A"} • Entregue em: <span className="text-rose-100">{formatDateBR(e.data_entrega)}</span>
                   {e.data_devolucao && (
                     <> • Devolvido em: <span className="text-amber-300">{formatDateBR(e.data_devolucao)}</span></>
@@ -3118,26 +3119,31 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
                 {e.data_devolucao && e.observacoes && (
                   <div className="text-[11px] text-amber-200/80 mt-0.5 normal-case">{e.observacoes}</div>
                 )}
+                </div>
               </div>
-              {canEdit && !e.data_devolucao && (
-                <>
-                  <Button size="sm" variant="outline" onClick={() => openReturn(e)} className="border-amber-400/40 bg-black/30 text-amber-200 hover:bg-amber-900/30 hover:text-amber-100">
-                    <Undo2 className="h-4 w-4 mr-1" /> Devolver
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => openNotReturned(e)} className="border-rose-400/40 bg-black/30 text-rose-200 hover:bg-rose-900/30 hover:text-rose-100" title="Marcar como não devolvido (perda/extravio)">
-                    <Ban className="h-4 w-4 mr-1" /> Não devolvido
-                  </Button>
-                </>
-              )}
-              {canEdit && e.data_devolucao && (
-                <Button size="sm" variant="ghost" onClick={() => undoReturn.mutate(e.id)} title="Desfazer devolução">
-                  <CheckCircle2 className="h-4 w-4 text-rose-300" />
-                </Button>
-              )}
-              {canDelete && (
-                <Button size="icon" variant="ghost" onClick={() => del.mutate(e.id)}>
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
+              {(canEdit || canDelete) && (
+                <div className="mt-3 flex flex-wrap items-center gap-2 pt-3 border-t border-rose-400/10">
+                  {canEdit && !e.data_devolucao && (
+                    <>
+                      <Button size="sm" variant="outline" onClick={() => openReturn(e)} className="flex-1 sm:flex-none min-w-[7rem] border-amber-400/40 bg-black/30 text-amber-200 hover:bg-amber-900/30 hover:text-amber-100">
+                        <Undo2 className="h-4 w-4 mr-1" /> Devolver
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => openNotReturned(e)} className="flex-1 sm:flex-none min-w-[7rem] border-rose-400/40 bg-black/30 text-rose-200 hover:bg-rose-900/30 hover:text-rose-100" title="Marcar como não devolvido (perda/extravio)">
+                        <Ban className="h-4 w-4 mr-1" /> Não devolvido
+                      </Button>
+                    </>
+                  )}
+                  {canEdit && e.data_devolucao && (
+                    <Button size="sm" variant="ghost" onClick={() => undoReturn.mutate(e.id)} title="Desfazer devolução" className="text-rose-200 hover:bg-rose-900/30">
+                      <CheckCircle2 className="h-4 w-4 mr-1 text-rose-300" /> Desfazer devolução
+                    </Button>
+                  )}
+                  {canDelete && (
+                    <Button size="icon" variant="ghost" onClick={() => del.mutate(e.id)} className="ml-auto shrink-0">
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  )}
+                </div>
               )}
             </div>
           ))}
