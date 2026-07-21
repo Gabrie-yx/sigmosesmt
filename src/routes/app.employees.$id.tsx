@@ -381,10 +381,12 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
               <button
                 type="button"
                 onClick={() => window.dispatchEvent(new CustomEvent("cmdk:open"))}
-                className="inline-flex h-8 items-center gap-1.5 rounded-full border border-white/15 bg-white/5 hover:bg-white/10 hover:border-brand/40 px-3 text-[10px] font-black uppercase tracking-widest text-slate-100 shadow-sm backdrop-blur-sm transition-all"
+                className="inline-flex h-8 items-center gap-1.5 rounded-full border border-white/15 bg-white/5 hover:bg-white/10 hover:border-brand/40 px-2.5 sm:px-3 text-[10px] font-black uppercase tracking-widest text-slate-100 shadow-sm backdrop-blur-sm transition-all"
                 title="Buscar outro funcionário (⌘K / Ctrl+K)"
+                aria-label="Buscar funcionário"
               >
-                <Search className="h-3.5 w-3.5" /> Buscar funcionário
+                <Search className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Buscar funcionário</span>
                 <kbd className="ml-1 hidden sm:inline-flex items-center rounded bg-black/30 px-1 text-[9px] font-mono text-slate-300">⌘K</kbd>
               </button>
               {isEditor && !isDesligado && (tab === "profile" || tab === "nrs") && (
@@ -486,9 +488,9 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
           </div>
         </div>
         </div>
-        <div className="mt-6 pt-5 border-t border-rose-100/10 flex flex-wrap items-center gap-x-4 gap-y-2 justify-between">
-          {/* Navegação de seções (mesmo idioma das pills) */}
-          <div className="inline-flex shrink-0 items-center gap-2">
+        <div className="mt-6 pt-5 border-t border-rose-100/10 flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between lg:gap-x-4 lg:gap-y-2">
+          {/* Navegação de seções — grid uniforme no mobile, inline no desktop */}
+          <div className="grid grid-cols-4 gap-2 w-full lg:inline-flex lg:w-auto lg:shrink-0 lg:items-center">
             <QuickTabBtn icon={HeartPulse} label="ASO" tone={asoTone} active={tab === "health"} onClick={() => { setTab("health"); setHealthSub("exams"); }} />
             <QuickTabBtn icon={Award} label="NR" tone={nrTone} active={tab === "nrs"} onClick={() => setTab("nrs")} />
             <QuickTabBtn icon={FolderOpen} label="Docs" tone={docsTone} active={tab === "docs"} onClick={() => setTab("docs")} />
@@ -498,9 +500,9 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
           {/* Divisor sutil quando cabem na mesma linha */}
           <div className="hidden lg:block h-6 w-px bg-white/10" aria-hidden />
 
-          {/* Ações documentais */}
-          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 justify-end">
-            <Link to="/app/audit" title="Auditar" className="glass-pill">
+          {/* Ações documentais — grid 3 colunas no mobile (2 linhas: 3+2), flex no desktop */}
+          <div className="grid grid-cols-3 gap-2 w-full lg:flex lg:min-w-0 lg:flex-1 lg:flex-wrap lg:items-center lg:justify-end lg:w-auto">
+            <Link to="/app/audit" title="Auditar" className="glass-pill justify-center">
               <ClipboardCheck className="h-4 w-4" /> Auditar
             </Link>
             <button
@@ -508,7 +510,7 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
               onClick={gerarFichaPdf}
               disabled={gerandoFicha}
               title="Gerar ficha em PDF"
-              className="glass-pill disabled:opacity-60 disabled:cursor-wait"
+              className="glass-pill justify-center disabled:opacity-60 disabled:cursor-wait"
             >
               <FileText className="h-4 w-4" /> {gerandoFicha ? "Gerando…" : "Ficha"}
             </button>
@@ -516,7 +518,7 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
               type="button"
               onClick={() => setPppOpen(true)}
               title="Emitir PPP (Perfil Profissiográfico Previdenciário)"
-              className="glass-pill"
+              className="glass-pill justify-center"
             >
               <FileSignature className="h-4 w-4" /> PPP
             </button>
@@ -524,7 +526,7 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
               type="button"
               onClick={() => setIntegOpen(true)}
               title="Registrar Integração NR-01"
-              className="glass-pill glass-pill--emerald"
+              className="glass-pill glass-pill--emerald justify-center"
             >
               <FileText className="h-4 w-4" /> Integração
             </button>
@@ -532,7 +534,7 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
               type="button"
               onClick={() => setTermoOpen(true)}
               title="Termo de Consentimento — Assinatura Eletrônica (Lei 14.063/2020)"
-              className={`glass-pill ${
+              className={`glass-pill justify-center ${
                 (emp as any)?.termo_consentimento_id
                   ? "glass-pill--emerald"
                   : (emp as any)?.assinatura_url
