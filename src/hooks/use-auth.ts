@@ -59,15 +59,17 @@ async function fetchAuthPayload(uid: string): Promise<AuthPayload> {
 // Sessão fica em módulo (singleton) — evita cada componente escutar
 // onAuthStateChange separadamente e refazer o loadAll.
 let cachedSession: Session | null | undefined = undefined;
-const sessionListeners = new Set<(s: Session | null) => void>();
+const sessionListeners = new Set<(s: Session | null, event: string) => void>();
 let sessionSubStarted = false;
 
 function startSessionSub() {
   if (sessionSubStarted) return;
+  // SSR guard: supabase.auth toca localStorage — não roda no servidor.
+  if (typeof window === "undefined") return;
   sessionSubStarted = true;
   supabase.auth.getSession().then(({ data }) => {
     cachedSession = data.session;
-    sessionListeners.forEach((fn) => fn(cachedSession ?? null));
+    sessionListeners.forEach((fn) => fn(cachedSession ?? null, "INITIAL"));
   });
   supabase.auth.onAuthStateChange((event, s) => {
     // TOKEN_REFRESHED não muda uid; só notifica se mudou de fato.
@@ -75,7 +77,7 @@ function startSessionSub() {
     const nextUid = s?.user?.id ?? null;
     cachedSession = s;
     if (event === "TOKEN_REFRESHED" && prevUid === nextUid) return;
-    sessionListeners.forEach((fn) => fn(s));
+    sessionListeners.forEach((fn) => fn(s, event));
   });
 }
 
@@ -85,22 +87,33 @@ export function useAuth() {
 
   useEffect(() => {
     startSessionSub();
-    const listener = (s: Session | null) => {
-      setSession((prev) => {
-        const prevUid = prev?.user?.id ?? null;
-        const nextUid = s?.user?.id ?? null;
-        if (prevUid !== nextUid) {
-          // Invalida cache do usuário anterior; próximo useQuery refaz.
-          qc.invalidateQueries({ queryKey: ["auth-payload"] });
-        }
-        return s;
-      });
+    // uid corrente (rastreado fora do setState pra não rodar side-effect
+    // dentro do updater — React 18 strict mode invoca o updater 2x).
+    let currentUid = session?.user?.id ?? null;
+    const listener = (s: Session | null, event: string) => {
+      const nextUid = s?.user?.id ?? null;
+      const uidChanged = currentUid !== nextUid;
+      currentUid = nextUid;
+      setSession(s);
+      if (event === "SIGNED_OUT") {
+        // limpa cache do user anterior de vez (não espera gcTime).
+        qc.removeQueries({ queryKey: ["auth-payload"] });
+      } else if (event === "USER_UPDATED" || event === "MFA_CHALLENGE_VERIFIED") {
+        // MFA / metadata mudou — força refetch do payload.
+        qc.invalidateQueries({ queryKey: ["auth-payload", nextUid] });
+      } else if (uidChanged) {
+        qc.invalidateQueries({ queryKey: ["auth-payload"] });
+      }
     };
     sessionListeners.add(listener);
-    if (cachedSession !== undefined) setSession(cachedSession);
+    if (cachedSession !== undefined && cachedSession !== session) {
+      setSession(cachedSession);
+      currentUid = cachedSession?.user?.id ?? null;
+    }
     return () => {
       sessionListeners.delete(listener);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qc]);
 
   const user: User | null = session?.user ?? null;
@@ -114,6 +127,7 @@ export function useAuth() {
     gcTime: 30 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
+    retry: 1, // falha rápido — não trava a UI em "loading" por minutos se o Supabase estiver fora.
   });
 
   const { roles, modules, menuKeys, modulesWithMenuConfig, aal, mfaActive, mfaGraceUntil } =
@@ -168,6 +182,12 @@ export function useAuth() {
     return menuKeys.has(key);
   }
 
+  // Handle exposto pra telas de MFA / RBAC forçarem refresh depois de
+  // mudanças server-side (enroll de TOTP, mudança de role por admin, etc.).
+  function refreshAuth() {
+    return qc.invalidateQueries({ queryKey: ["auth-payload", uid] });
+  }
+
   return {
     session, user, roles, modules, aal, mfaActive, loading,
     isAdmin, isModerator, isEditor, requiresMfa, mfaSatisfied,
@@ -175,5 +195,6 @@ export function useAuth() {
     hasModule, hasMenu,
     menuKeys, modulesWithMenuConfig,
     mfaGraceUntil, graceActive, graceDaysLeft,
+    refreshAuth,
   };
 }
