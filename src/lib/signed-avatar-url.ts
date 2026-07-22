@@ -56,6 +56,46 @@ export async function signAvatarUrl(
   return data.signedUrl;
 }
 
+// Pré-aquece o cache em UMA requisição só (createSignedUrls no plural).
+// Chame assim que tiver a lista de fotos — evita as N chamadas individuais
+// que os <SignedAvatarImg> disparariam ao montar (ex.: listagem com 167
+// funcionários = 167 requests virou 1).
+export async function prefetchAvatarUrls(
+  inputs: Array<string | null | undefined>,
+): Promise<void> {
+  const now = Date.now();
+  const paths = new Set<string>();
+  for (const input of inputs) {
+    if (!input) continue;
+    const path = extractAvatarPath(input);
+    if (!path) continue;
+    const hit = cache.get(path);
+    if (hit && hit.exp > now + 60_000) continue;
+    paths.add(path);
+  }
+  if (paths.size === 0) return;
+
+  // Supabase aceita createSignedUrls em lote. Divide em blocos p/ não
+  // estourar limite de URL/payload em listas gigantes.
+  const list = Array.from(paths);
+  const CHUNK = 100;
+  for (let i = 0; i < list.length; i += CHUNK) {
+    const slice = list.slice(i, i + CHUNK);
+    const { data, error } = await supabase.storage
+      .from(BUCKET)
+      .createSignedUrls(slice, TTL_SECONDS);
+    if (error || !data) continue;
+    for (const row of data) {
+      if (row.signedUrl && row.path) {
+        cache.set(row.path, {
+          url: row.signedUrl,
+          exp: Date.now() + TTL_SECONDS * 1000,
+        });
+      }
+    }
+  }
+}
+
 export function useSignedAvatarUrl(src: string | null | undefined): string | null {
   const [url, setUrl] = useState<string | null>(() => {
     if (!src) return null;
