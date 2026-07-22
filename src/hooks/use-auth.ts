@@ -1,97 +1,125 @@
 import { useEffect, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { MENU_BY_KEY } from "@/lib/menu-catalog";
 import type { AppModule, AppRole } from "@/lib/access-control";
 
 export type { AppModule, AppRole };
 
+type AuthPayload = {
+  roles: AppRole[];
+  modules: AppModule[];
+  menuKeys: Set<string>;
+  modulesWithMenuConfig: Set<AppModule>;
+  aal: "aal1" | "aal2";
+  mfaActive: boolean;
+  mfaGraceUntil: Date | null;
+};
+
+const EMPTY_PAYLOAD: AuthPayload = {
+  roles: [],
+  modules: [],
+  menuKeys: new Set(),
+  modulesWithMenuConfig: new Set(),
+  aal: "aal1",
+  mfaActive: false,
+  mfaGraceUntil: null,
+};
+
+async function fetchAuthPayload(uid: string): Promise<AuthPayload> {
+  const [rolesRes, modsRes, menusRes, aalRes, factorsRes, profileRes] = await Promise.all([
+    supabase.from("user_roles").select("role").eq("user_id", uid),
+    supabase.from("user_module_access").select("module, enabled").eq("user_id", uid).eq("enabled", true),
+    (supabase as any).from("user_menu_access").select("menu_key, enabled").eq("user_id", uid),
+    supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
+    supabase.auth.mfa.listFactors(),
+    (supabase as any).from("profiles").select("mfa_grace_until").eq("id", uid).maybeSingle(),
+  ]);
+  const rows = (menusRes?.data ?? []) as { menu_key: string; enabled: boolean }[];
+  const enabledKeys = new Set(rows.filter((r) => r.enabled).map((r) => r.menu_key));
+  const configuredModules = new Set<AppModule>();
+  for (const r of rows) {
+    const m = MENU_BY_KEY[r.menu_key]?.module;
+    if (m) configuredModules.add(m);
+  }
+  const totps = (factorsRes.data?.totp ?? []).filter((f) => f.status === "verified");
+  const g = (profileRes as any)?.data?.mfa_grace_until as string | null | undefined;
+  return {
+    roles: (rolesRes.data ?? []).map((r) => r.role as AppRole),
+    modules: (modsRes.data ?? []).map((m) => m.module as AppModule),
+    menuKeys: enabledKeys,
+    modulesWithMenuConfig: configuredModules,
+    aal: ((aalRes.data?.currentLevel ?? "aal1") as "aal1" | "aal2"),
+    mfaActive: totps.length > 0,
+    mfaGraceUntil: g ? new Date(g) : null,
+  };
+}
+
+// Sessão fica em módulo (singleton) — evita cada componente escutar
+// onAuthStateChange separadamente e refazer o loadAll.
+let cachedSession: Session | null | undefined = undefined;
+const sessionListeners = new Set<(s: Session | null) => void>();
+let sessionSubStarted = false;
+
+function startSessionSub() {
+  if (sessionSubStarted) return;
+  sessionSubStarted = true;
+  supabase.auth.getSession().then(({ data }) => {
+    cachedSession = data.session;
+    sessionListeners.forEach((fn) => fn(cachedSession ?? null));
+  });
+  supabase.auth.onAuthStateChange((event, s) => {
+    // TOKEN_REFRESHED não muda uid; só notifica se mudou de fato.
+    const prevUid = cachedSession?.user?.id ?? null;
+    const nextUid = s?.user?.id ?? null;
+    cachedSession = s;
+    if (event === "TOKEN_REFRESHED" && prevUid === nextUid) return;
+    sessionListeners.forEach((fn) => fn(s));
+  });
+}
+
 export function useAuth() {
-  const [session, setSession] = useState<Session | null>(null);
-  const [user, setUser] = useState<User | null>(null);
-  const [roles, setRoles] = useState<AppRole[]>([]);
-  const [modules, setModules] = useState<AppModule[]>([]);
-  const [menuKeys, setMenuKeys] = useState<Set<string>>(new Set());
-  const [modulesWithMenuConfig, setModulesWithMenuConfig] = useState<Set<AppModule>>(new Set());
-  const [aal, setAal] = useState<"aal1" | "aal2">("aal1");
-  const [mfaActive, setMfaActive] = useState(false);
-  const [mfaGraceUntil, setMfaGraceUntil] = useState<Date | null>(null);
-  const [loading, setLoading] = useState(true);
+  const qc = useQueryClient();
+  const [session, setSession] = useState<Session | null>(cachedSession ?? null);
 
   useEffect(() => {
-    let mounted = true;
-
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
-      if (!mounted) return;
-      setSession(s);
-      setUser(s?.user ?? null);
-      if (s?.user) {
-        setTimeout(() => {
-          loadAll(s.user.id).finally(() => mounted && setLoading(false));
-        }, 0);
-      } else {
-        setRoles([]);
-        setModules([]);
-        setMenuKeys(new Set());
-        setModulesWithMenuConfig(new Set());
-        setAal("aal1");
-        setMfaActive(false);
-        setMfaGraceUntil(null);
-        setLoading(false);
-      }
-    });
-
-    supabase.auth.getSession().then(async ({ data }) => {
-      if (!mounted) return;
-      setSession(data.session);
-      setUser(data.session?.user ?? null);
-      if (data.session?.user) {
-        await loadAll(data.session.user.id);
-      }
-      if (mounted) setLoading(false);
-    });
-
-    return () => {
-      mounted = false;
-      sub.subscription.unsubscribe();
+    startSessionSub();
+    const listener = (s: Session | null) => {
+      setSession((prev) => {
+        const prevUid = prev?.user?.id ?? null;
+        const nextUid = s?.user?.id ?? null;
+        if (prevUid !== nextUid) {
+          // Invalida cache do usuário anterior; próximo useQuery refaz.
+          qc.invalidateQueries({ queryKey: ["auth-payload"] });
+        }
+        return s;
+      });
     };
-  }, []);
+    sessionListeners.add(listener);
+    if (cachedSession !== undefined) setSession(cachedSession);
+    return () => {
+      sessionListeners.delete(listener);
+    };
+  }, [qc]);
 
-  async function loadAll(uid: string) {
-    try {
-      const [rolesRes, modsRes, menusRes, aalRes, factorsRes, profileRes] = await Promise.all([
-        supabase.from("user_roles").select("role").eq("user_id", uid),
-        supabase.from("user_module_access").select("module, enabled").eq("user_id", uid).eq("enabled", true),
-        (supabase as any).from("user_menu_access").select("menu_key, enabled").eq("user_id", uid),
-        supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
-        supabase.auth.mfa.listFactors(),
-        (supabase as any).from("profiles").select("mfa_grace_until").eq("id", uid).maybeSingle(),
-      ]);
-      setRoles((rolesRes.data ?? []).map((r) => r.role as AppRole));
-      setModules((modsRes.data ?? []).map((m) => m.module as AppModule));
-      const rows = (menusRes?.data ?? []) as { menu_key: string; enabled: boolean }[];
-      const enabledKeys = new Set(rows.filter((r) => r.enabled).map((r) => r.menu_key));
-      const configuredModules = new Set<AppModule>();
-      for (const r of rows) {
-        const m = MENU_BY_KEY[r.menu_key]?.module;
-        if (m) configuredModules.add(m);
-      }
-      setMenuKeys(enabledKeys);
-      setModulesWithMenuConfig(configuredModules);
-      setAal(((aalRes.data?.currentLevel ?? "aal1") as "aal1" | "aal2"));
-      const totps = (factorsRes.data?.totp ?? []).filter((f) => f.status === "verified");
-      setMfaActive(totps.length > 0);
-      const g = (profileRes as any)?.data?.mfa_grace_until as string | null | undefined;
-      setMfaGraceUntil(g ? new Date(g) : null);
-    } catch (e) {
-      console.warn("[useAuth] loadAll exception:", e);
-      setRoles([]);
-      setModules([]);
-      setMenuKeys(new Set());
-      setModulesWithMenuConfig(new Set());
-      setMfaGraceUntil(null);
-    }
-  }
+  const user: User | null = session?.user ?? null;
+  const uid = user?.id ?? null;
+
+  const { data: payload, isLoading: payloadLoading } = useQuery({
+    queryKey: ["auth-payload", uid],
+    queryFn: () => fetchAuthPayload(uid!),
+    enabled: !!uid,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+  });
+
+  const { roles, modules, menuKeys, modulesWithMenuConfig, aal, mfaActive, mfaGraceUntil } =
+    payload ?? EMPTY_PAYLOAD;
+
+  const loading = cachedSession === undefined || (!!uid && payloadLoading && !payload);
 
   const isAdmin = roles.includes("admin");
   const isModerator = isAdmin || roles.includes("moderador");
