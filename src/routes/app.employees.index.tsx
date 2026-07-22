@@ -12,6 +12,7 @@ import { EmployeeListagemDialog } from "@/components/employees/employee-listagem
 import { NewEmployeeDialog } from "@/components/employees/new-employee-dialog";
 import { ConvocacaoExamesDialog } from "@/components/employees/convocacao-exames-dialog";
 import { daysUntil, addYearsToDate } from "@/lib/utils-date";
+import { prefetchAvatarUrls } from "@/lib/signed-avatar-url";
 
 export const Route = createFileRoute("/app/employees/")({
   component: EmployeesPage,
