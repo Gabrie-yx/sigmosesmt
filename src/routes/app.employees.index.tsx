@@ -76,6 +76,13 @@ function EmployeesPage() {
       return data;
     },
   });
+  // Pré-assina todas as fotos em UMA requisição (createSignedUrls) assim
+  // que a lista chega. Sem isso, cada card faria seu próprio createSignedUrl
+  // (167 requests seriais = ~30s). Com prefetch, os cards leem do cache.
+  useEffect(() => {
+    if (!emps || emps.length === 0) return;
+    void prefetchAvatarUrls(emps.map((e: any) => e.foto_url));
+  }, [emps]);
   const { data: companies } = useQuery({
     queryKey: ["companies-with-type"],
     queryFn: async () => (await supabase.from("companies").select("id,name,type").order("name")).data ?? [],
