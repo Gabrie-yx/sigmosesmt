@@ -166,7 +166,7 @@ function DesligadosPage() {
                 {!pacotesEmitidos?.has(e.id) && (
                   <Button
                     onClick={() => setRegularizarTarget(e)}
-                    className="w-full bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-black uppercase tracking-widest rounded-xl"
+                    className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 text-[11px] font-black uppercase tracking-widest rounded-xl shadow-md shadow-amber-900/40"
                   >
                     <ShieldAlert className="h-3.5 w-3.5 mr-1.5" /> Regularizar Pacote SST
                   </Button>
@@ -174,7 +174,7 @@ function DesligadosPage() {
                 <Button
                   onClick={() => setTarget(e)}
                   variant="outline"
-                  className="w-full text-[11px] font-black uppercase tracking-widest rounded-xl border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                  className="w-full text-[11px] font-black uppercase tracking-widest rounded-xl border-emerald-400/60 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20 hover:text-emerald-100"
                 >
                   <RotateCcw className="h-3.5 w-3.5 mr-1.5" /> Reativar
                 </Button>
