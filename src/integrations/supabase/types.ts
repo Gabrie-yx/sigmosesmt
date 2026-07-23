@@ -3376,6 +3376,7 @@ export type Database = {
           motivo_detalhe: string | null
           observacoes: string | null
           oss_afetadas: Json
+          pdf_url: string | null
           ppp_emissao_id: string | null
           regularizacao: boolean
           sha256_snapshot: string | null
@@ -3402,6 +3403,7 @@ export type Database = {
           motivo_detalhe?: string | null
           observacoes?: string | null
           oss_afetadas?: Json
+          pdf_url?: string | null
           ppp_emissao_id?: string | null
           regularizacao?: boolean
           sha256_snapshot?: string | null
@@ -3428,6 +3430,7 @@ export type Database = {
           motivo_detalhe?: string | null
           observacoes?: string | null
           oss_afetadas?: Json
+          pdf_url?: string | null
           ppp_emissao_id?: string | null
           regularizacao?: boolean
           sha256_snapshot?: string | null
