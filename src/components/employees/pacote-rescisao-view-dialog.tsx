@@ -62,6 +62,37 @@ export function PacoteRescisaoViewDialog({ emp, companyName, roleName, open, onC
     },
   });
 
+  const snapshotEpisVazio = !!pacote && ((pacote.epis_devolvidos ?? []).length + (pacote.epis_pendentes ?? []).length === 0);
+  const snapshotOssVazio = !!pacote && ((pacote.oss_afetadas ?? []).length === 0);
+
+  // Pacotes antigos podem ter sido emitidos antes do snapshot completo.
+  // Quando isso acontecer, reconstituímos pela ficha do funcionário para não abrir PDF vazio.
+  const { data: episReconstituir } = useQuery({
+    queryKey: ["desligamento-pacote-epis-reconstituir", emp?.id, pacote?.id],
+    enabled: !!emp?.id && open && snapshotEpisVazio,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("epi_deliveries")
+        .select("id, item, ca, qtd, data_entrega, data_devolucao")
+        .eq("employee_id", emp.id)
+        .order("data_entrega", { ascending: false });
+      return (data ?? []) as any[];
+    },
+  });
+
+  const { data: ossReconstituir } = useQuery({
+    queryKey: ["desligamento-pacote-oss-reconstituir", emp?.id, pacote?.id],
+    enabled: !!emp?.id && open && snapshotOssVazio,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("oss_emissoes")
+        .select("id, cargo_snapshot, status, emitido_em, oss_templates(codigo, procedimento)")
+        .eq("employee_id", emp.id)
+        .order("emitido_em", { ascending: false });
+      return (data ?? []) as any[];
+    },
+  });
+
   const fileName = useMemo(
     () => `pacote_rescisao_${(emp?.nome ?? "").toLowerCase().replace(/\s+/g, "_")}.pdf`,
     [emp?.nome],
@@ -70,6 +101,24 @@ export function PacoteRescisaoViewDialog({ emp, companyName, roleName, open, onC
   useEffect(() => {
     if (!open || !pacote) { setDoc(null); return; }
     try {
+      const episDevolvidos = snapshotEpisVazio
+        ? (episReconstituir ?? [])
+            .filter((e: any) => !!e.data_devolucao)
+            .map((e: any) => ({ item: e.item, ca: e.ca, qtd: e.qtd, data_entrega: e.data_entrega }))
+        : (pacote.epis_devolvidos ?? []);
+      const episPendentes = snapshotEpisVazio
+        ? (episReconstituir ?? [])
+            .filter((e: any) => !e.data_devolucao)
+            .map((e: any) => ({ item: e.item, ca: e.ca, qtd: e.qtd, data_entrega: e.data_entrega }))
+        : (pacote.epis_pendentes ?? []);
+      const ossAfetadas = snapshotOssVazio
+        ? (ossReconstituir ?? []).map((o: any) => ({
+            codigo: o.oss_templates?.codigo,
+            template: o.oss_templates?.procedimento ?? o.cargo_snapshot,
+            status_antes: o.status,
+            status_depois: "SUBSTITUIDO",
+          }))
+        : (pacote.oss_afetadas ?? []);
       const generated = gerarPacoteRescisaoPdf({
         emp: { nome: emp.nome, cpf: emp.cpf, matricula: emp.matricula, admissao: emp.admissao },
         company: companyName ? { name: companyName } : null,
@@ -82,9 +131,9 @@ export function PacoteRescisaoViewDialog({ emp, companyName, roleName, open, onC
           ? { dispensado: true, dispensa_justificativa: pacote.aso_dispensa_justificativa }
           : { data: asoRow?.data_realizacao, aptidao: asoRow?.aptidao },
         ppp_numero: pppNumero ?? null,
-        epis_devolvidos: pacote.epis_devolvidos ?? [],
-        epis_pendentes: pacote.epis_pendentes ?? [],
-        oss_afetadas: pacote.oss_afetadas ?? [],
+        epis_devolvidos: episDevolvidos,
+        epis_pendentes: episPendentes,
+        oss_afetadas: ossAfetadas,
         checklist: pacote.checklist ?? {},
         observacoes: pacote.observacoes,
         sha256: pacote.sha256_snapshot ?? pacote.id,
@@ -94,7 +143,7 @@ export function PacoteRescisaoViewDialog({ emp, companyName, roleName, open, onC
       console.error("[PacoteView] falha ao regenerar PDF", e);
       setDoc(null);
     }
-  }, [open, pacote, pppNumero, asoRow, emp, companyName, roleName]);
+  }, [open, pacote, pppNumero, asoRow, emp, companyName, roleName, snapshotEpisVazio, snapshotOssVazio, episReconstituir, ossReconstituir]);
 
   return (
     <PDFPreviewDialog

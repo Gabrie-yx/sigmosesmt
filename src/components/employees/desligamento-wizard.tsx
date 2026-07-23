@@ -255,6 +255,8 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
       qc.invalidateQueries({ queryKey: ["employees-desligados"] });
       qc.invalidateQueries({ queryKey: ["desligamento-pendencias"] });
       qc.invalidateQueries({ queryKey: ["desligados-pacotes-emitidos"] });
+      qc.invalidateQueries({ queryKey: ["desligamento-pacote-status", emp.id] });
+      qc.invalidateQueries({ queryKey: ["desligamento-pacote-view", emp.id] });
       onClose();
     },
     onError: (e: any) => toast.error(e.message ?? "Falha ao emitir pacote"),
