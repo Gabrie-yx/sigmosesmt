@@ -561,12 +561,12 @@ function EmployeeCard({ emp, company, companyType, role, asoStatus }: {
 }) {
   const statusStyle =
     emp.status === "ATIVO"
-      ? "bg-emerald-100 text-emerald-700 ring-emerald-200"
+      ? "bg-emerald-500/15 text-emerald-200 ring-emerald-500/40"
       : emp.status === "AFASTADO"
-      ? "bg-amber-100 text-amber-700 ring-amber-200"
+      ? "bg-amber-500/15 text-amber-200 ring-amber-500/40"
       : emp.status === "DESLIGADO"
-      ? "bg-slate-200 text-slate-700 ring-slate-300"
-      : "bg-rose-100 text-rose-700 ring-rose-200";
+      ? "bg-muted text-muted-foreground ring-border"
+      : "bg-rose-500/15 text-rose-200 ring-rose-500/40";
   const isTerceiro = companyType === "TERCEIRIZADO" || emp.tipo_vinculo === "TERCEIRO";
   const isMei = emp.tipo_cadastro === "MEI";
   const isActive = emp.status === "ATIVO";
@@ -640,12 +640,12 @@ function EmployeeCard({ emp, company, companyType, role, asoStatus }: {
           </span>
           <div className="mt-1 flex flex-wrap gap-1">
             {isTerceiro && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-800 ring-1 ring-amber-200 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest">
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 text-amber-200 ring-1 ring-amber-500/40 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest">
                 TERCEIRO
               </span>
             )}
             {isMei && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 text-violet-800 ring-1 ring-violet-200 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest">
+              <span className="inline-flex items-center gap-1 rounded-full bg-violet-500/15 text-violet-200 ring-1 ring-violet-500/40 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest">
                 MEI
               </span>
             )}
