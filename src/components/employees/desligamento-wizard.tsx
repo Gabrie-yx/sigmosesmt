@@ -395,9 +395,9 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
                 </div>
 
                 <div>
-                  <Label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">OSs ativas ({(oss ?? []).length})</Label>
+                  <Label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">Histórico de OSs ({(oss ?? []).length})</Label>
                   <div className="rounded-lg border border-border divide-y divide-border mt-1 max-h-40 overflow-y-auto">
-                    {(oss ?? []).length === 0 && <div className="text-xs text-muted-foreground p-3">Nenhuma OS ativa.</div>}
+                    {(oss ?? []).length === 0 && <div className="text-xs text-muted-foreground p-3">Nenhuma OS emitida no histórico.</div>}
                     {(oss ?? []).map((o: any) => (
                       <div key={o.id} className="flex items-center gap-3 px-3 py-2">
                         <div className="flex-1 text-xs">
@@ -408,7 +408,7 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
                       </div>
                     ))}
                   </div>
-                  <div className="text-[10px] text-muted-foreground mt-1">OSs ficam <b>preservadas</b> (NR-01 · 5 anos após o contrato) e mudam para SUBSTITUIDO — não são excluídas.</div>
+                  <div className="text-[10px] text-muted-foreground mt-1">Todo o histórico de OSs é <b>preservado</b> (NR-01 · 5 anos após o contrato). Ativas mudam para SUBSTITUIDO — nada é excluído.</div>
                 </div>
 
                 <div>
