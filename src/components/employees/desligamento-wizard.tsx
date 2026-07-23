@@ -12,7 +12,6 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, FileSignature, ShieldCheck, PackageOpen, ClipboardCheck, Download, UserMinus } from "lucide-react";
 import { PPPEditorDialog } from "@/components/ppp/ppp-editor-dialog";
-import { gerarPacoteRescisaoPdf } from "@/lib/rescisao-pacote-pdf";
 
 const MOTIVOS = [
   "Fim de contrato terceirizado",
@@ -216,6 +215,7 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
       // Gera o PDF, arquiva no Storage privado e grava a URL no pacote
       try {
         const asoRow: any = asos?.find((a: any) => a.id === asoExamId);
+        const { gerarPacoteRescisaoPdf } = await import("@/lib/rescisao-pacote-pdf");
         const doc = gerarPacoteRescisaoPdf({
           emp: { nome: emp.nome, cpf: emp.cpf, matricula: emp.matricula, admissao: emp.admissao },
           company: company ? { name: company.name, cnpj: company.cnpj } : null,
@@ -255,6 +255,8 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
       qc.invalidateQueries({ queryKey: ["employees-desligados"] });
       qc.invalidateQueries({ queryKey: ["desligamento-pendencias"] });
       qc.invalidateQueries({ queryKey: ["desligados-pacotes-emitidos"] });
+      qc.invalidateQueries({ queryKey: ["desligamento-pacote-status", emp.id] });
+      qc.invalidateQueries({ queryKey: ["desligamento-pacote-view", emp.id] });
       onClose();
     },
     onError: (e: any) => toast.error(e.message ?? "Falha ao emitir pacote"),

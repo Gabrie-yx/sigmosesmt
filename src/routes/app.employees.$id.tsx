@@ -56,8 +56,12 @@ const SignaturePadDialog = lazy(() =>
   import("@/components/signature-pad-dialog").then((m) => ({ default: m.SignaturePadDialog }))
 );
 import { DesligamentoDialog } from "@/components/employees/desligamento-dialog";
-import { DesligamentoWizard } from "@/components/employees/desligamento-wizard";
-import { PacoteRescisaoViewDialog } from "@/components/employees/pacote-rescisao-view-dialog";
+const DesligamentoWizard = lazy(() =>
+  import("@/components/employees/desligamento-wizard").then((m) => ({ default: m.DesligamentoWizard }))
+);
+const PacoteRescisaoViewDialog = lazy(() =>
+  import("@/components/employees/pacote-rescisao-view-dialog").then((m) => ({ default: m.PacoteRescisaoViewDialog }))
+);
 import { ExcluirPermanenteDialog } from "@/components/employees/excluir-permanente-dialog";
 import { NewEmployeeDialog } from "@/components/employees/new-employee-dialog";
 import { UserMinus, RotateCcw, Trash, ArrowRightLeft } from "lucide-react";
@@ -815,40 +819,42 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
         onOpenChange={setTermoOpen}
         employeeId={emp?.id}
       />
-      {emp?.status === "DESLIGADO" ? (
-        <DesligamentoDialog
-          emp={emp as any}
-          open={desligamentoOpen}
-          onClose={() => setDesligamentoOpen(false)}
-        />
-      ) : (
-        <DesligamentoWizard
-          emp={emp as any}
-          company={(companies ?? []).find((c: any) => c.id === emp?.company_id) ?? null}
-          role={role}
-          open={desligamentoOpen}
-          onClose={() => setDesligamentoOpen(false)}
-        />
-      )}
-      {emp && (
-        <DesligamentoWizard
-          emp={emp as any}
-          company={(companies ?? []).find((c: any) => c.id === emp?.company_id) ?? null}
-          role={role}
-          open={regularizacaoOpen}
-          onClose={() => setRegularizacaoOpen(false)}
-          modo="regularizacao"
-        />
-      )}
-      {emp && (
-        <PacoteRescisaoViewDialog
-          emp={emp as any}
-          companyName={((companies ?? []).find((c: any) => c.id === emp?.company_id) as any)?.name ?? null}
-          roleName={role?.name ?? null}
-          open={verPacoteOpen}
-          onClose={() => setVerPacoteOpen(false)}
-        />
-      )}
+      <Suspense fallback={null}>
+        {emp?.status === "DESLIGADO" ? (
+          <DesligamentoDialog
+            emp={emp as any}
+            open={desligamentoOpen}
+            onClose={() => setDesligamentoOpen(false)}
+          />
+        ) : (
+          <DesligamentoWizard
+            emp={emp as any}
+            company={(companies ?? []).find((c: any) => c.id === emp?.company_id) ?? null}
+            role={role}
+            open={desligamentoOpen}
+            onClose={() => setDesligamentoOpen(false)}
+          />
+        )}
+        {emp && (
+          <DesligamentoWizard
+            emp={emp as any}
+            company={(companies ?? []).find((c: any) => c.id === emp?.company_id) ?? null}
+            role={role}
+            open={regularizacaoOpen}
+            onClose={() => setRegularizacaoOpen(false)}
+            modo="regularizacao"
+          />
+        )}
+        {emp && (
+          <PacoteRescisaoViewDialog
+            emp={emp as any}
+            companyName={((companies ?? []).find((c: any) => c.id === emp?.company_id) as any)?.name ?? null}
+            roleName={role?.name ?? null}
+            open={verPacoteOpen}
+            onClose={() => setVerPacoteOpen(false)}
+          />
+        )}
+      </Suspense>
       {emp && (
         <ExcluirPermanenteDialog
           emp={{ id: emp.id, nome: emp.nome }}
