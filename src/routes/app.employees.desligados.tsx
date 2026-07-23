@@ -5,9 +5,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { SignedAvatarImg } from "@/components/signed-avatar-img";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, ArrowLeft, UserRoundX, RotateCcw, Building2, Briefcase, CalendarClock, ShieldAlert, FileCheck2 } from "lucide-react";
+import { Search, ArrowLeft, UserRoundX, RotateCcw, Building2, Briefcase, CalendarClock, ShieldAlert, FileCheck2, FileText } from "lucide-react";
 import { DesligamentoDialog } from "@/components/employees/desligamento-dialog";
 import { DesligamentoWizard } from "@/components/employees/desligamento-wizard";
+import { PacoteRescisaoViewDialog } from "@/components/employees/pacote-rescisao-view-dialog";
 
 export const Route = createFileRoute("/app/employees/desligados")({
   component: DesligadosPage,
@@ -17,6 +18,7 @@ function DesligadosPage() {
   const [q, setQ] = useState("");
   const [target, setTarget] = useState<any | null>(null);
   const [regularizarTarget, setRegularizarTarget] = useState<any | null>(null);
+  const [verPacoteTarget, setVerPacoteTarget] = useState<any | null>(null);
 
   const { data: emps, isLoading } = useQuery({
     queryKey: ["employees-desligados"],
@@ -171,6 +173,14 @@ function DesligadosPage() {
                     <ShieldAlert className="h-3.5 w-3.5 mr-1.5" /> Regularizar Pacote SST
                   </Button>
                 )}
+                {pacotesEmitidos?.has(e.id) && (
+                  <Button
+                    onClick={() => setVerPacoteTarget(e)}
+                    className="w-full bg-sky-500 hover:bg-sky-400 text-slate-950 text-[11px] font-black uppercase tracking-widest rounded-xl shadow-md shadow-sky-900/40"
+                  >
+                    <FileText className="h-3.5 w-3.5 mr-1.5" /> Ver Pacote SST
+                  </Button>
+                )}
                 <Button
                   onClick={() => setTarget(e)}
                   variant="outline"
@@ -200,6 +210,16 @@ function DesligadosPage() {
           open={!!regularizarTarget}
           onClose={() => setRegularizarTarget(null)}
           modo="regularizacao"
+        />
+      )}
+
+      {verPacoteTarget && (
+        <PacoteRescisaoViewDialog
+          emp={verPacoteTarget}
+          companyName={cMap.get(verPacoteTarget.company_id) ?? null}
+          roleName={rMap.get(verPacoteTarget.role_id) ?? null}
+          open={!!verPacoteTarget}
+          onClose={() => setVerPacoteTarget(null)}
         />
       )}
     </div>

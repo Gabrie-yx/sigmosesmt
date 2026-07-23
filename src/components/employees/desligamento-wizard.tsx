@@ -133,15 +133,16 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
     setEpisDevolvidos((cur) => ({ ...preset, ...cur }));
   }, [epis]);
 
-  // OSs ativas
+  // OSs — traz TODO o histórico (todos os status) para o pacote de rescisão,
+  // igual à lógica dos EPIs. Assim OSs já SUBSTITUIDAS, VENCIDAS ou antigas
+  // aparecem no PDF do desligamento (rastreabilidade NR-01 · 5 anos pós-contrato).
   const { data: oss } = useQuery({
     queryKey: ["desl-oss", emp?.id],
     enabled: !!emp?.id && open,
     queryFn: async () => {
       const { data } = await supabase.from("oss_emissoes")
-        .select("id, cargo_snapshot, status, oss_templates(codigo, procedimento)")
+        .select("id, cargo_snapshot, status, emitido_em, oss_templates(codigo, procedimento)")
         .eq("employee_id", emp.id)
-        .in("status", ["ASSINADO", "PENDENTE_ASSINATURA"])
         .order("emitido_em", { ascending: false });
       return data ?? [];
     },
@@ -211,16 +212,8 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
       }
       const { error } = await (supabase as any).rpc("finalizar_desligamento_pacote", { _pacote_id: id });
       if (error) throw error;
-      return id;
-    },
-    onSuccess: (id) => {
-      toast.success("Pacote de rescisão emitido — histórico preservado.");
-      qc.invalidateQueries({ queryKey: ["employee", emp.id] });
-      qc.invalidateQueries({ queryKey: ["employees"] });
-      qc.invalidateQueries({ queryKey: ["employees-listagem"] });
-      qc.invalidateQueries({ queryKey: ["employees-desligados"] });
-      qc.invalidateQueries({ queryKey: ["desligamento-pendencias"] });
-      // Baixa o PDF
+
+      // Gera o PDF, arquiva no Storage privado e grava a URL no pacote
       try {
         const asoRow: any = asos?.find((a: any) => a.id === asoExamId);
         const doc = gerarPacoteRescisaoPdf({
@@ -241,8 +234,26 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
           observacoes: obs,
           sha256: id,
         });
+        const blob = doc.output("blob") as Blob;
+        const path = `${id}.pdf`;
+        const up = await supabase.storage.from("desligamento-pacotes").upload(path, blob, {
+          contentType: "application/pdf",
+          upsert: true,
+        });
+        if (!up.error) {
+          await supabase.from("desligamento_pacotes" as any).update({ pdf_url: path }).eq("id", id);
+        }
         doc.save(`pacote_rescisao_${emp.nome?.toLowerCase().replace(/\s+/g, "_")}.pdf`);
       } catch (e) { console.error(e); }
+      return id;
+    },
+    onSuccess: (id) => {
+      toast.success("Pacote de rescisão emitido — histórico preservado.");
+      qc.invalidateQueries({ queryKey: ["employee", emp.id] });
+      qc.invalidateQueries({ queryKey: ["employees"] });
+      qc.invalidateQueries({ queryKey: ["employees-listagem"] });
+      qc.invalidateQueries({ queryKey: ["employees-desligados"] });
+      qc.invalidateQueries({ queryKey: ["desligamento-pendencias"] });
       onClose();
     },
     onError: (e: any) => toast.error(e.message ?? "Falha ao emitir pacote"),
@@ -384,9 +395,9 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
                 </div>
 
                 <div>
-                  <Label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">OSs ativas ({(oss ?? []).length})</Label>
+                  <Label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">Histórico de OSs ({(oss ?? []).length})</Label>
                   <div className="rounded-lg border border-border divide-y divide-border mt-1 max-h-40 overflow-y-auto">
-                    {(oss ?? []).length === 0 && <div className="text-xs text-muted-foreground p-3">Nenhuma OS ativa.</div>}
+                    {(oss ?? []).length === 0 && <div className="text-xs text-muted-foreground p-3">Nenhuma OS emitida no histórico.</div>}
                     {(oss ?? []).map((o: any) => (
                       <div key={o.id} className="flex items-center gap-3 px-3 py-2">
                         <div className="flex-1 text-xs">
@@ -397,7 +408,7 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
                       </div>
                     ))}
                   </div>
-                  <div className="text-[10px] text-muted-foreground mt-1">OSs ficam <b>preservadas</b> (NR-01 · 5 anos após o contrato) e mudam para SUBSTITUIDO — não são excluídas.</div>
+                  <div className="text-[10px] text-muted-foreground mt-1">Todo o histórico de OSs é <b>preservado</b> (NR-01 · 5 anos após o contrato). Ativas mudam para SUBSTITUIDO — nada é excluído.</div>
                 </div>
 
                 <div>
