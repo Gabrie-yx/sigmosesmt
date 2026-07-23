@@ -110,14 +110,28 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
     queryKey: ["desl-epis", emp?.id],
     enabled: !!emp?.id && open,
     queryFn: async () => {
+      // Traz TUDO ainda em posse + devolvidos nos últimos 90 dias
+      // (para reconstruir pacote de quem já foi desligado / regularização)
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - 90);
       const { data } = await supabase.from("epi_deliveries")
         .select("id, item, ca, qtd, data_entrega, data_devolucao")
         .eq("employee_id", emp.id)
-        .is("data_devolucao", null)
+        .or(`data_devolucao.is.null,data_devolucao.gte.${cutoff.toISOString().slice(0, 10)}`)
         .order("data_entrega", { ascending: false });
       return data ?? [];
     },
   });
+
+  // Pré-marca como "devolvidos" os que já têm data_devolucao gravada no banco
+  useEffect(() => {
+    if (!epis) return;
+    const preset: Record<string, boolean> = {};
+    (epis as any[]).forEach((e) => {
+      if (e.data_devolucao) preset[e.id] = true;
+    });
+    setEpisDevolvidos((cur) => ({ ...preset, ...cur }));
+  }, [epis]);
 
   // OSs ativas
   const { data: oss } = useQuery({
@@ -184,6 +198,17 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
   const finalizar = useMutation({
     mutationFn: async () => {
       const id = await salvarRascunho.mutateAsync();
+      // Persiste devolução no epi_deliveries para os marcados que ainda não têm data_devolucao
+      const paraDevolver = (epis ?? [])
+        .filter((e: any) => episDevolvidos[e.id] && !e.data_devolucao)
+        .map((e: any) => e.id);
+      if (paraDevolver.length > 0) {
+        const { error: devErr } = await supabase
+          .from("epi_deliveries")
+          .update({ data_devolucao: data })
+          .in("id", paraDevolver);
+        if (devErr) throw devErr;
+      }
       const { error } = await (supabase as any).rpc("finalizar_desligamento_pacote", { _pacote_id: id });
       if (error) throw error;
       return id;
