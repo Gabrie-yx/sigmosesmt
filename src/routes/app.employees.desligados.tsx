@@ -128,7 +128,7 @@ function DesligadosPage() {
                 {e.foto_url ? (
                   <SignedAvatarImg src={e.foto_url} alt={e.nome} className="h-12 w-12 rounded-full object-cover grayscale ring-2 ring-white shadow" />
                 ) : (
-                  <div className="h-12 w-12 rounded-full bg-slate-300 text-white font-black text-sm flex items-center justify-center shadow ring-2 ring-white">
+                  <div className="h-12 w-12 rounded-full bg-muted text-muted-foreground font-black text-sm flex items-center justify-center shadow ring-2 ring-border">
                     {e.nome?.split(/\s+/).map((p: string) => p[0]).slice(0, 2).join("").toUpperCase()}
                   </div>
                 )}
@@ -137,15 +137,15 @@ function DesligadosPage() {
                     <h3 className="font-black text-sm text-foreground uppercase leading-tight truncate hover:text-[var(--brand-text)]">{e.nome}</h3>
                   </Link>
                   <div className="mt-1 flex flex-wrap items-center gap-1">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-200 text-slate-700 ring-1 ring-slate-300 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-muted text-muted-foreground ring-1 ring-border px-2 py-0.5 text-[9px] font-black uppercase tracking-widest">
                       DESLIGADO
                     </span>
                     {pacotesEmitidos?.has(e.id) ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-800 ring-1 ring-emerald-200 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 text-emerald-200 ring-1 ring-emerald-500/40 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest">
                         <FileCheck2 className="h-2.5 w-2.5" /> Pacote SST
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-800 ring-1 ring-amber-200 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest" title="Sem pacote de rescisão SST — regularize para fechar a lacuna de auditoria">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 text-amber-200 ring-1 ring-amber-500/40 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest" title="Sem pacote de rescisão SST — regularize para fechar a lacuna de auditoria">
                         <ShieldAlert className="h-2.5 w-2.5" /> Sem pacote
                       </span>
                     )}
