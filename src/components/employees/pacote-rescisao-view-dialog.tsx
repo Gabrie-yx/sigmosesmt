@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import type jsPDF from "jspdf";
 import { supabase } from "@/integrations/supabase/client";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
-import { gerarPacoteRescisaoPdf } from "@/lib/rescisao-pacote-pdf";
 
 type Props = {
   emp: any;
@@ -100,6 +99,12 @@ export function PacoteRescisaoViewDialog({ emp, companyName, roleName, open, onC
 
   useEffect(() => {
     if (!open || !pacote) { setDoc(null); return; }
+    if ((snapshotEpisVazio && !episReconstituir) || (snapshotOssVazio && !ossReconstituir)) {
+      setDoc(null);
+      return;
+    }
+    let alive = true;
+    void (async () => {
     try {
       const episDevolvidos = snapshotEpisVazio
         ? (episReconstituir ?? [])
@@ -119,6 +124,7 @@ export function PacoteRescisaoViewDialog({ emp, companyName, roleName, open, onC
             status_depois: "SUBSTITUIDO",
           }))
         : (pacote.oss_afetadas ?? []);
+      const { gerarPacoteRescisaoPdf } = await import("@/lib/rescisao-pacote-pdf");
       const generated = gerarPacoteRescisaoPdf({
         emp: { nome: emp.nome, cpf: emp.cpf, matricula: emp.matricula, admissao: emp.admissao },
         company: companyName ? { name: companyName } : null,
@@ -138,11 +144,13 @@ export function PacoteRescisaoViewDialog({ emp, companyName, roleName, open, onC
         observacoes: pacote.observacoes,
         sha256: pacote.sha256_snapshot ?? pacote.id,
       });
-      setDoc(generated);
+      if (alive) setDoc(generated);
     } catch (e) {
       console.error("[PacoteView] falha ao regenerar PDF", e);
-      setDoc(null);
+      if (alive) setDoc(null);
     }
+    })();
+    return () => { alive = false; };
   }, [open, pacote, pppNumero, asoRow, emp, companyName, roleName, snapshotEpisVazio, snapshotOssVazio, episReconstituir, ossReconstituir]);
 
   return (
