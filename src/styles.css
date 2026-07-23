@@ -550,6 +550,42 @@
 }
 .glass-pill--emerald { --pill-glow: rgba(74, 222, 128, 0.55); color: rgba(220, 252, 231, 0.98); }
 .glass-pill--amber   { --pill-glow: rgba(255, 178, 60, 0.60); color: rgba(254, 243, 199, 0.98); }
+.glass-pill--sky     { --pill-glow: rgba(56, 189, 248, 0.62); color: rgba(224, 242, 254, 0.98); }
+
+/* Status pills SIGMO — alto contraste para fundos vinho/glass.
+   Use estas classes nos badges de status para não voltar ao cinza/branco lavado. */
+.sigmo-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 999px;
+  padding: 0.125rem 0.5rem;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid color-mix(in oklch, var(--status-pill-tone, var(--brand-text)) 45%, transparent);
+  color: color-mix(in oklch, var(--status-pill-tone, var(--brand-text)) 88%, white 12%);
+  background:
+    linear-gradient(180deg,
+      color-mix(in oklch, var(--status-pill-tone, var(--brand-text)) 24%, transparent),
+      color-mix(in oklch, var(--status-pill-tone, var(--brand-text)) 10%, transparent)
+    );
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklch, white 22%, transparent),
+    0 0 16px -8px color-mix(in oklch, var(--status-pill-tone, var(--brand-text)) 70%, transparent);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(14px) saturate(150%);
+}
+.sigmo-status-pill--ativo { --status-pill-tone: var(--status-apto); }
+.sigmo-status-pill--afastado,
+.sigmo-status-pill--terceiro,
+.sigmo-status-pill--pacote-pendente { --status-pill-tone: var(--status-alerta); }
+.sigmo-status-pill--desligado,
+.sigmo-status-pill--bloqueado { --status-pill-tone: var(--status-bloqueado); }
+.sigmo-status-pill--mei { --status-pill-tone: var(--chart-4); }
+.sigmo-status-pill--pacote-ok { --status-pill-tone: var(--status-apto); }
+.sigmo-status-pill--neutral { --status-pill-tone: var(--muted-foreground); }
 
 /* Dialog vinho com borda âmbar em flare fino e forte + entrada com pulso */
 @utility revoke-amber-flare {

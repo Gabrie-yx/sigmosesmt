@@ -137,15 +137,15 @@ function DesligadosPage() {
                     <h3 className="font-black text-sm text-foreground uppercase leading-tight truncate hover:text-[var(--brand-text)]">{e.nome}</h3>
                   </Link>
                   <div className="mt-1 flex flex-wrap items-center gap-1">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-muted text-muted-foreground ring-1 ring-border px-2 py-0.5 text-[9px] font-black uppercase tracking-widest">
+                    <span className="sigmo-status-pill sigmo-status-pill--desligado">
                       DESLIGADO
                     </span>
                     {pacotesEmitidos?.has(e.id) ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 text-emerald-200 ring-1 ring-emerald-500/40 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest">
+                      <span className="sigmo-status-pill sigmo-status-pill--pacote-ok">
                         <FileCheck2 className="h-2.5 w-2.5" /> Pacote SST
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 text-amber-200 ring-1 ring-amber-500/40 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest" title="Sem pacote de rescisão SST — regularize para fechar a lacuna de auditoria">
+                      <span className="sigmo-status-pill sigmo-status-pill--pacote-pendente" title="Sem pacote de rescisão SST — regularize para fechar a lacuna de auditoria">
                         <ShieldAlert className="h-2.5 w-2.5" /> Sem pacote
                       </span>
                     )}
