@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Trash2, Syringe, Upload, FileText, Camera, X, AlertTriangle, Undo2, CheckCircle2, User, ShieldCheck, FileText as FileIcon, HeartPulse, Building2, IdCard, UserCog, Briefcase, Users, Award, FolderOpen, UserPlus, Download, Pencil, ClipboardCheck } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Syringe, Upload, FileText, Camera, X, AlertTriangle, Undo2, CheckCircle2, User, ShieldCheck, ShieldAlert, FileText as FileIcon, HeartPulse, Building2, IdCard, UserCog, Briefcase, Users, Award, FolderOpen, UserPlus, Download, Pencil, ClipboardCheck } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
@@ -57,6 +57,7 @@ const SignaturePadDialog = lazy(() =>
 );
 import { DesligamentoDialog } from "@/components/employees/desligamento-dialog";
 import { DesligamentoWizard } from "@/components/employees/desligamento-wizard";
+import { PacoteRescisaoViewDialog } from "@/components/employees/pacote-rescisao-view-dialog";
 import { ExcluirPermanenteDialog } from "@/components/employees/excluir-permanente-dialog";
 import { NewEmployeeDialog } from "@/components/employees/new-employee-dialog";
 import { UserMinus, RotateCcw, Trash, ArrowRightLeft } from "lucide-react";
@@ -182,6 +183,22 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
   }, [role]);
   const isDesligado = emp?.status === "DESLIGADO";
   const canEditHeader = (isEditor || isAdmin) && !isDesligado;
+  const { data: pacoteSstEmitido } = useQuery({
+    queryKey: ["desligamento-pacote-status", id],
+    enabled: !!emp?.id && isDesligado,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("desligamento_pacotes" as any)
+        .select("id, emitido_em, pdf_url")
+        .eq("employee_id", id)
+        .eq("status", "EMITIDO")
+        .order("emitido_em", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data as any;
+    },
+  });
   const [uploadingHeaderPhoto, setUploadingHeaderPhoto] = useState(false);
   const uploadEmployeePhotoFn = useServerFn(uploadEmployeePhoto);
   const removeEmployeePhotoFn = useServerFn(removeEmployeePhoto);
@@ -191,6 +208,8 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
   const [integOpen, setIntegOpen] = useState(false);
   const [termoOpen, setTermoOpen] = useState(false);
   const [desligamentoOpen, setDesligamentoOpen] = useState(false);
+  const [regularizacaoOpen, setRegularizacaoOpen] = useState(false);
+  const [verPacoteOpen, setVerPacoteOpen] = useState(false);
   const [transferOpen, setTransferOpen] = useState(false);
   const [excluirOpen, setExcluirOpen] = useState(false);
 
@@ -400,14 +419,14 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
                 </button>
               )}
               {isDesligado ? (
-                <div className="inline-flex h-8 items-center gap-1.5 rounded-full bg-slate-200 ring-1 ring-slate-300 px-2.5 opacity-70">
-                  <span className="h-2 w-2 rounded-full bg-slate-500" />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">DESLIGADO</span>
+                <div className="sigmo-status-pill sigmo-status-pill--desligado h-8 px-3">
+                  <span className="h-2 w-2 rounded-full bg-current" />
+                  <span className="text-[10px]">DESLIGADO</span>
                 </div>
               ) : status && (
-                <div className="inline-flex h-8 items-center gap-1.5 rounded-full bg-slate-50 ring-1 ring-slate-200 px-2.5">
+                <div className="inline-flex h-8 items-center gap-1.5 rounded-full border border-white/15 bg-white/8 px-2.5 text-slate-100 shadow-sm backdrop-blur-sm">
                   <span className={`h-2 w-2 rounded-full ${status.colorClass}`} />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">{status.label}</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest">{status.label}</span>
                 </div>
               )}
               {(isEditor || isAdmin || isModerator) && (
@@ -435,10 +454,23 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
                     )}
                     {isEditor && (
                       emp.status === "DESLIGADO" ? (
-                        <DropdownMenuItem onClick={() => setDesligamentoOpen(true)} className="gap-2 cursor-pointer">
-                          <RotateCcw className="h-4 w-4 text-emerald-500" />
-                          <span>Reativar funcionário</span>
-                        </DropdownMenuItem>
+                        <>
+                          {pacoteSstEmitido ? (
+                            <DropdownMenuItem onClick={() => setVerPacoteOpen(true)} className="gap-2 cursor-pointer">
+                              <FileText className="h-4 w-4 text-sky-400" />
+                              <span>Ver Pacote SST</span>
+                            </DropdownMenuItem>
+                          ) : (
+                            <DropdownMenuItem onClick={() => setRegularizacaoOpen(true)} className="gap-2 cursor-pointer">
+                              <ShieldAlert className="h-4 w-4 text-amber-400" />
+                              <span>Regularizar Pacote SST</span>
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem onClick={() => setDesligamentoOpen(true)} className="gap-2 cursor-pointer">
+                            <RotateCcw className="h-4 w-4 text-emerald-500" />
+                            <span>Reativar funcionário</span>
+                          </DropdownMenuItem>
+                        </>
                       ) : (
                         <DropdownMenuItem onClick={() => setDesligamentoOpen(true)} className="gap-2 cursor-pointer">
                           <UserMinus className="h-4 w-4 text-amber-500" />
@@ -545,6 +577,26 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
               <FileSignature className="h-4 w-4" />
               {(emp as any)?.termo_consentimento_id ? "Termo ✓" : "Termo"}
             </button>
+            {isDesligado && pacoteSstEmitido && (
+              <button
+                type="button"
+                onClick={() => setVerPacoteOpen(true)}
+                title="Abrir pacote de rescisão SST"
+                className="glass-pill glass-pill--sky justify-center"
+              >
+                <FileText className="h-4 w-4" /> Ver Pacote SST
+              </button>
+            )}
+            {isDesligado && !pacoteSstEmitido && (
+              <button
+                type="button"
+                onClick={() => setRegularizacaoOpen(true)}
+                title="Regularizar e emitir pacote de rescisão SST"
+                className="glass-pill glass-pill--amber justify-center"
+              >
+                <AlertTriangle className="h-4 w-4" /> Regularizar Pacote SST
+              </button>
+            )}
           </div>
         </div>
       </Card>
@@ -776,6 +828,25 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
           role={role}
           open={desligamentoOpen}
           onClose={() => setDesligamentoOpen(false)}
+        />
+      )}
+      {emp && (
+        <DesligamentoWizard
+          emp={emp as any}
+          company={(companies ?? []).find((c: any) => c.id === emp?.company_id) ?? null}
+          role={role}
+          open={regularizacaoOpen}
+          onClose={() => setRegularizacaoOpen(false)}
+          modo="regularizacao"
+        />
+      )}
+      {emp && (
+        <PacoteRescisaoViewDialog
+          emp={emp as any}
+          companyName={((companies ?? []).find((c: any) => c.id === emp?.company_id) as any)?.name ?? null}
+          roleName={role?.name ?? null}
+          open={verPacoteOpen}
+          onClose={() => setVerPacoteOpen(false)}
         />
       )}
       {emp && (

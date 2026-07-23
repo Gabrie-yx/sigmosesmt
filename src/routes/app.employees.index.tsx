@@ -561,12 +561,12 @@ function EmployeeCard({ emp, company, companyType, role, asoStatus }: {
 }) {
   const statusStyle =
     emp.status === "ATIVO"
-      ? "bg-emerald-500/15 text-emerald-200 ring-emerald-500/40"
+      ? "sigmo-status-pill--ativo"
       : emp.status === "AFASTADO"
-      ? "bg-amber-500/15 text-amber-200 ring-amber-500/40"
+      ? "sigmo-status-pill--afastado"
       : emp.status === "DESLIGADO"
-      ? "bg-muted text-muted-foreground ring-border"
-      : "bg-rose-500/15 text-rose-200 ring-rose-500/40";
+      ? "sigmo-status-pill--desligado"
+      : "sigmo-status-pill--bloqueado";
   const isTerceiro = companyType === "TERCEIRIZADO" || emp.tipo_vinculo === "TERCEIRO";
   const isMei = emp.tipo_cadastro === "MEI";
   const isActive = emp.status === "ATIVO";
@@ -635,17 +635,17 @@ function EmployeeCard({ emp, company, companyType, role, asoStatus }: {
           <h3 className="font-black text-sm text-slate-900 uppercase leading-tight truncate group-hover:text-[#7B1E2B] transition-colors">
             {emp.nome}
           </h3>
-          <span className={`mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-widest ring-1 ${statusStyle}`}>
+          <span className={`mt-1 sigmo-status-pill ${statusStyle}`}>
             {emp.status}
           </span>
           <div className="mt-1 flex flex-wrap gap-1">
             {isTerceiro && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 text-amber-200 ring-1 ring-amber-500/40 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest">
+              <span className="sigmo-status-pill sigmo-status-pill--terceiro">
                 TERCEIRO
               </span>
             )}
             {isMei && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-violet-500/15 text-violet-200 ring-1 ring-violet-500/40 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest">
+              <span className="sigmo-status-pill sigmo-status-pill--mei">
                 MEI
               </span>
             )}
