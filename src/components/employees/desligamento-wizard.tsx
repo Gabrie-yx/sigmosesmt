@@ -198,6 +198,17 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
   const finalizar = useMutation({
     mutationFn: async () => {
       const id = await salvarRascunho.mutateAsync();
+      // Persiste devolução no epi_deliveries para os marcados que ainda não têm data_devolucao
+      const paraDevolver = (epis ?? [])
+        .filter((e: any) => episDevolvidos[e.id] && !e.data_devolucao)
+        .map((e: any) => e.id);
+      if (paraDevolver.length > 0) {
+        const { error: devErr } = await supabase
+          .from("epi_deliveries")
+          .update({ data_devolucao: data })
+          .in("id", paraDevolver);
+        if (devErr) throw devErr;
+      }
       const { error } = await (supabase as any).rpc("finalizar_desligamento_pacote", { _pacote_id: id });
       if (error) throw error;
       return id;
