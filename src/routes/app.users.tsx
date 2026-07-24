@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,7 @@ import {
 import { createInvestorAccess } from "@/lib/temp-investors.functions";
 import { MENU_CATALOG, MENU_BY_KEY, menusForModule, AVAILABLE_MODULES } from "@/lib/menu-catalog";
 import { APP_ROLES, moduleLabel } from "@/lib/access-control";
+import { LayoutTemplate } from "lucide-react";
 
 export const Route = createFileRoute("/app/users")({
   component: UsersPage,
@@ -131,6 +133,29 @@ function UsersPage() {
     enabled: isAdmin && mfaSatisfied,
     queryFn: () => listFn(),
   });
+
+  // Templates de perfil (para acelerar convite)
+  const { data: roleTemplates = [] } = useQuery({
+    queryKey: ["role-templates-invite"],
+    enabled: isAdmin && mfaSatisfied,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("role_templates")
+        .select("id, nome, descricao, roles, modulos, menus, oficial")
+        .order("oficial", { ascending: false })
+        .order("nome", { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  function aplicarTemplate(t: any) {
+    const primeiroRole = Array.isArray(t.roles) && t.roles.length ? String(t.roles[0]) : "editor";
+    setFRole(primeiroRole);
+    setFModules(Array.isArray(t.modulos) ? t.modulos.map(String) : []);
+    setFMenus(Array.isArray(t.menus) ? t.menus.map(String) : []);
+    toast.success(`Template "${t.nome}" aplicado`);
+  }
 
   const { data: logsData, isLoading: logsLoading } = useQuery({
     queryKey: ["users-audit-logs"],
@@ -518,8 +543,35 @@ function UsersPage() {
       <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
         <DialogContent className="max-w-6xl p-0 gap-0 overflow-hidden">
           <DialogHeader className="px-6 pt-6 pb-4 border-b">
-            <DialogTitle>Convidar usuário</DialogTitle>
-            <DialogDescription>Um e-mail será enviado com link para definir senha.</DialogDescription>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <DialogTitle>Convidar usuário</DialogTitle>
+                <DialogDescription>Um e-mail será enviado com link para definir senha.</DialogDescription>
+              </div>
+              {roleTemplates.length > 0 && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <LayoutTemplate className="h-3.5 w-3.5 mr-1" /> Usar template
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-64">
+                    <DropdownMenuLabel>Templates de perfil</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {roleTemplates.map((t: any) => (
+                      <DropdownMenuItem key={t.id} onClick={() => aplicarTemplate(t)}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{t.nome}</span>
+                          {t.descricao && (
+                            <span className="text-[10px] text-muted-foreground line-clamp-1">{t.descricao}</span>
+                          )}
+                        </div>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-[minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,1.3fr)] max-h-[72vh]">
             {/* Coluna esquerda: identidade + papel */}
