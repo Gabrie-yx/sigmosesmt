@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PenTool, Trash2, Plus, Check, ImageIcon, Pencil } from "lucide-react";
+import { PenTool, Trash2, Plus, Check, ImageIcon, Pencil, Download } from "lucide-react";
 import { toast } from "sonner";
 
 interface UserSignature {
@@ -48,6 +48,50 @@ export function SignatureGallery({ onSelect, trigger }: SignatureGalleryProps) {
       if (error) throw error;
       return data as UserSignature[];
     },
+  });
+
+  // Também traz a assinatura vinculada ao cadastro de funcionário (employees.assinatura_url).
+  // Assim o usuário sempre encontra a assinatura já usada em OS/DDS/EPI dentro da galeria,
+  // podendo usar direto ou importar como item nomeado.
+  const { data: employeeSig } = useQuery({
+    queryKey: ["user-employee-signature", user?.id],
+    enabled: !!user?.id && open,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("employees")
+        .select("nome, assinatura_url")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return (data as { nome: string | null; assinatura_url: string | null } | null) ?? null;
+    },
+  });
+
+  const importEmployeeMutation = useMutation({
+    mutationFn: async () => {
+      if (!employeeSig?.assinatura_url || !user?.id) return;
+      // baixa a URL pública/assinada e converte pra data URL pra manter offline no galeria
+      const res = await fetch(employeeSig.assinatura_url, { cache: "no-store" });
+      if (!res.ok) throw new Error("Não consegui baixar a assinatura do cadastro");
+      const blob = await res.blob();
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const fr = new FileReader();
+        fr.onloadend = () => resolve(fr.result as string);
+        fr.onerror = () => reject(fr.error);
+        fr.readAsDataURL(blob);
+      });
+      const { error } = await supabase.from("user_signatures").insert({
+        user_id: user.id,
+        label: employeeSig.nome ? `Cadastro — ${employeeSig.nome}` : "Assinatura do cadastro",
+        signature_data: dataUrl,
+        is_default: signatures.length === 0,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["user-signatures"] });
+      toast.success("Assinatura do cadastro importada para a galeria");
+    },
+    onError: (e: any) => toast.error(e.message),
   });
 
   const addMutation = useMutation({
@@ -193,6 +237,47 @@ export function SignatureGallery({ onSelect, trigger }: SignatureGalleryProps) {
               </div>
             </div>
           ) : (
+            <>
+            {employeeSig?.assinatura_url && (
+              <div className="mb-4 border rounded-lg p-3 bg-amber-50/60 border-amber-200">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[11px] font-bold uppercase text-amber-800">
+                    Assinatura do meu cadastro
+                  </span>
+                  <span className="text-[10px] text-amber-700">Vinculada em Funcionários</span>
+                </div>
+                <div className="h-20 w-full flex items-center justify-center bg-white rounded mb-3">
+                  <img
+                    src={employeeSig.assinatura_url}
+                    alt="Assinatura do cadastro"
+                    className="h-full w-full object-contain"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 h-8 text-[11px]"
+                    onClick={() => {
+                      if (onSelect && employeeSig.assinatura_url) onSelect(employeeSig.assinatura_url);
+                      setOpen(false);
+                    }}
+                  >
+                    Usar esta
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 text-[11px]"
+                    disabled={importEmployeeMutation.isPending}
+                    onClick={() => importEmployeeMutation.mutate()}
+                  >
+                    <Download className="h-3 w-3 mr-1" />
+                    Importar p/ galeria
+                  </Button>
+                </div>
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <button
                 onClick={() => setIsAdding(true)}
@@ -288,9 +373,10 @@ export function SignatureGallery({ onSelect, trigger }: SignatureGalleryProps) {
                 </div>
               ))}
             </div>
+            </>
           )}
 
-          {!isLoading && signatures.length === 0 && !isAdding && (
+          {!isLoading && signatures.length === 0 && !employeeSig?.assinatura_url && !isAdding && (
             <div className="text-center py-12 text-slate-400">
               <PenTool className="h-12 w-12 mx-auto mb-3 opacity-20" />
               <p className="text-sm">Sua galeria está vazia.</p>
