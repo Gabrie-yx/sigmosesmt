@@ -806,6 +806,14 @@ function DiagnosticoTab() {
         />
       )}
 
+      {campanhaId && (agregado ?? []).length > 0 && (
+        <OutcomesPanel
+          linhas={agregado ?? []}
+          minRespondentes={(campanhas ?? []).find((c: any) => c.id === campanhaId)?.min_respondentes ?? 5}
+          tercis={tercis}
+        />
+      )}
+
       {campanhaId && (demografico ?? []).length > 0 && (
         <EstratificacaoDemografica linhas={demografico ?? []} />
       )}
@@ -829,9 +837,11 @@ function DiagnosticoTab() {
 }
 
 function MatrizDiagnostico({ linhas, minRespondentes, tercis }: { linhas: any[]; minRespondentes?: number; tercis?: TercisMap }) {
-  // agrupa por GHE × dimensão
+  // agrupa por GHE × dimensão — só FATORES (causas). OUTCOMEs (Burnout/Sono) vão em painel próprio.
   const minResp = minRespondentes ?? 5;
-  const dimensoes = Object.keys(DIMENSAO_LABEL);
+  const dimensoes = Object.keys(DIMENSAO_LABEL).filter(
+    (d) => DIMENSAO_TIPO[d as keyof typeof DIMENSAO_TIPO] === "FATOR",
+  );
   const ghes = Array.from(new Set(linhas.map((l) => l.ghe_id))).filter(Boolean);
 
   const usaInterno = tercis && Object.values(tercis).some((t) => t?.fonte === "INTERNO");
@@ -839,7 +849,10 @@ function MatrizDiagnostico({ linhas, minRespondentes, tercis }: { linhas: any[];
   return (
     <Card className="p-4 overflow-x-auto border-rose-500/20 bg-gradient-to-br from-rose-950/40 to-slate-950/60">
       <div className="flex items-center justify-between gap-3 mb-3">
-        <h3 className="font-bold text-rose-50">Matriz agregada por GHE × Dimensão</h3>
+        <div>
+          <h3 className="font-bold text-rose-50">Matriz de FATORES por GHE × Dimensão</h3>
+          <p className="text-[10px] text-rose-100/60 mt-0.5">Causas do risco psicossocial (o que a organização precisa mudar).</p>
+        </div>
         <ComoLerMatrizSheet />
       </div>
       <table className="w-full text-xs">
