@@ -256,8 +256,9 @@ export function usePendencias() {
       // Cancelada não demanda ação — fica fora do count.
       const { data } = await supabase
         .from("oss_emissoes")
-        .select("id,status")
-        .in("status", ["PENDENTE_ASSINATURA", "SUBSTITUIDO", "VENCIDO"]);
+        .select("id,status,employees!inner(status)")
+        .in("status", ["PENDENTE_ASSINATURA", "SUBSTITUIDO", "VENCIDO"])
+        .eq("employees.status", "ATIVO");
       const rows = data ?? [];
       const pendentes = rows.filter((r) => r.status === "PENDENTE_ASSINATURA").length;
       const vencidas = rows.filter((r) => r.status === "VENCIDO").length;
