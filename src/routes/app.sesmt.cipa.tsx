@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -12,7 +12,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, ShieldCheck, Users, CalendarDays, ListChecks, Vote, Loader2 } from "lucide-react";
+import { Plus, ShieldCheck, Users, CalendarDays, ListChecks, Vote, Loader2, Trash2 } from "lucide-react";
+import { dimensionarCipa } from "@/lib/cipa-dimensionamento";
 
 // CIPA — NR-05 (rev. Portaria MTP 4.219/2022) + Lei 14.457/2022 (Emprega + Mulher).
 // MVP: cadastro de gestão/mandato, membros, reuniões, plano anual e calendário eleitoral.
@@ -56,49 +57,8 @@ type Gestao = {
   observacoes: string | null;
 };
 
-/**
- * Dimensionamento NR-05 (Quadro I, resumido).
- * Retorna sugestão de modo (DESIGNADO vs COMISSAO), composição paritária mínima
- * e carga horária de capacitação obrigatória.
- * Base: NR-05 itens 5.6.3/5.6.4 + Quadro I (Portaria MTP 4.219/2022).
- */
-export function dimensionarCipa(gr: number | null, n: number | null) {
-  if (!gr || !n || n <= 0) return null;
-  // Piso de eleição paritária por grau de risco (Quadro I):
-  // GR1/GR2: exige comissão a partir de 51 empregados.
-  // GR3/GR3: comissão a partir de 20 emp; GR4: comissão a partir de 30 emp (20-29 = designado).
-  const piso = gr === 4 ? 30 : gr === 3 ? 20 : gr === 2 ? 51 : 51;
-  if (n < piso) {
-    return {
-      modo: "DESIGNADO" as const,
-      efetivosEmpregador: 0,
-      suplentesEmpregador: 0,
-      efetivosEmpregados: 0,
-      suplentesEmpregados: 0,
-      cargaTreinamento: gr >= 3 ? 20 : 8,
-      nota:
-        n < 20
-          ? `Estabelecimento com menos de 20 empregados: designado obrigatório (NR-05 item 5.6.3).`
-          : `Grau de Risco ${gr} com ${n} empregados: abaixo do Quadro I → designa 1 empregado (NR-05 item 5.6.4). Sem estabilidade do art. 10 ADCT, salvo previsão em ACT/CCT.`,
-    };
-  }
-  // Faixas simplificadas do Quadro I (composição mínima):
-  const faixa =
-    n <= 50 ? { ef: 1, su: 1 } :
-    n <= 100 ? { ef: 3, su: 3 } :
-    n <= 500 ? { ef: 4, su: 4 } :
-    n <= 1000 ? { ef: 6, su: 6 } :
-    { ef: 9, su: 7 };
-  return {
-    modo: "COMISSAO" as const,
-    efetivosEmpregador: faixa.ef,
-    suplentesEmpregador: faixa.su,
-    efetivosEmpregados: faixa.ef,
-    suplentesEmpregados: faixa.su,
-    cargaTreinamento: gr >= 3 ? 20 : 8,
-    nota: `Comissão paritária: ${faixa.ef} efetivos + ${faixa.su} suplentes por bancada. Mandato 1 ano, permitida 1 reeleição. Estabilidade dos eleitos: art. 10, II, "a" ADCT.`,
-  };
-}
+// dimensionarCipa vive em src/lib/cipa-dimensionamento.ts (fora do route file
+// pra não bloquear o code-split do TanStack Router).
 
 function CipaPage() {
   const qc = useQueryClient();
