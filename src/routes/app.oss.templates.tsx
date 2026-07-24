@@ -828,6 +828,7 @@ function TemplateEditorDialog({
         doc={previewDoc}
         fileName={`OSS-PREVIEW-${form.cargo || "MODELO"}.pdf`}
         title="Pré-visualização da OSS"
+        anexosEscopo="os"
       />
     </>
   );

@@ -22,7 +22,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { DIMENSAO_LABEL, PSICO_ITEMS, classifyByTercis, type TercisMap } from "@/lib/psico-instrument";
+import { DIMENSAO_LABEL, DIMENSAO_TIPO, PSICO_ITEMS, classifyByTercis, type TercisMap } from "@/lib/psico-instrument";
 import { gerarParecerPsicossocialPdf } from "@/lib/psico-parecer-pdf";
 import { useServerFn } from "@tanstack/react-start";
 import { computarTercisPsico } from "@/lib/psico-actions.functions";
@@ -806,6 +806,14 @@ function DiagnosticoTab() {
         />
       )}
 
+      {campanhaId && (agregado ?? []).length > 0 && (
+        <OutcomesPanel
+          linhas={agregado ?? []}
+          minRespondentes={(campanhas ?? []).find((c: any) => c.id === campanhaId)?.min_respondentes ?? 5}
+          tercis={tercis}
+        />
+      )}
+
       {campanhaId && (demografico ?? []).length > 0 && (
         <EstratificacaoDemografica linhas={demografico ?? []} />
       )}
@@ -829,9 +837,11 @@ function DiagnosticoTab() {
 }
 
 function MatrizDiagnostico({ linhas, minRespondentes, tercis }: { linhas: any[]; minRespondentes?: number; tercis?: TercisMap }) {
-  // agrupa por GHE × dimensão
+  // agrupa por GHE × dimensão — só FATORES (causas). OUTCOMEs (Burnout/Sono) vão em painel próprio.
   const minResp = minRespondentes ?? 5;
-  const dimensoes = Object.keys(DIMENSAO_LABEL);
+  const dimensoes = Object.keys(DIMENSAO_LABEL).filter(
+    (d) => DIMENSAO_TIPO[d as keyof typeof DIMENSAO_TIPO] === "FATOR",
+  );
   const ghes = Array.from(new Set(linhas.map((l) => l.ghe_id))).filter(Boolean);
 
   const usaInterno = tercis && Object.values(tercis).some((t) => t?.fonte === "INTERNO");
@@ -839,7 +849,10 @@ function MatrizDiagnostico({ linhas, minRespondentes, tercis }: { linhas: any[];
   return (
     <Card className="p-4 overflow-x-auto border-rose-500/20 bg-gradient-to-br from-rose-950/40 to-slate-950/60">
       <div className="flex items-center justify-between gap-3 mb-3">
-        <h3 className="font-bold text-rose-50">Matriz agregada por GHE × Dimensão</h3>
+        <div>
+          <h3 className="font-bold text-rose-50">Matriz de FATORES por GHE × Dimensão</h3>
+          <p className="text-[10px] text-rose-100/60 mt-0.5">Causas do risco psicossocial (o que a organização precisa mudar).</p>
+        </div>
         <ComoLerMatrizSheet />
       </div>
       <table className="w-full text-xs">
@@ -991,6 +1004,89 @@ function ComoLerMatrizSheet() {
 function statusPorMedia(m: number, dimensao: string, tercis?: TercisMap): { label: string; cor: string; fonte: "INTERNO" | "MANUAL_PT" } {
   const r = classifyByTercis(m, dimensao, tercis);
   return { label: r.label, cor: r.cor, fonte: r.fonte };
+}
+
+/* ---- Painel dedicado a OUTCOMES (Burnout / Sono) ---- */
+/* OUTCOMEs são efeitos, não causas. Servem como "sinal de alerta" que valida
+ * o diagnóstico dos FATORES: se Burnout/Sono estão altos num GHE cujos FATORES
+ * já vinham vermelhos, é confirmação clínica do quadro (COPSOQ II).            */
+function OutcomesPanel({ linhas, minRespondentes, tercis }: { linhas: any[]; minRespondentes?: number; tercis?: TercisMap }) {
+  const minResp = minRespondentes ?? 5;
+  const outcomeDims = (Object.keys(DIMENSAO_LABEL) as Array<keyof typeof DIMENSAO_LABEL>)
+    .filter((d) => DIMENSAO_TIPO[d] === "OUTCOME");
+  const ghes = Array.from(new Set(linhas.map((l) => l.ghe_id))).filter(Boolean);
+  // só mostra o painel se houver ao menos uma linha de OUTCOME
+  const temOutcome = linhas.some((l) => DIMENSAO_TIPO[l.dimensao as keyof typeof DIMENSAO_TIPO] === "OUTCOME");
+  if (!temOutcome) return null;
+
+  return (
+    <Card className="p-4 overflow-x-auto border-amber-500/20 bg-gradient-to-br from-amber-950/30 to-slate-950/60">
+      <div className="flex items-center justify-between gap-3 mb-3">
+        <div>
+          <h3 className="font-bold text-amber-50">Sinais de alerta clínico — OUTCOMES</h3>
+          <p className="text-[10px] text-amber-100/60 mt-0.5">
+            Efeitos (Burnout / Sono) medidos separadamente das causas. Quando aparecem altos num GHE cujos FATORES já estão no vermelho, confirmam o quadro (padrão COPSOQ II).
+          </p>
+        </div>
+      </div>
+      <table className="w-full text-xs">
+        <thead>
+          <tr>
+            <th className="text-left p-2 border-b">GHE</th>
+            {outcomeDims.map((d) => (
+              <th key={d} className="text-center p-2 border-b text-[10px]">{DIMENSAO_LABEL[d]}</th>
+            ))}
+            <th className="text-center p-2 border-b text-[10px]">Respondentes</th>
+          </tr>
+        </thead>
+        <tbody>
+          {ghes.map((ghe) => {
+            const linhasGhe = linhas.filter((l) => l.ghe_id === ghe);
+            const maxN = Math.max(0, ...linhasGhe.map((l) => Number(l.n_respostas ?? 0)));
+            const atingiu = maxN >= minResp;
+            return (
+              <tr key={ghe as string}>
+                <td className="p-2 border-b text-amber-100/80 font-semibold">{(ghe as string).slice(0, 8)}…</td>
+                {outcomeDims.map((d) => {
+                  const cell = linhas.find((l) => l.ghe_id === ghe && l.dimensao === d);
+                  if (!cell) return <td key={d} className="p-2 border-b text-center text-amber-100/30">—</td>;
+                  if (cell.suprimido)
+                    return <td key={d} className="p-2 border-b text-center text-amber-100/40" title="Menos de 5 respondentes (LGPD)">🔒</td>;
+                  const media = Number(cell.media);
+                  const st = statusPorMedia(media, d, tercis);
+                  return (
+                    <td
+                      key={d}
+                      className={`p-2 border-b text-center font-bold text-white ${st.cor} cursor-help`}
+                      title={`${media.toFixed(1)} — ${st.label} · corte ${st.fonte === "INTERNO" ? "empírico SIGMO" : "COPSOQ II PT"}`}
+                    >
+                      {media.toFixed(1)}
+                    </td>
+                  );
+                })}
+                <td className="p-2 border-b text-center">
+                  <span
+                    className={`inline-flex items-center justify-center rounded px-2 py-0.5 text-[10px] font-bold ${
+                      atingiu
+                        ? "bg-emerald-500/20 text-emerald-200 border border-emerald-500/30"
+                        : "bg-amber-500/20 text-amber-200 border border-amber-500/30"
+                    }`}
+                    title={atingiu ? "Mínimo atingido" : `Faltam ${minResp - maxN} respondente(s)`}
+                  >
+                    {Math.min(maxN, minResp)}/{minResp}
+                  </span>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      <p className="mt-3 text-[10px] text-amber-100/60 border-t border-amber-500/20 pt-2">
+        <b className="text-amber-100/80">Burnout</b> baseado em Copenhagen Burnout Inventory (CBI, curto) · <b className="text-amber-100/80">Sono</b> inspirado em COPSOQ II.
+        Escala 1–5, invertida quando aplicável (score alto = pior). Não é diagnóstico clínico — encaminhar ao médico do trabalho se persistir alto.
+      </p>
+    </Card>
+  );
 }
 
 /* ============ 4. INSTRUMENTO (preview do questionário) ============ */
