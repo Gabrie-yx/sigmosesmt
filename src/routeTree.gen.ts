@@ -100,6 +100,7 @@ import { Route as AppDdsPainelRouteImport } from './routes/app.dds.painel'
 import { Route as AppDdsHistoricoRouteImport } from './routes/app.dds.historico'
 import { Route as AppDdsGestoresRouteImport } from './routes/app.dds.gestores'
 import { Route as AppContaSegurancaRouteImport } from './routes/app.conta.seguranca'
+import { Route as AppConfiguracoesProdutividadeRouteImport } from './routes/app.configuracoes.produtividade'
 import { Route as AppComprasRequisicoesRecebidasRouteImport } from './routes/app.compras.requisicoes-recebidas'
 import { Route as AppComprasFornecedoresRouteImport } from './routes/app.compras.fornecedores'
 import { Route as AppComprasDashboardRouteImport } from './routes/app.compras.dashboard'
@@ -602,6 +603,12 @@ const AppContaSegurancaRoute = AppContaSegurancaRouteImport.update({
   path: '/conta/seguranca',
   getParentRoute: () => AppRoute,
 } as any)
+const AppConfiguracoesProdutividadeRoute =
+  AppConfiguracoesProdutividadeRouteImport.update({
+    id: '/configuracoes/produtividade',
+    path: '/configuracoes/produtividade',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppComprasRequisicoesRecebidasRoute =
   AppComprasRequisicoesRecebidasRouteImport.update({
     id: '/compras/requisicoes-recebidas',
@@ -834,6 +841,7 @@ export interface FileRoutesByFullPath {
   '/app/compras/dashboard': typeof AppComprasDashboardRoute
   '/app/compras/fornecedores': typeof AppComprasFornecedoresRoute
   '/app/compras/requisicoes-recebidas': typeof AppComprasRequisicoesRecebidasRoute
+  '/app/configuracoes/produtividade': typeof AppConfiguracoesProdutividadeRoute
   '/app/conta/seguranca': typeof AppContaSegurancaRoute
   '/app/dds/gestores': typeof AppDdsGestoresRoute
   '/app/dds/historico': typeof AppDdsHistoricoRoute
@@ -955,6 +963,7 @@ export interface FileRoutesByTo {
   '/app/compras/dashboard': typeof AppComprasDashboardRoute
   '/app/compras/fornecedores': typeof AppComprasFornecedoresRoute
   '/app/compras/requisicoes-recebidas': typeof AppComprasRequisicoesRecebidasRoute
+  '/app/configuracoes/produtividade': typeof AppConfiguracoesProdutividadeRoute
   '/app/conta/seguranca': typeof AppContaSegurancaRoute
   '/app/dds/gestores': typeof AppDdsGestoresRoute
   '/app/dds/historico': typeof AppDdsHistoricoRoute
@@ -1080,6 +1089,7 @@ export interface FileRoutesById {
   '/app/compras/dashboard': typeof AppComprasDashboardRoute
   '/app/compras/fornecedores': typeof AppComprasFornecedoresRoute
   '/app/compras/requisicoes-recebidas': typeof AppComprasRequisicoesRecebidasRoute
+  '/app/configuracoes/produtividade': typeof AppConfiguracoesProdutividadeRoute
   '/app/conta/seguranca': typeof AppContaSegurancaRoute
   '/app/dds/gestores': typeof AppDdsGestoresRoute
   '/app/dds/historico': typeof AppDdsHistoricoRoute
@@ -1207,6 +1217,7 @@ export interface FileRouteTypes {
     | '/app/compras/dashboard'
     | '/app/compras/fornecedores'
     | '/app/compras/requisicoes-recebidas'
+    | '/app/configuracoes/produtividade'
     | '/app/conta/seguranca'
     | '/app/dds/gestores'
     | '/app/dds/historico'
@@ -1328,6 +1339,7 @@ export interface FileRouteTypes {
     | '/app/compras/dashboard'
     | '/app/compras/fornecedores'
     | '/app/compras/requisicoes-recebidas'
+    | '/app/configuracoes/produtividade'
     | '/app/conta/seguranca'
     | '/app/dds/gestores'
     | '/app/dds/historico'
@@ -1452,6 +1464,7 @@ export interface FileRouteTypes {
     | '/app/compras/dashboard'
     | '/app/compras/fornecedores'
     | '/app/compras/requisicoes-recebidas'
+    | '/app/configuracoes/produtividade'
     | '/app/conta/seguranca'
     | '/app/dds/gestores'
     | '/app/dds/historico'
@@ -2181,6 +2194,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppContaSegurancaRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/configuracoes/produtividade': {
+      id: '/app/configuracoes/produtividade'
+      path: '/configuracoes/produtividade'
+      fullPath: '/app/configuracoes/produtividade'
+      preLoaderRoute: typeof AppConfiguracoesProdutividadeRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/compras/requisicoes-recebidas': {
       id: '/app/compras/requisicoes-recebidas'
       path: '/compras/requisicoes-recebidas'
@@ -2546,6 +2566,7 @@ interface AppRouteChildren {
   AppComprasDashboardRoute: typeof AppComprasDashboardRoute
   AppComprasFornecedoresRoute: typeof AppComprasFornecedoresRoute
   AppComprasRequisicoesRecebidasRoute: typeof AppComprasRequisicoesRecebidasRoute
+  AppConfiguracoesProdutividadeRoute: typeof AppConfiguracoesProdutividadeRoute
   AppContaSegurancaRoute: typeof AppContaSegurancaRoute
   AppDdsGestoresRoute: typeof AppDdsGestoresRoute
   AppDdsHistoricoRoute: typeof AppDdsHistoricoRoute
@@ -2639,6 +2660,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppComprasDashboardRoute: AppComprasDashboardRoute,
   AppComprasFornecedoresRoute: AppComprasFornecedoresRoute,
   AppComprasRequisicoesRecebidasRoute: AppComprasRequisicoesRecebidasRoute,
+  AppConfiguracoesProdutividadeRoute: AppConfiguracoesProdutividadeRoute,
   AppContaSegurancaRoute: AppContaSegurancaRoute,
   AppDdsGestoresRoute: AppDdsGestoresRoute,
   AppDdsHistoricoRoute: AppDdsHistoricoRoute,
