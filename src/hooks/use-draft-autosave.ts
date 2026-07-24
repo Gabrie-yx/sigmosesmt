@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { saveDraft, DRAFTS_EVENT } from "@/lib/draft-store";
+import { saveDraft, DRAFTS_EVENT, clearDraftTombstone } from "@/lib/draft-store";
 
 /**
  * Autosave de rascunho: serializa `data` no localStorage com debounce.
@@ -32,6 +32,10 @@ export function useDraftAutosave<T>(
       clearPendingSave();
       return;
     }
+    // Nova montagem/ativação do form → limpa tombstone da chave.
+    // Assim, se o usuário descartou o rascunho pela barra e voltou
+    // depois pra tela, o autosave volta a funcionar normalmente.
+    clearDraftTombstone(key);
     // não salva no mount inicial pra evitar gravar valores default vazios
     if (firstRun.current) {
       firstRun.current = false;
@@ -77,5 +81,5 @@ export function useDraftAutosave<T>(
     };
     window.addEventListener(DRAFTS_EVENT, onChange);
     return () => window.removeEventListener(DRAFTS_EVENT, onChange);
-  }, [enabled, key]);
+  }, [enabled, key, serialized]);
 }
