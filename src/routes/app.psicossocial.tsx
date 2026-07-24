@@ -22,8 +22,10 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { DIMENSAO_LABEL, PSICO_ITEMS } from "@/lib/psico-instrument";
+import { DIMENSAO_LABEL, PSICO_ITEMS, classifyByTercis, type TercisMap } from "@/lib/psico-instrument";
 import { gerarParecerPsicossocialPdf } from "@/lib/psico-parecer-pdf";
+import { useServerFn } from "@tanstack/react-start";
+import { computarTercisPsico } from "@/lib/psico-actions.functions";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import type jsPDF from "jspdf";
 import { PlanoAcaoTab } from "@/components/psicossocial/plano-acao-tab";
@@ -646,6 +648,13 @@ function DiagnosticoTab() {
   const [tstSig, setTstSig] = useState<string | null>(null);
   const [supSig, setSupSig] = useState<string | null>(null);
 
+  const tercisFn = useServerFn(computarTercisPsico);
+  const { data: tercis } = useQuery({
+    queryKey: ["psico-tercis"],
+    queryFn: () => tercisFn(),
+    staleTime: 5 * 60_000,
+  });
+
   const { data: campanhas } = useQuery({
     queryKey: ["psico-campanhas-diag"],
     queryFn: async () => {
@@ -793,6 +802,7 @@ function DiagnosticoTab() {
         <MatrizDiagnostico
           linhas={agregado ?? []}
           minRespondentes={(campanhas ?? []).find((c: any) => c.id === campanhaId)?.min_respondentes ?? 5}
+          tercis={tercis}
         />
       )}
 
@@ -818,11 +828,13 @@ function DiagnosticoTab() {
   );
 }
 
-function MatrizDiagnostico({ linhas, minRespondentes }: { linhas: any[]; minRespondentes?: number }) {
+function MatrizDiagnostico({ linhas, minRespondentes, tercis }: { linhas: any[]; minRespondentes?: number; tercis?: TercisMap }) {
   // agrupa por GHE × dimensão
   const minResp = minRespondentes ?? 5;
   const dimensoes = Object.keys(DIMENSAO_LABEL);
   const ghes = Array.from(new Set(linhas.map((l) => l.ghe_id))).filter(Boolean);
+
+  const usaInterno = tercis && Object.values(tercis).some((t) => t?.fonte === "INTERNO");
 
   return (
     <Card className="p-4 overflow-x-auto border-rose-500/20 bg-gradient-to-br from-rose-950/40 to-slate-950/60">
@@ -854,12 +866,12 @@ function MatrizDiagnostico({ linhas, minRespondentes }: { linhas: any[]; minResp
                   if (cell.suprimido)
                     return <td key={d} className="p-2 border-b text-center text-rose-100/40" title="Menos de 5 respondentes (LGPD)">🔒</td>;
                   const media = Number(cell.media);
-                  const st = statusPorMedia(media, d);
+                  const st = statusPorMedia(media, d, tercis);
                   return (
                     <td
                       key={d}
                       className={`p-2 border-b text-center font-bold text-white ${st.cor} cursor-help`}
-                      title={`${media.toFixed(1)} — ${st.label}: ${st.desc}`}
+                      title={`${media.toFixed(1)} — ${st.label} · corte ${st.fonte === "INTERNO" ? "empírico SIGMO" : "COPSOQ II PT"}`}
                     >
                       {media.toFixed(1)}
                     </td>
@@ -886,11 +898,13 @@ function MatrizDiagnostico({ linhas, minRespondentes }: { linhas: any[]; minResp
       {/* Legenda enxuta — cores da Matriz 5x5 DMN */}
       <div className="mt-3 pt-3 border-t border-rose-500/20 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[10px] text-rose-100/70">
         <span className="font-semibold text-rose-100/80">Legenda:</span>
-        <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-[#2ecc71]" /> &lt; 2,0 · Baixo risco</span>
-        <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-[#f7d842]" /> 2,0 – 2,9 · Risco moderado</span>
-        <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-[#f39c12]" /> 3,0 – 3,9 · Alto risco</span>
-        <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-[#e74c3c]" /> ≥ 4,0 · Risco crítico</span>
-        <span className="ml-auto text-rose-100/50">Passe o mouse na célula para ver o status.</span>
+        <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-[#2ecc71]" /> &lt; P33 · Baixo</span>
+        <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-[#f7d842]" /> P33–P66 · Moderado</span>
+        <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-[#f39c12]" /> ≥ P66 · Alto</span>
+        <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-[#e74c3c]" /> ≥ 4,25 <b>ou</b> violência ≥ 1,5 · Crítico</span>
+        <span className="ml-auto text-rose-100/50">
+          Cortes: <b>{usaInterno ? "tercis empíricos SIGMO" : "tercis COPSOQ II PT (fallback)"}</b>
+        </span>
       </div>
     </Card>
   );
@@ -973,15 +987,10 @@ function ComoLerMatrizSheet() {
   );
 }
 
-/* Status textual + cor por média, alinhado à Matriz 5x5 DMN (verde/amarelo/laranja/vermelho) */
-function statusPorMedia(m: number, dimensao: string): { label: string; desc: string; cor: string } {
-  if (dimensao === "violencia_assedio" && m >= 1.5) {
-    return { label: "Risco crítico", desc: "violência/assédio — ação imediata", cor: "bg-[#e74c3c]" };
-  }
-  if (m < 2.0) return { label: "Baixo risco", desc: "dimensão saudável", cor: "bg-[#2ecc71]" };
-  if (m < 3.0) return { label: "Risco moderado", desc: "monitorar", cor: "bg-[#f7d842] !text-slate-900" };
-  if (m < 4.0) return { label: "Alto risco", desc: "plano de ação", cor: "bg-[#f39c12]" };
-  return { label: "Risco crítico", desc: "ação imediata", cor: "bg-[#e74c3c]" };
+/* Status por média usando tercis dinâmicos (com fallback COPSOQ II PT). */
+function statusPorMedia(m: number, dimensao: string, tercis?: TercisMap): { label: string; cor: string; fonte: "INTERNO" | "MANUAL_PT" } {
+  const r = classifyByTercis(m, dimensao, tercis);
+  return { label: r.label, cor: r.cor, fonte: r.fonte };
 }
 
 /* ============ 4. INSTRUMENTO (preview do questionário) ============ */
