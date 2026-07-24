@@ -904,6 +904,7 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
         doc={previewDoc}
         fileName={previewName}
         onClose={() => { setPreviewDoc(null); if (previewFromSave) { setPreviewFromSave(false); onSaved(); } }}
+        anexosEscopo="dds"
       />
     </Dialog>
   );
