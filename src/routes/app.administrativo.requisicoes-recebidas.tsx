@@ -24,7 +24,6 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useQueryClient } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/app/administrativo/requisicoes-recebidas")({
   component: AdministrativoRecebidasPage,
