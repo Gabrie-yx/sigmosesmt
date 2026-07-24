@@ -384,6 +384,340 @@ function RegistradosTab() {
   );
 }
 
+// ---------- Atendimento (fila do dia) ----------
+type Atend = {
+  id: string;
+  employee_id: string;
+  status: string;
+  natureza: string;
+  prioridade: string;
+  data_agendada: string;
+  hora_agendada: string | null;
+  chegou_em: string | null;
+  chamado_em: string | null;
+  iniciado_em: string | null;
+  concluido_em: string | null;
+  observacoes: string | null;
+  employees?: { id: string; nome: string; matricula: string | null } | null;
+};
+
+function AtendimentoTab() {
+  const qc = useQueryClient();
+  const [novoOpen, setNovoOpen] = useState(false);
+  const [anamneseFor, setAnamneseFor] = useState<{ employeeId: string; atendimentoId: string; natureza: string } | null>(null);
+
+  const { data: atendimentos, isLoading } = useQuery({
+    queryKey: ["atendimentos-hoje"],
+    queryFn: async () => {
+      const hoje = new Date().toISOString().slice(0, 10);
+      const { data } = await supabase
+        .from("atendimentos_medicos" as any)
+        .select("*, employees(id, nome, matricula)")
+        .eq("data_agendada", hoje)
+        .order("hora_agendada", { ascending: true, nullsFirst: false })
+        .order("created_at", { ascending: true });
+      return (data ?? []) as unknown as Atend[];
+    },
+  });
+
+  const updateStatus = useMutation({
+    mutationFn: async ({ id, status, extra }: { id: string; status: string; extra?: Record<string, any> }) => {
+      const payload: any = { status, ...extra };
+      const { error } = await supabase.from("atendimentos_medicos" as any).update(payload).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["atendimentos-hoje"] }),
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const excluir = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("atendimentos_medicos" as any).delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Atendimento removido"); qc.invalidateQueries({ queryKey: ["atendimentos-hoje"] }); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const buckets = useMemo(() => {
+    const acc: Record<string, Atend[]> = { AGENDADO: [], CHEGOU: [], EM_ATENDIMENTO: [], CONCLUIDO: [] };
+    (atendimentos ?? []).forEach((a) => {
+      const k = acc[a.status] ? a.status : "AGENDADO";
+      acc[k].push(a);
+    });
+    return acc;
+  }, [atendimentos]);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-semibold text-white uppercase tracking-wider">Fila de atendimento — hoje</h2>
+          <p className="text-[11px] text-slate-400">Registro em tempo real dos exames em curso na clínica. NR-07 item 7.5.1.</p>
+        </div>
+        <Button onClick={() => setNovoOpen(true)} size="sm" className="bg-emerald-600 hover:bg-emerald-500 gap-1.5">
+          <Plus className="h-4 w-4" /> Novo atendimento
+        </Button>
+      </div>
+
+      {isLoading && <div className="text-sm text-slate-400">Carregando…</div>}
+
+      <div className="grid md:grid-cols-4 gap-3">
+        <Coluna titulo="Agendado" tone="slate" count={buckets.AGENDADO.length}>
+          {buckets.AGENDADO.map((a) => (
+            <AtendCard key={a.id} a={a}
+              onNext={() => updateStatus.mutate({ id: a.id, status: "CHEGOU", extra: { chegou_em: new Date().toISOString() } })}
+              nextLabel="Chegou" nextIcon={LogIn}
+              onDelete={() => excluir.mutate(a.id)}
+            />
+          ))}
+          {buckets.AGENDADO.length === 0 && <Vazio texto="Sem agendados." />}
+        </Coluna>
+        <Coluna titulo="Aguardando" tone="amber" count={buckets.CHEGOU.length}>
+          {buckets.CHEGOU.map((a) => (
+            <AtendCard key={a.id} a={a}
+              onNext={() => updateStatus.mutate({ id: a.id, status: "EM_ATENDIMENTO", extra: { iniciado_em: new Date().toISOString() } })}
+              nextLabel="Iniciar" nextIcon={PlayCircle}
+              extraAction={{ label: "Anamnese", icon: ClipboardCheck, onClick: () => setAnamneseFor({ employeeId: a.employee_id, atendimentoId: a.id, natureza: a.natureza }) }}
+              onDelete={() => excluir.mutate(a.id)}
+            />
+          ))}
+          {buckets.CHEGOU.length === 0 && <Vazio texto="Ninguém aguardando." />}
+        </Coluna>
+        <Coluna titulo="Em atendimento" tone="emerald" count={buckets.EM_ATENDIMENTO.length}>
+          {buckets.EM_ATENDIMENTO.map((a) => (
+            <AtendCard key={a.id} a={a}
+              onNext={() => updateStatus.mutate({ id: a.id, status: "CONCLUIDO", extra: { concluido_em: new Date().toISOString() } })}
+              nextLabel="Concluir" nextIcon={CheckCircle2}
+              extraAction={{ label: "Anamnese", icon: ClipboardCheck, onClick: () => setAnamneseFor({ employeeId: a.employee_id, atendimentoId: a.id, natureza: a.natureza }) }}
+              onDelete={() => excluir.mutate(a.id)}
+            />
+          ))}
+          {buckets.EM_ATENDIMENTO.length === 0 && <Vazio texto="Ninguém em atendimento." />}
+        </Coluna>
+        <Coluna titulo="Concluído" tone="slate" count={buckets.CONCLUIDO.length}>
+          {buckets.CONCLUIDO.map((a) => (
+            <AtendCard key={a.id} a={a} concluded onDelete={() => excluir.mutate(a.id)}
+              extraAction={{ label: "Ver anamnese", icon: ClipboardCheck, onClick: () => setAnamneseFor({ employeeId: a.employee_id, atendimentoId: a.id, natureza: a.natureza }) }}
+            />
+          ))}
+          {buckets.CONCLUIDO.length === 0 && <Vazio texto="Sem conclusões hoje." />}
+        </Coluna>
+      </div>
+
+      <NovoAtendimentoDialog open={novoOpen} onOpenChange={setNovoOpen} />
+      {anamneseFor && (
+        <AnamneseDialog
+          open={!!anamneseFor}
+          onOpenChange={(v) => !v && setAnamneseFor(null)}
+          employeeId={anamneseFor.employeeId}
+          atendimentoId={anamneseFor.atendimentoId}
+          natureza={anamneseFor.natureza}
+        />
+      )}
+    </div>
+  );
+}
+
+function Coluna({ titulo, tone, count, children }: { titulo: string; tone: "slate" | "amber" | "emerald"; count: number; children: React.ReactNode }) {
+  const tones: Record<string, string> = {
+    slate: "bg-slate-800/50 ring-slate-500/20 text-slate-200",
+    amber: "bg-amber-500/10 ring-amber-400/30 text-amber-200",
+    emerald: "bg-emerald-500/10 ring-emerald-400/30 text-emerald-200",
+  };
+  return (
+    <div className="rounded-xl border border-white/10 bg-slate-950/40 p-3 space-y-2 min-h-[240px]">
+      <div className={`rounded-md ring-1 px-2 py-1 flex items-center justify-between ${tones[tone]}`}>
+        <span className="text-[11px] uppercase tracking-wider font-semibold">{titulo}</span>
+        <span className="text-xs font-mono">{count}</span>
+      </div>
+      <div className="space-y-2">{children}</div>
+    </div>
+  );
+}
+
+function Vazio({ texto }: { texto: string }) {
+  return <div className="text-[11px] text-slate-500 italic py-3 text-center">{texto}</div>;
+}
+
+function AtendCard({
+  a, onNext, nextLabel, nextIcon: NextIcon, extraAction, onDelete, concluded,
+}: {
+  a: Atend;
+  onNext?: () => void;
+  nextLabel?: string;
+  nextIcon?: any;
+  extraAction?: { label: string; icon: any; onClick: () => void };
+  onDelete?: () => void;
+  concluded?: boolean;
+}) {
+  const dur = a.iniciado_em && a.concluido_em
+    ? Math.round((new Date(a.concluido_em).getTime() - new Date(a.iniciado_em).getTime()) / 60000)
+    : a.iniciado_em ? Math.round((Date.now() - new Date(a.iniciado_em).getTime()) / 60000) : null;
+  return (
+    <div className="rounded-lg border border-white/10 bg-white/[0.03] p-2 space-y-1.5">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="text-xs text-white font-medium truncate">{a.employees?.nome ?? "—"}</div>
+          <div className="text-[10px] text-slate-400 flex items-center gap-1 flex-wrap">
+            <Badge variant="outline" className="border-white/15 text-slate-300 h-4 px-1 text-[9px]">{a.natureza}</Badge>
+            {a.prioridade !== "NORMAL" && (
+              <Badge className="bg-red-500/15 text-red-200 ring-1 ring-red-400/30 h-4 px-1 text-[9px]">{a.prioridade}</Badge>
+            )}
+            {a.hora_agendada && <span>· {a.hora_agendada.slice(0, 5)}</span>}
+            {dur !== null && <span>· {dur} min</span>}
+          </div>
+        </div>
+        {onDelete && (
+          <button onClick={onDelete} className="text-slate-500 hover:text-red-300 text-xs">×</button>
+        )}
+      </div>
+      {a.observacoes && <div className="text-[10px] text-slate-400 line-clamp-2">{a.observacoes}</div>}
+      <div className="flex gap-1 pt-1">
+        {extraAction && (
+          <Button size="sm" variant="outline" onClick={extraAction.onClick} className="h-6 text-[10px] border-white/15 gap-1 flex-1">
+            <extraAction.icon className="h-3 w-3" /> {extraAction.label}
+          </Button>
+        )}
+        {onNext && NextIcon && !concluded && (
+          <Button size="sm" onClick={onNext} className="h-6 text-[10px] bg-emerald-600 hover:bg-emerald-500 gap-1 flex-1">
+            <NextIcon className="h-3 w-3" /> {nextLabel}
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function NovoAtendimentoDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
+  const qc = useQueryClient();
+  const [busca, setBusca] = useState("");
+  const [empId, setEmpId] = useState<string>("");
+  const [natureza, setNatureza] = useState("PERIODICO");
+  const [prioridade, setPrioridade] = useState("NORMAL");
+  const [hora, setHora] = useState("");
+  const [obs, setObs] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const { data: emps } = useQuery({
+    queryKey: ["emps-novo-atendimento", busca],
+    enabled: open && busca.length >= 2,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("employees")
+        .select("id, nome, matricula")
+        .eq("status", "ATIVO")
+        .ilike("nome", `%${busca}%`)
+        .limit(15);
+      return data ?? [];
+    },
+  });
+
+  useEffect(() => {
+    if (!open) {
+      setBusca(""); setEmpId(""); setNatureza("PERIODICO");
+      setPrioridade("NORMAL"); setHora(""); setObs("");
+    }
+  }, [open]);
+
+  const salvar = async () => {
+    if (!empId) { toast.error("Selecione o colaborador"); return; }
+    setSaving(true);
+    try {
+      const { data: userRes } = await supabase.auth.getUser();
+      const { error } = await supabase.from("atendimentos_medicos" as any).insert({
+        employee_id: empId,
+        natureza,
+        prioridade,
+        hora_agendada: hora || null,
+        observacoes: obs || null,
+        status: "AGENDADO",
+        data_agendada: new Date().toISOString().slice(0, 10),
+        created_by: userRes.user?.id ?? null,
+      });
+      if (error) throw error;
+      toast.success("Atendimento adicionado à fila");
+      qc.invalidateQueries({ queryKey: ["atendimentos-hoje"] });
+      onOpenChange(false);
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const empSel = (emps ?? []).find((e: any) => e.id === empId);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg bg-slate-950 border-white/10 text-slate-100">
+        <DialogHeader>
+          <DialogTitle className="text-white">Novo atendimento</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label className="text-xs text-slate-400">Colaborador</Label>
+            <Input placeholder="Buscar por nome…" value={busca} onChange={(e) => { setBusca(e.target.value); setEmpId(""); }}
+              className="bg-slate-900/50 border-white/10" />
+            {empSel && <div className="text-xs text-emerald-300 mt-1">Selecionado: {empSel.nome}</div>}
+            {!empSel && busca.length >= 2 && (
+              <div className="mt-1 max-h-40 overflow-auto rounded-md border border-white/10 bg-slate-900/60">
+                {(emps ?? []).map((e: any) => (
+                  <button key={e.id} type="button" onClick={() => setEmpId(e.id)}
+                    className="w-full text-left px-2 py-1.5 text-xs hover:bg-white/5">
+                    {e.nome} {e.matricula && <span className="text-slate-500">· {e.matricula}</span>}
+                  </button>
+                ))}
+                {(emps ?? []).length === 0 && <div className="text-xs text-slate-500 p-2">Nenhum encontrado.</div>}
+              </div>
+            )}
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <div>
+              <Label className="text-xs text-slate-400">Natureza</Label>
+              <Select value={natureza} onValueChange={setNatureza}>
+                <SelectTrigger className="bg-slate-900/50 border-white/10"><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-slate-950 border-white/10">
+                  <SelectItem value="ADMISSIONAL">Admissional</SelectItem>
+                  <SelectItem value="PERIODICO">Periódico</SelectItem>
+                  <SelectItem value="RETORNO">Retorno</SelectItem>
+                  <SelectItem value="MUDANCA">Mudança</SelectItem>
+                  <SelectItem value="DEMISSIONAL">Demissional</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs text-slate-400">Prioridade</Label>
+              <Select value={prioridade} onValueChange={setPrioridade}>
+                <SelectTrigger className="bg-slate-900/50 border-white/10"><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-slate-950 border-white/10">
+                  <SelectItem value="NORMAL">Normal</SelectItem>
+                  <SelectItem value="URGENTE">Urgente</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs text-slate-400">Hora</Label>
+              <Input type="time" value={hora} onChange={(e) => setHora(e.target.value)} className="bg-slate-900/50 border-white/10" />
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs text-slate-400">Observações</Label>
+            <Textarea rows={2} value={obs} onChange={(e) => setObs(e.target.value)} className="bg-slate-900/50 border-white/10" />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="border-white/15">Cancelar</Button>
+          <Button onClick={salvar} disabled={saving} className="bg-emerald-600 hover:bg-emerald-500 gap-1.5">
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+            Adicionar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ---------- Coordenador PCMSO ----------
 function CoordenadorTab() {
   const qc = useQueryClient();
