@@ -72,6 +72,7 @@ import { Route as AppSesmtEquipamentosMoveisRouteImport } from './routes/app.ses
 import { Route as AppSesmtDocsRouteImport } from './routes/app.sesmt.docs'
 import { Route as AppSesmtConvocacoesAsoRouteImport } from './routes/app.sesmt.convocacoes-aso'
 import { Route as AppSesmtCipaRouteImport } from './routes/app.sesmt.cipa'
+import { Route as AppSesmtAsosRouteImport } from './routes/app.sesmt.asos'
 import { Route as AppSesmtAgendaRouteImport } from './routes/app.sesmt.agenda'
 import { Route as AppRelatoriosReincidenciaEpiRouteImport } from './routes/app.relatorios.reincidencia-epi'
 import { Route as AppProducaoTiposProdutoRouteImport } from './routes/app.producao.tipos-produto'
@@ -454,6 +455,11 @@ const AppSesmtConvocacoesAsoRoute = AppSesmtConvocacoesAsoRouteImport.update({
 const AppSesmtCipaRoute = AppSesmtCipaRouteImport.update({
   id: '/sesmt/cipa',
   path: '/sesmt/cipa',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSesmtAsosRoute = AppSesmtAsosRouteImport.update({
+  id: '/sesmt/asos',
+  path: '/sesmt/asos',
   getParentRoute: () => AppRoute,
 } as any)
 const AppSesmtAgendaRoute = AppSesmtAgendaRouteImport.update({
@@ -877,6 +883,7 @@ export interface FileRoutesByFullPath {
   '/app/producao/tipos-produto': typeof AppProducaoTiposProdutoRoute
   '/app/relatorios/reincidencia-epi': typeof AppRelatoriosReincidenciaEpiRoute
   '/app/sesmt/agenda': typeof AppSesmtAgendaRoute
+  '/app/sesmt/asos': typeof AppSesmtAsosRoute
   '/app/sesmt/cipa': typeof AppSesmtCipaRoute
   '/app/sesmt/convocacoes-aso': typeof AppSesmtConvocacoesAsoRoute
   '/app/sesmt/docs': typeof AppSesmtDocsRoute
@@ -1000,6 +1007,7 @@ export interface FileRoutesByTo {
   '/app/producao/tipos-produto': typeof AppProducaoTiposProdutoRoute
   '/app/relatorios/reincidencia-epi': typeof AppRelatoriosReincidenciaEpiRoute
   '/app/sesmt/agenda': typeof AppSesmtAgendaRoute
+  '/app/sesmt/asos': typeof AppSesmtAsosRoute
   '/app/sesmt/cipa': typeof AppSesmtCipaRoute
   '/app/sesmt/convocacoes-aso': typeof AppSesmtConvocacoesAsoRoute
   '/app/sesmt/docs': typeof AppSesmtDocsRoute
@@ -1127,6 +1135,7 @@ export interface FileRoutesById {
   '/app/producao/tipos-produto': typeof AppProducaoTiposProdutoRoute
   '/app/relatorios/reincidencia-epi': typeof AppRelatoriosReincidenciaEpiRoute
   '/app/sesmt/agenda': typeof AppSesmtAgendaRoute
+  '/app/sesmt/asos': typeof AppSesmtAsosRoute
   '/app/sesmt/cipa': typeof AppSesmtCipaRoute
   '/app/sesmt/convocacoes-aso': typeof AppSesmtConvocacoesAsoRoute
   '/app/sesmt/docs': typeof AppSesmtDocsRoute
@@ -1256,6 +1265,7 @@ export interface FileRouteTypes {
     | '/app/producao/tipos-produto'
     | '/app/relatorios/reincidencia-epi'
     | '/app/sesmt/agenda'
+    | '/app/sesmt/asos'
     | '/app/sesmt/cipa'
     | '/app/sesmt/convocacoes-aso'
     | '/app/sesmt/docs'
@@ -1379,6 +1389,7 @@ export interface FileRouteTypes {
     | '/app/producao/tipos-produto'
     | '/app/relatorios/reincidencia-epi'
     | '/app/sesmt/agenda'
+    | '/app/sesmt/asos'
     | '/app/sesmt/cipa'
     | '/app/sesmt/convocacoes-aso'
     | '/app/sesmt/docs'
@@ -1505,6 +1516,7 @@ export interface FileRouteTypes {
     | '/app/producao/tipos-produto'
     | '/app/relatorios/reincidencia-epi'
     | '/app/sesmt/agenda'
+    | '/app/sesmt/asos'
     | '/app/sesmt/cipa'
     | '/app/sesmt/convocacoes-aso'
     | '/app/sesmt/docs'
@@ -2008,6 +2020,13 @@ declare module '@tanstack/react-router' {
       path: '/sesmt/cipa'
       fullPath: '/app/sesmt/cipa'
       preLoaderRoute: typeof AppSesmtCipaRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/sesmt/asos': {
+      id: '/app/sesmt/asos'
+      path: '/sesmt/asos'
+      fullPath: '/app/sesmt/asos'
+      preLoaderRoute: typeof AppSesmtAsosRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/sesmt/agenda': {
@@ -2608,6 +2627,7 @@ interface AppRouteChildren {
   AppProducaoTiposProdutoRoute: typeof AppProducaoTiposProdutoRoute
   AppRelatoriosReincidenciaEpiRoute: typeof AppRelatoriosReincidenciaEpiRoute
   AppSesmtAgendaRoute: typeof AppSesmtAgendaRoute
+  AppSesmtAsosRoute: typeof AppSesmtAsosRoute
   AppSesmtCipaRoute: typeof AppSesmtCipaRoute
   AppSesmtConvocacoesAsoRoute: typeof AppSesmtConvocacoesAsoRoute
   AppSesmtDocsRoute: typeof AppSesmtDocsRoute
@@ -2703,6 +2723,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppProducaoTiposProdutoRoute: AppProducaoTiposProdutoRoute,
   AppRelatoriosReincidenciaEpiRoute: AppRelatoriosReincidenciaEpiRoute,
   AppSesmtAgendaRoute: AppSesmtAgendaRoute,
+  AppSesmtAsosRoute: AppSesmtAsosRoute,
   AppSesmtCipaRoute: AppSesmtCipaRoute,
   AppSesmtConvocacoesAsoRoute: AppSesmtConvocacoesAsoRoute,
   AppSesmtDocsRoute: AppSesmtDocsRoute,
