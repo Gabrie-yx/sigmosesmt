@@ -15,6 +15,10 @@ import { toast } from "sonner";
 import { Plus, ShieldCheck, Users, CalendarDays, ListChecks, Vote, Loader2, Trash2, Pencil, Archive, MoreVertical } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { dimensionarCipa } from "@/lib/cipa-dimensionamento";
+import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
+import { buildCipaCalendarioPdf, type CipaCalendarioLinha } from "@/lib/cipa-calendario-pdf";
+import { EMPRESA_INFO } from "@/lib/empresa-info";
+import { FileText } from "lucide-react";
 
 // CIPA — NR-05 (rev. Portaria MTP 4.219/2022) + Lei 14.457/2022 (Emprega + Mulher).
 // MVP: cadastro de gestão/mandato, membros, reuniões, plano anual e calendário eleitoral.
@@ -645,12 +649,21 @@ function ReunioesTab({ gestaoId }: { gestaoId: string }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [editRow, setEditRow] = useState<any>(null);
+  const [pdfDoc, setPdfDoc] = useState<ReturnType<typeof buildCipaCalendarioPdf> | null>(null);
   const { data } = useQuery({
     queryKey: ["cipa", "reunioes", gestaoId],
     queryFn: async () => {
       const { data, error } = await supabase.from("cipa_reunioes").select("*").eq("gestao_id", gestaoId).order("data", { ascending: false });
       if (error) throw error;
       return data ?? [];
+    },
+  });
+  const { data: gestao } = useQuery({
+    queryKey: ["cipa", "gestao-info", gestaoId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("cipa_gestoes").select("gestao, data_inicio, data_fim, company_id").eq("id", gestaoId).maybeSingle();
+      if (error) throw error;
+      return data;
     },
   });
   const del = useMutation({
@@ -661,6 +674,40 @@ function ReunioesTab({ gestaoId }: { gestaoId: string }) {
     onSuccess: () => { toast.success("Reunião removida"); qc.invalidateQueries({ queryKey: ["cipa", "reunioes", gestaoId] }); },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  function gerarCalendario() {
+    const rows = ((data ?? []) as any[]).slice().sort((a, b) => (a.data ?? "").localeCompare(b.data ?? ""));
+    const meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+    const mapStatus = (s?: string): CipaCalendarioLinha["status"] => {
+      if (s === "REALIZADA") return "R";
+      if (s === "CANCELADA") return "NC";
+      if (s === "ADIADA") return "RP";
+      return "P";
+    };
+    const linhas: CipaCalendarioLinha[] = Array.from({ length: 12 }, (_, i) => {
+      const r = rows[i];
+      if (!r) return { numero: i + 1, mes: "", horario: "", status: "P", reprogramado: "", statusReprog: "" };
+      const m = r.data ? new Date(r.data + "T00:00:00").getMonth() : null;
+      return {
+        numero: i + 1,
+        mes: m !== null ? meses[m] : "",
+        horario: r.hora ? String(r.hora).slice(0, 5) : "",
+        status: mapStatus(r.status),
+        reprogramado: "",
+        statusReprog: "",
+      };
+    });
+    const doc = buildCipaCalendarioPdf({
+      razaoSocial: EMPRESA_INFO.razao_social,
+      gestao: gestao?.gestao ?? "",
+      linhas,
+      dataEmissao: new Date().toISOString().slice(0, 10),
+      elaboradoPor: "SESMT",
+      aprovadoPor: "Presidente CIPA",
+    });
+    setPdfDoc(doc);
+  }
+
   return (
     <Card className="p-4">
       <div className="flex items-center justify-between mb-3">
@@ -668,7 +715,12 @@ function ReunioesTab({ gestaoId }: { gestaoId: string }) {
           <h3 className="font-bold">Reuniões</h3>
           <p className="text-[10px] text-muted-foreground">NR-05 item 5.7.1 exige reuniões ordinárias mensais.</p>
         </div>
-        <Button size="sm" onClick={() => setOpen(true)}><Plus className="h-4 w-4 mr-1" /> Agendar reunião</Button>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={gerarCalendario}>
+            <FileText className="h-4 w-4 mr-1" /> Calendário (FOR-SEG 11)
+          </Button>
+          <Button size="sm" onClick={() => setOpen(true)}><Plus className="h-4 w-4 mr-1" /> Agendar reunião</Button>
+        </div>
       </div>
       {(data ?? []).length === 0 ? (
         <p className="text-sm text-muted-foreground">Nenhuma reunião registrada.</p>
@@ -710,6 +762,13 @@ function ReunioesTab({ gestaoId }: { gestaoId: string }) {
         gestaoId={gestaoId}
         onClose={() => setEditRow(null)}
         onSaved={() => qc.invalidateQueries({ queryKey: ["cipa", "reunioes", gestaoId] })}
+      />
+      <PDFPreviewDialog
+        open={!!pdfDoc}
+        onClose={() => setPdfDoc(null)}
+        doc={pdfDoc}
+        fileName={`FOR-SEG-11_Calendario_CIPA_${gestao?.gestao?.replace(/\W+/g, "-") ?? "gestao"}.pdf`}
+        title="Calendário de Reuniões da CIPA (FOR-SEG 11)"
       />
     </Card>
   );
