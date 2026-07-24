@@ -3,7 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 export type PsicoValidateResult =
   | {
       ok: true;
-      campanha: { id: string; titulo: string; descricao: string | null; instrumento: string };
+      campanha: { id: string; titulo: string; descricao: string | null; instrumento: string; termo_lgpd: string | null };
       ghe: { id: string | null; label: string | null };
     }
   | { ok: false; motivo: string };
@@ -39,7 +39,7 @@ export const validatePsicoToken = createServerFn({ method: "POST" })
 
     const { data: camp } = await supabaseAdmin
       .from("psico_campanhas")
-      .select("id, titulo, descricao, status, instrumento")
+      .select("id, titulo, descricao, status, instrumento, termo_lgpd")
       .eq("id", tok.campanha_id)
       .maybeSingle();
 
@@ -62,6 +62,7 @@ export const validatePsicoToken = createServerFn({ method: "POST" })
         titulo: camp.titulo,
         descricao: camp.descricao,
         instrumento: camp.instrumento,
+        termo_lgpd: (camp as any).termo_lgpd ?? null,
       },
       ghe: { id: tok.ghe_id, label: gheLabel },
     };
