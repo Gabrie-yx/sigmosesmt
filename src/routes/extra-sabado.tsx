@@ -12,12 +12,15 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import {
   LogOut, Search, Check, UserPlus, AlertTriangle, Users, Loader2, Clock, ShieldAlert,
-  Plus, CalendarDays, ClipboardList, ChevronLeft, CheckCircle2, XCircle, HourglassIcon, Trash2,
+  Plus, CalendarDays, ClipboardList, ChevronLeft, CheckCircle2, XCircle, HourglassIcon, Trash2, FileText,
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
+import { buildHoraExtraSabadoPdf } from "@/lib/hora-extra-sabado-build";
+import type jsPDF from "jspdf";
 
 export const Route = createFileRoute("/extra-sabado")({
   component: ExtraSabadoMobilePage,
@@ -39,6 +42,31 @@ function ExtraSabadoMobilePage() {
   const [novaOpen, setNovaOpen] = useState(false);
   const [busca, setBusca] = useState("");
   const [externoOpen, setExternoOpen] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState<jsPDF | null>(null);
+  const [previewFileName, setPreviewFileName] = useState("hora-extra.pdf");
+  const [gerandoPdf, setGerandoPdf] = useState(false);
+
+  async function gerarPdfDaConvocacao() {
+    if (!convId) return;
+    setGerandoPdf(true);
+    try {
+      const solicitanteNome =
+        (user as any)?.user_metadata?.full_name ??
+        (user as any)?.email?.split("@")[0] ??
+        null;
+      const result = await buildHoraExtraSabadoPdf({ fichaId: convId, solicitanteNome });
+      if (!result) {
+        toast.error("Ficha não encontrada");
+        return;
+      }
+      setPreviewFileName(result.fileName);
+      setPreviewDoc(result.doc);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Falha ao gerar o PDF");
+    } finally {
+      setGerandoPdf(false);
+    }
+  }
 
   useEffect(() => {
     if (!loading && !session) {
