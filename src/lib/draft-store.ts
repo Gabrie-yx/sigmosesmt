@@ -5,6 +5,21 @@
 const KEY_PREFIX = "sigmo:draft:";
 const EVT = "sigmo:drafts-changed";
 
+// Tombstone em memória: chaves recém-descartadas pelo usuário.
+// Enquanto a chave estiver aqui, `saveDraft` é ignorado — evita que o
+// autosave recrie o rascunho logo após o clique no X da barra.
+// A tombstone é limpa quando o formulário correspondente é remontado
+// (ver useDraftAutosave) ou explicitamente via clearDraftTombstone.
+const tombstones = new Set<string>();
+
+export function clearDraftTombstone(key: string) {
+  tombstones.delete(key);
+}
+
+export function isDraftTombstoned(key: string) {
+  return tombstones.has(key);
+}
+
 export type DraftRecord<T = unknown> = {
   label: string;
   route: string;
@@ -26,6 +41,7 @@ function safeWindow(): Window | null {
 export function saveDraft<T>(key: string, label: string, route: string, data: T) {
   const w = safeWindow();
   if (!w) return;
+  if (tombstones.has(key)) return;
   try {
     // Para economizar espaço no localStorage, removemos a assinatura (Base64 pesado) do rascunho
     // se for o objeto de dados da requisição. Ela será recuperada do storage global ao reabrir.
@@ -57,6 +73,7 @@ export function loadDraft<T = unknown>(key: string): DraftRecord<T> | null {
 export function deleteDraft(key: string) {
   const w = safeWindow();
   if (!w) return;
+  tombstones.add(key);
   w.localStorage.removeItem(KEY_PREFIX + key);
   w.dispatchEvent(new CustomEvent(EVT));
 }

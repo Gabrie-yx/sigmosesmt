@@ -35,9 +35,10 @@ export function QuickActionsBar() {
   }, []);
 
   const handleDiscard = (key: string, label: string) => {
-    if (!confirm(`Descartar o rascunho "${label}"?`)) return;
     deleteDraft(key);
-    toast.success("Rascunho descartado");
+    // atualização otimista — não espera o evento pra sumir da UI
+    setDrafts((prev) => prev.filter((d) => d.key !== key));
+    toast.success(`Rascunho "${label}" descartado`);
   };
 
   return (
