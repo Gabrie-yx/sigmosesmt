@@ -843,16 +843,34 @@ function NovaGestaoDialog({ open, onClose, onCreated }: { open: boolean; onClose
   const [fim, setFim] = useState("");
   const [grupo, setGrupo] = useState("");
   const [num, setNum] = useState("");
+  const [gr, setGr] = useState("");
+  const [modo, setModo] = useState<"COMISSAO" | "DESIGNADO">("COMISSAO");
   const [efE, setEfE] = useState("");
   const [suE, setSuE] = useState("");
   const [efF, setEfF] = useState("");
   const [suF, setSuF] = useState("");
+
+  const sugestao = useMemo(
+    () => dimensionarCipa(gr ? Number(gr) : null, num ? Number(num) : null),
+    [gr, num],
+  );
+
+  function aplicarSugestao() {
+    if (!sugestao) return;
+    setModo(sugestao.modo);
+    setEfE(String(sugestao.efetivosEmpregador));
+    setSuE(String(sugestao.suplentesEmpregador));
+    setEfF(String(sugestao.efetivosEmpregados));
+    setSuF(String(sugestao.suplentesEmpregados));
+  }
 
   const mut = useMutation({
     mutationFn: async () => {
       if (!gestao || !inicio || !fim) throw new Error("Preencha gestão, início e fim");
       const { data, error } = await supabase.from("cipa_gestoes").insert({
         gestao, data_inicio: inicio, data_fim: fim,
+        modo,
+        grau_risco: gr ? Number(gr) : null,
         grupo_nr05: grupo || null,
         num_empregados: num ? Number(num) : null,
         efetivos_empregador: efE ? Number(efE) : 0,
@@ -878,17 +896,48 @@ function NovaGestaoDialog({ open, onClose, onCreated }: { open: boolean; onClose
             <div><Label>Início</Label><Input type="date" value={inicio} onChange={(e) => setInicio(e.target.value)} /></div>
             <div><Label>Fim</Label><Input type="date" value={fim} onChange={(e) => setFim(e.target.value)} /></div>
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div><Label>Grupo NR-05 (Quadro I)</Label><Input value={grupo} onChange={(e) => setGrupo(e.target.value)} placeholder="Ex.: C-18" /></div>
+          <div className="grid grid-cols-3 gap-2">
+            <div>
+              <Label>Grau de Risco</Label>
+              <Select value={gr} onValueChange={setGr}>
+                <SelectTrigger><SelectValue placeholder="1-4" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">GR 1</SelectItem>
+                  <SelectItem value="2">GR 2</SelectItem>
+                  <SelectItem value="3">GR 3</SelectItem>
+                  <SelectItem value="4">GR 4 (naval / construção)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div><Label>Nº empregados</Label><Input type="number" value={num} onChange={(e) => setNum(e.target.value)} /></div>
+            <div><Label>Grupo NR-05</Label><Input value={grupo} onChange={(e) => setGrupo(e.target.value)} placeholder="Ex.: C-18" /></div>
           </div>
+          {sugestao && (
+            <div className="rounded border border-border bg-muted/30 p-3 text-xs space-y-2">
+              <div><b>Sugestão automática:</b> modo <b className="text-rose-400">{sugestao.modo}</b> · treinamento {sugestao.cargaTreinamento}h</div>
+              <p className="text-muted-foreground">{sugestao.nota}</p>
+              <Button type="button" size="sm" variant="outline" onClick={aplicarSugestao}>Aplicar sugestão</Button>
+            </div>
+          )}
+          <div>
+            <Label>Modo de operação</Label>
+            <Select value={modo} onValueChange={(v) => setModo(v as any)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="COMISSAO">Comissão paritária (eleição + indicação)</SelectItem>
+                <SelectItem value="DESIGNADO">Designado (NR-05 item 5.6.4 — sem eleição)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {modo === "COMISSAO" && (
           <div className="grid grid-cols-4 gap-2">
             <div><Label className="text-[10px]">Efetivos empregador</Label><Input type="number" value={efE} onChange={(e) => setEfE(e.target.value)} /></div>
             <div><Label className="text-[10px]">Suplentes empregador</Label><Input type="number" value={suE} onChange={(e) => setSuE(e.target.value)} /></div>
             <div><Label className="text-[10px]">Efetivos empregados</Label><Input type="number" value={efF} onChange={(e) => setEfF(e.target.value)} /></div>
             <div><Label className="text-[10px]">Suplentes empregados</Label><Input type="number" value={suF} onChange={(e) => setSuF(e.target.value)} /></div>
           </div>
-          <p className="text-[10px] text-muted-foreground">Dimensionamento conforme Quadro I da NR-05 (CNAE × nº de empregados). Mandato: 1 ano, permitida 1 reeleição.</p>
+          )}
+          <p className="text-[10px] text-muted-foreground">Mandato: 1 ano, permitida 1 reeleição (comissão). Designado: mandato acompanha a vigência do PGR. Base: NR-05 (Portaria MTP 4.219/2022).</p>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>Cancelar</Button>
