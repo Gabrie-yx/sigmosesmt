@@ -81,5 +81,5 @@ export function useDraftAutosave<T>(
     };
     window.addEventListener(DRAFTS_EVENT, onChange);
     return () => window.removeEventListener(DRAFTS_EVENT, onChange);
-  }, [enabled, key, serialized]);
+  }, [enabled, key]);
 }
