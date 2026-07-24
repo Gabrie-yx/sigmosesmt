@@ -228,6 +228,46 @@ export async function gerarGuiaEncaminhamentoPDF(ctx: GuiaCtx) {
   doc.text(ctx.setor || "Segurança e Saúde no Trabalho", M + colW / 2, y + 9, { align: "center" });
   doc.text("Carimbo e assinatura do prestador", M + colW + 10 + colW / 2, y + 9, { align: "center" });
 
+  // ====================== QR de autenticidade ======================
+  try {
+    const payload = {
+      t: "SIGMO-GUIA",
+      n: ctx.numero,
+      d: ctx.data.toISOString().slice(0, 10),
+      nat: ctx.natureza,
+      col: ctx.emp.nome,
+      cpf: ctx.emp.cpf ?? null,
+      mat: ctx.emp.matricula ?? null,
+      car: ctx.emp.cargo ?? null,
+      pres: ctx.prestador.razao_social,
+      ex: ctx.exames,
+      sol: ctx.solicitante,
+    };
+    const qrData = await QR.toDataURL(JSON.stringify(payload), { margin: 0, width: 256, errorCorrectionLevel: "M" });
+    const qrSize = 22;
+    const qrX = W - M - qrSize;
+    const qrY = 258;
+    doc.addImage(qrData, "PNG", qrX, qrY, qrSize, qrSize, undefined, "FAST");
+    doc.setFontSize(6.5);
+    doc.setTextColor(60, 60, 60);
+    doc.setFont("helvetica", "normal");
+    doc.text("autenticidade", qrX + qrSize / 2, qrY + qrSize + 3, { align: "center" });
+    doc.text(`Guia ${ctx.numero}`, qrX + qrSize / 2, qrY + qrSize + 6, { align: "center" });
+
+    // Legenda ao lado do QR
+    doc.setFontSize(7.5);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont("helvetica", "bold");
+    doc.text("Verificação da Guia", M, qrY + 3);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(60, 60, 60);
+    const legenda = doc.splitTextToSize(
+      "Escaneie o QR ao lado para conferir os dados desta guia (colaborador, natureza, exames e emissor). Documento emitido pelo SIGMO — SGI-SST DMN.",
+      qrX - M - 4,
+    );
+    doc.text(legenda, M, qrY + 7);
+  } catch {}
+
   // Rodapé
   doc.setFontSize(7.5);
   doc.setTextColor(60, 60, 60);
