@@ -26,6 +26,7 @@ type Marcador = {
     exclude_employee_ids?: string[];
     company_ids?: string[];
     employee_ids?: string[];
+    include_company_ids?: string[];
   } | null;
 };
 
@@ -55,6 +56,19 @@ function MarcadoresHoraExtraPage() {
         .from("companies")
         .select("id,name,type")
         .eq("type", "TERCEIRIZADO")
+        .order("name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const { data: outrasCompanies = [] } = useQuery({
+    queryKey: ["companies-nao-terceirizadas"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("companies")
+        .select("id,name,type")
+        .neq("type", "TERCEIRIZADO")
         .order("name");
       if (error) throw error;
       return data ?? [];
@@ -101,6 +115,7 @@ function MarcadoresHoraExtraPage() {
           key={m.user_id}
           marcador={m}
           companies={companies}
+          outrasCompanies={outrasCompanies}
           employees={employees}
           busca={busca}
           setBusca={setBusca}
@@ -111,9 +126,10 @@ function MarcadoresHoraExtraPage() {
   );
 }
 
-function MarcadorCard({ marcador, companies, employees, busca, setBusca, onSaved }: {
+function MarcadorCard({ marcador, companies, outrasCompanies, employees, busca, setBusca, onSaved }: {
   marcador: Marcador;
   companies: { id: string; name: string }[];
+  outrasCompanies: { id: string; name: string; type: string | null }[];
   employees: { id: string; nome: string; company_id: string; companies: any }[];
   busca: string;
   setBusca: (v: string) => void;
@@ -122,6 +138,7 @@ function MarcadorCard({ marcador, companies, employees, busca, setBusca, onSaved
   const esc = marcador.escopo ?? {};
   const [excCompanies, setExcCompanies] = useState<Set<string>>(new Set(esc.exclude_company_ids ?? []));
   const [excEmployees, setExcEmployees] = useState<Set<string>>(new Set(esc.exclude_employee_ids ?? []));
+  const [incCompanies, setIncCompanies] = useState<Set<string>>(new Set(esc.include_company_ids ?? []));
   const isAuto = esc.tipo === "TERCEIRIZADAS_AUTO";
 
   const empresasIncluidas = useMemo(
@@ -145,6 +162,7 @@ function MarcadorCard({ marcador, companies, employees, busca, setBusca, onSaved
         tipo: esc.tipo ?? "TERCEIRIZADAS_AUTO",
         exclude_company_ids: Array.from(excCompanies),
         exclude_employee_ids: Array.from(excEmployees),
+        include_company_ids: Array.from(incCompanies),
       };
       const { error } = await supabase
         .from("hora_extra_marcadores")
@@ -168,6 +186,13 @@ function MarcadorCard({ marcador, companies, employees, busca, setBusca, onSaved
   }
   function toggleEmployee(id: string) {
     setExcEmployees((prev) => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id); else n.add(id);
+      return n;
+    });
+  }
+  function toggleIncCompany(id: string) {
+    setIncCompanies((prev) => {
       const n = new Set(prev);
       if (n.has(id)) n.delete(id); else n.add(id);
       return n;
@@ -215,6 +240,34 @@ function MarcadorCard({ marcador, companies, employees, busca, setBusca, onSaved
               );
             })}
           </div>
+        </section>
+
+        <section>
+          <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-2">
+            <Building2 className="h-3.5 w-3.5" /> Empresas extras — marque para INCLUIR no escopo (além das terceirizadas)
+          </h3>
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {outrasCompanies.length === 0 ? (
+              <p className="text-xs text-muted-foreground">Nenhuma outra empresa cadastrada.</p>
+            ) : outrasCompanies.map((c) => {
+              const incluida = incCompanies.has(c.id);
+              return (
+                <label
+                  key={c.id}
+                  className={`flex items-center gap-2 rounded-md border p-2 cursor-pointer text-sm transition ${
+                    incluida ? "border-primary/50 bg-primary/10" : "border-border bg-card/40 hover:bg-accent/30"
+                  }`}
+                >
+                  <Checkbox checked={incluida} onCheckedChange={() => toggleIncCompany(c.id)} />
+                  <span className="flex-1">{c.name}</span>
+                  <span className="text-[10px] text-muted-foreground uppercase">{c.type ?? "—"}</span>
+                </label>
+              );
+            })}
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-1">
+            Use para dar acesso a empresas próprias (ex.: DMN) mantendo o escopo automático das terceirizadas.
+          </p>
         </section>
 
         <section>
