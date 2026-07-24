@@ -1,13 +1,24 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { FileText, ListChecks } from "lucide-react";
+import { FileText, ListChecks, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type jsPDF from "jspdf";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
+import { useAuth } from "@/hooks/use-auth";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   gerarPdfRequisicaoDoc,
   rcPdfFileName,
@@ -48,6 +59,8 @@ function fmt(d?: string | null) {
  * Assim toda RC — de qualquer módulo — sai no mesmo padrão.
  */
 export function MinhasRcsList({ setorFixo }: { setorFixo: string }) {
+  const qc = useQueryClient();
+  const { isAdmin } = useAuth();
   const { data: reqs = [], isLoading } = useQuery({
     queryKey: ["purchase-reqs", "setor", setorFixo],
     queryFn: async () => {
@@ -66,6 +79,27 @@ export function MinhasRcsList({ setorFixo }: { setorFixo: string }) {
   const [pdfReq, setPdfReq] = useState<Req | null>(null);
   const [openPreview, setOpenPreview] = useState(false);
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [toDelete, setToDelete] = useState<Req | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  async function confirmarExclusao() {
+    if (!toDelete) return;
+    setDeleting(true);
+    try {
+      const { error } = await supabase
+        .from("purchase_requisitions")
+        .delete()
+        .eq("id", toDelete.id);
+      if (error) throw error;
+      toast.success(`RC ${toDelete.numero} excluída`);
+      setToDelete(null);
+      qc.invalidateQueries({ queryKey: ["purchase-reqs"] });
+    } catch (err: any) {
+      toast.error(err?.message ?? "Falha ao excluir RC");
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   async function visualizar(req: Req) {
     if (loadingId) return;
@@ -156,6 +190,17 @@ export function MinhasRcsList({ setorFixo }: { setorFixo: string }) {
                   <FileText className="h-3.5 w-3.5 mr-1" />
                   {loadingId === r.id ? "Gerando…" : "Visualizar PDF"}
                 </Button>
+                {isAdmin && (
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => setToDelete(r)}
+                    title="Excluir RC (admin)"
+                  >
+                    <Trash2 className="h-3.5 w-3.5 mr-1" />
+                    Excluir
+                  </Button>
+                )}
               </div>
             ))}
           </div>
@@ -172,6 +217,31 @@ export function MinhasRcsList({ setorFixo }: { setorFixo: string }) {
         fileName={pdfReq ? rcPdfFileName(pdfReq) : "requisicao.pdf"}
         title={pdfReq ? `RC ${pdfReq.numero}` : "Requisição"}
       />
+      <AlertDialog open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir RC {toDelete?.numero}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação remove permanentemente a requisição, seus itens e cotações
+              vinculadas. Não pode ser desfeita. Use apenas para limpar testes ou
+              registros indevidos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleting}
+              onClick={(e) => {
+                e.preventDefault();
+                confirmarExclusao();
+              }}
+              className="bg-rose-600 hover:bg-rose-700"
+            >
+              {deleting ? "Excluindo…" : "Excluir definitivamente"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
