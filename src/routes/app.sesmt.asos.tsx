@@ -19,6 +19,8 @@ import {
   Building2, UserPlus, Hospital, Plus, MoreVertical, Pencil, Trash2, ArrowRight,
   ClipboardList, FileText, Loader2, ArrowLeft, Clock, Activity,
 } from "lucide-react";
+import { Sparkles } from "lucide-react";
+import { AsoRapidoDialog } from "@/components/aso/aso-rapido-dialog";
 
 // Módulo central de ASO (NR-07 / PCMSO)
 // Painel unificado: KPIs semafóricos + Convocações + Registrados + Coordenador PCMSO + Clínicas + Relatório Analítico
@@ -68,9 +70,10 @@ type Clinica = {
 };
 
 function AsoHubPage() {
+  const [rapidoOpen, setRapidoOpen] = useState(false);
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-4">
-      <Header />
+      <Header onAsoRapido={() => setRapidoOpen(true)} />
       <Tabs defaultValue="painel">
         <TabsList className="flex-wrap h-auto bg-slate-900/60 border border-white/10">
           <TabsTrigger value="painel"><Activity className="h-4 w-4 mr-1.5" /> Painel</TabsTrigger>
@@ -86,11 +89,12 @@ function AsoHubPage() {
         <TabsContent value="clinicas" className="pt-4"><ClinicasTab /></TabsContent>
         <TabsContent value="analitico" className="pt-4"><AnaliticoTab /></TabsContent>
       </Tabs>
+      <AsoRapidoDialog open={rapidoOpen} onOpenChange={setRapidoOpen} />
     </div>
   );
 }
 
-function Header() {
+function Header({ onAsoRapido }: { onAsoRapido: () => void }) {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-3 text-sm">
@@ -98,16 +102,21 @@ function Header() {
           <ArrowLeft className="h-4 w-4" /> Hoje
         </Link>
       </div>
-      <div className="flex items-start gap-3">
-        <div className="h-11 w-11 rounded-xl bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-400/30 grid place-items-center shrink-0">
-          <Stethoscope className="h-5 w-5" />
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-3 min-w-0">
+          <div className="h-11 w-11 rounded-xl bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-400/30 grid place-items-center shrink-0">
+            <Stethoscope className="h-5 w-5" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-xl md:text-2xl font-semibold text-white leading-tight">Painel de ASO — PCMSO / NR-07</h1>
+            <p className="text-sm text-slate-400 mt-0.5">
+              Centro operacional dos exames ocupacionais: vencimentos, convocações, coordenador responsável, clínicas credenciadas e relatório anual (NR-07 item 7.6.1).
+            </p>
+          </div>
         </div>
-        <div className="min-w-0">
-          <h1 className="text-xl md:text-2xl font-semibold text-white leading-tight">Painel de ASO — PCMSO / NR-07</h1>
-          <p className="text-sm text-slate-400 mt-0.5">
-            Centro operacional dos exames ocupacionais: vencimentos, convocações, coordenador responsável, clínicas credenciadas e relatório anual (NR-07 item 7.6.1).
-          </p>
-        </div>
+        <Button onClick={onAsoRapido} className="shrink-0 bg-emerald-600 hover:bg-emerald-500 gap-1.5">
+          <Sparkles className="h-4 w-4" /> ASO Rápido
+        </Button>
       </div>
     </div>
   );
