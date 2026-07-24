@@ -1,19 +1,34 @@
-// Instrumento HSE-IT BR (Health & Safety Executive UK — Indicator Tool)
-// Adaptado + itens de assédio/violência (uso livre). Base ISO 45003:2021.
+// Instrumento SIGMO Psicossocial v2 — base ISO 45003:2021 + NR-01 (Ap. GRO).
+// Núcleo original: HSE-IT (Health & Safety Executive UK — Indicator Tool).
+// Dimensões complementares (Cognitivas, Emocionais, Significado) e blocos
+// de outcome (Burnout, Sono) inspirados no COPSOQ II — versão portuguesa
+// validada (Silva C., Amaral V., Pereira A. et al., 2011), utilizado aqui
+// sob uso livre não-comercial com adaptação de redação para o contexto
+// naval/industrial brasileiro.
 // Escala Likert 1-5 (1 = nunca, 5 = sempre). Itens NEGATIVOS já invertidos:
 // score alto = risco alto (padrão SIGMO).
+
+export const INSTRUMENTO_CITACAO =
+  "Instrumento SIGMO Psicossocial v2 — baseado em HSE Management Standards " +
+  "(HSE-UK) e COPSOQ II Portugal (Silva et al., 2011), aderente à ISO " +
+  "45003:2021 e NR-01 (Apêndice GRO). Uso interno, não-comercial.";
 
 export type PsicoItem = {
   codigo: string;
   dimensao:
     | "DEMANDAS"
+    | "COGNITIVAS"
+    | "EMOCIONAIS"
     | "CONTROLE"
     | "APOIO"
     | "RECOMPENSA"
     | "PAPEL_MUDANCA"
     | "RELACOES"
+    | "SIGNIFICADO"
     | "VIOLENCIA"
-    | "INTERFACE";
+    | "INTERFACE"
+    | "BURNOUT"
+    | "SONO";
   texto: string;
   invertido?: boolean; // se true, respondente 1 = risco 5 (calcular na análise)
 };
@@ -28,13 +43,35 @@ export const LIKERT_LABELS = [
 
 export const DIMENSAO_LABEL: Record<PsicoItem["dimensao"], string> = {
   DEMANDAS: "Demandas do trabalho",
+  COGNITIVAS: "Exigências cognitivas",
+  EMOCIONAIS: "Exigências emocionais",
   CONTROLE: "Controle e autonomia",
   APOIO: "Apoio social",
   RECOMPENSA: "Reconhecimento e recompensa",
   PAPEL_MUDANCA: "Papel e mudança",
   RELACOES: "Relações interpessoais",
+  SIGNIFICADO: "Significado do trabalho",
   VIOLENCIA: "Violência e assédio",
   INTERFACE: "Interface trabalho-vida",
+  BURNOUT: "Burnout (esgotamento)",
+  SONO: "Qualidade do sono",
+};
+
+/** Tipo de dimensão para separação causa (fator de risco) x efeito (outcome). */
+export const DIMENSAO_TIPO: Record<PsicoItem["dimensao"], "FATOR" | "OUTCOME"> = {
+  DEMANDAS: "FATOR",
+  COGNITIVAS: "FATOR",
+  EMOCIONAIS: "FATOR",
+  CONTROLE: "FATOR",
+  APOIO: "FATOR",
+  RECOMPENSA: "FATOR",
+  PAPEL_MUDANCA: "FATOR",
+  RELACOES: "FATOR",
+  SIGNIFICADO: "FATOR",
+  VIOLENCIA: "FATOR",
+  INTERFACE: "FATOR",
+  BURNOUT: "OUTCOME",
+  SONO: "OUTCOME",
 };
 
 export const PSICO_ITEMS: PsicoItem[] = [
@@ -43,6 +80,16 @@ export const PSICO_ITEMS: PsicoItem[] = [
   { codigo: "DEM-Q2", dimensao: "DEMANDAS", texto: "Tenho que trabalhar em ritmo muito acelerado." },
   { codigo: "DEM-Q3", dimensao: "DEMANDAS", texto: "Meu trabalho me desgasta emocionalmente." },
   { codigo: "DEM-Q4", dimensao: "DEMANDAS", texto: "Faço horas extras com muita frequência." },
+
+  // EXIGÊNCIAS COGNITIVAS (novo — inspirado COPSOQ II)
+  { codigo: "COG-Q1", dimensao: "COGNITIVAS", texto: "Meu trabalho exige que eu tome decisões difíceis." },
+  { codigo: "COG-Q2", dimensao: "COGNITIVAS", texto: "Meu trabalho exige que eu memorize muitas informações ao mesmo tempo." },
+  { codigo: "COG-Q3", dimensao: "COGNITIVAS", texto: "Meu trabalho exige atenção constante para evitar erros graves." },
+
+  // EXIGÊNCIAS EMOCIONAIS (separada de DEM-Q3 — inspirado COPSOQ II)
+  { codigo: "EMO-Q1", dimensao: "EMOCIONAIS", texto: "Meu trabalho me coloca em situações emocionalmente perturbadoras." },
+  { codigo: "EMO-Q2", dimensao: "EMOCIONAIS", texto: "Tenho que esconder o que sinto para conseguir realizar meu trabalho." },
+  { codigo: "EMO-Q3", dimensao: "EMOCIONAIS", texto: "Lido com sofrimento humano (acidentes, doenças, perdas) no meu trabalho." },
 
   // CONTROLE
   { codigo: "CTR-Q1", dimensao: "CONTROLE", texto: "Tenho autonomia para decidir COMO executar meu trabalho.", invertido: true },
@@ -67,6 +114,11 @@ export const PSICO_ITEMS: PsicoItem[] = [
   { codigo: "REL-Q1", dimensao: "RELACOES", texto: "Existem conflitos interpessoais não resolvidos na equipe." },
   { codigo: "REL-Q2", dimensao: "RELACOES", texto: "Sinto-me respeitado(a) pelos meus colegas.", invertido: true },
 
+  // SIGNIFICADO DO TRABALHO (novo — inspirado COPSOQ II)
+  { codigo: "SIG-Q1", dimensao: "SIGNIFICADO", texto: "Meu trabalho tem significado para mim.", invertido: true },
+  { codigo: "SIG-Q2", dimensao: "SIGNIFICADO", texto: "Sinto orgulho de trabalhar nesta empresa.", invertido: true },
+  { codigo: "SIG-Q3", dimensao: "SIGNIFICADO", texto: "O que faço no meu trabalho é importante para o resultado da empresa.", invertido: true },
+
   // VIOLÊNCIA / ASSÉDIO
   { codigo: "VIO-Q1", dimensao: "VIOLENCIA", texto: "Já presenciei ou sofri humilhação, chantagem ou ameaça no trabalho (assédio moral)." },
   { codigo: "VIO-Q2", dimensao: "VIOLENCIA", texto: "Já presenciei ou sofri insinuação, cantada ou toque não autorizado (assédio sexual)." },
@@ -77,6 +129,15 @@ export const PSICO_ITEMS: PsicoItem[] = [
   { codigo: "INT-Q1", dimensao: "INTERFACE", texto: "Sou cobrado(a) fora do meu horário de trabalho (WhatsApp, e-mail, ligação)." },
   { codigo: "INT-Q2", dimensao: "INTERFACE", texto: "Meu trabalho prejudica minha vida familiar e social." },
   { codigo: "INT-Q3", dimensao: "INTERFACE", texto: "Tenho medo de perder meu emprego." },
+
+  // OUTCOMES — BURNOUT (CBI curto adaptado; efeito, não causa)
+  { codigo: "BUR-Q1", dimensao: "BURNOUT", texto: "Sinto-me esgotado(a) no fim do dia de trabalho." },
+  { codigo: "BUR-Q2", dimensao: "BURNOUT", texto: "Sinto-me exausto(a) pela manhã só de pensar em mais um dia de trabalho." },
+  { codigo: "BUR-Q3", dimensao: "BURNOUT", texto: "Cada hora de trabalho é cansativa para mim." },
+
+  // OUTCOMES — SONO
+  { codigo: "SON-Q1", dimensao: "SONO", texto: "Tenho dificuldade para dormir por causa de preocupações com o trabalho." },
+  { codigo: "SON-Q2", dimensao: "SONO", texto: "Acordo cansado(a), como se não tivesse descansado." },
 ];
 
 export const FAIXA_ETARIA = ["18-24", "25-34", "35-44", "45-54", "55+"];
