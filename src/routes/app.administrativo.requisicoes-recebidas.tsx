@@ -16,10 +16,15 @@ import {
 } from "@/components/ui/select";
 import {
   Briefcase, Search, Filter, Eye, CheckCircle2, XCircle, ShieldAlert, FileText, BookOpen,
-  Building2, Wrench, Cog, Factory, Boxes, ShieldPlus, Package, ChevronDown, ChevronRight,
+  Building2, Wrench, Cog, Factory, Boxes, ShieldPlus, Package, ChevronDown, ChevronRight, Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { decidirRc } from "@/lib/rc-public.functions";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useQueryClient } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/app/administrativo/requisicoes-recebidas")({
   component: AdministrativoRecebidasPage,
