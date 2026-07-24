@@ -9,6 +9,7 @@ import {
   DIMENSAO_LABEL,
   FAIXA_ETARIA,
   FAIXA_TEMPO_CASA,
+  INSTRUMENTO_CITACAO,
   type PsicoItem,
 } from "@/lib/psico-instrument";
 import { validatePsicoToken, type PsicoValidateResult } from "@/lib/psico-public.functions";
@@ -408,6 +409,10 @@ function PsicoPublicPage() {
           />
           <p className="text-[10px] text-slate-400 mt-1 text-right">{relatoAberto.length}/2000</p>
         </Panel>
+
+        <p className="text-[10px] text-slate-400 text-center px-2 leading-relaxed pb-2">
+          {INSTRUMENTO_CITACAO}
+        </p>
       </main>
 
       <footer className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-[#7f1d3a] p-3 shadow-[0_-4px_12px_rgba(127,29,58,0.08)]">

@@ -1,7 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { drawPdfHeader } from "./pdf-header";
-import { DIMENSAO_LABEL } from "./psico-instrument";
+import { DIMENSAO_LABEL, INSTRUMENTO_CITACAO } from "./psico-instrument";
 
 /* Paleta Matriz 5x5 DMN (mesmas cores do dashboard) */
 const COR_BAIXO: [number, number, number] = [0x2e, 0xcc, 0x71];   // verde
@@ -341,6 +341,10 @@ export function gerarParecerPsicossocialPdf(opts: ParecerPsicoOpts): jsPDF {
     doc.setTextColor(100, 116, 139);
     doc.text("SIGMO · Módulo Psicossocial NR-01 · Documento sujeito a auditoria (LGPD/ISO 45003)", M, H - 6);
     doc.text(`Página ${p} de ${pageCount}`, W - M, H - 6, { align: "right" });
+    // Citação do instrumento (linha extra, fonte micro) — todas as páginas
+    doc.setFontSize(6.5);
+    doc.setTextColor(130, 140, 160);
+    doc.text(INSTRUMENTO_CITACAO, M, H - 2, { maxWidth: W - 2 * M });
   }
 
   return doc;
