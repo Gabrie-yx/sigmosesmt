@@ -146,6 +146,14 @@ export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable
         <DialogHeader>
           <DialogTitle className="text-foreground">{title ?? "Visualizar PDF"} — {fileName}</DialogTitle>
         </DialogHeader>
+        {anexosEscopo && (
+          <AnexosSelector
+            escopo={anexosEscopo}
+            value={anexosSel}
+            onChange={setAnexosSel}
+            className="rounded border border-white/10 bg-black/20 p-3"
+          />
+        )}
         {signable && (
           <div className="flex flex-wrap items-center gap-2 rounded p-2 text-xs border border-red-500/30 bg-red-500/10 text-foreground">
             <span className="font-bold uppercase tracking-wide text-red-200/90">Assinaturas:</span>
