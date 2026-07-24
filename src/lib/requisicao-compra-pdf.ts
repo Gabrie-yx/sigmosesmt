@@ -294,7 +294,8 @@ export async function gerarPdfRequisicaoDoc(
       }
       // Itens sem item_numero válido (legado/colisão): anexados no fim,
       // numerados sequencialmente a partir do próximo slot livre.
-      let proximo = Math.max(MIN_ROWS + 1, ...Array.from(byNumero.keys()).filter((n) => n > MIN_ROWS)) + 1;
+      const extendedNums = Array.from(byNumero.keys()).filter((n) => n > MIN_ROWS);
+      let proximo = (extendedNums.length ? Math.max(...extendedNums) : MIN_ROWS) + 1;
       for (const it of semNumero) {
         rows.push([
           String(proximo).padStart(2, "0"),
