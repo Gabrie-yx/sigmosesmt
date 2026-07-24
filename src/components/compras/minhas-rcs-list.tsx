@@ -216,6 +216,7 @@ export function MinhasRcsList({ setorFixo }: { setorFixo: string }) {
         doc={pdfDoc}
         fileName={pdfReq ? rcPdfFileName(pdfReq) : "requisicao.pdf"}
         title={pdfReq ? `RC ${pdfReq.numero}` : "Requisição"}
+        anexosEscopo="rc"
       />
       <AlertDialog open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)}>
         <AlertDialogContent>

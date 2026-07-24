@@ -459,6 +459,7 @@ function DDSDetail({ dds, temaMap, gestorMap }: { dds: DDS; temaMap: any; gestor
         sesmtSig={sesmtSig}
         onChangeEncSig={(v) => { encSigRef.current = v; setEncSig(v); if (lastBuildArgs.current) buildAndShow(lastBuildArgs.current.companies, lastBuildArgs.current.funcs); }}
         onChangeSesmtSig={(v) => { sesmtSigRef.current = v; setSesmtSig(v); if (lastBuildArgs.current) buildAndShow(lastBuildArgs.current.companies, lastBuildArgs.current.funcs); }}
+        anexosEscopo="dds"
       />
       <Dialog open={prepOpen} onOpenChange={(o) => !o && setPrepOpen(false)}>
         <DialogContent className="max-w-lg">
@@ -903,6 +904,7 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
         doc={previewDoc}
         fileName={previewName}
         onClose={() => { setPreviewDoc(null); if (previewFromSave) { setPreviewFromSave(false); onSaved(); } }}
+        anexosEscopo="dds"
       />
     </Dialog>
   );
