@@ -375,6 +375,36 @@ function RequisicoesPage() {
     return "Último ano";
   }
 
+  // Agrupa as RCs filtradas em Mês → Dia → itens.
+  // Ordena tudo do mais recente pro mais antigo (data_requisicao desc).
+  const grupos = useMemo(() => {
+    const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+    const byMes = new Map<string, { label: string; ord: number; dias: Map<string, { label: string; ord: number; itens: Req[] }> }>();
+    for (const r of filtered) {
+      const [yStr, mStr, dStr] = (r.data_requisicao || "").split("T")[0].split("-");
+      const y = Number(yStr), m = Number(mStr), d = Number(dStr);
+      if (!y || !m || !d) continue;
+      const mesKey = `${y}-${String(m).padStart(2,"0")}`;
+      const mesLabel = `${MESES[m-1]} de ${y}`;
+      const mesOrd = y * 100 + m;
+      let mes = byMes.get(mesKey);
+      if (!mes) { mes = { label: mesLabel, ord: mesOrd, dias: new Map() }; byMes.set(mesKey, mes); }
+      const diaKey = `${mesKey}-${String(d).padStart(2,"0")}`;
+      const diaLabel = `${String(d).padStart(2,"0")}/${String(m).padStart(2,"0")}/${y}`;
+      const diaOrd = mesOrd * 100 + d;
+      let dia = mes.dias.get(diaKey);
+      if (!dia) { dia = { label: diaLabel, ord: diaOrd, itens: [] }; mes.dias.set(diaKey, dia); }
+      dia.itens.push(r);
+    }
+    return Array.from(byMes.values())
+      .sort((a, b) => b.ord - a.ord)
+      .map((mes) => ({
+        ...mes,
+        dias: Array.from(mes.dias.values()).sort((a, b) => b.ord - a.ord),
+        total: Array.from(mes.dias.values()).reduce((n, d) => n + d.itens.length, 0),
+      }));
+  }, [filtered]);
+
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -443,15 +473,14 @@ function RequisicoesPage() {
             <TabsContent value={tab} className="mt-4">
               {filtered.length === 0 ? (
                 <div className="text-center text-slate-500 py-12 text-sm">Nenhuma requisição encontrada.</div>
-              ) : (
-                <div className="space-y-2">
-                  {filtered.map((r) => (
-                     <div
-                       key={r.id}
-                       className={`border rounded-lg p-3 hover:bg-slate-50 transition flex flex-wrap items-center gap-3 ${
-                         r.status === "PENDENTE" ? "animate-pulse-amber border-amber-300/70" : ""
-                       }`}
-                     >
+              ) : (() => {
+                const renderLinha = (r: Req) => (
+                    <div
+                      key={r.id}
+                      className={`border rounded-lg p-3 bg-card hover:bg-muted/40 transition flex flex-wrap items-center gap-3 ${
+                        r.status === "PENDENTE" ? "animate-pulse-amber border-amber-300/70" : ""
+                      }`}
+                    >
                       <div className="flex-1 min-w-[220px]">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-bold text-slate-900 dark:text-white">Nº {r.numero}</span>
@@ -593,9 +622,51 @@ function RequisicoesPage() {
                         )}
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
+                );
+                return (
+                  <div className="space-y-3">
+                    {grupos.map((mes, mIdx) => (
+                      <details
+                        key={mes.label}
+                        open={mIdx === 0}
+                        className="group rounded-xl border border-border/60 bg-muted/20 overflow-hidden"
+                      >
+                        <summary className="cursor-pointer select-none list-none px-3 md:px-4 py-2.5 flex items-center justify-between gap-2 hover:bg-muted/40 transition">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-muted-foreground text-xs group-open:rotate-90 transition-transform">▶</span>
+                            <span className="font-bold text-foreground capitalize truncate">{mes.label}</span>
+                          </div>
+                          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-200 shrink-0">
+                            {mes.total} {mes.total === 1 ? "requisição" : "requisições"}
+                          </span>
+                        </summary>
+                        <div className="p-2 md:p-3 space-y-2 bg-background/40">
+                          {mes.dias.map((dia, dIdx) => (
+                            <details
+                              key={dia.label}
+                              open={mIdx === 0 && dIdx === 0}
+                              className="group/dia rounded-lg border border-border/50 bg-card/60"
+                            >
+                              <summary className="cursor-pointer select-none list-none px-3 py-2 flex items-center justify-between gap-2 hover:bg-muted/30 transition">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <span className="text-muted-foreground text-[10px] group-open/dia:rotate-90 transition-transform">▶</span>
+                                  <span className="font-semibold text-sm text-foreground">{dia.label}</span>
+                                </div>
+                                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">
+                                  {dia.itens.length}
+                                </span>
+                              </summary>
+                              <div className="p-2 space-y-2">
+                                {dia.itens.map(renderLinha)}
+                              </div>
+                            </details>
+                          ))}
+                        </div>
+                      </details>
+                    ))}
+                  </div>
+                );
+              })()}
             </TabsContent>
           </Tabs>
         </CardContent>
