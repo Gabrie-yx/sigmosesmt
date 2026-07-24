@@ -6,8 +6,14 @@ import { toast } from "sonner";
 import type jsPDF from "jspdf";
 import { printPdf, renderPdfToImagePagesProgressive } from "@/lib/pdf-print";
 import { SignaturePadDialog } from "@/components/signature-pad-dialog";
+import { AnexosSelector } from "@/components/pdf-anexos/anexos-selector";
+import { mergeAnexos } from "@/lib/pdf-anexos-merge";
+import { useServerFn } from "@tanstack/react-start";
+import { listarAnexosPorEscopo } from "@/lib/pdf-anexos.functions";
 
-export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable, engSig, encSig, sesmtSig, onChangeEngSig, onChangeEncSig, onChangeSesmtSig, onRequestSign, hasSignature, signatureLabels, useSignatureGallery }: {
+type AnexoEscopo = "apr" | "oss" | "pte" | "dds" | "os" | "rc";
+
+export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable, engSig, encSig, sesmtSig, onChangeEngSig, onChangeEncSig, onChangeSesmtSig, onRequestSign, hasSignature, signatureLabels, useSignatureGallery, anexosEscopo }: {
   open: boolean;
   onClose: () => void;
   doc: jsPDF | null;
@@ -26,6 +32,8 @@ export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable
   signatureLabels?: { eng?: string; enc?: string; sesmt?: string };
   /** Quando true, ao clicar em "Assinar" abre o SignaturePadDialog (galeria/desenhar/importar). */
   useSignatureGallery?: boolean;
+  /** Ativa bloco de "Anexos padrão" — concatena PDFs cadastrados no fim do documento. */
+  anexosEscopo?: AnexoEscopo;
 }) {
   // Renderizamos as páginas com PDF.js em <canvas> — o visualizador nativo de
   // PDF do Chrome é desativado dentro de iframes com sandbox (preview do
@@ -35,6 +43,45 @@ export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable
   const [loadError, setLoadError] = useState<string | null>(null);
   const renderTokenRef = useRef(0);
   const [galleryTarget, setGalleryTarget] = useState<null | ((v: string | null) => void)>(null);
+  const [anexosSel, setAnexosSel] = useState<string[]>([]);
+  const listarAnexos = useServerFn(listarAnexosPorEscopo);
+  const anexosCatalogRef = useRef<Array<{ id: string; arquivo_path: string; titulo: string }>>([]);
+
+  // Cache do catálogo p/ resolver id → arquivo_path na hora do merge.
+  useEffect(() => {
+    if (!anexosEscopo || !open) return;
+    let cancel = false;
+    (async () => {
+      try {
+        const rows = await listarAnexos({ data: { escopo: anexosEscopo } });
+        if (!cancel) {
+          anexosCatalogRef.current = (rows ?? []).map((r: any) => ({
+            id: r.id, arquivo_path: r.arquivo_path, titulo: r.titulo,
+          }));
+        }
+      } catch (e) {
+        console.error("[PDFPreview] listar anexos", e);
+      }
+    })();
+    return () => { cancel = true; };
+  }, [anexosEscopo, open, listarAnexos]);
+
+  function anexosEscolhidos() {
+    if (!anexosEscopo) return [];
+    return anexosCatalogRef.current.filter((a) => anexosSel.includes(a.id));
+  }
+
+  async function bytesComAnexos(): Promise<Uint8Array> {
+    const base = doc!.output("arraybuffer") as ArrayBuffer;
+    const escolhidos = anexosEscolhidos();
+    if (!escolhidos.length) return new Uint8Array(base);
+    return await mergeAnexos(base, escolhidos);
+  }
+
+  async function blobComAnexos(): Promise<Blob> {
+    const bytes = await bytesComAnexos();
+    return new Blob([bytes as BlobPart], { type: "application/pdf" });
+  }
 
   useEffect(() => {
     if (!doc || !open) { setPages([]); setLoadError(null); return; }
@@ -46,8 +93,9 @@ export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable
       try {
         // Renderiza página a página em JPEG (scale 2) — a 1ª página aparece
         // rápido em vez de esperar todas em PNG scale 3.
+        const bytes = await bytesComAnexos();
         await renderPdfToImagePagesProgressive(
-          doc.output("arraybuffer") as ArrayBuffer,
+          bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer,
           (pageDataUrl) => {
             if (renderTokenRef.current !== token) return;
             setPages((prev) => [...prev, pageDataUrl]);
@@ -62,12 +110,12 @@ export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable
       }
     })();
     return () => { renderTokenRef.current++; };
-  }, [doc, open]);
+  }, [doc, open, anexosSel]);
 
-  function download() {
+  async function download() {
     if (!doc) return;
     try {
-      const blob = doc.output("blob") as Blob;
+      const blob = await blobComAnexos();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -84,14 +132,14 @@ export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable
     if (!doc) return;
     // Impressão nativa do PDF (vetor) — preserva o texto preto sólido.
     // Fallback automático para raster está dentro de printPdf().
-    const blob = doc.output("blob") as Blob;
+    const blob = await blobComAnexos();
     await printPdf(blob, fileName);
   }
 
   async function share() {
     if (!doc) return;
     try {
-      const blob = doc.output("blob") as Blob;
+      const blob = await blobComAnexos();
       const file = new File([blob], fileName, { type: "application/pdf" });
       const nav: any = navigator;
       if (nav.canShare && nav.canShare({ files: [file] })) {
@@ -146,6 +194,14 @@ export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable
         <DialogHeader>
           <DialogTitle className="text-foreground">{title ?? "Visualizar PDF"} — {fileName}</DialogTitle>
         </DialogHeader>
+        {anexosEscopo && (
+          <AnexosSelector
+            escopo={anexosEscopo}
+            value={anexosSel}
+            onChange={setAnexosSel}
+            className="rounded border border-white/10 bg-black/20 p-3"
+          />
+        )}
         {signable && (
           <div className="flex flex-wrap items-center gap-2 rounded p-2 text-xs border border-red-500/30 bg-red-500/10 text-foreground">
             <span className="font-bold uppercase tracking-wide text-red-200/90">Assinaturas:</span>

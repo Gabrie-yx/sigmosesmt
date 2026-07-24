@@ -1645,6 +1645,7 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
           doc={previewDoc}
           fileName={`${apr.numero ?? "apr"}.pdf`}
           title="APR"
+          anexosEscopo="apr"
         />
       </Suspense>
     </div>
