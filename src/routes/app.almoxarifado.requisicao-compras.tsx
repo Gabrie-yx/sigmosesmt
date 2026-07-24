@@ -7,6 +7,7 @@ import { ShoppingCart, Warehouse, Plus } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { ReqFormDialog } from "@/routes/app.sesmt.requisicoes";
 import { BaseMpLookupSheet, suggestFromBaseMpAndHistorico } from "@/components/compras/base-mp-lookup-sheet";
+import { MinhasRcsList } from "@/components/compras/minhas-rcs-list";
 
 export const Route = createFileRoute("/app/almoxarifado/requisicao-compras")({
   head: () => ({
@@ -72,6 +73,8 @@ function AlmoxarifadoRequisicaoComprasPage() {
           </div>
         </CardContent>
       </Card>
+
+      <MinhasRcsList setorFixo="Almoxarifado" />
     </div>
   );
 }
