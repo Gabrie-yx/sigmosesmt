@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Brain, Plus, Copy, Loader2, AlertTriangle, ShieldCheck, Users, BarChart3, ListChecks, ClipboardList, Pencil, Trash2, Check, ChevronDown, X, HelpCircle } from "lucide-react";
+import { Brain, Plus, Copy, Loader2, AlertTriangle, ShieldCheck, Users, BarChart3, ListChecks, ClipboardList, Pencil, Trash2, Check, ChevronDown, X, HelpCircle, QrCode, MessageCircle, Download } from "lucide-react";
 import { FileText } from "lucide-react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
@@ -28,6 +28,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { computarTercisPsico } from "@/lib/psico-actions.functions";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import type jsPDF from "jspdf";
+import QRCode from "qrcode";
 import { PlanoAcaoTab } from "@/components/psicossocial/plano-acao-tab";
 import { CronogramaTab } from "@/components/psicossocial/cronograma-tab";
 import { AcoesRealizadasTab } from "@/components/psicossocial/acoes-tab";
@@ -195,6 +196,44 @@ function CampanhasTab() {
   const [gheIds, setGheIds] = useState<string[]>([]);
   const [tokensGerados, setTokensGerados] = useState<{ token: string; url: string }[]>([]);
   const [tokensDialogOpen, setTokensDialogOpen] = useState(false);
+  const [qrLink, setQrLink] = useState<{ url: string; idx: number } | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string>("");
+
+  useEffect(() => {
+    if (!qrLink) { setQrDataUrl(""); return; }
+    QRCode.toDataURL(qrLink.url, { width: 512, margin: 2, errorCorrectionLevel: "M" })
+      .then(setQrDataUrl).catch(() => setQrDataUrl(""));
+  }, [qrLink]);
+
+  async function baixarFolhaQRs() {
+    const { default: JsPDF } = await import("jspdf");
+    const doc = new JsPDF({ unit: "mm", format: "a4" });
+    const pageW = 210, pageH = 297, margin = 10;
+    const cols = 3, rows = 4;
+    const cellW = (pageW - margin * 2) / cols;
+    const cellH = (pageH - margin * 2) / rows;
+    const qrSize = Math.min(cellW, cellH) - 16;
+    for (let i = 0; i < tokensGerados.length; i++) {
+      const posInPage = i % (cols * rows);
+      if (i > 0 && posInPage === 0) doc.addPage();
+      const c = posInPage % cols;
+      const r = Math.floor(posInPage / cols);
+      const x = margin + c * cellW;
+      const y = margin + r * cellH;
+      const dataUrl = await QRCode.toDataURL(tokensGerados[i].url, { width: 512, margin: 1 });
+      doc.addImage(dataUrl, "PNG", x + (cellW - qrSize) / 2, y + 4, qrSize, qrSize);
+      doc.setFontSize(9);
+      doc.text(`#${i + 1}`, x + cellW / 2, y + cellH - 6, { align: "center" });
+      doc.setFontSize(7);
+      doc.text("Avaliação Psicossocial — NR-01", x + cellW / 2, y + cellH - 2, { align: "center" });
+    }
+    doc.save(`campanha-psicossocial-qrs-${new Date().toISOString().slice(0, 10)}.pdf`);
+  }
+
+  function shareWhatsApp(url: string) {
+    const texto = `Olá! Você foi convidado(a) a participar da avaliação de riscos psicossociais (NR-01).\n\nÉ anônimo, dura ~10 min e o link é de uso único:\n${url}\n\nObrigado pela colaboração.`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank");
+  }
   const [editing, setEditing] = useState<any | null>(null);
   const [deleting, setDeleting] = useState<any | null>(null);
 
@@ -448,16 +487,51 @@ function CampanhasTab() {
             >
               <Copy className="h-4 w-4 mr-1" /> Copiar TODOS os links
             </Button>
+            <Button variant="outline" className="w-full" onClick={baixarFolhaQRs}>
+              <Download className="h-4 w-4 mr-1" /> Baixar folha de QR Codes (PDF)
+            </Button>
             <div className="space-y-1">
               {tokensGerados.map((t, i) => (
                 <div key={i} className="flex items-start gap-2 p-2 rounded bg-rose-950/30 border border-rose-500/10 text-xs">
                   <span className="text-rose-100/40 w-8 shrink-0 pt-0.5">#{i + 1}</span>
                   <code className="flex-1 min-w-0 break-all text-rose-100/80 leading-snug">{t.url}</code>
+                  <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0 text-emerald-300 hover:bg-emerald-500/20" title="Compartilhar no WhatsApp" onClick={() => shareWhatsApp(t.url)}>
+                    <MessageCircle className="h-3 w-3" />
+                  </Button>
+                  <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0 text-sky-300 hover:bg-sky-500/20" title="Mostrar QR Code" onClick={() => setQrLink({ url: t.url, idx: i + 1 })}>
+                    <QrCode className="h-3 w-3" />
+                  </Button>
                   <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => { navigator.clipboard.writeText(t.url); toast.success("Copiado"); }}>
                     <Copy className="h-3 w-3" />
                   </Button>
                 </div>
               ))}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog QR de um link */}
+      <Dialog open={!!qrLink} onOpenChange={(o) => !o && setQrLink(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>QR Code — Link #{qrLink?.idx}</DialogTitle></DialogHeader>
+          <div className="flex flex-col items-center gap-3">
+            {qrDataUrl ? (
+              <img src={qrDataUrl} alt="QR Code" className="w-64 h-64 bg-white p-2 rounded" />
+            ) : (
+              <div className="w-64 h-64 flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>
+            )}
+            <code className="text-[10px] break-all text-center text-rose-100/60">{qrLink?.url}</code>
+            <div className="flex gap-2 w-full">
+              <Button variant="outline" className="flex-1" onClick={() => { if (qrLink) shareWhatsApp(qrLink.url); }}>
+                <MessageCircle className="h-4 w-4 mr-1" /> WhatsApp
+              </Button>
+              <Button variant="outline" className="flex-1" onClick={() => {
+                const a = document.createElement("a");
+                a.href = qrDataUrl; a.download = `qr-psico-${qrLink?.idx}.png`; a.click();
+              }}>
+                <Download className="h-4 w-4 mr-1" /> PNG
+              </Button>
             </div>
           </div>
         </DialogContent>
