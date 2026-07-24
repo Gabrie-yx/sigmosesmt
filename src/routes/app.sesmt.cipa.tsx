@@ -386,6 +386,14 @@ function MembrosTab({ gestaoId }: { gestaoId: string }) {
       return data ?? [];
     },
   });
+  const del = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("cipa_membros").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Membro removido"); qc.invalidateQueries({ queryKey: ["cipa", "membros", gestaoId] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
   return (
     <Card className="p-4">
       <div className="flex items-center justify-between mb-3">
@@ -398,7 +406,7 @@ function MembrosTab({ gestaoId }: { gestaoId: string }) {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="text-xs text-muted-foreground">
-              <tr><th className="text-left p-2">Funcionário</th><th className="text-left p-2">Representação</th><th className="text-left p-2">Papel</th><th className="text-left p-2">Posse</th><th className="text-left p-2">Status</th></tr>
+              <tr><th className="text-left p-2">Funcionário</th><th className="text-left p-2">Representação</th><th className="text-left p-2">Papel</th><th className="text-left p-2">Posse</th><th className="text-left p-2">Status</th><th className="p-2"></th></tr>
             </thead>
             <tbody>
               {(data as any[]).map((m) => (
@@ -408,6 +416,11 @@ function MembrosTab({ gestaoId }: { gestaoId: string }) {
                   <td className="p-2">{m.papel}{m.votos ? ` · ${m.votos} votos` : ""}</td>
                   <td className="p-2">{m.posse_em ?? "—"}</td>
                   <td className="p-2"><Badge variant={m.status === "ATIVO" ? "default" : "secondary"}>{m.status}</Badge></td>
+                  <td className="p-2 text-right">
+                    <Button size="icon" variant="ghost" onClick={() => { if (confirm("Remover este membro?")) del.mutate(m.id); }}>
+                      <Trash2 className="h-3.5 w-3.5 text-rose-400" />
+                    </Button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -525,6 +538,14 @@ function ReunioesTab({ gestaoId }: { gestaoId: string }) {
       return data ?? [];
     },
   });
+  const del = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("cipa_reunioes").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Reunião removida"); qc.invalidateQueries({ queryKey: ["cipa", "reunioes", gestaoId] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
   return (
     <Card className="p-4">
       <div className="flex items-center justify-between mb-3">
@@ -545,7 +566,12 @@ function ReunioesTab({ gestaoId }: { gestaoId: string }) {
                   <div className="text-sm font-semibold">{r.data} · {r.tipo}</div>
                   <div className="text-xs text-muted-foreground">{r.local ?? "—"} {r.hora ? `· ${r.hora}` : ""}</div>
                 </div>
-                <Badge variant={r.status === "REALIZADA" ? "default" : "secondary"}>{r.status}</Badge>
+                <div className="flex items-center gap-1">
+                  <Badge variant={r.status === "REALIZADA" ? "default" : "secondary"}>{r.status}</Badge>
+                  <Button size="icon" variant="ghost" onClick={() => { if (confirm("Remover esta reunião?")) del.mutate(r.id); }}>
+                    <Trash2 className="h-3.5 w-3.5 text-rose-400" />
+                  </Button>
+                </div>
               </div>
               {r.pauta && <p className="text-xs mt-2 text-muted-foreground whitespace-pre-wrap"><b>Pauta:</b> {r.pauta}</p>}
             </li>
@@ -628,6 +654,14 @@ function PlanoTab({ gestaoId }: { gestaoId: string }) {
       return data ?? [];
     },
   });
+  const del = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("cipa_plano_anual").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Ação removida"); qc.invalidateQueries({ queryKey: ["cipa", "plano", gestaoId] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
   return (
     <Card className="p-4">
       <div className="flex items-center justify-between mb-3">
@@ -645,7 +679,12 @@ function PlanoTab({ gestaoId }: { gestaoId: string }) {
             <li key={p.id} className="border border-border rounded p-3">
               <div className="flex items-center justify-between gap-2">
                 <div className="text-sm font-semibold">{p.acao}</div>
-                <Badge variant="secondary">{p.status}</Badge>
+                <div className="flex items-center gap-1">
+                  <Badge variant="secondary">{p.status}</Badge>
+                  <Button size="icon" variant="ghost" onClick={() => { if (confirm("Remover esta ação?")) del.mutate(p.id); }}>
+                    <Trash2 className="h-3.5 w-3.5 text-rose-400" />
+                  </Button>
+                </div>
               </div>
               <div className="text-xs text-muted-foreground mt-1 flex flex-wrap gap-x-3">
                 <span>Eixo: {p.eixo}</span>
