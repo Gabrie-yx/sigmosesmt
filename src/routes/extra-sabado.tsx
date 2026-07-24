@@ -93,7 +93,7 @@ function ExtraSabadoMobilePage() {
   // Convocações criadas por este líder
   const { data: minhasConvocacoes, isLoading: loadingConvs } = useQuery({
     queryKey: ["convocacoes-do-lider", user?.id],
-    enabled: !!user?.id && isLider,
+    enabled: !!user?.id && (isLider || isExtraSabadoMarcador || isAdmin),
     queryFn: async () => {
       const { data, error } = await supabase.rpc("listar_convocacoes_extra_lider");
       if (error) throw error;
