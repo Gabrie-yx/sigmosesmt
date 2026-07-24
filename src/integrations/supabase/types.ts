@@ -292,6 +292,146 @@ export type Database = {
           },
         ]
       }
+      anamneses_ocupacionais: {
+        Row: {
+          alergias: string | null
+          antecedentes_familiares: Json
+          antecedentes_ocupacionais: Json
+          antecedentes_pessoais: Json
+          aptidao: string | null
+          atendimento_id: string | null
+          conduta: string | null
+          created_at: string
+          created_by: string | null
+          data_anamnese: string
+          employee_id: string
+          exam_id: string | null
+          exame_fisico: Json
+          finalizada: boolean
+          finalizada_em: string | null
+          habitos: Json
+          hda: string | null
+          hipoteses_diagnosticas: string | null
+          id: string
+          medicacoes_uso: string | null
+          medico_crm: string | null
+          medico_nome: string | null
+          natureza: string
+          observacoes: string | null
+          queixa_principal: string | null
+          restricoes: string | null
+          updated_at: string
+        }
+        Insert: {
+          alergias?: string | null
+          antecedentes_familiares?: Json
+          antecedentes_ocupacionais?: Json
+          antecedentes_pessoais?: Json
+          aptidao?: string | null
+          atendimento_id?: string | null
+          conduta?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_anamnese?: string
+          employee_id: string
+          exam_id?: string | null
+          exame_fisico?: Json
+          finalizada?: boolean
+          finalizada_em?: string | null
+          habitos?: Json
+          hda?: string | null
+          hipoteses_diagnosticas?: string | null
+          id?: string
+          medicacoes_uso?: string | null
+          medico_crm?: string | null
+          medico_nome?: string | null
+          natureza?: string
+          observacoes?: string | null
+          queixa_principal?: string | null
+          restricoes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          alergias?: string | null
+          antecedentes_familiares?: Json
+          antecedentes_ocupacionais?: Json
+          antecedentes_pessoais?: Json
+          aptidao?: string | null
+          atendimento_id?: string | null
+          conduta?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_anamnese?: string
+          employee_id?: string
+          exam_id?: string | null
+          exame_fisico?: Json
+          finalizada?: boolean
+          finalizada_em?: string | null
+          habitos?: Json
+          hda?: string | null
+          hipoteses_diagnosticas?: string | null
+          id?: string
+          medicacoes_uso?: string | null
+          medico_crm?: string | null
+          medico_nome?: string | null
+          natureza?: string
+          observacoes?: string | null
+          queixa_principal?: string | null
+          restricoes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "anamneses_ocupacionais_atendimento_id_fkey"
+            columns: ["atendimento_id"]
+            isOneToOne: false
+            referencedRelation: "atendimentos_medicos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "anamneses_ocupacionais_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "anamneses_ocupacionais_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligados_sem_pacote"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "anamneses_ocupacionais_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "anamneses_ocupacionais_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_termos_consentimento_status"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "anamneses_ocupacionais_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "anamneses_ocupacionais_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "employee_exams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       apr_assinaturas: {
         Row: {
           apr_id: string
@@ -851,6 +991,126 @@ export type Database = {
           },
           {
             foreignKeyName: "assinaturas_termos_consentimento_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
+          },
+        ]
+      }
+      atendimentos_medicos: {
+        Row: {
+          chamado_em: string | null
+          chegou_em: string | null
+          clinica_id: string | null
+          concluido_em: string | null
+          convocacao_id: string | null
+          coordenador_id: string | null
+          created_at: string
+          created_by: string | null
+          data_agendada: string
+          employee_id: string
+          hora_agendada: string | null
+          id: string
+          iniciado_em: string | null
+          natureza: string
+          observacoes: string | null
+          prioridade: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          chamado_em?: string | null
+          chegou_em?: string | null
+          clinica_id?: string | null
+          concluido_em?: string | null
+          convocacao_id?: string | null
+          coordenador_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_agendada?: string
+          employee_id: string
+          hora_agendada?: string | null
+          id?: string
+          iniciado_em?: string | null
+          natureza?: string
+          observacoes?: string | null
+          prioridade?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          chamado_em?: string | null
+          chegou_em?: string | null
+          clinica_id?: string | null
+          concluido_em?: string | null
+          convocacao_id?: string | null
+          coordenador_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_agendada?: string
+          employee_id?: string
+          hora_agendada?: string | null
+          id?: string
+          iniciado_em?: string | null
+          natureza?: string
+          observacoes?: string | null
+          prioridade?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "atendimentos_medicos_clinica_id_fkey"
+            columns: ["clinica_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas_ocupacionais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "atendimentos_medicos_convocacao_id_fkey"
+            columns: ["convocacao_id"]
+            isOneToOne: false
+            referencedRelation: "convocacoes_exames"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "atendimentos_medicos_coordenador_id_fkey"
+            columns: ["coordenador_id"]
+            isOneToOne: false
+            referencedRelation: "pcmso_coordenadores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "atendimentos_medicos_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "atendimentos_medicos_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligados_sem_pacote"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "atendimentos_medicos_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "atendimentos_medicos_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_termos_consentimento_status"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "atendimentos_medicos_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
             referencedRelation: "vw_colaborador_pgr"
