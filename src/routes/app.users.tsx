@@ -543,8 +543,35 @@ function UsersPage() {
       <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
         <DialogContent className="max-w-6xl p-0 gap-0 overflow-hidden">
           <DialogHeader className="px-6 pt-6 pb-4 border-b">
-            <DialogTitle>Convidar usuário</DialogTitle>
-            <DialogDescription>Um e-mail será enviado com link para definir senha.</DialogDescription>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <DialogTitle>Convidar usuário</DialogTitle>
+                <DialogDescription>Um e-mail será enviado com link para definir senha.</DialogDescription>
+              </div>
+              {roleTemplates.length > 0 && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <LayoutTemplate className="h-3.5 w-3.5 mr-1" /> Usar template
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-64">
+                    <DropdownMenuLabel>Templates de perfil</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {roleTemplates.map((t: any) => (
+                      <DropdownMenuItem key={t.id} onClick={() => aplicarTemplate(t)}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{t.nome}</span>
+                          {t.descricao && (
+                            <span className="text-[10px] text-muted-foreground line-clamp-1">{t.descricao}</span>
+                          )}
+                        </div>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-[minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,1.3fr)] max-h-[72vh]">
             {/* Coluna esquerda: identidade + papel */}
