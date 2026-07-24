@@ -375,6 +375,36 @@ function RequisicoesPage() {
     return "Último ano";
   }
 
+  // Agrupa as RCs filtradas em Mês → Dia → itens.
+  // Ordena tudo do mais recente pro mais antigo (data_requisicao desc).
+  const grupos = useMemo(() => {
+    const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+    const byMes = new Map<string, { label: string; ord: number; dias: Map<string, { label: string; ord: number; itens: Req[] }> }>();
+    for (const r of filtered) {
+      const [yStr, mStr, dStr] = (r.data_requisicao || "").split("T")[0].split("-");
+      const y = Number(yStr), m = Number(mStr), d = Number(dStr);
+      if (!y || !m || !d) continue;
+      const mesKey = `${y}-${String(m).padStart(2,"0")}`;
+      const mesLabel = `${MESES[m-1]} de ${y}`;
+      const mesOrd = y * 100 + m;
+      let mes = byMes.get(mesKey);
+      if (!mes) { mes = { label: mesLabel, ord: mesOrd, dias: new Map() }; byMes.set(mesKey, mes); }
+      const diaKey = `${mesKey}-${String(d).padStart(2,"0")}`;
+      const diaLabel = `${String(d).padStart(2,"0")}/${String(m).padStart(2,"0")}/${y}`;
+      const diaOrd = mesOrd * 100 + d;
+      let dia = mes.dias.get(diaKey);
+      if (!dia) { dia = { label: diaLabel, ord: diaOrd, itens: [] }; mes.dias.set(diaKey, dia); }
+      dia.itens.push(r);
+    }
+    return Array.from(byMes.values())
+      .sort((a, b) => b.ord - a.ord)
+      .map((mes) => ({
+        ...mes,
+        dias: Array.from(mes.dias.values()).sort((a, b) => b.ord - a.ord),
+        total: Array.from(mes.dias.values()).reduce((n, d) => n + d.itens.length, 0),
+      }));
+  }, [filtered]);
+
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
