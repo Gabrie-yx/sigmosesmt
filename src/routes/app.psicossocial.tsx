@@ -22,7 +22,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { DIMENSAO_LABEL, PSICO_ITEMS, classifyByTercis, type TercisMap } from "@/lib/psico-instrument";
+import { DIMENSAO_LABEL, DIMENSAO_TIPO, PSICO_ITEMS, classifyByTercis, type TercisMap } from "@/lib/psico-instrument";
 import { gerarParecerPsicossocialPdf } from "@/lib/psico-parecer-pdf";
 import { useServerFn } from "@tanstack/react-start";
 import { computarTercisPsico } from "@/lib/psico-actions.functions";
