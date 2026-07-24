@@ -2818,6 +2818,63 @@ export type Database = {
           },
         ]
       }
+      clinicas_ocupacionais: {
+        Row: {
+          ativa: boolean
+          cidade: string | null
+          cnpj: string | null
+          contato_responsavel: string | null
+          created_at: string
+          created_by: string | null
+          email: string | null
+          endereco: string | null
+          especialidades: string[]
+          id: string
+          nome: string
+          observacoes: string | null
+          telefone: string | null
+          tipos_exame: string[]
+          uf: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativa?: boolean
+          cidade?: string | null
+          cnpj?: string | null
+          contato_responsavel?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          endereco?: string | null
+          especialidades?: string[]
+          id?: string
+          nome: string
+          observacoes?: string | null
+          telefone?: string | null
+          tipos_exame?: string[]
+          uf?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativa?: boolean
+          cidade?: string | null
+          cnpj?: string | null
+          contato_responsavel?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          endereco?: string | null
+          especialidades?: string[]
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          telefone?: string | null
+          tipos_exame?: string[]
+          uf?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       companies: {
         Row: {
           bairro: string | null
@@ -7589,6 +7646,78 @@ export type Database = {
           validade_meses?: number
         }
         Relationships: []
+      }
+      pcmso_coordenadores: {
+        Row: {
+          assinatura_path: string | null
+          ativo: boolean
+          company_id: string
+          contrato_fim: string | null
+          contrato_inicio: string | null
+          created_at: string
+          created_by: string | null
+          crm: string
+          crm_uf: string
+          email: string | null
+          especialidade: string | null
+          id: string
+          nome: string
+          observacoes: string | null
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          assinatura_path?: string | null
+          ativo?: boolean
+          company_id: string
+          contrato_fim?: string | null
+          contrato_inicio?: string | null
+          created_at?: string
+          created_by?: string | null
+          crm: string
+          crm_uf: string
+          email?: string | null
+          especialidade?: string | null
+          id?: string
+          nome: string
+          observacoes?: string | null
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assinatura_path?: string | null
+          ativo?: boolean
+          company_id?: string
+          contrato_fim?: string | null
+          contrato_inicio?: string | null
+          created_at?: string
+          created_by?: string | null
+          crm?: string
+          crm_uf?: string
+          email?: string | null
+          especialidade?: string | null
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          telefone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pcmso_coordenadores_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pcmso_coordenadores_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "v_contratada_dossie_status"
+            referencedColumns: ["company_id"]
+          },
+        ]
       }
       pdf_anexos_padrao: {
         Row: {
