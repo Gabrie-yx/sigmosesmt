@@ -911,7 +911,8 @@ function EtapaLinha({ etapa, inicio, fim, status, onSave }: { etapa: { id: strin
 }
 
 /* -------------------- NOVA GESTÃO -------------------- */
-function NovaGestaoDialog({ open, onClose, onCreated }: { open: boolean; onClose: () => void; onCreated: (id: string) => void }) {
+function NovaGestaoDialog({ open, onClose, onCreated, edit }: { open: boolean; onClose: () => void; onCreated: (id: string) => void; edit?: Gestao | null }) {
+  const isEdit = !!edit;
   const [gestao, setGestao] = useState("");
   const [inicio, setInicio] = useState("");
   const [fim, setFim] = useState("");
@@ -923,6 +924,22 @@ function NovaGestaoDialog({ open, onClose, onCreated }: { open: boolean; onClose
   const [suE, setSuE] = useState("");
   const [efF, setEfF] = useState("");
   const [suF, setSuF] = useState("");
+
+  useEffect(() => {
+    if (open && edit) {
+      setGestao(edit.gestao ?? "");
+      setInicio(edit.data_inicio ?? "");
+      setFim(edit.data_fim ?? "");
+      setGrupo(edit.grupo_nr05 ?? "");
+      setNum(edit.num_empregados?.toString() ?? "");
+      setGr(edit.grau_risco?.toString() ?? "");
+      setModo(edit.modo);
+      setEfE(edit.efetivos_empregador?.toString() ?? "");
+      setSuE(edit.suplentes_empregador?.toString() ?? "");
+      setEfF(edit.efetivos_empregados?.toString() ?? "");
+      setSuF(edit.suplentes_empregados?.toString() ?? "");
+    }
+  }, [open, edit]);
 
   const sugestao = useMemo(
     () => dimensionarCipa(gr ? Number(gr) : null, num ? Number(num) : null),
@@ -959,7 +976,7 @@ function NovaGestaoDialog({ open, onClose, onCreated }: { open: boolean; onClose
       if (modo === "COMISSAO" && (Number(efF || 0) < 1 || Number(efE || 0) < 1)) {
         throw new Error("Comissão paritária exige ao menos 1 efetivo por bancada. Use 'Aplicar sugestão' ou mude para Designado.");
       }
-      const { data, error } = await supabase.from("cipa_gestoes").insert({
+      const payload = {
         gestao, data_inicio: inicio, data_fim: fim,
         modo,
         grau_risco: gr ? Number(gr) : null,
@@ -969,19 +986,24 @@ function NovaGestaoDialog({ open, onClose, onCreated }: { open: boolean; onClose
         suplentes_empregador: suE ? Number(suE) : 0,
         efetivos_empregados: efF ? Number(efF) : 0,
         suplentes_empregados: suF ? Number(suF) : 0,
-        status: "PLANEJAMENTO",
-      }).select("id").single();
+      };
+      if (isEdit && edit) {
+        const { error } = await supabase.from("cipa_gestoes").update(payload).eq("id", edit.id);
+        if (error) throw error;
+        return edit.id;
+      }
+      const { data, error } = await supabase.from("cipa_gestoes").insert({ ...payload, status: "PLANEJAMENTO" }).select("id").single();
       if (error) throw error;
       return data.id as string;
     },
-    onSuccess: (id) => { toast.success("Gestão criada"); onCreated(id); onClose(); resetar(); },
+    onSuccess: (id) => { toast.success(isEdit ? "Gestão atualizada" : "Gestão criada"); onCreated(id); onClose(); if (!isEdit) resetar(); },
     onError: (e: Error) => toast.error(e.message),
   });
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) { onClose(); resetar(); } }}>
       <DialogContent>
-        <DialogHeader><DialogTitle>Nova gestão da CIPA</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{isEdit ? "Editar gestão da CIPA" : "Nova gestão da CIPA"}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div className="grid grid-cols-3 gap-2">
             <div><Label>Gestão</Label><Input placeholder="2026/2027" value={gestao} onChange={(e) => setGestao(e.target.value)} /></div>
@@ -1033,7 +1055,7 @@ function NovaGestaoDialog({ open, onClose, onCreated }: { open: boolean; onClose
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>Cancelar</Button>
-          <Button onClick={() => mut.mutate()} disabled={mut.isPending}>{mut.isPending ? "Criando…" : "Criar gestão"}</Button>
+          <Button onClick={() => mut.mutate()} disabled={mut.isPending}>{mut.isPending ? "Salvando…" : (isEdit ? "Salvar alterações" : "Criar gestão")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
