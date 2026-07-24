@@ -445,6 +445,7 @@ function DesignadoTab({ gestao, onSaved }: { gestao: Gestao; onSaved: () => void
 function MembrosTab({ gestaoId }: { gestaoId: string }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [editRow, setEditRow] = useState<any>(null);
   const { data } = useQuery({
     queryKey: ["cipa", "membros", gestaoId],
     queryFn: async () => {
@@ -487,7 +488,10 @@ function MembrosTab({ gestaoId }: { gestaoId: string }) {
                   <td className="p-2">{m.papel}{m.votos ? ` · ${m.votos} votos` : ""}</td>
                   <td className="p-2">{m.posse_em ?? "—"}</td>
                   <td className="p-2"><Badge variant={m.status === "ATIVO" ? "default" : "secondary"}>{m.status}</Badge></td>
-                  <td className="p-2 text-right">
+                  <td className="p-2 text-right whitespace-nowrap">
+                    <Button size="icon" variant="ghost" onClick={() => setEditRow(m)} title="Editar">
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
                     <Button size="icon" variant="ghost" onClick={() => { if (confirm("Remover este membro?")) del.mutate(m.id); }}>
                       <Trash2 className="h-3.5 w-3.5 text-rose-400" />
                     </Button>
@@ -504,16 +508,39 @@ function MembrosTab({ gestaoId }: { gestaoId: string }) {
         onClose={() => setOpen(false)}
         onSaved={() => qc.invalidateQueries({ queryKey: ["cipa", "membros", gestaoId] })}
       />
+      <NovoMembroDialog
+        open={!!editRow}
+        edit={editRow}
+        gestaoId={gestaoId}
+        onClose={() => setEditRow(null)}
+        onSaved={() => qc.invalidateQueries({ queryKey: ["cipa", "membros", gestaoId] })}
+      />
     </Card>
   );
 }
 
-function NovoMembroDialog({ open, onClose, gestaoId, onSaved }: { open: boolean; onClose: () => void; gestaoId: string; onSaved: () => void }) {
+function NovoMembroDialog({ open, onClose, gestaoId, onSaved, edit }: { open: boolean; onClose: () => void; gestaoId: string; onSaved: () => void; edit?: any }) {
+  const isEdit = !!edit;
   const [employeeId, setEmployeeId] = useState("");
   const [representacao, setRepresentacao] = useState<"EMPREGADOR" | "EMPREGADOS">("EMPREGADOS");
   const [papel, setPapel] = useState<"EFETIVO" | "SUPLENTE">("EFETIVO");
   const [votos, setVotos] = useState("");
   const [posseEm, setPosseEm] = useState("");
+  const [status, setStatus] = useState<"ATIVO" | "INATIVO">("ATIVO");
+
+  useEffect(() => {
+    if (open && edit) {
+      setEmployeeId(edit.employee_id ?? "");
+      setRepresentacao(edit.representacao);
+      setPapel(edit.papel);
+      setVotos(edit.votos?.toString() ?? "");
+      setPosseEm(edit.posse_em ?? "");
+      setStatus(edit.status ?? "ATIVO");
+    } else if (open && !edit) {
+      setEmployeeId(""); setRepresentacao("EMPREGADOS"); setPapel("EFETIVO");
+      setVotos(""); setPosseEm(""); setStatus("ATIVO");
+    }
+  }, [open, edit]);
 
   const { data: funcs } = useQuery({
     queryKey: ["cipa", "employees-lookup"],
@@ -528,21 +555,27 @@ function NovoMembroDialog({ open, onClose, gestaoId, onSaved }: { open: boolean;
   const mut = useMutation({
     mutationFn: async () => {
       if (!employeeId) throw new Error("Selecione um funcionário");
-      const { error } = await supabase.from("cipa_membros").insert({
+      const payload = {
         gestao_id: gestaoId,
         employee_id: employeeId,
         representacao,
         papel,
         votos: votos ? Number(votos) : null,
         posse_em: posseEm || null,
-      });
-      if (error) throw error;
+        status,
+      };
+      if (isEdit) {
+        const { error } = await supabase.from("cipa_membros").update(payload).eq("id", edit.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("cipa_membros").insert(payload);
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
-      toast.success("Membro adicionado");
+      toast.success(isEdit ? "Membro atualizado" : "Membro adicionado");
       onSaved();
       onClose();
-      setEmployeeId(""); setVotos(""); setPosseEm("");
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -550,7 +583,7 @@ function NovoMembroDialog({ open, onClose, gestaoId, onSaved }: { open: boolean;
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent>
-        <DialogHeader><DialogTitle>Adicionar membro à CIPA</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{isEdit ? "Editar membro da CIPA" : "Adicionar membro à CIPA"}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div>
             <Label>Funcionário</Label>
@@ -586,6 +619,16 @@ function NovoMembroDialog({ open, onClose, gestaoId, onSaved }: { open: boolean;
           <div className="grid grid-cols-2 gap-2">
             <div><Label>Votos (se eleito)</Label><Input type="number" value={votos} onChange={(e) => setVotos(e.target.value)} /></div>
             <div><Label>Posse em</Label><Input type="date" value={posseEm} onChange={(e) => setPosseEm(e.target.value)} /></div>
+          </div>
+          <div>
+            <Label>Status</Label>
+            <Select value={status} onValueChange={(v) => setStatus(v as any)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ATIVO">Ativo</SelectItem>
+                <SelectItem value="INATIVO">Inativo (afastado/renúncia)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
         <DialogFooter>
