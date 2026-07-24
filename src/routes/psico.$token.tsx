@@ -219,6 +219,11 @@ function PsicoPublicPage() {
             </div>
           </div>
           {meta?.ghe.label && <p className="text-xs text-slate-500 mt-3">{meta.ghe.label}</p>}
+          {meta?.campanha.termo_lgpd?.trim() ? (
+            <div className="text-sm text-slate-700 space-y-2 mt-4 whitespace-pre-wrap">
+              {meta.campanha.termo_lgpd}
+            </div>
+          ) : (
           <div className="text-sm text-slate-700 space-y-2 mt-4">
             <p>
               <b className="text-[#4c0519]">Sua resposta é 100% anônima.</b> O sistema não sabe quem você é — não pedimos nome, CPF, e-mail ou
@@ -236,6 +241,7 @@ function PsicoPublicPage() {
               São {totalItens} perguntas rápidas · leva ~8 a 12 minutos. Se fechar a aba, suas respostas ficam salvas nesse celular até você enviar.
             </p>
           </div>
+          )}
           <label
             htmlFor={consentId}
             className="w-full flex items-start gap-3 rounded-lg bg-[#fdf2f8] border border-rose-200 p-3 mt-4 text-left hover:bg-[#fce7ef] transition cursor-pointer select-none"
