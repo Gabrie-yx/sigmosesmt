@@ -253,16 +253,37 @@ export async function gerarPdfRequisicaoDoc(
     ],
     body: (() => {
       const MIN_ROWS = 10;
-      const rows = itens.map((i) => [
-        String(i.item_numero).padStart(2, "0"),
-        i.descricao || "",
-        i.quantidade != null ? String(i.quantidade) : "",
-        i.unidade || "",
-        i.observacao || "",
-      ]);
-      // Modelo homologado FOR-COMP-03 exige 10 linhas fixas, mesmo em branco.
-      for (let n = rows.length; n < MIN_ROWS; n++) {
-        rows.push([String(n + 1).padStart(2, "0"), "", "", "", ""]);
+      // Modelo homologado FOR-COMP-03 exige 10 linhas fixas na tabela de itens,
+      // mesmo quando estão em branco. Preenchemos os slots 1..10 e escoamos
+      // eventuais itens excedentes (>10) na sequência.
+      const byNumero = new Map<number, RcPdfItem>();
+      for (const it of itens) {
+        const n = Number(it.item_numero);
+        if (Number.isFinite(n) && n > 0) byNumero.set(n, it);
+      }
+      const rows: (string | number)[][] = [];
+      for (let n = 1; n <= MIN_ROWS; n++) {
+        const it = byNumero.get(n);
+        rows.push([
+          String(n).padStart(2, "0"),
+          it?.descricao || "",
+          it?.quantidade != null ? String(it.quantidade) : "",
+          it?.unidade || "",
+          it?.observacao || "",
+        ]);
+      }
+      // Itens com número > 10 (edição estendida) entram no fim mantendo o número real.
+      for (const it of itens) {
+        const n = Number(it.item_numero);
+        if (Number.isFinite(n) && n > MIN_ROWS) {
+          rows.push([
+            String(n).padStart(2, "0"),
+            it.descricao || "",
+            it.quantidade != null ? String(it.quantidade) : "",
+            it.unidade || "",
+            it.observacao || "",
+          ]);
+        }
       }
       return rows;
     })(),
