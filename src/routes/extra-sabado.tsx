@@ -508,6 +508,15 @@ function ExtraSabadoMobilePage() {
         convId={convId ?? null}
         onSaved={() => qc.invalidateQueries({ queryKey: ["extra-sabado-marcados", convId] })}
       />
+
+      {/* Prévia do PDF + compartilhamento nativo (WhatsApp, etc.) */}
+      <PDFPreviewDialog
+        open={!!previewDoc}
+        onClose={() => setPreviewDoc(null)}
+        doc={previewDoc}
+        fileName={previewFileName}
+        title="Ficha de hora extra"
+      />
     </div>
   );
 }
