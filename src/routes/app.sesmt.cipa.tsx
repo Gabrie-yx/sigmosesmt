@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -12,7 +12,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, ShieldCheck, Users, CalendarDays, ListChecks, Vote, Loader2 } from "lucide-react";
+import { Plus, ShieldCheck, Users, CalendarDays, ListChecks, Vote, Loader2, Trash2 } from "lucide-react";
+import { dimensionarCipa } from "@/lib/cipa-dimensionamento";
 
 // CIPA — NR-05 (rev. Portaria MTP 4.219/2022) + Lei 14.457/2022 (Emprega + Mulher).
 // MVP: cadastro de gestão/mandato, membros, reuniões, plano anual e calendário eleitoral.
@@ -56,49 +57,8 @@ type Gestao = {
   observacoes: string | null;
 };
 
-/**
- * Dimensionamento NR-05 (Quadro I, resumido).
- * Retorna sugestão de modo (DESIGNADO vs COMISSAO), composição paritária mínima
- * e carga horária de capacitação obrigatória.
- * Base: NR-05 itens 5.6.3/5.6.4 + Quadro I (Portaria MTP 4.219/2022).
- */
-export function dimensionarCipa(gr: number | null, n: number | null) {
-  if (!gr || !n || n <= 0) return null;
-  // Piso de eleição paritária por grau de risco (Quadro I):
-  // GR1/GR2: exige comissão a partir de 51 empregados.
-  // GR3/GR3: comissão a partir de 20 emp; GR4: comissão a partir de 30 emp (20-29 = designado).
-  const piso = gr === 4 ? 30 : gr === 3 ? 20 : gr === 2 ? 51 : 51;
-  if (n < piso) {
-    return {
-      modo: "DESIGNADO" as const,
-      efetivosEmpregador: 0,
-      suplentesEmpregador: 0,
-      efetivosEmpregados: 0,
-      suplentesEmpregados: 0,
-      cargaTreinamento: gr >= 3 ? 20 : 8,
-      nota:
-        n < 20
-          ? `Estabelecimento com menos de 20 empregados: designado obrigatório (NR-05 item 5.6.3).`
-          : `Grau de Risco ${gr} com ${n} empregados: abaixo do Quadro I → designa 1 empregado (NR-05 item 5.6.4). Sem estabilidade do art. 10 ADCT, salvo previsão em ACT/CCT.`,
-    };
-  }
-  // Faixas simplificadas do Quadro I (composição mínima):
-  const faixa =
-    n <= 50 ? { ef: 1, su: 1 } :
-    n <= 100 ? { ef: 3, su: 3 } :
-    n <= 500 ? { ef: 4, su: 4 } :
-    n <= 1000 ? { ef: 6, su: 6 } :
-    { ef: 9, su: 7 };
-  return {
-    modo: "COMISSAO" as const,
-    efetivosEmpregador: faixa.ef,
-    suplentesEmpregador: faixa.su,
-    efetivosEmpregados: faixa.ef,
-    suplentesEmpregados: faixa.su,
-    cargaTreinamento: gr >= 3 ? 20 : 8,
-    nota: `Comissão paritária: ${faixa.ef} efetivos + ${faixa.su} suplentes por bancada. Mandato 1 ano, permitida 1 reeleição. Estabilidade dos eleitos: art. 10, II, "a" ADCT.`,
-  };
-}
+// dimensionarCipa vive em src/lib/cipa-dimensionamento.ts (fora do route file
+// pra não bloquear o code-split do TanStack Router).
 
 function CipaPage() {
   const qc = useQueryClient();
@@ -197,22 +157,22 @@ function CipaPage() {
           </TabsContent>
           {gestaoAtiva.modo === "COMISSAO" ? (
             <TabsContent value="membros" className="mt-4">
-              <MembrosTab gestaoId={gestaoAtiva.id} />
+              <MembrosTab key={gestaoAtiva.id} gestaoId={gestaoAtiva.id} />
             </TabsContent>
           ) : (
             <TabsContent value="designado" className="mt-4">
-              <DesignadoTab gestao={gestaoAtiva} onSaved={() => qc.invalidateQueries({ queryKey: ["cipa", "gestoes"] })} />
+              <DesignadoTab key={gestaoAtiva.id} gestao={gestaoAtiva} onSaved={() => qc.invalidateQueries({ queryKey: ["cipa", "gestoes"] })} />
             </TabsContent>
           )}
           <TabsContent value="reunioes" className="mt-4">
-            <ReunioesTab gestaoId={gestaoAtiva.id} />
+            <ReunioesTab key={gestaoAtiva.id} gestaoId={gestaoAtiva.id} />
           </TabsContent>
           <TabsContent value="plano" className="mt-4">
-            <PlanoTab gestaoId={gestaoAtiva.id} />
+            <PlanoTab key={gestaoAtiva.id} gestaoId={gestaoAtiva.id} />
           </TabsContent>
           {gestaoAtiva.modo === "COMISSAO" && (
             <TabsContent value="eleicao" className="mt-4">
-              <EleicaoTab gestaoId={gestaoAtiva.id} />
+              <EleicaoTab key={gestaoAtiva.id} gestaoId={gestaoAtiva.id} />
             </TabsContent>
           )}
         </Tabs>
@@ -323,6 +283,10 @@ function DesignadoTab({ gestao, onSaved }: { gestao: Gestao; onSaved: () => void
 
   const mut = useMutation({
     mutationFn: async () => {
+      if (!employeeId) throw new Error("Selecione o funcionário designado");
+      if (treinHoras && Number(treinHoras) < cargaMinima) {
+        throw new Error(`Carga horária mínima: ${cargaMinima}h (NR-05 item 5.7)`);
+      }
       const { error } = await supabase.from("cipa_gestoes").update({
         designado_employee_id: employeeId || null,
         designado_termo_data: termoData || null,
@@ -422,6 +386,14 @@ function MembrosTab({ gestaoId }: { gestaoId: string }) {
       return data ?? [];
     },
   });
+  const del = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("cipa_membros").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Membro removido"); qc.invalidateQueries({ queryKey: ["cipa", "membros", gestaoId] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
   return (
     <Card className="p-4">
       <div className="flex items-center justify-between mb-3">
@@ -434,7 +406,7 @@ function MembrosTab({ gestaoId }: { gestaoId: string }) {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="text-xs text-muted-foreground">
-              <tr><th className="text-left p-2">Funcionário</th><th className="text-left p-2">Representação</th><th className="text-left p-2">Papel</th><th className="text-left p-2">Posse</th><th className="text-left p-2">Status</th></tr>
+              <tr><th className="text-left p-2">Funcionário</th><th className="text-left p-2">Representação</th><th className="text-left p-2">Papel</th><th className="text-left p-2">Posse</th><th className="text-left p-2">Status</th><th className="p-2"></th></tr>
             </thead>
             <tbody>
               {(data as any[]).map((m) => (
@@ -444,6 +416,11 @@ function MembrosTab({ gestaoId }: { gestaoId: string }) {
                   <td className="p-2">{m.papel}{m.votos ? ` · ${m.votos} votos` : ""}</td>
                   <td className="p-2">{m.posse_em ?? "—"}</td>
                   <td className="p-2"><Badge variant={m.status === "ATIVO" ? "default" : "secondary"}>{m.status}</Badge></td>
+                  <td className="p-2 text-right">
+                    <Button size="icon" variant="ghost" onClick={() => { if (confirm("Remover este membro?")) del.mutate(m.id); }}>
+                      <Trash2 className="h-3.5 w-3.5 text-rose-400" />
+                    </Button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -561,6 +538,14 @@ function ReunioesTab({ gestaoId }: { gestaoId: string }) {
       return data ?? [];
     },
   });
+  const del = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("cipa_reunioes").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Reunião removida"); qc.invalidateQueries({ queryKey: ["cipa", "reunioes", gestaoId] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
   return (
     <Card className="p-4">
       <div className="flex items-center justify-between mb-3">
@@ -581,7 +566,12 @@ function ReunioesTab({ gestaoId }: { gestaoId: string }) {
                   <div className="text-sm font-semibold">{r.data} · {r.tipo}</div>
                   <div className="text-xs text-muted-foreground">{r.local ?? "—"} {r.hora ? `· ${r.hora}` : ""}</div>
                 </div>
-                <Badge variant={r.status === "REALIZADA" ? "default" : "secondary"}>{r.status}</Badge>
+                <div className="flex items-center gap-1">
+                  <Badge variant={r.status === "REALIZADA" ? "default" : "secondary"}>{r.status}</Badge>
+                  <Button size="icon" variant="ghost" onClick={() => { if (confirm("Remover esta reunião?")) del.mutate(r.id); }}>
+                    <Trash2 className="h-3.5 w-3.5 text-rose-400" />
+                  </Button>
+                </div>
               </div>
               {r.pauta && <p className="text-xs mt-2 text-muted-foreground whitespace-pre-wrap"><b>Pauta:</b> {r.pauta}</p>}
             </li>
@@ -664,6 +654,14 @@ function PlanoTab({ gestaoId }: { gestaoId: string }) {
       return data ?? [];
     },
   });
+  const del = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("cipa_plano_anual").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Ação removida"); qc.invalidateQueries({ queryKey: ["cipa", "plano", gestaoId] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
   return (
     <Card className="p-4">
       <div className="flex items-center justify-between mb-3">
@@ -681,7 +679,12 @@ function PlanoTab({ gestaoId }: { gestaoId: string }) {
             <li key={p.id} className="border border-border rounded p-3">
               <div className="flex items-center justify-between gap-2">
                 <div className="text-sm font-semibold">{p.acao}</div>
-                <Badge variant="secondary">{p.status}</Badge>
+                <div className="flex items-center gap-1">
+                  <Badge variant="secondary">{p.status}</Badge>
+                  <Button size="icon" variant="ghost" onClick={() => { if (confirm("Remover esta ação?")) del.mutate(p.id); }}>
+                    <Trash2 className="h-3.5 w-3.5 text-rose-400" />
+                  </Button>
+                </div>
               </div>
               <div className="text-xs text-muted-foreground mt-1 flex flex-wrap gap-x-3">
                 <span>Eixo: {p.eixo}</span>
@@ -855,6 +858,20 @@ function NovaGestaoDialog({ open, onClose, onCreated }: { open: boolean; onClose
     [gr, num],
   );
 
+  function resetar() {
+    setGestao(""); setInicio(""); setFim(""); setGrupo(""); setNum("");
+    setGr(""); setModo("COMISSAO");
+    setEfE(""); setSuE(""); setEfF(""); setSuF("");
+  }
+
+  // Auto-alinhamento: quando a sugestão detectar DESIGNADO, força o modo
+  // (evita criar comissão paritária "zerada" em estabelecimento < piso).
+  useEffect(() => {
+    if (sugestao?.modo === "DESIGNADO" && modo === "COMISSAO") {
+      setModo("DESIGNADO");
+    }
+  }, [sugestao?.modo, modo]);
+
   function aplicarSugestao() {
     if (!sugestao) return;
     setModo(sugestao.modo);
@@ -867,6 +884,10 @@ function NovaGestaoDialog({ open, onClose, onCreated }: { open: boolean; onClose
   const mut = useMutation({
     mutationFn: async () => {
       if (!gestao || !inicio || !fim) throw new Error("Preencha gestão, início e fim");
+      if (new Date(fim) <= new Date(inicio)) throw new Error("A data fim deve ser posterior à data início");
+      if (modo === "COMISSAO" && (Number(efF || 0) < 1 || Number(efE || 0) < 1)) {
+        throw new Error("Comissão paritária exige ao menos 1 efetivo por bancada. Use 'Aplicar sugestão' ou mude para Designado.");
+      }
       const { data, error } = await supabase.from("cipa_gestoes").insert({
         gestao, data_inicio: inicio, data_fim: fim,
         modo,
@@ -882,12 +903,12 @@ function NovaGestaoDialog({ open, onClose, onCreated }: { open: boolean; onClose
       if (error) throw error;
       return data.id as string;
     },
-    onSuccess: (id) => { toast.success("Gestão criada"); onCreated(id); onClose(); },
+    onSuccess: (id) => { toast.success("Gestão criada"); onCreated(id); onClose(); resetar(); },
     onError: (e: Error) => toast.error(e.message),
   });
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v) { onClose(); resetar(); } }}>
       <DialogContent>
         <DialogHeader><DialogTitle>Nova gestão da CIPA</DialogTitle></DialogHeader>
         <div className="space-y-3">
