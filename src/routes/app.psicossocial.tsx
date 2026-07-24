@@ -487,16 +487,51 @@ function CampanhasTab() {
             >
               <Copy className="h-4 w-4 mr-1" /> Copiar TODOS os links
             </Button>
+            <Button variant="outline" className="w-full" onClick={baixarFolhaQRs}>
+              <Download className="h-4 w-4 mr-1" /> Baixar folha de QR Codes (PDF)
+            </Button>
             <div className="space-y-1">
               {tokensGerados.map((t, i) => (
                 <div key={i} className="flex items-start gap-2 p-2 rounded bg-rose-950/30 border border-rose-500/10 text-xs">
                   <span className="text-rose-100/40 w-8 shrink-0 pt-0.5">#{i + 1}</span>
                   <code className="flex-1 min-w-0 break-all text-rose-100/80 leading-snug">{t.url}</code>
+                  <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0 text-emerald-300 hover:bg-emerald-500/20" title="Compartilhar no WhatsApp" onClick={() => shareWhatsApp(t.url)}>
+                    <MessageCircle className="h-3 w-3" />
+                  </Button>
+                  <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0 text-sky-300 hover:bg-sky-500/20" title="Mostrar QR Code" onClick={() => setQrLink({ url: t.url, idx: i + 1 })}>
+                    <QrCode className="h-3 w-3" />
+                  </Button>
                   <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => { navigator.clipboard.writeText(t.url); toast.success("Copiado"); }}>
                     <Copy className="h-3 w-3" />
                   </Button>
                 </div>
               ))}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog QR de um link */}
+      <Dialog open={!!qrLink} onOpenChange={(o) => !o && setQrLink(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>QR Code — Link #{qrLink?.idx}</DialogTitle></DialogHeader>
+          <div className="flex flex-col items-center gap-3">
+            {qrDataUrl ? (
+              <img src={qrDataUrl} alt="QR Code" className="w-64 h-64 bg-white p-2 rounded" />
+            ) : (
+              <div className="w-64 h-64 flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>
+            )}
+            <code className="text-[10px] break-all text-center text-rose-100/60">{qrLink?.url}</code>
+            <div className="flex gap-2 w-full">
+              <Button variant="outline" className="flex-1" onClick={() => { if (qrLink) shareWhatsApp(qrLink.url); }}>
+                <MessageCircle className="h-4 w-4 mr-1" /> WhatsApp
+              </Button>
+              <Button variant="outline" className="flex-1" onClick={() => {
+                const a = document.createElement("a");
+                a.href = qrDataUrl; a.download = `qr-psico-${qrLink?.idx}.png`; a.click();
+              }}>
+                <Download className="h-4 w-4 mr-1" /> PNG
+              </Button>
             </div>
           </div>
         </DialogContent>
