@@ -19,8 +19,9 @@ import {
   Building2, UserPlus, Hospital, Plus, MoreVertical, Pencil, Trash2, ArrowRight,
   ClipboardList, FileText, Loader2, ArrowLeft, Clock, Activity,
 } from "lucide-react";
-import { Sparkles } from "lucide-react";
+import { Sparkles, PlayCircle, LogIn, ClipboardCheck, Timer } from "lucide-react";
 import { AsoRapidoDialog } from "@/components/aso/aso-rapido-dialog";
+import { AnamneseDialog } from "@/components/aso/anamnese-dialog";
 
 // Módulo central de ASO (NR-07 / PCMSO)
 // Painel unificado: KPIs semafóricos + Convocações + Registrados + Coordenador PCMSO + Clínicas + Relatório Analítico
@@ -77,6 +78,7 @@ function AsoHubPage() {
       <Tabs defaultValue="painel">
         <TabsList className="flex-wrap h-auto bg-slate-900/60 border border-white/10">
           <TabsTrigger value="painel"><Activity className="h-4 w-4 mr-1.5" /> Painel</TabsTrigger>
+          <TabsTrigger value="atendimento"><Timer className="h-4 w-4 mr-1.5" /> Atendimento</TabsTrigger>
           <TabsTrigger value="registrados"><ClipboardList className="h-4 w-4 mr-1.5" /> Registrados</TabsTrigger>
           <TabsTrigger value="coordenador"><UserPlus className="h-4 w-4 mr-1.5" /> Coordenador PCMSO</TabsTrigger>
           <TabsTrigger value="clinicas"><Hospital className="h-4 w-4 mr-1.5" /> Clínicas</TabsTrigger>
@@ -84,6 +86,7 @@ function AsoHubPage() {
         </TabsList>
 
         <TabsContent value="painel" className="pt-4 space-y-4"><PainelTab /></TabsContent>
+        <TabsContent value="atendimento" className="pt-4"><AtendimentoTab /></TabsContent>
         <TabsContent value="registrados" className="pt-4"><RegistradosTab /></TabsContent>
         <TabsContent value="coordenador" className="pt-4"><CoordenadorTab /></TabsContent>
         <TabsContent value="clinicas" className="pt-4"><ClinicasTab /></TabsContent>
