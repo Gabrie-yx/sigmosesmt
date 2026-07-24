@@ -251,13 +251,21 @@ export async function gerarPdfRequisicaoDoc(
         "OBSERVAÇÃO",
       ],
     ],
-    body: itens.map((i) => [
-      String(i.item_numero).padStart(2, "0"),
-      i.descricao || "",
-      i.quantidade != null ? String(i.quantidade) : "",
-      i.unidade || "",
-      i.observacao || "",
-    ]),
+    body: (() => {
+      const MIN_ROWS = 10;
+      const rows = itens.map((i) => [
+        String(i.item_numero).padStart(2, "0"),
+        i.descricao || "",
+        i.quantidade != null ? String(i.quantidade) : "",
+        i.unidade || "",
+        i.observacao || "",
+      ]);
+      // Modelo homologado FOR-COMP-03 exige 10 linhas fixas, mesmo em branco.
+      for (let n = rows.length; n < MIN_ROWS; n++) {
+        rows.push([String(n + 1).padStart(2, "0"), "", "", "", ""]);
+      }
+      return rows;
+    })(),
   });
 
   // Assinaturas
