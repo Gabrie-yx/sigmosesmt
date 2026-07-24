@@ -2282,6 +2282,483 @@ export type Database = {
           },
         ]
       }
+      cipa_calendario_eleicao: {
+        Row: {
+          created_at: string
+          data_fim: string | null
+          data_inicio: string
+          documento_url: string | null
+          etapa: string
+          gestao_id: string
+          id: string
+          observacoes: string | null
+          responsavel: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data_fim?: string | null
+          data_inicio: string
+          documento_url?: string | null
+          etapa: string
+          gestao_id: string
+          id?: string
+          observacoes?: string | null
+          responsavel?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string
+          documento_url?: string | null
+          etapa?: string
+          gestao_id?: string
+          id?: string
+          observacoes?: string | null
+          responsavel?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cipa_calendario_eleicao_gestao_id_fkey"
+            columns: ["gestao_id"]
+            isOneToOne: false
+            referencedRelation: "cipa_gestoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cipa_gestoes: {
+        Row: {
+          cnae: string | null
+          company_id: string | null
+          created_at: string
+          created_by: string | null
+          data_fim: string
+          data_inicio: string
+          efetivos_empregador: number | null
+          efetivos_empregados: number | null
+          gestao: string
+          grupo_nr05: string | null
+          id: string
+          num_empregados: number | null
+          observacoes: string | null
+          presidente_id: string | null
+          secretario_id: string | null
+          status: string
+          suplentes_empregador: number | null
+          suplentes_empregados: number | null
+          updated_at: string
+          vice_presidente_id: string | null
+        }
+        Insert: {
+          cnae?: string | null
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_fim: string
+          data_inicio: string
+          efetivos_empregador?: number | null
+          efetivos_empregados?: number | null
+          gestao: string
+          grupo_nr05?: string | null
+          id?: string
+          num_empregados?: number | null
+          observacoes?: string | null
+          presidente_id?: string | null
+          secretario_id?: string | null
+          status?: string
+          suplentes_empregador?: number | null
+          suplentes_empregados?: number | null
+          updated_at?: string
+          vice_presidente_id?: string | null
+        }
+        Update: {
+          cnae?: string | null
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_fim?: string
+          data_inicio?: string
+          efetivos_empregador?: number | null
+          efetivos_empregados?: number | null
+          gestao?: string
+          grupo_nr05?: string | null
+          id?: string
+          num_empregados?: number | null
+          observacoes?: string | null
+          presidente_id?: string | null
+          secretario_id?: string | null
+          status?: string
+          suplentes_empregador?: number | null
+          suplentes_empregados?: number | null
+          updated_at?: string
+          vice_presidente_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cipa_gestoes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cipa_gestoes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "v_contratada_dossie_status"
+            referencedColumns: ["company_id"]
+          },
+          {
+            foreignKeyName: "cipa_gestoes_presidente_id_fkey"
+            columns: ["presidente_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cipa_gestoes_presidente_id_fkey"
+            columns: ["presidente_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligados_sem_pacote"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "cipa_gestoes_presidente_id_fkey"
+            columns: ["presidente_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "cipa_gestoes_presidente_id_fkey"
+            columns: ["presidente_id"]
+            isOneToOne: false
+            referencedRelation: "v_termos_consentimento_status"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "cipa_gestoes_presidente_id_fkey"
+            columns: ["presidente_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "cipa_gestoes_secretario_id_fkey"
+            columns: ["secretario_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cipa_gestoes_secretario_id_fkey"
+            columns: ["secretario_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligados_sem_pacote"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "cipa_gestoes_secretario_id_fkey"
+            columns: ["secretario_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "cipa_gestoes_secretario_id_fkey"
+            columns: ["secretario_id"]
+            isOneToOne: false
+            referencedRelation: "v_termos_consentimento_status"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "cipa_gestoes_secretario_id_fkey"
+            columns: ["secretario_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "cipa_gestoes_vice_presidente_id_fkey"
+            columns: ["vice_presidente_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cipa_gestoes_vice_presidente_id_fkey"
+            columns: ["vice_presidente_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligados_sem_pacote"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "cipa_gestoes_vice_presidente_id_fkey"
+            columns: ["vice_presidente_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "cipa_gestoes_vice_presidente_id_fkey"
+            columns: ["vice_presidente_id"]
+            isOneToOne: false
+            referencedRelation: "v_termos_consentimento_status"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "cipa_gestoes_vice_presidente_id_fkey"
+            columns: ["vice_presidente_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
+          },
+        ]
+      }
+      cipa_membros: {
+        Row: {
+          created_at: string
+          employee_id: string
+          gestao_id: string
+          id: string
+          observacoes: string | null
+          papel: string
+          posse_em: string | null
+          representacao: string
+          status: string
+          updated_at: string
+          votos: number | null
+        }
+        Insert: {
+          created_at?: string
+          employee_id: string
+          gestao_id: string
+          id?: string
+          observacoes?: string | null
+          papel: string
+          posse_em?: string | null
+          representacao: string
+          status?: string
+          updated_at?: string
+          votos?: number | null
+        }
+        Update: {
+          created_at?: string
+          employee_id?: string
+          gestao_id?: string
+          id?: string
+          observacoes?: string | null
+          papel?: string
+          posse_em?: string | null
+          representacao?: string
+          status?: string
+          updated_at?: string
+          votos?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cipa_membros_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cipa_membros_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligados_sem_pacote"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "cipa_membros_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "cipa_membros_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_termos_consentimento_status"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "cipa_membros_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "cipa_membros_gestao_id_fkey"
+            columns: ["gestao_id"]
+            isOneToOne: false
+            referencedRelation: "cipa_gestoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cipa_plano_anual: {
+        Row: {
+          acao: string
+          base_normativa: string | null
+          created_at: string
+          eixo: string
+          evidencia_url: string | null
+          gestao_id: string
+          id: string
+          observacoes: string | null
+          ordem: number
+          prazo: string | null
+          responsavel_id: string | null
+          responsavel_nome: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          acao: string
+          base_normativa?: string | null
+          created_at?: string
+          eixo?: string
+          evidencia_url?: string | null
+          gestao_id: string
+          id?: string
+          observacoes?: string | null
+          ordem?: number
+          prazo?: string | null
+          responsavel_id?: string | null
+          responsavel_nome?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          acao?: string
+          base_normativa?: string | null
+          created_at?: string
+          eixo?: string
+          evidencia_url?: string | null
+          gestao_id?: string
+          id?: string
+          observacoes?: string | null
+          ordem?: number
+          prazo?: string | null
+          responsavel_id?: string | null
+          responsavel_nome?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cipa_plano_anual_gestao_id_fkey"
+            columns: ["gestao_id"]
+            isOneToOne: false
+            referencedRelation: "cipa_gestoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cipa_plano_anual_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cipa_plano_anual_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligados_sem_pacote"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "cipa_plano_anual_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "cipa_plano_anual_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "v_termos_consentimento_status"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "cipa_plano_anual_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
+          },
+        ]
+      }
+      cipa_reunioes: {
+        Row: {
+          ata_texto: string | null
+          ata_url: string | null
+          created_at: string
+          created_by: string | null
+          data: string
+          gestao_id: string
+          hora: string | null
+          id: string
+          local: string | null
+          pauta: string | null
+          presentes: Json
+          status: string
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          ata_texto?: string | null
+          ata_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          data: string
+          gestao_id: string
+          hora?: string | null
+          id?: string
+          local?: string | null
+          pauta?: string | null
+          presentes?: Json
+          status?: string
+          tipo?: string
+          updated_at?: string
+        }
+        Update: {
+          ata_texto?: string | null
+          ata_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          data?: string
+          gestao_id?: string
+          hora?: string | null
+          id?: string
+          local?: string | null
+          pauta?: string | null
+          presentes?: Json
+          status?: string
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cipa_reunioes_gestao_id_fkey"
+            columns: ["gestao_id"]
+            isOneToOne: false
+            referencedRelation: "cipa_gestoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           bairro: string | null
