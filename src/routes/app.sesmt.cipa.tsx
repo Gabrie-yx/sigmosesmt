@@ -12,7 +12,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, ShieldCheck, Users, CalendarDays, ListChecks, Vote, Loader2, Trash2 } from "lucide-react";
+import { Plus, ShieldCheck, Users, CalendarDays, ListChecks, Vote, Loader2, Trash2, Pencil, Archive, MoreVertical } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { dimensionarCipa } from "@/lib/cipa-dimensionamento";
 
 // CIPA — NR-05 (rev. Portaria MTP 4.219/2022) + Lei 14.457/2022 (Emprega + Mulher).
@@ -64,6 +65,7 @@ function CipaPage() {
   const qc = useQueryClient();
   const [gestaoId, setGestaoId] = useState<string | null>(null);
   const [novaGestaoOpen, setNovaGestaoOpen] = useState(false);
+  const [editGestao, setEditGestao] = useState<Gestao | null>(null);
 
   const { data: gestoes, isLoading } = useQuery({
     queryKey: ["cipa", "gestoes"],
@@ -110,6 +112,14 @@ function CipaPage() {
               ))}
             </SelectContent>
           </Select>
+          {gestaoAtiva && (
+            <GestaoActions
+              gestao={gestaoAtiva}
+              onEdit={() => setEditGestao(gestaoAtiva)}
+              onChanged={() => qc.invalidateQueries({ queryKey: ["cipa", "gestoes"] })}
+              onDeleted={() => { setGestaoId(null); qc.invalidateQueries({ queryKey: ["cipa", "gestoes"] }); }}
+            />
+          )}
           <Button onClick={() => setNovaGestaoOpen(true)} className="gap-1">
             <Plus className="h-4 w-4" /> Nova gestão
           </Button>
@@ -186,7 +196,68 @@ function CipaPage() {
           qc.invalidateQueries({ queryKey: ["cipa", "gestoes"] });
         }}
       />
+      <NovaGestaoDialog
+        open={!!editGestao}
+        edit={editGestao}
+        onClose={() => setEditGestao(null)}
+        onCreated={() => { setEditGestao(null); qc.invalidateQueries({ queryKey: ["cipa", "gestoes"] }); }}
+      />
     </div>
+  );
+}
+
+/* -------------------- AÇÕES DA GESTÃO -------------------- */
+function GestaoActions({ gestao, onEdit, onChanged, onDeleted }: {
+  gestao: Gestao;
+  onEdit: () => void;
+  onChanged: () => void;
+  onDeleted: () => void;
+}) {
+  const setStatus = useMutation({
+    mutationFn: async (status: Gestao["status"]) => {
+      const { error } = await supabase.from("cipa_gestoes").update({ status }).eq("id", gestao.id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Status atualizado"); onChanged(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const del = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("cipa_gestoes").delete().eq("id", gestao.id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Gestão excluída"); onDeleted(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="icon" title="Ações da gestão">
+          <MoreVertical className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel>Gestão {gestao.gestao}</DropdownMenuLabel>
+        <DropdownMenuItem onClick={onEdit}><Pencil className="h-4 w-4 mr-2" /> Editar dados</DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel className="text-[10px] uppercase text-muted-foreground">Alterar status</DropdownMenuLabel>
+        {(["PLANEJAMENTO","ELEICAO","ATIVA","ENCERRADA"] as const).map((s) => (
+          <DropdownMenuItem key={s} disabled={gestao.status === s} onClick={() => setStatus.mutate(s)}>
+            {s === "ENCERRADA" ? <Archive className="h-4 w-4 mr-2" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
+            {statusLabel(s)}
+          </DropdownMenuItem>
+        ))}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className="text-rose-400"
+          onClick={() => {
+            if (confirm(`Excluir a gestão ${gestao.gestao}?\nIsso apaga TODOS os membros, reuniões, plano e cronograma vinculados.`)) del.mutate();
+          }}
+        >
+          <Trash2 className="h-4 w-4 mr-2" /> Excluir gestão
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -374,6 +445,7 @@ function DesignadoTab({ gestao, onSaved }: { gestao: Gestao; onSaved: () => void
 function MembrosTab({ gestaoId }: { gestaoId: string }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [editRow, setEditRow] = useState<any>(null);
   const { data } = useQuery({
     queryKey: ["cipa", "membros", gestaoId],
     queryFn: async () => {
@@ -416,7 +488,10 @@ function MembrosTab({ gestaoId }: { gestaoId: string }) {
                   <td className="p-2">{m.papel}{m.votos ? ` · ${m.votos} votos` : ""}</td>
                   <td className="p-2">{m.posse_em ?? "—"}</td>
                   <td className="p-2"><Badge variant={m.status === "ATIVO" ? "default" : "secondary"}>{m.status}</Badge></td>
-                  <td className="p-2 text-right">
+                  <td className="p-2 text-right whitespace-nowrap">
+                    <Button size="icon" variant="ghost" onClick={() => setEditRow(m)} title="Editar">
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
                     <Button size="icon" variant="ghost" onClick={() => { if (confirm("Remover este membro?")) del.mutate(m.id); }}>
                       <Trash2 className="h-3.5 w-3.5 text-rose-400" />
                     </Button>
@@ -433,16 +508,39 @@ function MembrosTab({ gestaoId }: { gestaoId: string }) {
         onClose={() => setOpen(false)}
         onSaved={() => qc.invalidateQueries({ queryKey: ["cipa", "membros", gestaoId] })}
       />
+      <NovoMembroDialog
+        open={!!editRow}
+        edit={editRow}
+        gestaoId={gestaoId}
+        onClose={() => setEditRow(null)}
+        onSaved={() => qc.invalidateQueries({ queryKey: ["cipa", "membros", gestaoId] })}
+      />
     </Card>
   );
 }
 
-function NovoMembroDialog({ open, onClose, gestaoId, onSaved }: { open: boolean; onClose: () => void; gestaoId: string; onSaved: () => void }) {
+function NovoMembroDialog({ open, onClose, gestaoId, onSaved, edit }: { open: boolean; onClose: () => void; gestaoId: string; onSaved: () => void; edit?: any }) {
+  const isEdit = !!edit;
   const [employeeId, setEmployeeId] = useState("");
   const [representacao, setRepresentacao] = useState<"EMPREGADOR" | "EMPREGADOS">("EMPREGADOS");
   const [papel, setPapel] = useState<"EFETIVO" | "SUPLENTE">("EFETIVO");
   const [votos, setVotos] = useState("");
   const [posseEm, setPosseEm] = useState("");
+  const [status, setStatus] = useState<"ATIVO" | "INATIVO">("ATIVO");
+
+  useEffect(() => {
+    if (open && edit) {
+      setEmployeeId(edit.employee_id ?? "");
+      setRepresentacao(edit.representacao);
+      setPapel(edit.papel);
+      setVotos(edit.votos?.toString() ?? "");
+      setPosseEm(edit.posse_em ?? "");
+      setStatus(edit.status ?? "ATIVO");
+    } else if (open && !edit) {
+      setEmployeeId(""); setRepresentacao("EMPREGADOS"); setPapel("EFETIVO");
+      setVotos(""); setPosseEm(""); setStatus("ATIVO");
+    }
+  }, [open, edit]);
 
   const { data: funcs } = useQuery({
     queryKey: ["cipa", "employees-lookup"],
@@ -457,21 +555,27 @@ function NovoMembroDialog({ open, onClose, gestaoId, onSaved }: { open: boolean;
   const mut = useMutation({
     mutationFn: async () => {
       if (!employeeId) throw new Error("Selecione um funcionário");
-      const { error } = await supabase.from("cipa_membros").insert({
+      const payload = {
         gestao_id: gestaoId,
         employee_id: employeeId,
         representacao,
         papel,
         votos: votos ? Number(votos) : null,
         posse_em: posseEm || null,
-      });
-      if (error) throw error;
+        status,
+      };
+      if (isEdit) {
+        const { error } = await supabase.from("cipa_membros").update(payload).eq("id", edit.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("cipa_membros").insert(payload);
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
-      toast.success("Membro adicionado");
+      toast.success(isEdit ? "Membro atualizado" : "Membro adicionado");
       onSaved();
       onClose();
-      setEmployeeId(""); setVotos(""); setPosseEm("");
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -479,7 +583,7 @@ function NovoMembroDialog({ open, onClose, gestaoId, onSaved }: { open: boolean;
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent>
-        <DialogHeader><DialogTitle>Adicionar membro à CIPA</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{isEdit ? "Editar membro da CIPA" : "Adicionar membro à CIPA"}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div>
             <Label>Funcionário</Label>
@@ -516,6 +620,16 @@ function NovoMembroDialog({ open, onClose, gestaoId, onSaved }: { open: boolean;
             <div><Label>Votos (se eleito)</Label><Input type="number" value={votos} onChange={(e) => setVotos(e.target.value)} /></div>
             <div><Label>Posse em</Label><Input type="date" value={posseEm} onChange={(e) => setPosseEm(e.target.value)} /></div>
           </div>
+          <div>
+            <Label>Status</Label>
+            <Select value={status} onValueChange={(v) => setStatus(v as any)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ATIVO">Ativo</SelectItem>
+                <SelectItem value="INATIVO">Inativo (afastado/renúncia)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>Cancelar</Button>
@@ -530,6 +644,7 @@ function NovoMembroDialog({ open, onClose, gestaoId, onSaved }: { open: boolean;
 function ReunioesTab({ gestaoId }: { gestaoId: string }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [editRow, setEditRow] = useState<any>(null);
   const { data } = useQuery({
     queryKey: ["cipa", "reunioes", gestaoId],
     queryFn: async () => {
@@ -568,12 +683,17 @@ function ReunioesTab({ gestaoId }: { gestaoId: string }) {
                 </div>
                 <div className="flex items-center gap-1">
                   <Badge variant={r.status === "REALIZADA" ? "default" : "secondary"}>{r.status}</Badge>
+                  <Button size="icon" variant="ghost" onClick={() => setEditRow(r)} title="Editar">
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
                   <Button size="icon" variant="ghost" onClick={() => { if (confirm("Remover esta reunião?")) del.mutate(r.id); }}>
                     <Trash2 className="h-3.5 w-3.5 text-rose-400" />
                   </Button>
                 </div>
               </div>
               {r.pauta && <p className="text-xs mt-2 text-muted-foreground whitespace-pre-wrap"><b>Pauta:</b> {r.pauta}</p>}
+              {r.ata_texto && <p className="text-xs mt-2 whitespace-pre-wrap"><b>Ata:</b> {r.ata_texto}</p>}
+              {r.ata_url && <a href={r.ata_url} target="_blank" rel="noreferrer" className="text-xs text-rose-400 underline">Ata (PDF) →</a>}
             </li>
           ))}
         </ul>
@@ -584,33 +704,63 @@ function ReunioesTab({ gestaoId }: { gestaoId: string }) {
         onClose={() => setOpen(false)}
         onSaved={() => qc.invalidateQueries({ queryKey: ["cipa", "reunioes", gestaoId] })}
       />
+      <NovaReuniaoDialog
+        open={!!editRow}
+        edit={editRow}
+        gestaoId={gestaoId}
+        onClose={() => setEditRow(null)}
+        onSaved={() => qc.invalidateQueries({ queryKey: ["cipa", "reunioes", gestaoId] })}
+      />
     </Card>
   );
 }
 
-function NovaReuniaoDialog({ open, onClose, gestaoId, onSaved }: { open: boolean; onClose: () => void; gestaoId: string; onSaved: () => void }) {
+function NovaReuniaoDialog({ open, onClose, gestaoId, onSaved, edit }: { open: boolean; onClose: () => void; gestaoId: string; onSaved: () => void; edit?: any }) {
+  const isEdit = !!edit;
   const [tipo, setTipo] = useState("ORDINARIA");
   const [data, setData] = useState("");
   const [hora, setHora] = useState("");
   const [local, setLocal] = useState("");
   const [pauta, setPauta] = useState("");
+  const [status, setStatus] = useState("AGENDADA");
+  const [ataTexto, setAtaTexto] = useState("");
+  const [ataUrl, setAtaUrl] = useState("");
+
+  useEffect(() => {
+    if (open && edit) {
+      setTipo(edit.tipo ?? "ORDINARIA");
+      setData(edit.data ?? "");
+      setHora(edit.hora ?? "");
+      setLocal(edit.local ?? "");
+      setPauta(edit.pauta ?? "");
+      setStatus(edit.status ?? "AGENDADA");
+      setAtaTexto(edit.ata_texto ?? "");
+      setAtaUrl(edit.ata_url ?? "");
+    } else if (open && !edit) {
+      setTipo("ORDINARIA"); setData(""); setHora(""); setLocal(""); setPauta("");
+      setStatus("AGENDADA"); setAtaTexto(""); setAtaUrl("");
+    }
+  }, [open, edit]);
+
   const mut = useMutation({
     mutationFn: async () => {
       if (!data) throw new Error("Informe a data");
-      const { error } = await supabase.from("cipa_reunioes").insert({ gestao_id: gestaoId, tipo, data, hora: hora || null, local: local || null, pauta: pauta || null });
-      if (error) throw error;
+      const payload = { gestao_id: gestaoId, tipo, data, hora: hora || null, local: local || null, pauta: pauta || null, status, ata_texto: ataTexto || null, ata_url: ataUrl || null };
+      if (isEdit) {
+        const { error } = await supabase.from("cipa_reunioes").update(payload).eq("id", edit.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("cipa_reunioes").insert(payload);
+        if (error) throw error;
+      }
     },
-    onSuccess: () => {
-      toast.success("Reunião agendada");
-      onSaved(); onClose();
-      setData(""); setHora(""); setLocal(""); setPauta("");
-    },
+    onSuccess: () => { toast.success(isEdit ? "Reunião atualizada" : "Reunião agendada"); onSaved(); onClose(); },
     onError: (e: Error) => toast.error(e.message),
   });
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent>
-        <DialogHeader><DialogTitle>Agendar reunião da CIPA</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{isEdit ? "Editar reunião" : "Agendar reunião da CIPA"}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-2">
             <div>
@@ -632,6 +782,22 @@ function NovaReuniaoDialog({ open, onClose, gestaoId, onSaved }: { open: boolean
             <div><Label>Local</Label><Input value={local} onChange={(e) => setLocal(e.target.value)} placeholder="Sala/local" /></div>
           </div>
           <div><Label>Pauta</Label><Textarea rows={4} value={pauta} onChange={(e) => setPauta(e.target.value)} /></div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label>Status</Label>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="AGENDADA">Agendada</SelectItem>
+                  <SelectItem value="REALIZADA">Realizada</SelectItem>
+                  <SelectItem value="CANCELADA">Cancelada</SelectItem>
+                  <SelectItem value="ADIADA">Adiada</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div><Label>URL da ata (PDF)</Label><Input value={ataUrl} onChange={(e) => setAtaUrl(e.target.value)} placeholder="https://..." /></div>
+          </div>
+          <div><Label>Ata (texto)</Label><Textarea rows={4} value={ataTexto} onChange={(e) => setAtaTexto(e.target.value)} placeholder="Deliberações, presentes, encaminhamentos…" /></div>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>Cancelar</Button>
@@ -646,6 +812,7 @@ function NovaReuniaoDialog({ open, onClose, gestaoId, onSaved }: { open: boolean
 function PlanoTab({ gestaoId }: { gestaoId: string }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [editRow, setEditRow] = useState<any>(null);
   const { data } = useQuery({
     queryKey: ["cipa", "plano", gestaoId],
     queryFn: async () => {
@@ -681,6 +848,9 @@ function PlanoTab({ gestaoId }: { gestaoId: string }) {
                 <div className="text-sm font-semibold">{p.acao}</div>
                 <div className="flex items-center gap-1">
                   <Badge variant="secondary">{p.status}</Badge>
+                  <Button size="icon" variant="ghost" onClick={() => setEditRow(p)} title="Editar">
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
                   <Button size="icon" variant="ghost" onClick={() => { if (confirm("Remover esta ação?")) del.mutate(p.id); }}>
                     <Trash2 className="h-3.5 w-3.5 text-rose-400" />
                   </Button>
@@ -692,6 +862,8 @@ function PlanoTab({ gestaoId }: { gestaoId: string }) {
                 {p.prazo && <span>Prazo: {p.prazo}</span>}
                 {p.base_normativa && <span>Base: {p.base_normativa}</span>}
               </div>
+              {p.observacoes && <p className="text-xs text-muted-foreground mt-1 whitespace-pre-wrap">{p.observacoes}</p>}
+              {p.evidencia_url && <a href={p.evidencia_url} target="_blank" rel="noreferrer" className="text-xs text-rose-400 underline">Evidência →</a>}
             </li>
           ))}
         </ul>
@@ -702,29 +874,63 @@ function PlanoTab({ gestaoId }: { gestaoId: string }) {
         onClose={() => setOpen(false)}
         onSaved={() => qc.invalidateQueries({ queryKey: ["cipa", "plano", gestaoId] })}
       />
+      <NovoPlanoDialog
+        open={!!editRow}
+        edit={editRow}
+        gestaoId={gestaoId}
+        onClose={() => setEditRow(null)}
+        onSaved={() => qc.invalidateQueries({ queryKey: ["cipa", "plano", gestaoId] })}
+      />
     </Card>
   );
 }
 
-function NovoPlanoDialog({ open, onClose, gestaoId, onSaved }: { open: boolean; onClose: () => void; gestaoId: string; onSaved: () => void }) {
+function NovoPlanoDialog({ open, onClose, gestaoId, onSaved, edit }: { open: boolean; onClose: () => void; gestaoId: string; onSaved: () => void; edit?: any }) {
+  const isEdit = !!edit;
   const [acao, setAcao] = useState("");
   const [eixo, setEixo] = useState("PREVENCAO");
   const [prazo, setPrazo] = useState("");
   const [responsavel, setResponsavel] = useState("");
   const [base, setBase] = useState("");
+  const [status, setStatus] = useState("PLANEJADA");
+  const [obs, setObs] = useState("");
+  const [evid, setEvid] = useState("");
+
+  useEffect(() => {
+    if (open && edit) {
+      setAcao(edit.acao ?? "");
+      setEixo(edit.eixo ?? "PREVENCAO");
+      setPrazo(edit.prazo ?? "");
+      setResponsavel(edit.responsavel_nome ?? "");
+      setBase(edit.base_normativa ?? "");
+      setStatus(edit.status ?? "PLANEJADA");
+      setObs(edit.observacoes ?? "");
+      setEvid(edit.evidencia_url ?? "");
+    } else if (open && !edit) {
+      setAcao(""); setEixo("PREVENCAO"); setPrazo(""); setResponsavel(""); setBase("");
+      setStatus("PLANEJADA"); setObs(""); setEvid("");
+    }
+  }, [open, edit]);
+
   const mut = useMutation({
     mutationFn: async () => {
       if (!acao.trim()) throw new Error("Descreva a ação");
-      const { error } = await supabase.from("cipa_plano_anual").insert({ gestao_id: gestaoId, acao, eixo, prazo: prazo || null, responsavel_nome: responsavel || null, base_normativa: base || null });
-      if (error) throw error;
+      const payload = { gestao_id: gestaoId, acao, eixo, prazo: prazo || null, responsavel_nome: responsavel || null, base_normativa: base || null, status, observacoes: obs || null, evidencia_url: evid || null };
+      if (isEdit) {
+        const { error } = await supabase.from("cipa_plano_anual").update(payload).eq("id", edit.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("cipa_plano_anual").insert(payload);
+        if (error) throw error;
+      }
     },
-    onSuccess: () => { toast.success("Ação adicionada"); onSaved(); onClose(); setAcao(""); setPrazo(""); setResponsavel(""); setBase(""); },
+    onSuccess: () => { toast.success(isEdit ? "Ação atualizada" : "Ação adicionada"); onSaved(); onClose(); },
     onError: (e: Error) => toast.error(e.message),
   });
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent>
-        <DialogHeader><DialogTitle>Nova ação do plano anual</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{isEdit ? "Editar ação" : "Nova ação do plano anual"}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div><Label>Ação</Label><Textarea rows={3} value={acao} onChange={(e) => setAcao(e.target.value)} /></div>
           <div className="grid grid-cols-2 gap-2">
@@ -746,6 +952,23 @@ function NovoPlanoDialog({ open, onClose, gestaoId, onSaved }: { open: boolean; 
           </div>
           <div><Label>Responsável</Label><Input value={responsavel} onChange={(e) => setResponsavel(e.target.value)} /></div>
           <div><Label>Base normativa</Label><Input value={base} onChange={(e) => setBase(e.target.value)} placeholder="Ex.: NR-05 item 5.4.2" /></div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label>Status</Label>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="PLANEJADA">Planejada</SelectItem>
+                  <SelectItem value="EM_ANDAMENTO">Em andamento</SelectItem>
+                  <SelectItem value="CONCLUIDA">Concluída</SelectItem>
+                  <SelectItem value="ATRASADA">Atrasada</SelectItem>
+                  <SelectItem value="CANCELADA">Cancelada</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div><Label>URL da evidência</Label><Input value={evid} onChange={(e) => setEvid(e.target.value)} placeholder="https://..." /></div>
+          </div>
+          <div><Label>Observações</Label><Textarea rows={3} value={obs} onChange={(e) => setObs(e.target.value)} /></div>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>Cancelar</Button>
@@ -840,7 +1063,8 @@ function EtapaLinha({ etapa, inicio, fim, status, onSave }: { etapa: { id: strin
 }
 
 /* -------------------- NOVA GESTÃO -------------------- */
-function NovaGestaoDialog({ open, onClose, onCreated }: { open: boolean; onClose: () => void; onCreated: (id: string) => void }) {
+function NovaGestaoDialog({ open, onClose, onCreated, edit }: { open: boolean; onClose: () => void; onCreated: (id: string) => void; edit?: Gestao | null }) {
+  const isEdit = !!edit;
   const [gestao, setGestao] = useState("");
   const [inicio, setInicio] = useState("");
   const [fim, setFim] = useState("");
@@ -852,6 +1076,22 @@ function NovaGestaoDialog({ open, onClose, onCreated }: { open: boolean; onClose
   const [suE, setSuE] = useState("");
   const [efF, setEfF] = useState("");
   const [suF, setSuF] = useState("");
+
+  useEffect(() => {
+    if (open && edit) {
+      setGestao(edit.gestao ?? "");
+      setInicio(edit.data_inicio ?? "");
+      setFim(edit.data_fim ?? "");
+      setGrupo(edit.grupo_nr05 ?? "");
+      setNum(edit.num_empregados?.toString() ?? "");
+      setGr(edit.grau_risco?.toString() ?? "");
+      setModo(edit.modo);
+      setEfE(edit.efetivos_empregador?.toString() ?? "");
+      setSuE(edit.suplentes_empregador?.toString() ?? "");
+      setEfF(edit.efetivos_empregados?.toString() ?? "");
+      setSuF(edit.suplentes_empregados?.toString() ?? "");
+    }
+  }, [open, edit]);
 
   const sugestao = useMemo(
     () => dimensionarCipa(gr ? Number(gr) : null, num ? Number(num) : null),
@@ -888,7 +1128,7 @@ function NovaGestaoDialog({ open, onClose, onCreated }: { open: boolean; onClose
       if (modo === "COMISSAO" && (Number(efF || 0) < 1 || Number(efE || 0) < 1)) {
         throw new Error("Comissão paritária exige ao menos 1 efetivo por bancada. Use 'Aplicar sugestão' ou mude para Designado.");
       }
-      const { data, error } = await supabase.from("cipa_gestoes").insert({
+      const payload = {
         gestao, data_inicio: inicio, data_fim: fim,
         modo,
         grau_risco: gr ? Number(gr) : null,
@@ -898,19 +1138,24 @@ function NovaGestaoDialog({ open, onClose, onCreated }: { open: boolean; onClose
         suplentes_empregador: suE ? Number(suE) : 0,
         efetivos_empregados: efF ? Number(efF) : 0,
         suplentes_empregados: suF ? Number(suF) : 0,
-        status: "PLANEJAMENTO",
-      }).select("id").single();
+      };
+      if (isEdit && edit) {
+        const { error } = await supabase.from("cipa_gestoes").update(payload).eq("id", edit.id);
+        if (error) throw error;
+        return edit.id;
+      }
+      const { data, error } = await supabase.from("cipa_gestoes").insert({ ...payload, status: "PLANEJAMENTO" }).select("id").single();
       if (error) throw error;
       return data.id as string;
     },
-    onSuccess: (id) => { toast.success("Gestão criada"); onCreated(id); onClose(); resetar(); },
+    onSuccess: (id) => { toast.success(isEdit ? "Gestão atualizada" : "Gestão criada"); onCreated(id); onClose(); if (!isEdit) resetar(); },
     onError: (e: Error) => toast.error(e.message),
   });
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) { onClose(); resetar(); } }}>
       <DialogContent>
-        <DialogHeader><DialogTitle>Nova gestão da CIPA</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{isEdit ? "Editar gestão da CIPA" : "Nova gestão da CIPA"}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div className="grid grid-cols-3 gap-2">
             <div><Label>Gestão</Label><Input placeholder="2026/2027" value={gestao} onChange={(e) => setGestao(e.target.value)} /></div>
@@ -962,7 +1207,7 @@ function NovaGestaoDialog({ open, onClose, onCreated }: { open: boolean; onClose
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>Cancelar</Button>
-          <Button onClick={() => mut.mutate()} disabled={mut.isPending}>{mut.isPending ? "Criando…" : "Criar gestão"}</Button>
+          <Button onClick={() => mut.mutate()} disabled={mut.isPending}>{mut.isPending ? "Salvando…" : (isEdit ? "Salvar alterações" : "Criar gestão")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
