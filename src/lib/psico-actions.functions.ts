@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { TERCIS_MANUAL_PT, TERCIS_N_MINIMO, type TercisMap } from "@/lib/psico-instrument";
 
 /**
  * Módulo Psicossocial NR-01 — server functions "de trabalho":
@@ -234,4 +235,53 @@ export const cruzarSinaisPsico = createServerFn({ method: "POST" })
         he_horas_30d: Math.round(heTotal),
       },
     };
+  });
+
+/**
+ * Calcula tercis dinâmicos (P33 e P66) por dimensão a partir do histórico
+ * de respostas do próprio SIGMO. Quando a dimensão tem menos que
+ * TERCIS_N_MINIMO respostas, adota o valor do manual COPSOQ II PT como
+ * fallback. Retorna também a fonte usada, para exibição no diagnóstico.
+ */
+export const computarTercisPsico = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<TercisMap> => {
+    const supabase = context.supabase;
+    const { data, error } = await supabase
+      .from("psico_respostas")
+      .select("dimensao, valor");
+    if (error) throw new Error(error.message);
+
+    const porDim = new Map<string, number[]>();
+    for (const r of (data ?? []) as Array<{ dimensao: string; valor: number }>) {
+      if (!r?.dimensao || typeof r?.valor !== "number") continue;
+      const arr = porDim.get(r.dimensao) ?? [];
+      arr.push(r.valor);
+      porDim.set(r.dimensao, arr);
+    }
+
+    const percentil = (arr: number[], p: number) => {
+      const sorted = [...arr].sort((a, b) => a - b);
+      const idx = (sorted.length - 1) * p;
+      const lo = Math.floor(idx);
+      const hi = Math.ceil(idx);
+      if (lo === hi) return sorted[lo];
+      return sorted[lo] + (sorted[hi] - sorted[lo]) * (idx - lo);
+    };
+
+    const out: TercisMap = {};
+    for (const dim of Object.keys(TERCIS_MANUAL_PT) as Array<keyof typeof TERCIS_MANUAL_PT>) {
+      const amostras = porDim.get(dim) ?? [];
+      if (amostras.length >= TERCIS_N_MINIMO) {
+        out[dim] = {
+          p33: Number(percentil(amostras, 1 / 3).toFixed(2)),
+          p66: Number(percentil(amostras, 2 / 3).toFixed(2)),
+          n: amostras.length,
+          fonte: "INTERNO",
+        };
+      } else {
+        out[dim] = { ...TERCIS_MANUAL_PT[dim], n: amostras.length, fonte: "MANUAL_PT" };
+      }
+    }
+    return out;
   });
