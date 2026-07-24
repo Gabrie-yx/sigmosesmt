@@ -94,6 +94,7 @@ export const MENU_CATALOG: MenuEntry[] = [
   // ----- USUÁRIOS -----
   { key: "/app/users", label: "Usuários", module: "usuarios" },
   { key: "/app/audit", label: "Auditoria do Sistema", module: "usuarios" },
+  { key: "/app/configuracoes/produtividade", label: "Produtividade (Snippets · Templates · Anexos)", module: "usuarios" },
 
   // ----- COZINHA -----
   { key: "/app/cozinha", label: "Cozinha — Refeições do dia", module: "cozinha" },
