@@ -253,7 +253,7 @@ function AdministrativoRecebidasPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
           {grupos.map(([setor, lista]) => (
             <SetorCard key={setor} setor={setor} lista={lista} onChanged={() => refetch()} />
           ))}
