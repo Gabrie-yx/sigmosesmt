@@ -36,6 +36,8 @@ type Gestao = {
   data_inicio: string;
   data_fim: string;
   status: "PLANEJAMENTO" | "ELEICAO" | "ATIVA" | "ENCERRADA";
+  modo: "DESIGNADO" | "COMISSAO";
+  grau_risco: number | null;
   grupo_nr05: string | null;
   num_empregados: number | null;
   efetivos_empregador: number | null;
@@ -45,8 +47,58 @@ type Gestao = {
   presidente_id: string | null;
   vice_presidente_id: string | null;
   secretario_id: string | null;
+  designado_employee_id: string | null;
+  designado_termo_data: string | null;
+  designado_termo_url: string | null;
+  designado_treinamento_horas: number | null;
+  designado_treinamento_data: string | null;
+  assedio_canal_url: string | null;
   observacoes: string | null;
 };
+
+/**
+ * Dimensionamento NR-05 (Quadro I, resumido).
+ * Retorna sugestão de modo (DESIGNADO vs COMISSAO), composição paritária mínima
+ * e carga horária de capacitação obrigatória.
+ * Base: NR-05 itens 5.6.3/5.6.4 + Quadro I (Portaria MTP 4.219/2022).
+ */
+export function dimensionarCipa(gr: number | null, n: number | null) {
+  if (!gr || !n || n <= 0) return null;
+  // Piso de eleição paritária por grau de risco (Quadro I):
+  // GR1/GR2: exige comissão a partir de 51 empregados.
+  // GR3/GR3: comissão a partir de 20 emp; GR4: comissão a partir de 30 emp (20-29 = designado).
+  const piso = gr === 4 ? 30 : gr === 3 ? 20 : gr === 2 ? 51 : 51;
+  if (n < piso) {
+    return {
+      modo: "DESIGNADO" as const,
+      efetivosEmpregador: 0,
+      suplentesEmpregador: 0,
+      efetivosEmpregados: 0,
+      suplentesEmpregados: 0,
+      cargaTreinamento: gr >= 3 ? 20 : 8,
+      nota:
+        n < 20
+          ? `Estabelecimento com menos de 20 empregados: designado obrigatório (NR-05 item 5.6.3).`
+          : `Grau de Risco ${gr} com ${n} empregados: abaixo do Quadro I → designa 1 empregado (NR-05 item 5.6.4). Sem estabilidade do art. 10 ADCT, salvo previsão em ACT/CCT.`,
+    };
+  }
+  // Faixas simplificadas do Quadro I (composição mínima):
+  const faixa =
+    n <= 50 ? { ef: 1, su: 1 } :
+    n <= 100 ? { ef: 3, su: 3 } :
+    n <= 500 ? { ef: 4, su: 4 } :
+    n <= 1000 ? { ef: 6, su: 6 } :
+    { ef: 9, su: 7 };
+  return {
+    modo: "COMISSAO" as const,
+    efetivosEmpregador: faixa.ef,
+    suplentesEmpregador: faixa.su,
+    efetivosEmpregados: faixa.ef,
+    suplentesEmpregados: faixa.su,
+    cargaTreinamento: gr >= 3 ? 20 : 8,
+    nota: `Comissão paritária: ${faixa.ef} efetivos + ${faixa.su} suplentes por bancada. Mandato 1 ano, permitida 1 reeleição. Estabilidade dos eleitos: art. 10, II, "a" ADCT.`,
+  };
+}
 
 function CipaPage() {
   const qc = useQueryClient();
@@ -126,29 +178,43 @@ function CipaPage() {
 
       {gestaoAtiva && (
         <Tabs defaultValue="resumo">
-          <TabsList>
+          <TabsList className="flex-wrap h-auto">
             <TabsTrigger value="resumo"><ShieldCheck className="h-4 w-4 mr-1" /> Resumo</TabsTrigger>
-            <TabsTrigger value="membros"><Users className="h-4 w-4 mr-1" /> Membros</TabsTrigger>
+            {gestaoAtiva.modo === "DESIGNADO" ? (
+              <TabsTrigger value="designado"><Users className="h-4 w-4 mr-1" /> Designado</TabsTrigger>
+            ) : (
+              <TabsTrigger value="membros"><Users className="h-4 w-4 mr-1" /> Membros</TabsTrigger>
+            )}
             <TabsTrigger value="reunioes"><CalendarDays className="h-4 w-4 mr-1" /> Reuniões / Atas</TabsTrigger>
             <TabsTrigger value="plano"><ListChecks className="h-4 w-4 mr-1" /> Plano Anual</TabsTrigger>
-            <TabsTrigger value="eleicao"><Vote className="h-4 w-4 mr-1" /> Eleição</TabsTrigger>
+            {gestaoAtiva.modo === "COMISSAO" && (
+              <TabsTrigger value="eleicao"><Vote className="h-4 w-4 mr-1" /> Eleição</TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="resumo" className="mt-4">
             <ResumoGestao gestao={gestaoAtiva} />
           </TabsContent>
-          <TabsContent value="membros" className="mt-4">
-            <MembrosTab gestaoId={gestaoAtiva.id} />
-          </TabsContent>
+          {gestaoAtiva.modo === "COMISSAO" ? (
+            <TabsContent value="membros" className="mt-4">
+              <MembrosTab gestaoId={gestaoAtiva.id} />
+            </TabsContent>
+          ) : (
+            <TabsContent value="designado" className="mt-4">
+              <DesignadoTab gestao={gestaoAtiva} onSaved={() => qc.invalidateQueries({ queryKey: ["cipa", "gestoes"] })} />
+            </TabsContent>
+          )}
           <TabsContent value="reunioes" className="mt-4">
             <ReunioesTab gestaoId={gestaoAtiva.id} />
           </TabsContent>
           <TabsContent value="plano" className="mt-4">
             <PlanoTab gestaoId={gestaoAtiva.id} />
           </TabsContent>
-          <TabsContent value="eleicao" className="mt-4">
-            <EleicaoTab gestaoId={gestaoAtiva.id} />
-          </TabsContent>
+          {gestaoAtiva.modo === "COMISSAO" && (
+            <TabsContent value="eleicao" className="mt-4">
+              <EleicaoTab gestaoId={gestaoAtiva.id} />
+            </TabsContent>
+          )}
         </Tabs>
       )}
 
@@ -170,6 +236,7 @@ function statusLabel(s: Gestao["status"]) {
 
 /* -------------------- RESUMO -------------------- */
 function ResumoGestao({ gestao }: { gestao: Gestao }) {
+  const sugestao = dimensionarCipa(gestao.grau_risco, gestao.num_empregados);
   const dim = [
     ["Efetivos empregador", gestao.efetivos_empregador ?? 0],
     ["Suplentes empregador", gestao.suplentes_empregador ?? 0],
@@ -179,28 +246,163 @@ function ResumoGestao({ gestao }: { gestao: Gestao }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       <Card className="p-4 md:col-span-2">
-        <h3 className="font-bold mb-2">Gestão {gestao.gestao}</h3>
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <h3 className="font-bold">Gestão {gestao.gestao}</h3>
+          <Badge variant={gestao.modo === "DESIGNADO" ? "outline" : "default"}>
+            {gestao.modo === "DESIGNADO" ? "Modo Designado (NR-05 5.6.4)" : "Comissão paritária"}
+          </Badge>
+        </div>
         <div className="text-sm text-muted-foreground grid grid-cols-2 gap-2">
           <div><span className="opacity-60">Início:</span> {gestao.data_inicio}</div>
           <div><span className="opacity-60">Fim:</span> {gestao.data_fim}</div>
-          <div><span className="opacity-60">Grupo NR-05:</span> {gestao.grupo_nr05 ?? "—"}</div>
+          <div><span className="opacity-60">Grau de Risco:</span> {gestao.grau_risco ?? "—"}</div>
           <div><span className="opacity-60">Empregados:</span> {gestao.num_empregados ?? "—"}</div>
+          <div><span className="opacity-60">Grupo NR-05:</span> {gestao.grupo_nr05 ?? "—"}</div>
           <div className="col-span-2"><span className="opacity-60">Status:</span> <Badge variant="secondary">{statusLabel(gestao.status)}</Badge></div>
         </div>
+        {sugestao && (
+          <div className="mt-3 p-3 rounded border border-border bg-muted/30 text-xs space-y-1">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-3.5 w-3.5 text-rose-400" />
+              <b>Sugestão automática (Quadro I NR-05)</b>
+            </div>
+            <p className="text-muted-foreground">{sugestao.nota}</p>
+            <p className="text-muted-foreground">Capacitação obrigatória: <b>{sugestao.cargaTreinamento} h</b> antes da posse (NR-05 item 5.7).</p>
+            {gestao.modo !== sugestao.modo && (
+              <p className="text-amber-500">⚠ Modo cadastrado ({gestao.modo}) diverge da sugestão ({sugestao.modo}). Reveja o dimensionamento.</p>
+            )}
+          </div>
+        )}
         {gestao.observacoes && <p className="text-xs text-muted-foreground mt-3 whitespace-pre-wrap">{gestao.observacoes}</p>}
       </Card>
       <Card className="p-4">
-        <h3 className="font-bold mb-2 text-sm">Dimensionamento (Quadro I NR-05)</h3>
-        <ul className="text-sm space-y-1">
-          {dim.map(([l, v]) => (
-            <li key={l as string} className="flex justify-between"><span className="text-muted-foreground">{l}</span><b>{v}</b></li>
-          ))}
-        </ul>
-        <p className="text-[10px] text-muted-foreground mt-3">
-          Ajuste conforme o Quadro I da NR-05 para o seu CNAE × nº de empregados. Em estabelecimentos com &lt; 20 empregados, cabe o designado de CIPA (item 5.3.2).
-        </p>
+        <h3 className="font-bold mb-2 text-sm">Composição atual</h3>
+        {gestao.modo === "COMISSAO" ? (
+          <ul className="text-sm space-y-1">
+            {dim.map(([l, v]) => (
+              <li key={l as string} className="flex justify-between"><span className="text-muted-foreground">{l}</span><b>{v}</b></li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-muted-foreground">Estabelecimento fora do Quadro I: sem paridade. Ver aba <b>Designado</b>.</p>
+        )}
+        <div className="mt-3 pt-3 border-t border-border text-[10px] text-muted-foreground space-y-1">
+          <p><b>Integrações naval (NR-34):</b> designado/CIPA participa das PT de trabalho a quente, altura (NR-35) e espaço confinado (NR-33).</p>
+          <p><b>Assédio (Lei 14.457/2022):</b> canal de denúncia obrigatório.</p>
+          {gestao.assedio_canal_url && (
+            <a href={gestao.assedio_canal_url} target="_blank" rel="noreferrer" className="text-rose-400 underline">Abrir canal de denúncia →</a>
+          )}
+        </div>
       </Card>
     </div>
+  );
+}
+
+/* -------------------- DESIGNADO (NR-05 5.6.4) -------------------- */
+function DesignadoTab({ gestao, onSaved }: { gestao: Gestao; onSaved: () => void }) {
+  const [employeeId, setEmployeeId] = useState(gestao.designado_employee_id ?? "");
+  const [termoData, setTermoData] = useState(gestao.designado_termo_data ?? "");
+  const [termoUrl, setTermoUrl] = useState(gestao.designado_termo_url ?? "");
+  const [treinHoras, setTreinHoras] = useState(gestao.designado_treinamento_horas?.toString() ?? "");
+  const [treinData, setTreinData] = useState(gestao.designado_treinamento_data ?? "");
+  const [canal, setCanal] = useState(gestao.assedio_canal_url ?? "");
+
+  const { data: funcs } = useQuery({
+    queryKey: ["cipa", "employees-lookup"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("employees").select("id, nome, cargo").eq("status", "ATIVO").order("nome").limit(500);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const sugestao = dimensionarCipa(gestao.grau_risco, gestao.num_empregados);
+  const cargaMinima = sugestao?.cargaTreinamento ?? 20;
+  const horasNum = Number(treinHoras || 0);
+  const capacitado = horasNum >= cargaMinima && !!treinData;
+
+  const mut = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("cipa_gestoes").update({
+        designado_employee_id: employeeId || null,
+        designado_termo_data: termoData || null,
+        designado_termo_url: termoUrl || null,
+        designado_treinamento_horas: treinHoras ? Number(treinHoras) : null,
+        designado_treinamento_data: treinData || null,
+        assedio_canal_url: canal || null,
+      }).eq("id", gestao.id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Designado salvo"); onSaved(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const funcSel = (funcs ?? []).find((f: any) => f.id === employeeId) as any;
+
+  return (
+    <Card className="p-4 space-y-4">
+      <div>
+        <h3 className="font-bold">Empregado designado</h3>
+        <p className="text-[10px] text-muted-foreground">NR-05 item 5.6.4 — indicação formal do empregador. Cumpre as mesmas atribuições da CIPA (5.6.3).</p>
+      </div>
+
+      <div className="rounded border border-amber-600/40 bg-amber-950/20 p-3 text-xs text-amber-200">
+        ⚠ <b>Estabilidade:</b> o designado <u>NÃO</u> possui a garantia do art. 10, II, "a" ADCT (restrita a titulares/suplentes eleitos), salvo cláusula mais benéfica em ACT/CCT do sindicato da categoria. Verifique a convenção coletiva vigente antes da indicação.
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <Label>Funcionário indicado</Label>
+          <Select value={employeeId} onValueChange={setEmployeeId}>
+            <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
+            <SelectContent className="max-h-72">
+              {(funcs ?? []).map((f: any) => <SelectItem key={f.id} value={f.id}>{f.nome} — {f.cargo}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          {funcSel && <p className="text-[10px] text-muted-foreground mt-1">Cargo: {funcSel.cargo}</p>}
+        </div>
+        <div>
+          <Label>Data do Termo de Indicação</Label>
+          <Input type="date" value={termoData} onChange={(e) => setTermoData(e.target.value)} />
+        </div>
+        <div className="md:col-span-2">
+          <Label>URL do Termo de Indicação (PDF assinado)</Label>
+          <Input value={termoUrl} onChange={(e) => setTermoUrl(e.target.value)} placeholder="https://..." />
+          <p className="text-[10px] text-muted-foreground mt-1">Documento interno assinado por empregador + trabalhador, arquivado para fiscalização.</p>
+        </div>
+      </div>
+
+      <div className="pt-3 border-t border-border">
+        <h4 className="font-semibold text-sm mb-2">Capacitação obrigatória (NR-05 item 5.7)</h4>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div>
+            <Label>Carga horária realizada (h)</Label>
+            <Input type="number" value={treinHoras} onChange={(e) => setTreinHoras(e.target.value)} placeholder={`Mín. ${cargaMinima}h`} />
+          </div>
+          <div>
+            <Label>Data de conclusão</Label>
+            <Input type="date" value={treinData} onChange={(e) => setTreinData(e.target.value)} />
+          </div>
+          <div className="flex items-end">
+            <Badge variant={capacitado ? "default" : "secondary"} className={capacitado ? "bg-emerald-700" : ""}>
+              {capacitado ? "✓ Apto à posse" : `Faltam requisitos (mín. ${cargaMinima}h + data)`}
+            </Badge>
+          </div>
+        </div>
+        <p className="text-[10px] text-muted-foreground mt-2">
+          Conteúdo mínimo: riscos ocupacionais + Lei 14.457/2022 (assédio) + metodologia de avaliação de riscos (NR-01/PGR) + NR-33/34/35 quando aplicável.
+        </p>
+      </div>
+
+      <div className="pt-3 border-t border-border">
+        <Label>Canal de denúncia de assédio (Lei 14.457/2022)</Label>
+        <Input value={canal} onChange={(e) => setCanal(e.target.value)} placeholder="/denuncia ou URL externa" />
+      </div>
+
+      <div className="flex justify-end">
+        <Button onClick={() => mut.mutate()} disabled={mut.isPending}>{mut.isPending ? "Salvando…" : "Salvar designação"}</Button>
+      </div>
+    </Card>
   );
 }
 
@@ -641,16 +843,34 @@ function NovaGestaoDialog({ open, onClose, onCreated }: { open: boolean; onClose
   const [fim, setFim] = useState("");
   const [grupo, setGrupo] = useState("");
   const [num, setNum] = useState("");
+  const [gr, setGr] = useState("");
+  const [modo, setModo] = useState<"COMISSAO" | "DESIGNADO">("COMISSAO");
   const [efE, setEfE] = useState("");
   const [suE, setSuE] = useState("");
   const [efF, setEfF] = useState("");
   const [suF, setSuF] = useState("");
+
+  const sugestao = useMemo(
+    () => dimensionarCipa(gr ? Number(gr) : null, num ? Number(num) : null),
+    [gr, num],
+  );
+
+  function aplicarSugestao() {
+    if (!sugestao) return;
+    setModo(sugestao.modo);
+    setEfE(String(sugestao.efetivosEmpregador));
+    setSuE(String(sugestao.suplentesEmpregador));
+    setEfF(String(sugestao.efetivosEmpregados));
+    setSuF(String(sugestao.suplentesEmpregados));
+  }
 
   const mut = useMutation({
     mutationFn: async () => {
       if (!gestao || !inicio || !fim) throw new Error("Preencha gestão, início e fim");
       const { data, error } = await supabase.from("cipa_gestoes").insert({
         gestao, data_inicio: inicio, data_fim: fim,
+        modo,
+        grau_risco: gr ? Number(gr) : null,
         grupo_nr05: grupo || null,
         num_empregados: num ? Number(num) : null,
         efetivos_empregador: efE ? Number(efE) : 0,
@@ -676,17 +896,48 @@ function NovaGestaoDialog({ open, onClose, onCreated }: { open: boolean; onClose
             <div><Label>Início</Label><Input type="date" value={inicio} onChange={(e) => setInicio(e.target.value)} /></div>
             <div><Label>Fim</Label><Input type="date" value={fim} onChange={(e) => setFim(e.target.value)} /></div>
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div><Label>Grupo NR-05 (Quadro I)</Label><Input value={grupo} onChange={(e) => setGrupo(e.target.value)} placeholder="Ex.: C-18" /></div>
+          <div className="grid grid-cols-3 gap-2">
+            <div>
+              <Label>Grau de Risco</Label>
+              <Select value={gr} onValueChange={setGr}>
+                <SelectTrigger><SelectValue placeholder="1-4" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">GR 1</SelectItem>
+                  <SelectItem value="2">GR 2</SelectItem>
+                  <SelectItem value="3">GR 3</SelectItem>
+                  <SelectItem value="4">GR 4 (naval / construção)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div><Label>Nº empregados</Label><Input type="number" value={num} onChange={(e) => setNum(e.target.value)} /></div>
+            <div><Label>Grupo NR-05</Label><Input value={grupo} onChange={(e) => setGrupo(e.target.value)} placeholder="Ex.: C-18" /></div>
           </div>
+          {sugestao && (
+            <div className="rounded border border-border bg-muted/30 p-3 text-xs space-y-2">
+              <div><b>Sugestão automática:</b> modo <b className="text-rose-400">{sugestao.modo}</b> · treinamento {sugestao.cargaTreinamento}h</div>
+              <p className="text-muted-foreground">{sugestao.nota}</p>
+              <Button type="button" size="sm" variant="outline" onClick={aplicarSugestao}>Aplicar sugestão</Button>
+            </div>
+          )}
+          <div>
+            <Label>Modo de operação</Label>
+            <Select value={modo} onValueChange={(v) => setModo(v as any)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="COMISSAO">Comissão paritária (eleição + indicação)</SelectItem>
+                <SelectItem value="DESIGNADO">Designado (NR-05 item 5.6.4 — sem eleição)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {modo === "COMISSAO" && (
           <div className="grid grid-cols-4 gap-2">
             <div><Label className="text-[10px]">Efetivos empregador</Label><Input type="number" value={efE} onChange={(e) => setEfE(e.target.value)} /></div>
             <div><Label className="text-[10px]">Suplentes empregador</Label><Input type="number" value={suE} onChange={(e) => setSuE(e.target.value)} /></div>
             <div><Label className="text-[10px]">Efetivos empregados</Label><Input type="number" value={efF} onChange={(e) => setEfF(e.target.value)} /></div>
             <div><Label className="text-[10px]">Suplentes empregados</Label><Input type="number" value={suF} onChange={(e) => setSuF(e.target.value)} /></div>
           </div>
-          <p className="text-[10px] text-muted-foreground">Dimensionamento conforme Quadro I da NR-05 (CNAE × nº de empregados). Mandato: 1 ano, permitida 1 reeleição.</p>
+          )}
+          <p className="text-[10px] text-muted-foreground">Mandato: 1 ano, permitida 1 reeleição (comissão). Designado: mandato acompanha a vigência do PGR. Base: NR-05 (Portaria MTP 4.219/2022).</p>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>Cancelar</Button>

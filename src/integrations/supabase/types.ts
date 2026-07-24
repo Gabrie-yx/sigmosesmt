@@ -2334,17 +2334,25 @@ export type Database = {
       }
       cipa_gestoes: {
         Row: {
+          assedio_canal_url: string | null
           cnae: string | null
           company_id: string | null
           created_at: string
           created_by: string | null
           data_fim: string
           data_inicio: string
+          designado_employee_id: string | null
+          designado_termo_data: string | null
+          designado_termo_url: string | null
+          designado_treinamento_data: string | null
+          designado_treinamento_horas: number | null
           efetivos_empregador: number | null
           efetivos_empregados: number | null
           gestao: string
+          grau_risco: number | null
           grupo_nr05: string | null
           id: string
+          modo: string
           num_empregados: number | null
           observacoes: string | null
           presidente_id: string | null
@@ -2356,17 +2364,25 @@ export type Database = {
           vice_presidente_id: string | null
         }
         Insert: {
+          assedio_canal_url?: string | null
           cnae?: string | null
           company_id?: string | null
           created_at?: string
           created_by?: string | null
           data_fim: string
           data_inicio: string
+          designado_employee_id?: string | null
+          designado_termo_data?: string | null
+          designado_termo_url?: string | null
+          designado_treinamento_data?: string | null
+          designado_treinamento_horas?: number | null
           efetivos_empregador?: number | null
           efetivos_empregados?: number | null
           gestao: string
+          grau_risco?: number | null
           grupo_nr05?: string | null
           id?: string
+          modo?: string
           num_empregados?: number | null
           observacoes?: string | null
           presidente_id?: string | null
@@ -2378,17 +2394,25 @@ export type Database = {
           vice_presidente_id?: string | null
         }
         Update: {
+          assedio_canal_url?: string | null
           cnae?: string | null
           company_id?: string | null
           created_at?: string
           created_by?: string | null
           data_fim?: string
           data_inicio?: string
+          designado_employee_id?: string | null
+          designado_termo_data?: string | null
+          designado_termo_url?: string | null
+          designado_treinamento_data?: string | null
+          designado_treinamento_horas?: number | null
           efetivos_empregador?: number | null
           efetivos_empregados?: number | null
           gestao?: string
+          grau_risco?: number | null
           grupo_nr05?: string | null
           id?: string
+          modo?: string
           num_empregados?: number | null
           observacoes?: string | null
           presidente_id?: string | null
@@ -2413,6 +2437,41 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_contratada_dossie_status"
             referencedColumns: ["company_id"]
+          },
+          {
+            foreignKeyName: "cipa_gestoes_designado_employee_id_fkey"
+            columns: ["designado_employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cipa_gestoes_designado_employee_id_fkey"
+            columns: ["designado_employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligados_sem_pacote"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "cipa_gestoes_designado_employee_id_fkey"
+            columns: ["designado_employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "cipa_gestoes_designado_employee_id_fkey"
+            columns: ["designado_employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_termos_consentimento_status"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "cipa_gestoes_designado_employee_id_fkey"
+            columns: ["designado_employee_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
           },
           {
             foreignKeyName: "cipa_gestoes_presidente_id_fkey"
