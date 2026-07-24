@@ -157,22 +157,22 @@ function CipaPage() {
           </TabsContent>
           {gestaoAtiva.modo === "COMISSAO" ? (
             <TabsContent value="membros" className="mt-4">
-              <MembrosTab gestaoId={gestaoAtiva.id} />
+              <MembrosTab key={gestaoAtiva.id} gestaoId={gestaoAtiva.id} />
             </TabsContent>
           ) : (
             <TabsContent value="designado" className="mt-4">
-              <DesignadoTab gestao={gestaoAtiva} onSaved={() => qc.invalidateQueries({ queryKey: ["cipa", "gestoes"] })} />
+              <DesignadoTab key={gestaoAtiva.id} gestao={gestaoAtiva} onSaved={() => qc.invalidateQueries({ queryKey: ["cipa", "gestoes"] })} />
             </TabsContent>
           )}
           <TabsContent value="reunioes" className="mt-4">
-            <ReunioesTab gestaoId={gestaoAtiva.id} />
+            <ReunioesTab key={gestaoAtiva.id} gestaoId={gestaoAtiva.id} />
           </TabsContent>
           <TabsContent value="plano" className="mt-4">
-            <PlanoTab gestaoId={gestaoAtiva.id} />
+            <PlanoTab key={gestaoAtiva.id} gestaoId={gestaoAtiva.id} />
           </TabsContent>
           {gestaoAtiva.modo === "COMISSAO" && (
             <TabsContent value="eleicao" className="mt-4">
-              <EleicaoTab gestaoId={gestaoAtiva.id} />
+              <EleicaoTab key={gestaoAtiva.id} gestaoId={gestaoAtiva.id} />
             </TabsContent>
           )}
         </Tabs>
@@ -283,6 +283,10 @@ function DesignadoTab({ gestao, onSaved }: { gestao: Gestao; onSaved: () => void
 
   const mut = useMutation({
     mutationFn: async () => {
+      if (!employeeId) throw new Error("Selecione o funcionário designado");
+      if (treinHoras && Number(treinHoras) < cargaMinima) {
+        throw new Error(`Carga horária mínima: ${cargaMinima}h (NR-05 item 5.7)`);
+      }
       const { error } = await supabase.from("cipa_gestoes").update({
         designado_employee_id: employeeId || null,
         designado_termo_data: termoData || null,
@@ -815,6 +819,20 @@ function NovaGestaoDialog({ open, onClose, onCreated }: { open: boolean; onClose
     [gr, num],
   );
 
+  function resetar() {
+    setGestao(""); setInicio(""); setFim(""); setGrupo(""); setNum("");
+    setGr(""); setModo("COMISSAO");
+    setEfE(""); setSuE(""); setEfF(""); setSuF("");
+  }
+
+  // Auto-alinhamento: quando a sugestão detectar DESIGNADO, força o modo
+  // (evita criar comissão paritária "zerada" em estabelecimento < piso).
+  useEffect(() => {
+    if (sugestao?.modo === "DESIGNADO" && modo === "COMISSAO") {
+      setModo("DESIGNADO");
+    }
+  }, [sugestao?.modo, modo]);
+
   function aplicarSugestao() {
     if (!sugestao) return;
     setModo(sugestao.modo);
@@ -827,6 +845,10 @@ function NovaGestaoDialog({ open, onClose, onCreated }: { open: boolean; onClose
   const mut = useMutation({
     mutationFn: async () => {
       if (!gestao || !inicio || !fim) throw new Error("Preencha gestão, início e fim");
+      if (new Date(fim) <= new Date(inicio)) throw new Error("A data fim deve ser posterior à data início");
+      if (modo === "COMISSAO" && (Number(efF || 0) < 1 || Number(efE || 0) < 1)) {
+        throw new Error("Comissão paritária exige ao menos 1 efetivo por bancada. Use 'Aplicar sugestão' ou mude para Designado.");
+      }
       const { data, error } = await supabase.from("cipa_gestoes").insert({
         gestao, data_inicio: inicio, data_fim: fim,
         modo,
@@ -842,12 +864,12 @@ function NovaGestaoDialog({ open, onClose, onCreated }: { open: boolean; onClose
       if (error) throw error;
       return data.id as string;
     },
-    onSuccess: (id) => { toast.success("Gestão criada"); onCreated(id); onClose(); },
+    onSuccess: (id) => { toast.success("Gestão criada"); onCreated(id); onClose(); resetar(); },
     onError: (e: Error) => toast.error(e.message),
   });
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v) { onClose(); resetar(); } }}>
       <DialogContent>
         <DialogHeader><DialogTitle>Nova gestão da CIPA</DialogTitle></DialogHeader>
         <div className="space-y-3">
