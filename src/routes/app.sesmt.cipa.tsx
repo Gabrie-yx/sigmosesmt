@@ -12,7 +12,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, ShieldCheck, Users, CalendarDays, ListChecks, Vote, Loader2, Trash2 } from "lucide-react";
+import { Plus, ShieldCheck, Users, CalendarDays, ListChecks, Vote, Loader2, Trash2, Pencil, Archive, MoreVertical } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { dimensionarCipa } from "@/lib/cipa-dimensionamento";
 
 // CIPA — NR-05 (rev. Portaria MTP 4.219/2022) + Lei 14.457/2022 (Emprega + Mulher).
@@ -64,6 +65,7 @@ function CipaPage() {
   const qc = useQueryClient();
   const [gestaoId, setGestaoId] = useState<string | null>(null);
   const [novaGestaoOpen, setNovaGestaoOpen] = useState(false);
+  const [editGestao, setEditGestao] = useState<Gestao | null>(null);
 
   const { data: gestoes, isLoading } = useQuery({
     queryKey: ["cipa", "gestoes"],
@@ -110,6 +112,14 @@ function CipaPage() {
               ))}
             </SelectContent>
           </Select>
+          {gestaoAtiva && (
+            <GestaoActions
+              gestao={gestaoAtiva}
+              onEdit={() => setEditGestao(gestaoAtiva)}
+              onChanged={() => qc.invalidateQueries({ queryKey: ["cipa", "gestoes"] })}
+              onDeleted={() => { setGestaoId(null); qc.invalidateQueries({ queryKey: ["cipa", "gestoes"] }); }}
+            />
+          )}
           <Button onClick={() => setNovaGestaoOpen(true)} className="gap-1">
             <Plus className="h-4 w-4" /> Nova gestão
           </Button>
@@ -186,7 +196,68 @@ function CipaPage() {
           qc.invalidateQueries({ queryKey: ["cipa", "gestoes"] });
         }}
       />
+      <NovaGestaoDialog
+        open={!!editGestao}
+        edit={editGestao}
+        onClose={() => setEditGestao(null)}
+        onCreated={() => { setEditGestao(null); qc.invalidateQueries({ queryKey: ["cipa", "gestoes"] }); }}
+      />
     </div>
+  );
+}
+
+/* -------------------- AÇÕES DA GESTÃO -------------------- */
+function GestaoActions({ gestao, onEdit, onChanged, onDeleted }: {
+  gestao: Gestao;
+  onEdit: () => void;
+  onChanged: () => void;
+  onDeleted: () => void;
+}) {
+  const setStatus = useMutation({
+    mutationFn: async (status: Gestao["status"]) => {
+      const { error } = await supabase.from("cipa_gestoes").update({ status }).eq("id", gestao.id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Status atualizado"); onChanged(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const del = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("cipa_gestoes").delete().eq("id", gestao.id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Gestão excluída"); onDeleted(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="icon" title="Ações da gestão">
+          <MoreVertical className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel>Gestão {gestao.gestao}</DropdownMenuLabel>
+        <DropdownMenuItem onClick={onEdit}><Pencil className="h-4 w-4 mr-2" /> Editar dados</DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel className="text-[10px] uppercase text-muted-foreground">Alterar status</DropdownMenuLabel>
+        {(["PLANEJAMENTO","ELEICAO","ATIVA","ENCERRADA"] as const).map((s) => (
+          <DropdownMenuItem key={s} disabled={gestao.status === s} onClick={() => setStatus.mutate(s)}>
+            {s === "ENCERRADA" ? <Archive className="h-4 w-4 mr-2" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
+            {statusLabel(s)}
+          </DropdownMenuItem>
+        ))}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className="text-rose-400"
+          onClick={() => {
+            if (confirm(`Excluir a gestão ${gestao.gestao}?\nIsso apaga TODOS os membros, reuniões, plano e cronograma vinculados.`)) del.mutate();
+          }}
+        >
+          <Trash2 className="h-4 w-4 mr-2" /> Excluir gestão
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
