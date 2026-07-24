@@ -812,6 +812,7 @@ function NovaReuniaoDialog({ open, onClose, gestaoId, onSaved, edit }: { open: b
 function PlanoTab({ gestaoId }: { gestaoId: string }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [editRow, setEditRow] = useState<any>(null);
   const { data } = useQuery({
     queryKey: ["cipa", "plano", gestaoId],
     queryFn: async () => {
@@ -847,6 +848,9 @@ function PlanoTab({ gestaoId }: { gestaoId: string }) {
                 <div className="text-sm font-semibold">{p.acao}</div>
                 <div className="flex items-center gap-1">
                   <Badge variant="secondary">{p.status}</Badge>
+                  <Button size="icon" variant="ghost" onClick={() => setEditRow(p)} title="Editar">
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
                   <Button size="icon" variant="ghost" onClick={() => { if (confirm("Remover esta ação?")) del.mutate(p.id); }}>
                     <Trash2 className="h-3.5 w-3.5 text-rose-400" />
                   </Button>
@@ -858,6 +862,8 @@ function PlanoTab({ gestaoId }: { gestaoId: string }) {
                 {p.prazo && <span>Prazo: {p.prazo}</span>}
                 {p.base_normativa && <span>Base: {p.base_normativa}</span>}
               </div>
+              {p.observacoes && <p className="text-xs text-muted-foreground mt-1 whitespace-pre-wrap">{p.observacoes}</p>}
+              {p.evidencia_url && <a href={p.evidencia_url} target="_blank" rel="noreferrer" className="text-xs text-rose-400 underline">Evidência →</a>}
             </li>
           ))}
         </ul>
@@ -868,29 +874,63 @@ function PlanoTab({ gestaoId }: { gestaoId: string }) {
         onClose={() => setOpen(false)}
         onSaved={() => qc.invalidateQueries({ queryKey: ["cipa", "plano", gestaoId] })}
       />
+      <NovoPlanoDialog
+        open={!!editRow}
+        edit={editRow}
+        gestaoId={gestaoId}
+        onClose={() => setEditRow(null)}
+        onSaved={() => qc.invalidateQueries({ queryKey: ["cipa", "plano", gestaoId] })}
+      />
     </Card>
   );
 }
 
-function NovoPlanoDialog({ open, onClose, gestaoId, onSaved }: { open: boolean; onClose: () => void; gestaoId: string; onSaved: () => void }) {
+function NovoPlanoDialog({ open, onClose, gestaoId, onSaved, edit }: { open: boolean; onClose: () => void; gestaoId: string; onSaved: () => void; edit?: any }) {
+  const isEdit = !!edit;
   const [acao, setAcao] = useState("");
   const [eixo, setEixo] = useState("PREVENCAO");
   const [prazo, setPrazo] = useState("");
   const [responsavel, setResponsavel] = useState("");
   const [base, setBase] = useState("");
+  const [status, setStatus] = useState("PLANEJADA");
+  const [obs, setObs] = useState("");
+  const [evid, setEvid] = useState("");
+
+  useEffect(() => {
+    if (open && edit) {
+      setAcao(edit.acao ?? "");
+      setEixo(edit.eixo ?? "PREVENCAO");
+      setPrazo(edit.prazo ?? "");
+      setResponsavel(edit.responsavel_nome ?? "");
+      setBase(edit.base_normativa ?? "");
+      setStatus(edit.status ?? "PLANEJADA");
+      setObs(edit.observacoes ?? "");
+      setEvid(edit.evidencia_url ?? "");
+    } else if (open && !edit) {
+      setAcao(""); setEixo("PREVENCAO"); setPrazo(""); setResponsavel(""); setBase("");
+      setStatus("PLANEJADA"); setObs(""); setEvid("");
+    }
+  }, [open, edit]);
+
   const mut = useMutation({
     mutationFn: async () => {
       if (!acao.trim()) throw new Error("Descreva a ação");
-      const { error } = await supabase.from("cipa_plano_anual").insert({ gestao_id: gestaoId, acao, eixo, prazo: prazo || null, responsavel_nome: responsavel || null, base_normativa: base || null });
-      if (error) throw error;
+      const payload = { gestao_id: gestaoId, acao, eixo, prazo: prazo || null, responsavel_nome: responsavel || null, base_normativa: base || null, status, observacoes: obs || null, evidencia_url: evid || null };
+      if (isEdit) {
+        const { error } = await supabase.from("cipa_plano_anual").update(payload).eq("id", edit.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("cipa_plano_anual").insert(payload);
+        if (error) throw error;
+      }
     },
-    onSuccess: () => { toast.success("Ação adicionada"); onSaved(); onClose(); setAcao(""); setPrazo(""); setResponsavel(""); setBase(""); },
+    onSuccess: () => { toast.success(isEdit ? "Ação atualizada" : "Ação adicionada"); onSaved(); onClose(); },
     onError: (e: Error) => toast.error(e.message),
   });
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent>
-        <DialogHeader><DialogTitle>Nova ação do plano anual</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{isEdit ? "Editar ação" : "Nova ação do plano anual"}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div><Label>Ação</Label><Textarea rows={3} value={acao} onChange={(e) => setAcao(e.target.value)} /></div>
           <div className="grid grid-cols-2 gap-2">
@@ -912,6 +952,23 @@ function NovoPlanoDialog({ open, onClose, gestaoId, onSaved }: { open: boolean; 
           </div>
           <div><Label>Responsável</Label><Input value={responsavel} onChange={(e) => setResponsavel(e.target.value)} /></div>
           <div><Label>Base normativa</Label><Input value={base} onChange={(e) => setBase(e.target.value)} placeholder="Ex.: NR-05 item 5.4.2" /></div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label>Status</Label>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="PLANEJADA">Planejada</SelectItem>
+                  <SelectItem value="EM_ANDAMENTO">Em andamento</SelectItem>
+                  <SelectItem value="CONCLUIDA">Concluída</SelectItem>
+                  <SelectItem value="ATRASADA">Atrasada</SelectItem>
+                  <SelectItem value="CANCELADA">Cancelada</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div><Label>URL da evidência</Label><Input value={evid} onChange={(e) => setEvid(e.target.value)} placeholder="https://..." /></div>
+          </div>
+          <div><Label>Observações</Label><Textarea rows={3} value={obs} onChange={(e) => setObs(e.target.value)} /></div>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>Cancelar</Button>
