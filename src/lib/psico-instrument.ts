@@ -143,6 +143,59 @@ export const PSICO_ITEMS: PsicoItem[] = [
 export const FAIXA_ETARIA = ["18-24", "25-34", "35-44", "45-54", "55+"];
 export const FAIXA_TEMPO_CASA = ["<1 ano", "1-3 anos", "3-5 anos", "5-10 anos", "10+ anos"];
 
+/**
+ * Tercis de referência COPSOQ II — versão portuguesa (Silva et al., 2011).
+ * Valores adaptados para escala Likert 1-5 (P33 e P66 correspondem aos
+ * limites verde→amarelo e amarelo→vermelho). Usados como FALLBACK quando
+ * a base interna do SIGMO ainda não atingiu N mínimo para calcular
+ * tercis empíricos próprios. Convenção: score alto = risco alto.
+ */
+export const TERCIS_MANUAL_PT: Record<PsicoItem["dimensao"], { p33: number; p66: number }> = {
+  DEMANDAS:       { p33: 2.33, p66: 3.66 },
+  COGNITIVAS:     { p33: 2.75, p66: 3.75 }, // COPSOQ PT: 69% da população no vermelho
+  EMOCIONAIS:     { p33: 2.33, p66: 3.33 },
+  CONTROLE:       { p33: 2.33, p66: 3.66 },
+  APOIO:          { p33: 2.33, p66: 3.66 },
+  RECOMPENSA:     { p33: 2.33, p66: 3.66 },
+  PAPEL_MUDANCA:  { p33: 2.33, p66: 3.66 },
+  RELACOES:       { p33: 2.33, p66: 3.66 },
+  SIGNIFICADO:    { p33: 2.33, p66: 3.66 },
+  VIOLENCIA:      { p33: 1.25, p66: 1.50 }, // tolerância zero: qualquer sinal já pesa
+  INTERFACE:      { p33: 2.33, p66: 3.66 },
+  BURNOUT:        { p33: 2.50, p66: 3.50 },
+  SONO:           { p33: 2.33, p66: 3.33 },
+};
+
+/** N mínimo de respostas históricas por dimensão para adotar tercil empírico. */
+export const TERCIS_N_MINIMO = 100;
+
+export type TercisMap = Partial<Record<
+  PsicoItem["dimensao"],
+  { p33: number; p66: number; n: number; fonte: "INTERNO" | "MANUAL_PT" }
+>>;
+
+/**
+ * Classifica uma média (1-5) de dimensão usando tercis dinâmicos quando
+ * disponíveis, com fallback automático para tercis do manual COPSOQ II PT.
+ * VIOLENCIA sempre mantém regra de tolerância zero.
+ */
+export function classifyByTercis(
+  media: number,
+  dimensao: PsicoItem["dimensao"] | string,
+  tercis?: TercisMap,
+): { nivel: "BAIXO" | "MODERADO" | "ALTO" | "CRITICO"; cor: string; label: string; fonte: "INTERNO" | "MANUAL_PT" } {
+  const dim = dimensao as PsicoItem["dimensao"];
+  if (dim === "VIOLENCIA" && media >= 1.5) {
+    return { nivel: "CRITICO", cor: "bg-[#e74c3c]", label: "Risco crítico", fonte: "MANUAL_PT" };
+  }
+  const t = tercis?.[dim] ?? { ...TERCIS_MANUAL_PT[dim] ?? { p33: 2.33, p66: 3.66 }, n: 0, fonte: "MANUAL_PT" as const };
+  const fonte = t.fonte;
+  if (media < t.p33) return { nivel: "BAIXO",    cor: "bg-[#2ecc71]",                    label: "Baixo risco",    fonte };
+  if (media < t.p66) return { nivel: "MODERADO", cor: "bg-[#f7d842] !text-slate-900",    label: "Risco moderado", fonte };
+  if (media < 4.25)  return { nivel: "ALTO",     cor: "bg-[#f39c12]",                    label: "Alto risco",     fonte };
+  return { nivel: "CRITICO", cor: "bg-[#e74c3c]", label: "Risco crítico", fonte };
+}
+
 /** Normaliza o valor: se item é invertido (respondente concorda = coisa boa),
  * transforma para escala "risco alto = 5". */
 export function scoreRisco(item: PsicoItem, valor: number): number {
