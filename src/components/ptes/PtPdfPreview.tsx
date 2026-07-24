@@ -7,6 +7,11 @@ import { printPdf, renderPdfToImagePagesProgressive } from "@/lib/pdf-print";
 import { SignaturePadDialog } from "@/components/signature-pad-dialog";
 import { gerarPtePdf, type PtePdfParams } from "@/lib/pte-pdf";
 import { fetchSignatureAsCleanDataUrl } from "@/lib/signature-utils";
+import { AnexosSelector } from "@/components/pdf-anexos/anexos-selector";
+import { mergeAnexos } from "@/lib/pdf-anexos-merge";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
+import { listarAnexosPorEscopo } from "@/lib/pdf-anexos.functions";
 
 interface Props {
   open: boolean;
@@ -35,7 +40,16 @@ export function PtPdfPreview({ open, onClose, pt, apr, casco, company, employees
   const [error, setError] = useState<string | null>(null);
   const [blob, setBlob] = useState<Blob | null>(null);
   const [empSigs, setEmpSigs] = useState<Record<string, string | null>>({});
+  const [anexosSel, setAnexosSel] = useState<string[]>([]);
   const tokenRef = useRef(0);
+
+  const listarAnexos = useServerFn(listarAnexosPorEscopo);
+  const { data: anexosDisponiveis = [] } = useQuery({
+    queryKey: ["pdf-anexos-padrao", "pte"],
+    queryFn: () => listarAnexos({ data: { escopo: "pte" } }),
+    enabled: open,
+    staleTime: 60_000,
+  });
 
   const params = useMemo<PtePdfParams | null>(() => {
     if (!pt) return null;
@@ -146,8 +160,17 @@ export function PtPdfPreview({ open, onClose, pt, apr, casco, company, employees
       try {
         const b = await gerarPtePdf(params);
         if (tokenRef.current !== token) return;
-        setBlob(b);
-        const buf = await b.arrayBuffer();
+        const escolhidos = anexosDisponiveis
+          .filter((a) => anexosSel.includes(a.id))
+          .map((a) => ({ id: a.id, arquivo_path: a.arquivo_path, titulo: a.titulo }));
+        let finalBlob = b;
+        if (escolhidos.length > 0) {
+          const merged = await mergeAnexos(await b.arrayBuffer(), escolhidos);
+          if (tokenRef.current !== token) return;
+          finalBlob = new Blob([merged as BlobPart], { type: "application/pdf" });
+        }
+        setBlob(finalBlob);
+        const buf = await finalBlob.arrayBuffer();
         await renderPdfToImagePagesProgressive(buf, (page) => {
           if (tokenRef.current !== token) return;
           setPages((prev) => [...prev, page]);
@@ -159,7 +182,7 @@ export function PtPdfPreview({ open, onClose, pt, apr, casco, company, employees
       }
     })();
     return () => { tokenRef.current++; };
-  }, [open, params]);
+  }, [open, params, anexosSel, anexosDisponiveis]);
 
   if (!pt) return null;
 
@@ -214,6 +237,11 @@ export function PtPdfPreview({ open, onClose, pt, apr, casco, company, employees
           </div>
 
           <div className="max-h-[calc(95vh-65px)] overflow-auto bg-muted p-4">
+            {anexosDisponiveis.length > 0 && (
+              <div className="mb-4 rounded-lg border border-border bg-card p-3 max-w-[860px] mx-auto">
+                <AnexosSelector escopo="pte" value={anexosSel} onChange={setAnexosSel} />
+              </div>
+            )}
             {error ? (
               <div className="text-sm text-destructive p-6 text-center">Não foi possível gerar o PDF: {error}</div>
             ) : pages.length === 0 ? (
