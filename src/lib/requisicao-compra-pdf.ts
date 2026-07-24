@@ -257,9 +257,16 @@ export async function gerarPdfRequisicaoDoc(
       // mesmo quando estão em branco. Preenchemos os slots 1..10 e escoamos
       // eventuais itens excedentes (>10) na sequência.
       const byNumero = new Map<number, RcPdfItem>();
+      const semNumero: RcPdfItem[] = [];
       for (const it of itens) {
         const n = Number(it.item_numero);
-        if (Number.isFinite(n) && n > 0) byNumero.set(n, it);
+        if (Number.isFinite(n) && n > 0) {
+          // se dois itens colidirem no mesmo slot, o segundo vai pro fim
+          if (byNumero.has(n)) semNumero.push(it);
+          else byNumero.set(n, it);
+        } else {
+          semNumero.push(it);
+        }
       }
       const rows: (string | number)[][] = [];
       for (let n = 1; n <= MIN_ROWS; n++) {
@@ -284,6 +291,19 @@ export async function gerarPdfRequisicaoDoc(
             it.observacao || "",
           ]);
         }
+      }
+      // Itens sem item_numero válido (legado/colisão): anexados no fim,
+      // numerados sequencialmente a partir do próximo slot livre.
+      let proximo = Math.max(MIN_ROWS + 1, ...Array.from(byNumero.keys()).filter((n) => n > MIN_ROWS)) + 1;
+      for (const it of semNumero) {
+        rows.push([
+          String(proximo).padStart(2, "0"),
+          it.descricao || "",
+          it.quantidade != null ? String(it.quantidade) : "",
+          it.unidade || "",
+          it.observacao || "",
+        ]);
+        proximo++;
       }
       return rows;
     })(),
