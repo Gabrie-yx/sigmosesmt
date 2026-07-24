@@ -9,6 +9,7 @@ import {
   DIMENSAO_LABEL,
   FAIXA_ETARIA,
   FAIXA_TEMPO_CASA,
+  INSTRUMENTO_CITACAO,
   type PsicoItem,
 } from "@/lib/psico-instrument";
 import { validatePsicoToken, type PsicoValidateResult } from "@/lib/psico-public.functions";
