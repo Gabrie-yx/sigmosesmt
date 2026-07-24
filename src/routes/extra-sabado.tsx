@@ -286,6 +286,17 @@ function ExtraSabadoMobilePage() {
                 <Plus className="h-4 w-4" />
               </button>
             )}
+            {convId && conv && (marcados?.length ?? 0) > 0 && (
+              <button
+                onClick={gerarPdfDaConvocacao}
+                disabled={gerandoPdf}
+                className="p-2 rounded-full bg-sky-500/90 hover:bg-sky-500 transition text-white disabled:opacity-60"
+                aria-label="Gerar PDF e compartilhar"
+                title="Gerar PDF e compartilhar"
+              >
+                {gerandoPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+              </button>
+            )}
             {convId && (isLider || isAdmin) && conv && conv.status !== "APROVADA" && (
               <button
                 onClick={async () => {
