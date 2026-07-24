@@ -315,9 +315,21 @@ function CampanhasTab() {
           data_fim: payload.data_fim,
           status: payload.status,
           ghe_ids: payload.ghe_ids,
+          termo_lgpd: payload.termo_lgpd ?? null,
         })
         .eq("id", payload.id);
       if (error) throw error;
+      // Prorroga automaticamente os tokens que expiravam antes da nova data_fim
+      // (mantém a MESMA URL — o cartaz/QR já impresso continua válido).
+      if (payload.data_fim) {
+        const novaExp = new Date(payload.data_fim + "T23:59:59").toISOString();
+        await sb
+          .from("psico_tokens")
+          .update({ expira_em: novaExp })
+          .eq("campanha_id", payload.id)
+          .is("usado_em", null)
+          .lt("expira_em", novaExp);
+      }
     },
     onSuccess: () => {
       toast.success("Campanha atualizada.");
