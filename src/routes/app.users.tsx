@@ -134,6 +134,29 @@ function UsersPage() {
     queryFn: () => listFn(),
   });
 
+  // Templates de perfil (para acelerar convite)
+  const { data: roleTemplates = [] } = useQuery({
+    queryKey: ["role-templates-invite"],
+    enabled: isAdmin && mfaSatisfied,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("role_templates")
+        .select("id, nome, descricao, roles, modulos, menus, oficial")
+        .order("oficial", { ascending: false })
+        .order("nome", { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  function aplicarTemplate(t: any) {
+    const primeiroRole = Array.isArray(t.roles) && t.roles.length ? String(t.roles[0]) : "editor";
+    setFRole(primeiroRole);
+    setFModules(Array.isArray(t.modulos) ? t.modulos.map(String) : []);
+    setFMenus(Array.isArray(t.menus) ? t.menus.map(String) : []);
+    toast.success(`Template "${t.nome}" aplicado`);
+  }
+
   const { data: logsData, isLoading: logsLoading } = useQuery({
     queryKey: ["users-audit-logs"],
     enabled: isAdmin && mfaSatisfied,
