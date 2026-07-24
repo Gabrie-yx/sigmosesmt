@@ -776,6 +776,7 @@ function OssIndexPage() {
             doc={previewDoc?.doc ?? null}
             fileName={previewDoc?.name ?? "OSS.pdf"}
             title="Ordem de Serviço de Segurança"
+            anexosEscopo="oss"
           />
         </Suspense>
       )}
