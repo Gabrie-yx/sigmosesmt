@@ -6,6 +6,7 @@ import { Dialog } from "@/components/ui/dialog";
 import { ShoppingCart, Cog, Plus } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { ReqFormDialog } from "@/routes/app.sesmt.requisicoes";
+import { MinhasRcsList } from "@/components/compras/minhas-rcs-list";
 
 export const Route = createFileRoute("/app/modulo/mecanica/requisicao-compras")({
   head: () => ({
@@ -69,6 +70,8 @@ function MecanicaRequisicaoComprasPage() {
           </div>
         </CardContent>
       </Card>
+
+      <MinhasRcsList setorFixo="Manutenção Mecânica" />
     </div>
   );
 }
