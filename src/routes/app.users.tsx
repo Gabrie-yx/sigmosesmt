@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,15 @@ import {
 import { createInvestorAccess } from "@/lib/temp-investors.functions";
 import { MENU_CATALOG, MENU_BY_KEY, menusForModule, AVAILABLE_MODULES } from "@/lib/menu-catalog";
 import { APP_ROLES, moduleLabel } from "@/lib/access-control";
+import { LayoutTemplate } from "lucide-react";
+import {
+  DropdownMenu as TplDropdownMenu,
+  DropdownMenuTrigger as TplDropdownMenuTrigger,
+  DropdownMenuContent as TplDropdownMenuContent,
+  DropdownMenuItem as TplDropdownMenuItem,
+  DropdownMenuLabel as TplDropdownMenuLabel,
+  DropdownMenuSeparator as TplDropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 export const Route = createFileRoute("/app/users")({
   component: UsersPage,
