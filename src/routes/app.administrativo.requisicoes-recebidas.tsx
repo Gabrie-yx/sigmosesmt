@@ -313,6 +313,27 @@ function SetorCard({
 
 function RcCard({ req, onChanged }: { req: Req; onChanged: () => void }) {
   const [openDetail, setOpenDetail] = useState(false);
+  const { roles } = useAuth();
+  const isAdmin = roles.includes("admin");
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  async function excluir() {
+    setDeleting(true);
+    try {
+      const { error } = await supabase
+        .from("purchase_requisitions")
+        .delete()
+        .eq("id", req.id);
+      if (error) throw error;
+      toast.success(`RC ${req.numero} excluída`);
+      setConfirmDelete(false);
+      onChanged();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Falha ao excluir");
+    } finally {
+      setDeleting(false);
+    }
+  }
   const pulsing = req.status === "COTADA";
   return (
     <Card className={`glass-card overflow-hidden ${pulsing ? "ring-1 ring-sky-400/50" : ""}`}>
@@ -349,10 +370,40 @@ function RcCard({ req, onChanged }: { req: Req; onChanged: () => void }) {
         <Button size="sm" variant="outline" onClick={() => setOpenDetail(true)}>
           <Eye className="h-3.5 w-3.5 mr-1" /> Abrir
         </Button>
+        {isAdmin && (
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={() => setConfirmDelete(true)}
+            title="Excluir RC (admin)"
+          >
+            <Trash2 className="h-3.5 w-3.5 mr-1" /> Excluir
+          </Button>
+        )}
       </CardContent>
       {openDetail && (
         <RcDetailDialog req={req} onClose={() => { setOpenDetail(false); onChanged(); }} />
       )}
+      <AlertDialog open={confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(false)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir RC {req.numero}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Remove permanentemente a requisição, itens e cotações. Ação irreversível — use para limpar testes.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleting}
+              onClick={(e) => { e.preventDefault(); excluir(); }}
+              className="bg-rose-600 hover:bg-rose-700"
+            >
+              {deleting ? "Excluindo…" : "Excluir definitivamente"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
