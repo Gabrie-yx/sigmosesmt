@@ -644,6 +644,7 @@ function NovoMembroDialog({ open, onClose, gestaoId, onSaved, edit }: { open: bo
 function ReunioesTab({ gestaoId }: { gestaoId: string }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [editRow, setEditRow] = useState<any>(null);
   const { data } = useQuery({
     queryKey: ["cipa", "reunioes", gestaoId],
     queryFn: async () => {
@@ -682,12 +683,17 @@ function ReunioesTab({ gestaoId }: { gestaoId: string }) {
                 </div>
                 <div className="flex items-center gap-1">
                   <Badge variant={r.status === "REALIZADA" ? "default" : "secondary"}>{r.status}</Badge>
+                  <Button size="icon" variant="ghost" onClick={() => setEditRow(r)} title="Editar">
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
                   <Button size="icon" variant="ghost" onClick={() => { if (confirm("Remover esta reunião?")) del.mutate(r.id); }}>
                     <Trash2 className="h-3.5 w-3.5 text-rose-400" />
                   </Button>
                 </div>
               </div>
               {r.pauta && <p className="text-xs mt-2 text-muted-foreground whitespace-pre-wrap"><b>Pauta:</b> {r.pauta}</p>}
+              {r.ata_texto && <p className="text-xs mt-2 whitespace-pre-wrap"><b>Ata:</b> {r.ata_texto}</p>}
+              {r.ata_url && <a href={r.ata_url} target="_blank" rel="noreferrer" className="text-xs text-rose-400 underline">Ata (PDF) →</a>}
             </li>
           ))}
         </ul>
@@ -698,33 +704,63 @@ function ReunioesTab({ gestaoId }: { gestaoId: string }) {
         onClose={() => setOpen(false)}
         onSaved={() => qc.invalidateQueries({ queryKey: ["cipa", "reunioes", gestaoId] })}
       />
+      <NovaReuniaoDialog
+        open={!!editRow}
+        edit={editRow}
+        gestaoId={gestaoId}
+        onClose={() => setEditRow(null)}
+        onSaved={() => qc.invalidateQueries({ queryKey: ["cipa", "reunioes", gestaoId] })}
+      />
     </Card>
   );
 }
 
-function NovaReuniaoDialog({ open, onClose, gestaoId, onSaved }: { open: boolean; onClose: () => void; gestaoId: string; onSaved: () => void }) {
+function NovaReuniaoDialog({ open, onClose, gestaoId, onSaved, edit }: { open: boolean; onClose: () => void; gestaoId: string; onSaved: () => void; edit?: any }) {
+  const isEdit = !!edit;
   const [tipo, setTipo] = useState("ORDINARIA");
   const [data, setData] = useState("");
   const [hora, setHora] = useState("");
   const [local, setLocal] = useState("");
   const [pauta, setPauta] = useState("");
+  const [status, setStatus] = useState("AGENDADA");
+  const [ataTexto, setAtaTexto] = useState("");
+  const [ataUrl, setAtaUrl] = useState("");
+
+  useEffect(() => {
+    if (open && edit) {
+      setTipo(edit.tipo ?? "ORDINARIA");
+      setData(edit.data ?? "");
+      setHora(edit.hora ?? "");
+      setLocal(edit.local ?? "");
+      setPauta(edit.pauta ?? "");
+      setStatus(edit.status ?? "AGENDADA");
+      setAtaTexto(edit.ata_texto ?? "");
+      setAtaUrl(edit.ata_url ?? "");
+    } else if (open && !edit) {
+      setTipo("ORDINARIA"); setData(""); setHora(""); setLocal(""); setPauta("");
+      setStatus("AGENDADA"); setAtaTexto(""); setAtaUrl("");
+    }
+  }, [open, edit]);
+
   const mut = useMutation({
     mutationFn: async () => {
       if (!data) throw new Error("Informe a data");
-      const { error } = await supabase.from("cipa_reunioes").insert({ gestao_id: gestaoId, tipo, data, hora: hora || null, local: local || null, pauta: pauta || null });
-      if (error) throw error;
+      const payload = { gestao_id: gestaoId, tipo, data, hora: hora || null, local: local || null, pauta: pauta || null, status, ata_texto: ataTexto || null, ata_url: ataUrl || null };
+      if (isEdit) {
+        const { error } = await supabase.from("cipa_reunioes").update(payload).eq("id", edit.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("cipa_reunioes").insert(payload);
+        if (error) throw error;
+      }
     },
-    onSuccess: () => {
-      toast.success("Reunião agendada");
-      onSaved(); onClose();
-      setData(""); setHora(""); setLocal(""); setPauta("");
-    },
+    onSuccess: () => { toast.success(isEdit ? "Reunião atualizada" : "Reunião agendada"); onSaved(); onClose(); },
     onError: (e: Error) => toast.error(e.message),
   });
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent>
-        <DialogHeader><DialogTitle>Agendar reunião da CIPA</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{isEdit ? "Editar reunião" : "Agendar reunião da CIPA"}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-2">
             <div>
@@ -746,6 +782,22 @@ function NovaReuniaoDialog({ open, onClose, gestaoId, onSaved }: { open: boolean
             <div><Label>Local</Label><Input value={local} onChange={(e) => setLocal(e.target.value)} placeholder="Sala/local" /></div>
           </div>
           <div><Label>Pauta</Label><Textarea rows={4} value={pauta} onChange={(e) => setPauta(e.target.value)} /></div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label>Status</Label>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="AGENDADA">Agendada</SelectItem>
+                  <SelectItem value="REALIZADA">Realizada</SelectItem>
+                  <SelectItem value="CANCELADA">Cancelada</SelectItem>
+                  <SelectItem value="ADIADA">Adiada</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div><Label>URL da ata (PDF)</Label><Input value={ataUrl} onChange={(e) => setAtaUrl(e.target.value)} placeholder="https://..." /></div>
+          </div>
+          <div><Label>Ata (texto)</Label><Textarea rows={4} value={ataTexto} onChange={(e) => setAtaTexto(e.target.value)} placeholder="Deliberações, presentes, encaminhamentos…" /></div>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>Cancelar</Button>
