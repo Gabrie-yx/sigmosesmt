@@ -196,6 +196,44 @@ function CampanhasTab() {
   const [gheIds, setGheIds] = useState<string[]>([]);
   const [tokensGerados, setTokensGerados] = useState<{ token: string; url: string }[]>([]);
   const [tokensDialogOpen, setTokensDialogOpen] = useState(false);
+  const [qrLink, setQrLink] = useState<{ url: string; idx: number } | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string>("");
+
+  useEffect(() => {
+    if (!qrLink) { setQrDataUrl(""); return; }
+    QRCode.toDataURL(qrLink.url, { width: 512, margin: 2, errorCorrectionLevel: "M" })
+      .then(setQrDataUrl).catch(() => setQrDataUrl(""));
+  }, [qrLink]);
+
+  async function baixarFolhaQRs() {
+    const { default: JsPDF } = await import("jspdf");
+    const doc = new JsPDF({ unit: "mm", format: "a4" });
+    const pageW = 210, pageH = 297, margin = 10;
+    const cols = 3, rows = 4;
+    const cellW = (pageW - margin * 2) / cols;
+    const cellH = (pageH - margin * 2) / rows;
+    const qrSize = Math.min(cellW, cellH) - 16;
+    for (let i = 0; i < tokensGerados.length; i++) {
+      const posInPage = i % (cols * rows);
+      if (i > 0 && posInPage === 0) doc.addPage();
+      const c = posInPage % cols;
+      const r = Math.floor(posInPage / cols);
+      const x = margin + c * cellW;
+      const y = margin + r * cellH;
+      const dataUrl = await QRCode.toDataURL(tokensGerados[i].url, { width: 512, margin: 1 });
+      doc.addImage(dataUrl, "PNG", x + (cellW - qrSize) / 2, y + 4, qrSize, qrSize);
+      doc.setFontSize(9);
+      doc.text(`#${i + 1}`, x + cellW / 2, y + cellH - 6, { align: "center" });
+      doc.setFontSize(7);
+      doc.text("Avaliação Psicossocial — NR-01", x + cellW / 2, y + cellH - 2, { align: "center" });
+    }
+    doc.save(`campanha-psicossocial-qrs-${new Date().toISOString().slice(0, 10)}.pdf`);
+  }
+
+  function shareWhatsApp(url: string) {
+    const texto = `Olá! Você foi convidado(a) a participar da avaliação de riscos psicossociais (NR-01).\n\nÉ anônimo, dura ~10 min e o link é de uso único:\n${url}\n\nObrigado pela colaboração.`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank");
+  }
   const [editing, setEditing] = useState<any | null>(null);
   const [deleting, setDeleting] = useState<any | null>(null);
 
