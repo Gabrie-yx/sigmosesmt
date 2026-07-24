@@ -315,9 +315,21 @@ function CampanhasTab() {
           data_fim: payload.data_fim,
           status: payload.status,
           ghe_ids: payload.ghe_ids,
+          termo_lgpd: payload.termo_lgpd ?? null,
         })
         .eq("id", payload.id);
       if (error) throw error;
+      // Prorroga automaticamente os tokens que expiravam antes da nova data_fim
+      // (mantém a MESMA URL — o cartaz/QR já impresso continua válido).
+      if (payload.data_fim) {
+        const novaExp = new Date(payload.data_fim + "T23:59:59").toISOString();
+        await sb
+          .from("psico_tokens")
+          .update({ expira_em: novaExp })
+          .eq("campanha_id", payload.id)
+          .is("usado_em", null)
+          .lt("expira_em", novaExp);
+      }
     },
     onSuccess: () => {
       toast.success("Campanha atualizada.");
@@ -640,6 +652,7 @@ function EditarCampanhaDialog({
   const [dataFim, setDataFim] = useState("");
   const [status, setStatus] = useState("ATIVA");
   const [gheIds, setGheIds] = useState<string[]>([]);
+  const [termoLgpd, setTermoLgpd] = useState<string>("");
 
   useEffect(() => {
     if (campanha) {
@@ -649,6 +662,7 @@ function EditarCampanhaDialog({
       setDataFim(campanha.data_fim ?? "");
       setStatus(campanha.status ?? "ATIVA");
       setGheIds(Array.isArray(campanha.ghe_ids) ? campanha.ghe_ids : []);
+      setTermoLgpd(campanha.termo_lgpd ?? "");
     }
   }, [campanha]);
 
@@ -673,7 +687,22 @@ function EditarCampanhaDialog({
             <div>
               <Label>Fim</Label>
               <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
+              <p className="text-[10px] text-rose-100/50 mt-1">
+                Alterar o Fim <b>prorroga automaticamente</b> os links ainda não usados — a URL/QR já impresso continua valendo.
+              </p>
             </div>
+          </div>
+          <div>
+            <Label>Termo LGPD (opcional)</Label>
+            <Textarea
+              rows={6}
+              value={termoLgpd}
+              onChange={(e) => setTermoLgpd(e.target.value)}
+              placeholder="Deixe em branco para usar o texto padrão do SIGMO (anonimato, base legal NR-01 / Portaria MTP 1.419/2024, agregação por GHE)."
+            />
+            <p className="text-[10px] text-rose-100/50 mt-1">
+              Este texto aparece na tela de consentimento do respondente, antes das perguntas. Vazio = padrão SIGMO.
+            </p>
           </div>
           <div>
             <Label>Status</Label>
@@ -703,6 +732,7 @@ function EditarCampanhaDialog({
               id: campanha.id, titulo, descricao,
               data_inicio: dataInicio, data_fim: dataFim,
               status, ghe_ids: gheIds,
+              termo_lgpd: termoLgpd.trim() || null,
             })}
           >
             {saving && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}

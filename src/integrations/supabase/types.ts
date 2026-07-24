@@ -10259,6 +10259,7 @@ export type Database = {
           responsavel_tecnico_nome: string | null
           responsavel_tecnico_registro: string | null
           status: string
+          termo_lgpd: string | null
           titulo: string
           total_respostas: number
           total_tokens: number
@@ -10279,6 +10280,7 @@ export type Database = {
           responsavel_tecnico_nome?: string | null
           responsavel_tecnico_registro?: string | null
           status?: string
+          termo_lgpd?: string | null
           titulo: string
           total_respostas?: number
           total_tokens?: number
@@ -10299,6 +10301,7 @@ export type Database = {
           responsavel_tecnico_nome?: string | null
           responsavel_tecnico_registro?: string | null
           status?: string
+          termo_lgpd?: string | null
           titulo?: string
           total_respostas?: number
           total_tokens?: number

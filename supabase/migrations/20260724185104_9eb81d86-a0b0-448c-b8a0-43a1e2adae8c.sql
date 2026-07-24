@@ -1,0 +1,2 @@
+ALTER TABLE public.psico_campanhas ADD COLUMN IF NOT EXISTS termo_lgpd TEXT;
+COMMENT ON COLUMN public.psico_campanhas.termo_lgpd IS 'Termo de Consentimento LGPD exibido ao respondente. NULL = usa texto padrão do SIGMO.';
