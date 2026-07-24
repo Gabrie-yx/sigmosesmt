@@ -43,6 +43,7 @@ export const MENU_CATALOG: MenuEntry[] = [
   { key: "/app/matriz-riscos", label: "Matriz de Riscos (PGR/LTCAT)", module: "sesmt" },
   { key: "/app/pgr", label: "PGR — Programa de Riscos (NR-01)", module: "sesmt" },
   { key: "/app/psicossocial", label: "Psicossocial (NR-01 / ISO 45003)", module: "sesmt" },
+  { key: "/app/sesmt/cipa", label: "CIPA (NR-05 + Lei 14.457)", module: "sesmt" },
 
   // ----- ESTOQUE -----
   { key: "/app/estoque", label: "Estoque de EPIs", module: "estoque" },
