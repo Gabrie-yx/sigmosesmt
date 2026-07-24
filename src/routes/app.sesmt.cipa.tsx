@@ -178,29 +178,43 @@ function CipaPage() {
 
       {gestaoAtiva && (
         <Tabs defaultValue="resumo">
-          <TabsList>
+          <TabsList className="flex-wrap h-auto">
             <TabsTrigger value="resumo"><ShieldCheck className="h-4 w-4 mr-1" /> Resumo</TabsTrigger>
-            <TabsTrigger value="membros"><Users className="h-4 w-4 mr-1" /> Membros</TabsTrigger>
+            {gestaoAtiva.modo === "DESIGNADO" ? (
+              <TabsTrigger value="designado"><Users className="h-4 w-4 mr-1" /> Designado</TabsTrigger>
+            ) : (
+              <TabsTrigger value="membros"><Users className="h-4 w-4 mr-1" /> Membros</TabsTrigger>
+            )}
             <TabsTrigger value="reunioes"><CalendarDays className="h-4 w-4 mr-1" /> Reuniões / Atas</TabsTrigger>
             <TabsTrigger value="plano"><ListChecks className="h-4 w-4 mr-1" /> Plano Anual</TabsTrigger>
-            <TabsTrigger value="eleicao"><Vote className="h-4 w-4 mr-1" /> Eleição</TabsTrigger>
+            {gestaoAtiva.modo === "COMISSAO" && (
+              <TabsTrigger value="eleicao"><Vote className="h-4 w-4 mr-1" /> Eleição</TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="resumo" className="mt-4">
             <ResumoGestao gestao={gestaoAtiva} />
           </TabsContent>
-          <TabsContent value="membros" className="mt-4">
-            <MembrosTab gestaoId={gestaoAtiva.id} />
-          </TabsContent>
+          {gestaoAtiva.modo === "COMISSAO" ? (
+            <TabsContent value="membros" className="mt-4">
+              <MembrosTab gestaoId={gestaoAtiva.id} />
+            </TabsContent>
+          ) : (
+            <TabsContent value="designado" className="mt-4">
+              <DesignadoTab gestao={gestaoAtiva} onSaved={() => qc.invalidateQueries({ queryKey: ["cipa", "gestoes"] })} />
+            </TabsContent>
+          )}
           <TabsContent value="reunioes" className="mt-4">
             <ReunioesTab gestaoId={gestaoAtiva.id} />
           </TabsContent>
           <TabsContent value="plano" className="mt-4">
             <PlanoTab gestaoId={gestaoAtiva.id} />
           </TabsContent>
-          <TabsContent value="eleicao" className="mt-4">
-            <EleicaoTab gestaoId={gestaoAtiva.id} />
-          </TabsContent>
+          {gestaoAtiva.modo === "COMISSAO" && (
+            <TabsContent value="eleicao" className="mt-4">
+              <EleicaoTab gestaoId={gestaoAtiva.id} />
+            </TabsContent>
+          )}
         </Tabs>
       )}
 
