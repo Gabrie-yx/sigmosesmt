@@ -7054,6 +7054,48 @@ export type Database = {
         }
         Relationships: []
       }
+      pdf_anexos_padrao: {
+        Row: {
+          arquivo_path: string
+          ativo: boolean
+          created_at: string
+          created_by: string | null
+          descricao: string | null
+          escopo: string
+          id: string
+          obrigatorio: boolean
+          ordem: number
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          arquivo_path: string
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          descricao?: string | null
+          escopo: string
+          id?: string
+          obrigatorio?: boolean
+          ordem?: number
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          arquivo_path?: string
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          descricao?: string | null
+          escopo?: string
+          id?: string
+          obrigatorio?: boolean
+          ordem?: number
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pgr_ghe: {
         Row: {
           ativo: boolean
@@ -11040,6 +11082,42 @@ export type Database = {
           },
         ]
       }
+      role_templates: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          id: string
+          menus: Json
+          modulos: Json
+          nome: string
+          oficial: boolean
+          roles: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          menus?: Json
+          modulos?: Json
+          nome: string
+          oficial?: boolean
+          roles?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          menus?: Json
+          modulos?: Json
+          nome?: string
+          oficial?: boolean
+          roles?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       roles: {
         Row: {
           atividades: string | null
@@ -11300,6 +11378,42 @@ export type Database = {
           tipo?: string
           titulo?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      snippets: {
+        Row: {
+          campo_alvo: string | null
+          conteudo: string
+          created_at: string
+          created_by: string | null
+          escopo: string
+          id: string
+          oficial: boolean
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          campo_alvo?: string | null
+          conteudo: string
+          created_at?: string
+          created_by?: string | null
+          escopo: string
+          id?: string
+          oficial?: boolean
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          campo_alvo?: string | null
+          conteudo?: string
+          created_at?: string
+          created_by?: string | null
+          escopo?: string
+          id?: string
+          oficial?: boolean
+          titulo?: string
+          updated_at?: string
         }
         Relationships: []
       }
