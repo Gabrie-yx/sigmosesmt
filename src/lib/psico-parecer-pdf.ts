@@ -1,7 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { drawPdfHeader } from "./pdf-header";
-import { DIMENSAO_LABEL, INSTRUMENTO_CITACAO } from "./psico-instrument";
+import { DIMENSAO_LABEL, DIMENSAO_TIPO, INSTRUMENTO_CITACAO } from "./psico-instrument";
 
 /* Paleta Matriz 5x5 DMN (mesmas cores do dashboard) */
 const COR_BAIXO: [number, number, number] = [0x2e, 0xcc, 0x71];   // verde
@@ -93,6 +93,26 @@ export function gerarParecerPsicossocialPdf(opts: ParecerPsicoOpts): jsPDF {
   const criticas = validas.filter((l) => corMedia(Number(l.media), l.dimensao) === COR_CRIT).length;
   const altas = validas.filter((l) => corMedia(Number(l.media), l.dimensao) === COR_ALTO).length;
 
+  // Separação FATOR (causa) x OUTCOME (efeito clínico) — Burnout/Sono.
+  const validasFator = validas.filter(
+    (l) => DIMENSAO_TIPO[l.dimensao as keyof typeof DIMENSAO_TIPO] === "FATOR",
+  );
+  const validasOutcome = validas.filter(
+    (l) => DIMENSAO_TIPO[l.dimensao as keyof typeof DIMENSAO_TIPO] === "OUTCOME",
+  );
+  const burnoutLinhas = validasOutcome.filter((l) => l.dimensao === "BURNOUT");
+  const sonoLinhas = validasOutcome.filter((l) => l.dimensao === "SONO");
+  const outcomeCrit = validasOutcome.filter(
+    (l) => corMedia(Number(l.media), l.dimensao) === COR_CRIT,
+  ).length;
+  const outcomeAlto = validasOutcome.filter(
+    (l) => corMedia(Number(l.media), l.dimensao) === COR_ALTO,
+  ).length;
+  const mediaDim = (ls: typeof validas) =>
+    ls.length ? ls.reduce((s, l) => s + Number(l.media), 0) / ls.length : null;
+  const mediaBurnout = mediaDim(burnoutLinhas);
+  const mediaSono = mediaDim(sonoLinhas);
+
   let y = drawPdfHeader(doc, {
     titulo: "Parecer Técnico — Avaliação de Riscos Psicossociais",
     subtitulo: "NR-01 · Portaria MTP 1.419/2024 · ISO 45003:2021",
@@ -157,10 +177,10 @@ export function gerarParecerPsicossocialPdf(opts: ParecerPsicoOpts): jsPDF {
     y = legendaCores(doc, y);
   }
 
-  // ============== 4. RANKING DE CRITICIDADE ==============
+  // ============== 4.A RANKING — FATORES DE RISCO (causa) ==============
   y = ensureSpace(y + 4, 40);
-  y = sectionTitle(doc, "4. RANKING DE CRITICIDADE", y);
-  const ranking = validas
+  y = sectionTitle(doc, "4.A RANKING DE CRITICIDADE — FATORES DE RISCO (causa)", y);
+  const ranking = validasFator
     .map((l) => ({ ...l, mediaNum: Number(l.media) }))
     .sort((a, b) => b.mediaNum - a.mediaNum)
     .slice(0, 15);
@@ -203,12 +223,120 @@ export function gerarParecerPsicossocialPdf(opts: ParecerPsicoOpts): jsPDF {
   });
   y = (doc as any).lastAutoTable.finalY + 6;
 
+  // ============== 4.B OUTCOMES CLÍNICOS — BURNOUT & SONO (efeito) ==============
+  y = ensureSpace(y, 60);
+  y = sectionTitle(doc, "4.B OUTCOMES CLÍNICOS — BURNOUT & SONO (efeito)", y);
+  y = paragraph(
+    doc,
+    "Diferente dos fatores de risco (causa), Burnout e Sono são desfechos clínicos: medem o impacto " +
+      "cumulativo do ambiente sobre a saúde mental do trabalhador. Baseados em Copenhagen Burnout Inventory " +
+      "(CBI) e itens de sono do COPSOQ II. Nível ALTO/CRÍTICO exige encaminhamento ao SESMT/PCMSO " +
+      "(NR-07 item 7.5.2) — não basta ação no PGR.",
+    y,
+  );
+  const outcomeBody: (string | number)[][] = [];
+  if (mediaBurnout != null) {
+    outcomeBody.push([
+      "Burnout (esgotamento) — CBI",
+      String(burnoutLinhas.reduce((s, l) => s + l.n_respostas, 0)),
+      mediaBurnout.toFixed(2),
+      labelNivel(mediaBurnout, "BURNOUT"),
+    ]);
+  }
+  if (mediaSono != null) {
+    outcomeBody.push([
+      "Qualidade do sono",
+      String(sonoLinhas.reduce((s, l) => s + l.n_respostas, 0)),
+      mediaSono.toFixed(2),
+      labelNivel(mediaSono, "SONO"),
+    ]);
+  }
+  if (outcomeBody.length === 0) {
+    y = paragraph(doc, "Nenhum outcome com N suficiente para análise (recortes suprimidos por k-anonimato).", y);
+  } else {
+    autoTable(doc, {
+      startY: y,
+      margin: { left: M, right: M, bottom: BOTTOM },
+      theme: "grid",
+      styles: { fontSize: 9, cellPadding: 2, lineColor: [203, 213, 225], lineWidth: 0.2 },
+      headStyles: { fillColor: [15, 23, 42], textColor: 255, fontStyle: "bold", fontSize: 9 },
+      columnStyles: {
+        0: { cellWidth: 90 },
+        1: { cellWidth: 20, halign: "center" },
+        2: { cellWidth: 22, halign: "center" },
+        3: { cellWidth: 40, halign: "center" },
+      },
+      head: [["Outcome clínico", "n", "Média (1-5)", "Nível agregado"]],
+      body: outcomeBody,
+      didParseCell: (data) => {
+        if (data.section !== "body" || data.column.index !== 3) return;
+        const media = data.row.index === 0 ? mediaBurnout : mediaSono;
+        const dim = data.row.index === 0 ? "BURNOUT" : "SONO";
+        if (media == null) return;
+        const [rr, gg, bb] = corMedia(media, dim);
+        data.cell.styles.fillColor = [rr, gg, bb];
+        data.cell.styles.textColor = rr + gg + bb > 500 ? [15, 23, 42] : [255, 255, 255];
+        data.cell.styles.fontStyle = "bold";
+      },
+    });
+    y = (doc as any).lastAutoTable.finalY + 4;
+
+    // Ranking dos outcomes por GHE (quando há mais de 1)
+    if (validasOutcome.length > 1) {
+      y = ensureSpace(y, 30);
+      const rankOut = validasOutcome
+        .map((l) => ({ ...l, mediaNum: Number(l.media) }))
+        .sort((a, b) => b.mediaNum - a.mediaNum)
+        .slice(0, 10);
+      autoTable(doc, {
+        startY: y,
+        margin: { left: M, right: M, bottom: BOTTOM },
+        showHead: "everyPage",
+        theme: "grid",
+        styles: { fontSize: 8.5, cellPadding: 1.8, lineColor: [203, 213, 225], lineWidth: 0.2 },
+        headStyles: { fillColor: [15, 23, 42], textColor: 255, fontStyle: "bold", fontSize: 8.5 },
+        columnStyles: {
+          0: { cellWidth: 10, halign: "center" },
+          1: { cellWidth: 62 },
+          2: { cellWidth: 42 },
+          3: { cellWidth: 16, halign: "center" },
+          4: { cellWidth: 12, halign: "center" },
+          5: { cellWidth: 26, halign: "center" },
+        },
+        head: [["#", "GHE", "Outcome", "Média", "n", "Nível"]],
+        body: rankOut.map((r, i) => {
+          const g = opts.ghes.find((x) => x.id === r.ghe_id);
+          return [
+            String(i + 1),
+            g ? `GHE ${g.numero} — ${g.setor}` : r.ghe_id.slice(0, 8),
+            DIMENSAO_LABEL[r.dimensao as keyof typeof DIMENSAO_LABEL] ?? r.dimensao,
+            r.mediaNum.toFixed(2),
+            String(r.n_respostas),
+            labelNivel(r.mediaNum, r.dimensao),
+          ];
+        }),
+        didParseCell: (data) => {
+          if (data.section !== "body" || data.column.index !== 5) return;
+          const r = rankOut[data.row.index];
+          if (!r) return;
+          const [rr, gg, bb] = corMedia(r.mediaNum, r.dimensao);
+          data.cell.styles.fillColor = [rr, gg, bb];
+          data.cell.styles.textColor = rr + gg + bb > 500 ? [15, 23, 42] : [255, 255, 255];
+          data.cell.styles.fontStyle = "bold";
+        },
+      });
+      y = (doc as any).lastAutoTable.finalY + 6;
+    }
+  }
+
   // ============== 5. NÃO CONFORMIDADES ==============
   y = ensureSpace(y, 40);
   y = sectionTitle(doc, "5. NÃO CONFORMIDADES IDENTIFICADAS", y);
   const nc: string[] = [];
   if (criticas > 0) nc.push(`${criticas} recorte(s) em nível CRÍTICO — exigem ação imediata (NR-01 item 1.5.5.1 / 1.5.5.2 · ISO 45003 §8.1.4).`);
   if (altas > 0) nc.push(`${altas} recorte(s) em nível ALTO — exigem plano de ação com prazo (NR-01 item 1.5.5.2 · 1.5.4.4.6.1).`);
+  if (outcomeCrit > 0) nc.push(`${outcomeCrit} outcome(s) clínico(s) em nível CRÍTICO (Burnout/Sono) — encaminhamento imediato ao PCMSO (NR-07 7.5.2) e vigilância médica reforçada.`);
+  else if (outcomeAlto > 0) nc.push(`${outcomeAlto} outcome(s) clínico(s) em nível ALTO (Burnout/Sono) — reforçar vigilância médica no próximo ciclo do PCMSO (NR-07 7.5.2).`);
   const violCrit = validas.filter((l) => l.dimensao === "VIOLENCIA" && Number(l.media) >= 1.5).length;
   if (violCrit > 0) nc.push(`${violCrit} recorte(s) com sinais de violência/assédio — tolerância zero (Lei 14.457/2022 Art. 23 · ISO 45003 §8.3).`);
   if (pctAdesao < 40) nc.push(`Adesão baixa (${pctAdesao}%) — reforçar comunicação e reaplicar campanha (NR-01 item 1.5.3.2).`);
