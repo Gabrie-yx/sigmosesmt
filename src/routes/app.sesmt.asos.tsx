@@ -22,6 +22,9 @@ import {
 import { Sparkles, PlayCircle, LogIn, ClipboardCheck, Timer } from "lucide-react";
 import { AsoRapidoDialog } from "@/components/aso/aso-rapido-dialog";
 import { AnamneseDialog } from "@/components/aso/anamnese-dialog";
+import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
+import { gerarPcmsoAnaliticoPdf } from "@/lib/pcmso-analitico-pdf";
+import type jsPDF from "jspdf";
 
 // Módulo central de ASO (NR-07 / PCMSO)
 // Painel unificado: KPIs semafóricos + Convocações + Registrados + Coordenador PCMSO + Clínicas + Relatório Analítico
@@ -1136,24 +1139,164 @@ function ClinicaDialog({
   );
 }
 
-// ---------- Relatório Analítico (placeholder Fase 2) ----------
+// ---------- Relatório Analítico Anual do PCMSO (NR-07 7.6.1) ----------
 function AnaliticoTab() {
+  const anoAtual = new Date().getFullYear();
+  const [ano, setAno] = useState(anoAtual);
+  const [observacoes, setObservacoes] = useState("");
+  const [pdfDoc, setPdfDoc] = useState<jsPDF | null>(null);
+  const [pdfName, setPdfName] = useState("");
+
+  const inicio = `${ano}-01-01`;
+  const fim = `${ano}-12-31`;
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["pcmso-analitico", ano],
+    queryFn: async () => {
+      const [coordQ, ativosQ, examesAnoQ, examesUltQ, atestadosQ, convocQ, anamnesesQ] = await Promise.all([
+        supabase.from("pcmso_coordenadores").select("nome, crm, crm_uf").eq("ativo", true).limit(1).maybeSingle(),
+        supabase.from("employees").select("id", { count: "exact", head: true }).eq("status", "ATIVO"),
+        // Exames realizados no ano
+        supabase.from("employee_exams")
+          .select("id, natureza, aptidao, data_realizacao")
+          .gte("data_realizacao", inicio).lte("data_realizacao", fim).limit(10000),
+        // Última realização por ativo (para cobertura)
+        supabase.from("employee_exams")
+          .select("employee_id, data_vencimento, employees!inner(status)")
+          .eq("employees.status", "ATIVO")
+          .order("data_realizacao", { ascending: false }).limit(10000),
+        // Atestados do ano
+        supabase.from("employee_atestados")
+          .select("dias_afastamento, cid")
+          .gte("data_inicio", inicio).lte("data_inicio", fim).limit(10000),
+        supabase.from("convocacoes_exames")
+          .select("id", { count: "exact", head: true })
+          .gte("convocado_em", `${inicio}T00:00:00`).lte("convocado_em", `${fim}T23:59:59`),
+        supabase.from("anamneses_ocupacionais")
+          .select("id", { count: "exact", head: true })
+          .gte("data_anamnese", inicio).lte("data_anamnese", fim),
+      ]);
+
+      // Exames por natureza
+      const natMap = new Map<string, number>();
+      const aptidao = { aptos: 0, aptos_restr: 0, inaptos: 0, nao_informado: 0 };
+      for (const r of (examesAnoQ.data ?? []) as any[]) {
+        const nat = (r.natureza ?? "NÃO INFORMADA").toUpperCase();
+        natMap.set(nat, (natMap.get(nat) ?? 0) + 1);
+        const apt = (r.aptidao ?? "").toString().toUpperCase();
+        if (apt.includes("INAPTO")) aptidao.inaptos++;
+        else if (apt.includes("RESTR")) aptidao.aptos_restr++;
+        else if (apt.includes("APTO")) aptidao.aptos++;
+        else aptidao.nao_informado++;
+      }
+      const examesPorNatureza = Array.from(natMap.entries())
+        .map(([natureza, total]) => ({ natureza, total }))
+        .sort((a, b) => b.total - a.total);
+
+      // Cobertura (última realização por ativo)
+      const latest = new Map<string, string>();
+      for (const r of (examesUltQ.data ?? []) as any[]) {
+        if (!latest.has(r.employee_id)) latest.set(r.employee_id, r.data_vencimento);
+      }
+      const totalAtivos = ativosQ.count ?? 0;
+      const isoHoje = new Date().toISOString().slice(0, 10);
+      let vigente = 0, vencido = 0;
+      latest.forEach((v) => { if (!v) return; if (v >= isoHoje) vigente++; else vencido++; });
+      const sem = Math.max(0, totalAtivos - latest.size);
+
+      // Atestados
+      const cidMap = new Map<string, number>();
+      let atestTotal = 0, atestDias = 0;
+      for (const r of (atestadosQ.data ?? []) as any[]) {
+        atestTotal++;
+        atestDias += Number(r.dias_afastamento ?? 0) || 0;
+        const cid = (r.cid ?? "").toString().trim().toUpperCase();
+        if (cid) cidMap.set(cid, (cidMap.get(cid) ?? 0) + 1);
+      }
+      const top_cid = Array.from(cidMap.entries())
+        .map(([cid, n]) => ({ cid, n })).sort((a, b) => b.n - a.n).slice(0, 5);
+
+      return {
+        coordenador: coordQ.data ?? null,
+        totalAtivos,
+        cobertura: { vigente, vencido, sem },
+        examesPorNatureza,
+        aptidao,
+        atestados: { total: atestTotal, dias: atestDias, top_cid },
+        agravos: { encaminhados: convocQ.count ?? 0, anamneses: anamnesesQ.count ?? 0 },
+      };
+    },
+  });
+
+  function gerarPdf() {
+    if (!data) return;
+    const doc = gerarPcmsoAnaliticoPdf({ ano, observacoes: observacoes.trim() || undefined, ...data });
+    setPdfDoc(doc);
+    setPdfName(`Relatorio-Analitico-PCMSO-${ano}.pdf`);
+  }
+
+  const anos = Array.from({ length: 5 }, (_, i) => anoAtual - i);
+  const pctVigente = data?.totalAtivos ? Math.round((data.cobertura.vigente / data.totalAtivos) * 100) : 0;
+  const totalExames = data?.examesPorNatureza.reduce((s, r) => s + r.total, 0) ?? 0;
+
   return (
-    <Card className="p-6 bg-slate-900/40 border-white/10">
-      <div className="flex items-start gap-3">
-        <div className="h-10 w-10 rounded-lg bg-amber-500/15 text-amber-300 ring-1 ring-amber-400/30 grid place-items-center shrink-0">
-          <FileText className="h-5 w-5" />
-        </div>
-        <div className="min-w-0">
-          <h3 className="text-white font-semibold">Relatório Analítico do PCMSO (NR-07 item 7.6.1)</h3>
-          <p className="text-sm text-slate-400 mt-1 max-w-2xl">
-            Documento anual obrigatório, assinado pelo coordenador PCMSO, com estatísticas de exames, aptidões, agravos, encaminhamentos e propostas para o próximo ciclo.
-          </p>
-          <div className="mt-3 rounded-lg border border-amber-400/20 bg-amber-500/[0.04] p-3 text-xs text-amber-100/80">
-            Fase 2 — gerador do relatório será entregue após o cadastro do coordenador PCMSO e do mapeamento de exames por GHE.
+    <div className="space-y-4">
+      <Card className="p-4 bg-slate-900/40 border-white/10">
+        <div className="flex items-start gap-3">
+          <div className="h-10 w-10 rounded-lg bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-400/30 grid place-items-center shrink-0">
+            <FileText className="h-5 w-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h3 className="text-white font-semibold">Relatório Analítico Anual do PCMSO (NR-07 item 7.6.1)</h3>
+            <p className="text-sm text-slate-400 mt-1">
+              Documento anual assinado pelo coordenador PCMSO com estatísticas de exames, aptidões, absenteísmo, encaminhamentos e propostas para o próximo ciclo.
+            </p>
           </div>
         </div>
+
+        <div className="mt-4 grid md:grid-cols-[160px,1fr,auto] gap-3 items-end">
+          <div>
+            <Label className="text-slate-300 text-xs">Ano-base</Label>
+            <Select value={String(ano)} onValueChange={(v) => setAno(Number(v))}>
+              <SelectTrigger className="bg-slate-800/60 border-white/10 text-white"><SelectValue /></SelectTrigger>
+              <SelectContent>{anos.map((a) => <SelectItem key={a} value={String(a)}>{a}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-slate-300 text-xs">Observações do coordenador (opcional)</Label>
+            <Textarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)}
+              rows={2} className="bg-slate-800/60 border-white/10 text-white"
+              placeholder="Ex.: novos exames incluídos, ajustes no PCMSO, retomada de campanhas..." />
+          </div>
+          <Button onClick={gerarPdf} disabled={!data || isLoading} className="bg-emerald-600 hover:bg-emerald-500 gap-1.5">
+            <FileText className="h-4 w-4" /> Gerar PDF
+          </Button>
+        </div>
+      </Card>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Kpi label="Exames no ano" value={totalExames} icon={ClipboardList} tone="slate" loading={isLoading} />
+        <Kpi label="Cobertura ASO" value={pctVigente} icon={CheckCircle2}
+          tone={pctVigente >= 95 ? "emerald" : pctVigente >= 80 ? "amber" : "red"} loading={isLoading}
+          hint={`${data?.cobertura.vigente ?? 0} vigentes`} />
+        <Kpi label="Aptos" value={data?.aptidao.aptos} icon={HeartPulse} tone="emerald" loading={isLoading} />
+        <Kpi label="Inaptos" value={data?.aptidao.inaptos} icon={ShieldAlert}
+          tone={(data?.aptidao.inaptos ?? 0) > 0 ? "red" : "emerald"} loading={isLoading} />
       </div>
-    </Card>
+
+      {!data?.coordenador && !isLoading && (
+        <Card className="p-3 bg-red-500/10 border-red-400/30 text-sm text-red-100 flex items-center gap-2">
+          <AlertTriangle className="h-4 w-4" /> Não conformidade NR-07 7.3.2 — sem coordenador PCMSO ativo. Cadastre na aba "Coordenador PCMSO".
+        </Card>
+      )}
+
+      <PDFPreviewDialog
+        open={!!pdfDoc}
+        onClose={() => setPdfDoc(null)}
+        doc={pdfDoc}
+        fileName={pdfName}
+        title={`Relatório Analítico PCMSO ${ano}`}
+      />
+    </div>
   );
 }
