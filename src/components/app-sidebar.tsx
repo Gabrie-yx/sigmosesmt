@@ -74,6 +74,7 @@ import {
   Syringe,
   ChefHat,
   Brain,
+  HeartPulse,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -144,6 +145,7 @@ const SESMT_GROUPS: { title: string; items: LeafItem[] }[] = [
       { to: "/app/psicossocial", label: "Risco Psicossocial (NR-01)", icon: Brain },
       { to: "/app/sesmt/cipa", label: "CIPA (NR-05 + Lei 14.457)", icon: UsersIcon },
       { to: "/app/sesmt/asos", label: "ASO — Painel PCMSO", icon: Stethoscope },
+      { to: "/app/sesmt/medicina-ocupacional", label: "Medicina Ocupacional (Prontuário)", icon: HeartPulse },
       { to: "/app/sesmt/docs", label: "Documentos SESMT", icon: FileText },
       { to: "/app/sesmt/templates-documentos", label: "Templates FOR-SEG", icon: FileCheck2 },
       { to: "/app/sesmt/guia-documentos", label: "Guia: Onde encontrar laudos?", icon: BookOpenCheck },
