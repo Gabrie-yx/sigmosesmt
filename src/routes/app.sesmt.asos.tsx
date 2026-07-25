@@ -131,33 +131,40 @@ function PainelTab() {
     queryKey: ["asos-kpis"],
     queryFn: async () => {
       const today = new Date();
-      const in30 = new Date(today.getTime() + 30 * 86400000);
-      const in60 = new Date(today.getTime() + 60 * 86400000);
       const isoToday = today.toISOString().slice(0, 10);
-      const iso30 = in30.toISOString().slice(0, 10);
-      const iso60 = in60.toISOString().slice(0, 10);
+      const iso30 = new Date(today.getTime() + 30 * 86400000).toISOString().slice(0, 10);
+      const iso60 = new Date(today.getTime() + 60 * 86400000).toISOString().slice(0, 10);
 
-      const [ativos, vencidos, venc30, venc3160, pendentes, coord] = await Promise.all([
+      // Correção: última realização por colaborador ATIVO — evita contar
+      // exames antigos de quem já renovou. NR-07: vale o ASO vigente.
+      const [ativosQ, examesQ, pendentesQ, coordQ] = await Promise.all([
         supabase.from("employees").select("id", { count: "exact", head: true }).eq("status", "ATIVO"),
-        supabase.from("employee_exams").select("employee_id", { count: "exact", head: true })
-          .lt("data_vencimento", isoToday),
-        supabase.from("employee_exams").select("employee_id", { count: "exact", head: true })
-          .gte("data_vencimento", isoToday).lte("data_vencimento", iso30),
-        supabase.from("employee_exams").select("employee_id", { count: "exact", head: true })
-          .gt("data_vencimento", iso30).lte("data_vencimento", iso60),
-        supabase.from("convocacoes_exames").select("id", { count: "exact", head: true })
-          .eq("status", "PENDENTE"),
-        supabase.from("pcmso_coordenadores").select("id", { count: "exact", head: true })
-          .eq("ativo", true),
+        supabase.from("employee_exams")
+          .select("employee_id, data_realizacao, data_vencimento, employees!inner(status)")
+          .eq("employees.status", "ATIVO")
+          .order("data_realizacao", { ascending: false })
+          .limit(5000),
+        supabase.from("convocacoes_exames").select("id", { count: "exact", head: true }).eq("status", "PENDENTE"),
+        supabase.from("pcmso_coordenadores").select("id", { count: "exact", head: true }).eq("ativo", true),
       ]);
 
+      const latest = new Map<string, string>(); // employee_id -> data_vencimento
+      for (const r of (examesQ.data ?? []) as any[]) {
+        if (!latest.has(r.employee_id)) latest.set(r.employee_id, r.data_vencimento);
+      }
+      let vencidos = 0, venc30 = 0, venc3160 = 0;
+      latest.forEach((venc) => {
+        if (!venc) return;
+        if (venc < isoToday) vencidos++;
+        else if (venc <= iso30) venc30++;
+        else if (venc <= iso60) venc3160++;
+      });
+
       return {
-        ativos: ativos.count ?? 0,
-        vencidos: vencidos.count ?? 0,
-        venc30: venc30.count ?? 0,
-        venc3160: venc3160.count ?? 0,
-        pendentes: pendentes.count ?? 0,
-        coord: coord.count ?? 0,
+        ativos: ativosQ.count ?? 0,
+        vencidos, venc30, venc3160,
+        pendentes: pendentesQ.count ?? 0,
+        coord: coordQ.count ?? 0,
       };
     },
   });
@@ -312,6 +319,7 @@ function RegistradosTab() {
       const { data } = await supabase
         .from("employee_exams")
         .select("id, tipo_exame, natureza, aptidao, data_realizacao, data_vencimento, anexo_path, employees!inner(id, nome, matricula, status)")
+        .eq("employees.status", "ATIVO")
         .order("data_realizacao", { ascending: false })
         .limit(200);
       return data ?? [];
@@ -829,8 +837,8 @@ function CoordenadorDialog({
   const [form, setForm] = useState<Partial<Coordenador>>(editing ?? { ativo: true });
   const isEdit = !!editing?.id;
 
-  // reset when opened
-  useMemo(() => { setForm(editing ?? { ativo: true }); }, [editing, open]);
+  // reset when opened / editing muda
+  useEffect(() => { setForm(editing ?? { ativo: true }); }, [editing, open]);
 
   const save = async () => {
     if (!form.company_id || !form.nome || !form.crm || !form.crm_uf) {
@@ -1022,7 +1030,7 @@ function ClinicaDialog({
   const [form, setForm] = useState<Partial<Clinica>>(editing ?? { ativa: true, tipos_exame: [], especialidades: [] });
   const isEdit = !!editing?.id;
 
-  useMemo(() => {
+  useEffect(() => {
     setForm(editing ?? { ativa: true, tipos_exame: [], especialidades: [] });
   }, [editing, open]);
 

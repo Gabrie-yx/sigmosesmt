@@ -240,15 +240,17 @@ export function AnamneseDialog({ open, onOpenChange, employeeId, atendimentoId, 
             <ClipboardCheck className="h-5 w-5 text-emerald-300" />
             Anamnese Ocupacional — NR-07 / PCMSO
           </DialogTitle>
-          <DialogDescription className="text-slate-400 text-xs flex items-center gap-2 flex-wrap">
-            {emp ? <>Paciente: <span className="text-slate-200 font-medium">{emp.nome}</span></> : "Carregando…"}
-            {emp?.roles?.name && <Badge variant="outline" className="border-white/15 text-slate-300">{emp.roles.name}</Badge>}
-            <Badge className="bg-emerald-500/15 text-emerald-200 ring-1 ring-emerald-400/30">{natureza}</Badge>
-            {ultimaAnamnese && (
-              <Button size="sm" variant="ghost" onClick={importarUltima} className="h-6 text-[11px] text-emerald-300 hover:text-emerald-200 ml-auto">
-                Importar última anamnese
-              </Button>
-            )}
+          <DialogDescription asChild>
+            <div className="text-slate-400 text-xs flex items-center gap-2 flex-wrap">
+              {emp ? <span>Paciente: <span className="text-slate-200 font-medium">{emp.nome}</span></span> : <span>Carregando…</span>}
+              {emp?.roles?.name && <Badge variant="outline" className="border-white/15 text-slate-300">{emp.roles.name}</Badge>}
+              <Badge className="bg-emerald-500/15 text-emerald-200 ring-1 ring-emerald-400/30">{natureza}</Badge>
+              {ultimaAnamnese && (
+                <Button size="sm" variant="ghost" onClick={importarUltima} className="h-6 text-[11px] text-emerald-300 hover:text-emerald-200 ml-auto">
+                  Importar última anamnese
+                </Button>
+              )}
+            </div>
           </DialogDescription>
         </DialogHeader>
 
