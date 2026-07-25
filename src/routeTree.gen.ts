@@ -65,6 +65,7 @@ import { Route as AppSesmtProcedimentosRouteImport } from './routes/app.sesmt.pr
 import { Route as AppSesmtPrestadoresRouteImport } from './routes/app.sesmt.prestadores'
 import { Route as AppSesmtOrganogramaRouteImport } from './routes/app.sesmt.organograma'
 import { Route as AppSesmtOcrTesteRouteImport } from './routes/app.sesmt.ocr-teste'
+import { Route as AppSesmtMedicinaOcupacionalRouteImport } from './routes/app.sesmt.medicina-ocupacional'
 import { Route as AppSesmtIntegracoesRouteImport } from './routes/app.sesmt.integracoes'
 import { Route as AppSesmtInspecoesRouteImport } from './routes/app.sesmt.inspecoes'
 import { Route as AppSesmtGuiaDocumentosRouteImport } from './routes/app.sesmt.guia-documentos'
@@ -421,6 +422,12 @@ const AppSesmtOcrTesteRoute = AppSesmtOcrTesteRouteImport.update({
   path: '/sesmt/ocr-teste',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSesmtMedicinaOcupacionalRoute =
+  AppSesmtMedicinaOcupacionalRouteImport.update({
+    id: '/sesmt/medicina-ocupacional',
+    path: '/sesmt/medicina-ocupacional',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppSesmtIntegracoesRoute = AppSesmtIntegracoesRouteImport.update({
   id: '/sesmt/integracoes',
   path: '/sesmt/integracoes',
@@ -891,6 +898,7 @@ export interface FileRoutesByFullPath {
   '/app/sesmt/guia-documentos': typeof AppSesmtGuiaDocumentosRoute
   '/app/sesmt/inspecoes': typeof AppSesmtInspecoesRouteWithChildren
   '/app/sesmt/integracoes': typeof AppSesmtIntegracoesRoute
+  '/app/sesmt/medicina-ocupacional': typeof AppSesmtMedicinaOcupacionalRoute
   '/app/sesmt/ocr-teste': typeof AppSesmtOcrTesteRoute
   '/app/sesmt/organograma': typeof AppSesmtOrganogramaRoute
   '/app/sesmt/prestadores': typeof AppSesmtPrestadoresRoute
@@ -1014,6 +1022,7 @@ export interface FileRoutesByTo {
   '/app/sesmt/equipamentos-moveis': typeof AppSesmtEquipamentosMoveisRoute
   '/app/sesmt/guia-documentos': typeof AppSesmtGuiaDocumentosRoute
   '/app/sesmt/integracoes': typeof AppSesmtIntegracoesRoute
+  '/app/sesmt/medicina-ocupacional': typeof AppSesmtMedicinaOcupacionalRoute
   '/app/sesmt/ocr-teste': typeof AppSesmtOcrTesteRoute
   '/app/sesmt/organograma': typeof AppSesmtOrganogramaRoute
   '/app/sesmt/prestadores': typeof AppSesmtPrestadoresRoute
@@ -1143,6 +1152,7 @@ export interface FileRoutesById {
   '/app/sesmt/guia-documentos': typeof AppSesmtGuiaDocumentosRoute
   '/app/sesmt/inspecoes': typeof AppSesmtInspecoesRouteWithChildren
   '/app/sesmt/integracoes': typeof AppSesmtIntegracoesRoute
+  '/app/sesmt/medicina-ocupacional': typeof AppSesmtMedicinaOcupacionalRoute
   '/app/sesmt/ocr-teste': typeof AppSesmtOcrTesteRoute
   '/app/sesmt/organograma': typeof AppSesmtOrganogramaRoute
   '/app/sesmt/prestadores': typeof AppSesmtPrestadoresRoute
@@ -1273,6 +1283,7 @@ export interface FileRouteTypes {
     | '/app/sesmt/guia-documentos'
     | '/app/sesmt/inspecoes'
     | '/app/sesmt/integracoes'
+    | '/app/sesmt/medicina-ocupacional'
     | '/app/sesmt/ocr-teste'
     | '/app/sesmt/organograma'
     | '/app/sesmt/prestadores'
@@ -1396,6 +1407,7 @@ export interface FileRouteTypes {
     | '/app/sesmt/equipamentos-moveis'
     | '/app/sesmt/guia-documentos'
     | '/app/sesmt/integracoes'
+    | '/app/sesmt/medicina-ocupacional'
     | '/app/sesmt/ocr-teste'
     | '/app/sesmt/organograma'
     | '/app/sesmt/prestadores'
@@ -1524,6 +1536,7 @@ export interface FileRouteTypes {
     | '/app/sesmt/guia-documentos'
     | '/app/sesmt/inspecoes'
     | '/app/sesmt/integracoes'
+    | '/app/sesmt/medicina-ocupacional'
     | '/app/sesmt/ocr-teste'
     | '/app/sesmt/organograma'
     | '/app/sesmt/prestadores'
@@ -1971,6 +1984,13 @@ declare module '@tanstack/react-router' {
       path: '/sesmt/ocr-teste'
       fullPath: '/app/sesmt/ocr-teste'
       preLoaderRoute: typeof AppSesmtOcrTesteRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/sesmt/medicina-ocupacional': {
+      id: '/app/sesmt/medicina-ocupacional'
+      path: '/sesmt/medicina-ocupacional'
+      fullPath: '/app/sesmt/medicina-ocupacional'
+      preLoaderRoute: typeof AppSesmtMedicinaOcupacionalRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/sesmt/integracoes': {
@@ -2635,6 +2655,7 @@ interface AppRouteChildren {
   AppSesmtGuiaDocumentosRoute: typeof AppSesmtGuiaDocumentosRoute
   AppSesmtInspecoesRoute: typeof AppSesmtInspecoesRouteWithChildren
   AppSesmtIntegracoesRoute: typeof AppSesmtIntegracoesRoute
+  AppSesmtMedicinaOcupacionalRoute: typeof AppSesmtMedicinaOcupacionalRoute
   AppSesmtOcrTesteRoute: typeof AppSesmtOcrTesteRoute
   AppSesmtOrganogramaRoute: typeof AppSesmtOrganogramaRoute
   AppSesmtPrestadoresRoute: typeof AppSesmtPrestadoresRoute
@@ -2731,6 +2752,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSesmtGuiaDocumentosRoute: AppSesmtGuiaDocumentosRoute,
   AppSesmtInspecoesRoute: AppSesmtInspecoesRouteWithChildren,
   AppSesmtIntegracoesRoute: AppSesmtIntegracoesRoute,
+  AppSesmtMedicinaOcupacionalRoute: AppSesmtMedicinaOcupacionalRoute,
   AppSesmtOcrTesteRoute: AppSesmtOcrTesteRoute,
   AppSesmtOrganogramaRoute: AppSesmtOrganogramaRoute,
   AppSesmtPrestadoresRoute: AppSesmtPrestadoresRoute,
