@@ -278,6 +278,59 @@ export const novaRevisaoTemplate = createServerFn({ method: "POST" })
   });
 
 /* ---------- ANEXAR ORIGEM A REVISÃO EXISTENTE ---------- */
+/* ---------- CRIAR TEMPLATE (novo código, ex.: série "Outros") ---------- */
+const CriarTemplateSchema = z.object({
+  codigo: z.string().min(2).max(50),
+  nome: z.string().min(2).max(200),
+  descricao: z.string().max(1000).optional(),
+});
+
+export const criarTemplate = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => CriarTemplateSchema.parse(i))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const codigo = data.codigo.trim().toUpperCase();
+    if (!/^[A-Z0-9][A-Z0-9 ._-]*$/.test(codigo)) {
+      throw new Error("Código inválido. Use letras, números, espaço, ponto, hífen ou underscore.");
+    }
+
+    const { data: existente } = await supabaseAdmin
+      .from("document_templates")
+      .select("id, ativo")
+      .eq("codigo", codigo)
+      .maybeSingle();
+    if (existente) {
+      if (!existente.ativo) {
+        await supabaseAdmin.from("document_templates").update({ ativo: true }).eq("id", existente.id);
+        return { id: existente.id as string, codigo, reativado: true };
+      }
+      throw new Error("Já existe um template com este código.");
+    }
+
+    const { data: maior } = await supabaseAdmin
+      .from("document_templates")
+      .select("ordem")
+      .order("ordem", { ascending: false })
+      .limit(1);
+    const ordem = ((maior?.[0]?.ordem ?? 0) as number) + 1;
+
+    const { data: novo, error } = await supabaseAdmin
+      .from("document_templates")
+      .insert({
+        codigo,
+        nome: data.nome.trim(),
+        descricao: data.descricao?.trim() || null,
+        ativo: true,
+        ordem,
+      })
+      .select("id, codigo")
+      .single();
+    if (error || !novo) throw new Error(`Falha ao criar template: ${error?.message ?? ""}`);
+    return { id: novo.id as string, codigo: novo.codigo as string, reativado: false };
+  });
+
 const AnexarOrigemSchema = z.object({
   versionId: z.string().uuid(),
   fileName: z.string().min(1).max(200),
