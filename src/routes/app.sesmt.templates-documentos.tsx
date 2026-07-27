@@ -327,9 +327,9 @@ function HistoryDialog({ template, onClose }: { template: any; onClose: () => vo
     queryFn: () => hist({ data: { templateId: template.id } }),
   });
 
-  async function baixar(id: string) {
+  async function baixar(id: string, tipo: "pdf" | "origem" = "pdf") {
     try {
-      const { url } = await signedUrl({ data: { versionId: id } });
+      const { url } = await signedUrl({ data: { versionId: id, tipo } });
       window.open(url, "_blank");
     } catch (e: any) {
       toast.error(e?.message ?? "Falha ao gerar download.");
@@ -368,6 +368,11 @@ function HistoryDialog({ template, onClose }: { template: any; onClose: () => vo
                     {v.arquivo_nome} · {fmtDate(v.uploaded_at)}
                   </p>
                   <p className="text-xs text-rose-100/80 mt-1"><strong>Motivo:</strong> {v.motivo_alteracao}</p>
+                  {v.origem_nome && (
+                    <p className="text-xs text-rose-100/70 mt-1">
+                      <strong>Documento de origem:</strong> {v.origem_nome}
+                    </p>
+                  )}
                   {v.arquivo_hash && (
                     <p className="text-[10px] font-mono text-rose-100/40 mt-1 break-all">SHA-256: {v.arquivo_hash}</p>
                   )}
@@ -376,6 +381,12 @@ function HistoryDialog({ template, onClose }: { template: any; onClose: () => vo
                   <Button size="sm" variant="outline" onClick={() => baixar(v.id)}>
                     <Download className="w-3 h-3 mr-1" /> Baixar
                   </Button>
+                  {v.origem_path && (
+                    <Button size="sm" variant="outline" className="text-sky-300 border-sky-500/40"
+                      onClick={() => baixar(v.id, "origem")}>
+                      <FileDown className="w-3 h-3 mr-1" /> Origem
+                    </Button>
+                  )}
                   {v.status === "EM_HOMOLOGACAO" && !v.deleted_at && (
                     <Button size="sm" variant="outline" className="text-emerald-300 border-emerald-500/40"
                       onClick={() => act(() => homologar({ data: { versionId: v.id } }), "Revisão homologada.")}>
