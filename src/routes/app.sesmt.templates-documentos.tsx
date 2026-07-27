@@ -370,8 +370,13 @@ function HistoryDialog({ template, onClose }: { template: any; onClose: () => vo
 
   async function baixar(id: string, tipo: "pdf" | "origem" = "pdf") {
     try {
-      const { url } = await signedUrl({ data: { versionId: id, tipo } });
-      window.open(url, "_blank");
+      const { url, nome } = await signedUrl({ data: { versionId: id, tipo } });
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = nome ?? "documento";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
     } catch (e: any) {
       toast.error(e?.message ?? "Falha ao gerar download.");
     }
