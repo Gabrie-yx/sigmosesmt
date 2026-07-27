@@ -1568,6 +1568,8 @@ function PlanoDialog({
   const [quando, setQuando] = useState("");
   const [como, setComo] = useState("");
   const [quanto, setQuanto] = useState<number | "">("");
+  const [prioridade, setPrioridade] = useState<Prioridade>("MEDIA");
+  const [hierarquia, setHierarquia] = useState<string>("");
 
   useMemo(() => {
     if (open) {
@@ -1579,6 +1581,8 @@ function PlanoDialog({
       setQuando(edit?.quando ?? "");
       setComo(edit?.como ?? "");
       setQuanto(edit?.quanto ?? "");
+      setPrioridade((edit?.prioridade as Prioridade) ?? "MEDIA");
+      setHierarquia(edit?.hierarquia ?? "");
     }
   }, [open, edit]);
 
@@ -1595,6 +1599,8 @@ function PlanoDialog({
         quando: quando || null,
         como: como.trim() || null,
         quanto: quanto === "" ? null : Number(quanto),
+        prioridade,
+        hierarquia: hierarquia || null,
       };
       if (edit && edit.id) {
         const { error } = await sb.from("pgr_plano_acao").update(payload).eq("id", edit.id);
@@ -1643,6 +1649,31 @@ function PlanoDialog({
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Quando (prazo)</Label><Input type="date" value={quando} onChange={(e) => setQuando(e.target.value)} /></div>
             <div><Label>Quanto (R$)</Label><Input type="number" step="any" value={quanto} onChange={(e) => setQuanto(e.target.value === "" ? "" : Number(e.target.value))} /></div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Prioridade</Label>
+              <Select value={prioridade} onValueChange={(v) => setPrioridade(v as Prioridade)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {(Object.entries(PRIORIDADE_LABEL) as [string, string][]).map(([k, l]) => (
+                    <SelectItem key={k} value={k}>{l}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Hierarquia de controle (NR-01)</Label>
+              <Select value={hierarquia || "none"} onValueChange={(v) => setHierarquia(v === "none" ? "" : v)}>
+                <SelectTrigger><SelectValue placeholder="Não definida" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Não definida</SelectItem>
+                  {(Object.entries(HIERARQUIA_LABEL) as [string, string][]).map(([k, l]) => (
+                    <SelectItem key={k} value={k}>{l}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <div>
             <Label>Como</Label>
