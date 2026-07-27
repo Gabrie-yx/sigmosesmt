@@ -166,6 +166,16 @@ function PainelInterno() {
                       <AlertCircle className="w-3 h-3" /> Alinhar motor
                     </Badge>
                   )}
+                  {t.versao_vigente && t.versao_em_homologacao && (
+                    <Badge variant="outline" className="bg-sky-500/20 text-sky-200 border-sky-500/30">
+                      Rev.{String(t.versao_em_homologacao.revisao).padStart(2, "0")} aguardando homologação
+                    </Badge>
+                  )}
+                  {t.versao_atual?.origem_nome && (
+                    <Badge variant="outline" className="bg-slate-500/20 text-slate-200 border-slate-500/30">
+                      Origem anexada
+                    </Badge>
+                  )}
                 </div>
               </div>
               <div className="flex gap-2 flex-wrap pt-2 border-t border-rose-500/10">
