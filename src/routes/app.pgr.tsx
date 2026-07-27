@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/select";
 import {
   ShieldAlert, Plus, Pencil, Trash2, Users, Layers, Grid3x3, ListChecks, AlertTriangle, Save, HardHat,
-  Sparkles, Wand2, Loader2,
+  Sparkles, Wand2, Loader2, BookOpen,
   ClipboardList, Bot,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -33,6 +33,27 @@ import {
   classifyAiha, AIHA_LABEL, AIHA_COLOR, AIHA_CELL, AIHA_PRIORIZACAO,
   PROB_LABELS, SEV_LABELS, CATEGORIA_LABEL, type AihaClass,
 } from "@/lib/aiha";
+import { SugerirAcoesDialog, type RiscoAlvo } from "@/components/pgr/sugerir-acoes-dialog";
+import {
+  HIERARQUIA_LABEL, HIERARQUIA_COLOR, PRIORIDADE_LABEL, PRIORIDADE_COLOR, PRIORIDADE_ORDEM,
+  type Prioridade, type Hierarquia,
+} from "@/lib/pgr-acoes-biblioteca";
+
+function FiltroSelect({
+  label, value, onChange, options,
+}: { label: string; value: string; onChange: (v: string) => void; options: [string, string][] }) {
+  return (
+    <div>
+      <Label className="text-[11px] text-muted-foreground">{label}</Label>
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+        <SelectContent>
+          {options.map(([v, l]) => (<SelectItem key={v} value={v} className="text-xs">{l}</SelectItem>))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
 
 export const Route = createFileRoute("/app/pgr")({
   component: PgrPage,
@@ -1278,12 +1299,23 @@ type PlanoRow = {
   status: "PENDENTE" | "EM_ANDAMENTO" | "CONCLUIDA" | "CANCELADA";
   data_conclusao: string | null;
   observacao: string | null;
+  prioridade: Prioridade;
+  hierarquia: Hierarquia | null;
 };
 
 function PlanoTab() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState<PlanoRow | null>(null);
+  const [bibOpen, setBibOpen] = useState(false);
+  const [fCat, setFCat] = useState("all");
+  const [fPerigo, setFPerigo] = useState("all");
+  const [fNivel, setFNivel] = useState("all");
+  const [fPrio, setFPrio] = useState("all");
+  const [fHier, setFHier] = useState("all");
+  const [fResp, setFResp] = useState("all");
+  const [fStatus, setFStatus] = useState("abertas");
+  const [fPrazo, setFPrazo] = useState("all");
 
   const { data: inv = [] } = useQuery<InvRow[]>({
     queryKey: ["pgr_inventario_riscos", "all-for-plano"],
@@ -1336,14 +1368,80 @@ function PlanoTab() {
     },
   });
 
+  const hoje = new Date().toISOString().slice(0, 10);
+  const em30 = (() => { const d = new Date(); d.setDate(d.getDate() + 30); return d.toISOString().slice(0, 10); })();
+
+  const perigosOpts = useMemo(
+    () => Array.from(new Set(inv.map((r) => r.perigo))).sort((a, b) => a.localeCompare(b)),
+    [inv],
+  );
+  const respOpts = useMemo(
+    () => Array.from(new Set(planos.map((p) => (p.quem ?? "").trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
+    [planos],
+  );
+
+  const filtrados = useMemo(() => {
+    return planos.filter((p) => {
+      const r = inv.find((x) => x.id === p.inventario_id);
+      const cls = r ? classifyAiha(r.probabilidade, r.severidade) : "NAO_CLASSIFICADO";
+      if (fCat !== "all" && r?.categoria !== fCat) return false;
+      if (fPerigo !== "all" && r?.perigo !== fPerigo) return false;
+      if (fNivel !== "all" && cls !== fNivel) return false;
+      if (fPrio !== "all" && (p.prioridade ?? "MEDIA") !== fPrio) return false;
+      if (fHier !== "all" && (p.hierarquia ?? "") !== fHier) return false;
+      if (fResp !== "all" && (p.quem ?? "").trim() !== fResp) return false;
+      if (fStatus === "abertas" && (p.status === "CONCLUIDA" || p.status === "CANCELADA")) return false;
+      if (fStatus !== "all" && fStatus !== "abertas" && p.status !== fStatus) return false;
+      if (fPrazo === "vencidas" && !(p.quando && p.quando < hoje && p.status !== "CONCLUIDA")) return false;
+      if (fPrazo === "vencendo" && !(p.quando && p.quando >= hoje && p.quando <= em30 && p.status !== "CONCLUIDA")) return false;
+      if (fPrazo === "sem_prazo" && p.quando) return false;
+      return true;
+    }).sort((a, b) => {
+      const pa = PRIORIDADE_ORDEM[(a.prioridade ?? "MEDIA") as Prioridade] ?? 2;
+      const pb = PRIORIDADE_ORDEM[(b.prioridade ?? "MEDIA") as Prioridade] ?? 2;
+      return pa - pb || (a.quando ?? "9999").localeCompare(b.quando ?? "9999");
+    });
+  }, [planos, inv, fCat, fPerigo, fNivel, fPrio, fHier, fResp, fStatus, fPrazo, hoje, em30]);
+
+  const vencidas = planos.filter((p) => p.quando && p.quando < hoje && p.status !== "CONCLUIDA" && p.status !== "CANCELADA").length;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div className="text-sm text-slate-600">{planos.length} ação{planos.length === 1 ? "" : "es"} cadastrada{planos.length === 1 ? "" : "s"}</div>
-        <Button onClick={() => { setEdit(null); setOpen(true); }} className="bg-rose-700 hover:bg-rose-800 gap-2" disabled={inv.length === 0}>
-          <Plus className="h-4 w-4" />Nova ação
-        </Button>
+        <div className="text-sm text-slate-600">
+          {filtrados.length} de {planos.length} ação{planos.length === 1 ? "" : "es"}
+          {vencidas > 0 && <span className="ml-2 text-rose-700 font-semibold">· {vencidas} vencida(s)</span>}
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setBibOpen(true)} className="gap-2" disabled={inv.length === 0}>
+            <BookOpen className="h-4 w-4" />Biblioteca de ações
+          </Button>
+          <Button onClick={() => { setEdit(null); setOpen(true); }} className="bg-rose-700 hover:bg-rose-800 gap-2" disabled={inv.length === 0}>
+            <Plus className="h-4 w-4" />Nova ação
+          </Button>
+        </div>
       </div>
+
+      <Card className="p-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <FiltroSelect label="Categoria" value={fCat} onChange={setFCat}
+            options={[["all", "Todas"], ...Object.entries(CATEGORIA_LABEL)]} />
+          <FiltroSelect label="Perigo / fator de risco" value={fPerigo} onChange={setFPerigo}
+            options={[["all", "Todos"], ...perigosOpts.map((p) => [p, p] as [string, string])]} />
+          <FiltroSelect label="Nível de risco" value={fNivel} onChange={setFNivel}
+            options={[["all", "Todos"], ["MUITO_ALTO", "Muito Alto"], ["ALTO", "Alto"], ["MODERADO", "Moderado"], ["BAIXO", "Baixo"], ["TRIVIAL", "Trivial"]]} />
+          <FiltroSelect label="Prioridade" value={fPrio} onChange={setFPrio}
+            options={[["all", "Todas"], ...(Object.entries(PRIORIDADE_LABEL) as [string, string][])]} />
+          <FiltroSelect label="Hierarquia de controle" value={fHier} onChange={setFHier}
+            options={[["all", "Todas"], ...(Object.entries(HIERARQUIA_LABEL) as [string, string][])]} />
+          <FiltroSelect label="Responsável" value={fResp} onChange={setFResp}
+            options={[["all", "Todos"], ...respOpts.map((r) => [r, r] as [string, string])]} />
+          <FiltroSelect label="Status" value={fStatus} onChange={setFStatus}
+            options={[["abertas", "Em aberto"], ["all", "Todos"], ["PENDENTE", "Pendente"], ["EM_ANDAMENTO", "Em andamento"], ["CONCLUIDA", "Concluída"], ["CANCELADA", "Cancelada"]]} />
+          <FiltroSelect label="Prazo" value={fPrazo} onChange={setFPrazo}
+            options={[["all", "Todos"], ["vencidas", "Vencidas"], ["vencendo", "Vencendo em 30 dias"], ["sem_prazo", "Sem prazo"]]} />
+        </div>
+      </Card>
 
       {sugeridos.length > 0 && (
         <Card className="p-4 border-rose-200 bg-rose-50">
@@ -1362,6 +1460,7 @@ function PlanoTab() {
                     id: "", inventario_id: r.id, o_que: "", por_que: `Mitigar: ${r.perigo}`,
                     onde: null, quem: null, quando: null, como: null, quanto: null,
                     status: "PENDENTE", data_conclusao: null, observacao: null,
+                    prioridade: "MEDIA", hierarquia: null,
                   });
                   setOpen(true);
                 }}>
@@ -1376,16 +1475,17 @@ function PlanoTab() {
 
       {isLoading ? (
         <div className="text-center py-10 text-slate-500">Carregando…</div>
-      ) : planos.length === 0 ? (
+      ) : filtrados.length === 0 ? (
         <Card className="p-10 text-center text-slate-500">
           <ListChecks className="h-10 w-10 mx-auto mb-3 text-slate-300" />
-          <p className="font-semibold">Nenhuma ação no plano</p>
+          <p className="font-semibold">{planos.length === 0 ? "Nenhuma ação no plano" : "Nenhuma ação com os filtros aplicados"}</p>
         </Card>
       ) : (
         <div className="space-y-2">
-          {planos.map((p) => {
+          {filtrados.map((p) => {
             const risco = inv.find((r) => r.id === p.inventario_id);
             const cls = risco ? classifyAiha(risco.probabilidade, risco.severidade) : "NAO_CLASSIFICADO";
+            const atrasada = !!p.quando && p.quando < hoje && p.status !== "CONCLUIDA" && p.status !== "CANCELADA";
             const statusColor = {
               PENDENTE: "bg-slate-100 text-slate-700 border-slate-300",
               EM_ANDAMENTO: "bg-amber-100 text-amber-800 border-amber-300",
@@ -1393,12 +1493,21 @@ function PlanoTab() {
               CANCELADA: "bg-rose-100 text-rose-700 border-rose-300",
             }[p.status];
             return (
-              <Card key={p.id} className="p-4">
+              <Card key={p.id} className={`p-4 ${atrasada ? "border-rose-300" : ""}`}>
                 <div className="flex items-start gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2 mb-1">
                       <h4 className="font-bold text-slate-900">{p.o_que}</h4>
                       <Badge className={statusColor} variant="outline">{p.status}</Badge>
+                      <Badge variant="outline" className={PRIORIDADE_COLOR[(p.prioridade ?? "MEDIA") as Prioridade]}>
+                        {PRIORIDADE_LABEL[(p.prioridade ?? "MEDIA") as Prioridade]}
+                      </Badge>
+                      {p.hierarquia && (
+                        <Badge variant="outline" className={HIERARQUIA_COLOR[p.hierarquia]}>
+                          {HIERARQUIA_LABEL[p.hierarquia]}
+                        </Badge>
+                      )}
+                      {atrasada && <Badge variant="outline" className="bg-rose-100 text-rose-800 border-rose-300">VENCIDA</Badge>}
                       {risco && <Badge className={AIHA_COLOR[cls]} variant="outline">{risco.perigo} · {AIHA_LABEL[cls]}</Badge>}
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-x-3 gap-y-0.5 text-xs text-slate-600">
@@ -1437,6 +1546,12 @@ function PlanoTab() {
       )}
 
       <PlanoDialog open={open} onOpenChange={setOpen} edit={edit} inv={inv} />
+      <SugerirAcoesDialog
+        open={bibOpen}
+        onOpenChange={setBibOpen}
+        riscos={inv as unknown as RiscoAlvo[]}
+        riscosSemPlano={sugeridos as unknown as RiscoAlvo[]}
+      />
     </div>
   );
 }
@@ -1453,6 +1568,8 @@ function PlanoDialog({
   const [quando, setQuando] = useState("");
   const [como, setComo] = useState("");
   const [quanto, setQuanto] = useState<number | "">("");
+  const [prioridade, setPrioridade] = useState<Prioridade>("MEDIA");
+  const [hierarquia, setHierarquia] = useState<string>("");
 
   useMemo(() => {
     if (open) {
@@ -1464,6 +1581,8 @@ function PlanoDialog({
       setQuando(edit?.quando ?? "");
       setComo(edit?.como ?? "");
       setQuanto(edit?.quanto ?? "");
+      setPrioridade((edit?.prioridade as Prioridade) ?? "MEDIA");
+      setHierarquia(edit?.hierarquia ?? "");
     }
   }, [open, edit]);
 
@@ -1480,6 +1599,8 @@ function PlanoDialog({
         quando: quando || null,
         como: como.trim() || null,
         quanto: quanto === "" ? null : Number(quanto),
+        prioridade,
+        hierarquia: hierarquia || null,
       };
       if (edit && edit.id) {
         const { error } = await sb.from("pgr_plano_acao").update(payload).eq("id", edit.id);
@@ -1528,6 +1649,31 @@ function PlanoDialog({
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Quando (prazo)</Label><Input type="date" value={quando} onChange={(e) => setQuando(e.target.value)} /></div>
             <div><Label>Quanto (R$)</Label><Input type="number" step="any" value={quanto} onChange={(e) => setQuanto(e.target.value === "" ? "" : Number(e.target.value))} /></div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Prioridade</Label>
+              <Select value={prioridade} onValueChange={(v) => setPrioridade(v as Prioridade)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {(Object.entries(PRIORIDADE_LABEL) as [string, string][]).map(([k, l]) => (
+                    <SelectItem key={k} value={k}>{l}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Hierarquia de controle (NR-01)</Label>
+              <Select value={hierarquia || "none"} onValueChange={(v) => setHierarquia(v === "none" ? "" : v)}>
+                <SelectTrigger><SelectValue placeholder="Não definida" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Não definida</SelectItem>
+                  {(Object.entries(HIERARQUIA_LABEL) as [string, string][]).map(([k, l]) => (
+                    <SelectItem key={k} value={k}>{l}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <div>
             <Label>Como</Label>
