@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -11,6 +11,7 @@ import {
   arquivarVersao,
   restaurarVersao,
   excluirVersaoDefinitivo,
+  anexarOrigemRevisao,
 } from "@/lib/templates-documentos.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { Card } from "@/components/ui/card";
@@ -28,7 +29,7 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { FileText, Upload, History, Download, FileDown, ShieldAlert, CheckCircle2, Archive, RotateCcw, AlertCircle, Trash2 } from "lucide-react";
+import { FileText, Upload, History, Download, FileDown, ShieldAlert, CheckCircle2, Archive, RotateCcw, AlertCircle, Trash2, Paperclip } from "lucide-react";
 import { toast } from "sonner";
 import { hasOverlay } from "@/lib/pdf-overlay-maps";
 
@@ -362,6 +363,9 @@ function HistoryDialog({ template, onClose }: { template: any; onClose: () => vo
   const arquivar = useServerFn(arquivarVersao);
   const restaurar = useServerFn(restaurarVersao);
   const excluir = useServerFn(excluirVersaoDefinitivo);
+  const anexarOrigem = useServerFn(anexarOrigemRevisao);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [pendingVersionId, setPendingVersionId] = useState<string | null>(null);
 
   const { data: versoes, isLoading, refetch } = useQuery({
     queryKey: ["document-template-history", template.id],
@@ -392,9 +396,60 @@ function HistoryDialog({ template, onClose }: { template: any; onClose: () => vo
     }
   }
 
+  async function toB64(f: File) {
+    const buf = await f.arrayBuffer();
+    const bytes = new Uint8Array(buf);
+    let bin = "";
+    const CHUNK = 0x8000;
+    for (let i = 0; i < bytes.length; i += CHUNK) {
+      bin += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + CHUNK)) as any);
+    }
+    return btoa(bin);
+  }
+
+  function handleAnexarClick(versionId: string) {
+    setPendingVersionId(versionId);
+    fileInputRef.current?.click();
+  }
+
+  async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (!f || !pendingVersionId) return;
+    if (f.size > 20 * 1024 * 1024) {
+      toast.error("Arquivo maior que 20 MB.");
+      return;
+    }
+    try {
+      const b64 = await toB64(f);
+      await anexarOrigem({
+        data: {
+          versionId: pendingVersionId,
+          fileName: f.name,
+          contentType: f.type || "application/octet-stream",
+          base64: b64,
+        },
+      });
+      toast.success("Documento de origem anexado.");
+      await refetch();
+      qc.invalidateQueries({ queryKey: ["document-templates"] });
+    } catch (err: any) {
+      toast.error(err?.message ?? "Falha ao anexar documento de origem.");
+    } finally {
+      setPendingVersionId(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".docx,.doc,.xlsx,.xls,.odt,.ods,.pptx,.rtf,.csv"
+          className="hidden"
+          onChange={handleFileSelected}
+        />
         <DialogHeader>
           <DialogTitle>{template.codigo} — Histórico de revisões</DialogTitle>
           <DialogDescription>{template.nome}</DialogDescription>
@@ -427,10 +482,15 @@ function HistoryDialog({ template, onClose }: { template: any; onClose: () => vo
                   <Button size="sm" variant="outline" onClick={() => baixar(v.id)}>
                     <Download className="w-3 h-3 mr-1" /> Baixar
                   </Button>
-                  {v.origem_path && (
+                  {v.origem_path ? (
                     <Button size="sm" variant="outline" className="text-sky-300 border-sky-500/40"
                       onClick={() => baixar(v.id, "origem")}>
                       <FileDown className="w-3 h-3 mr-1" /> Origem
+                    </Button>
+                  ) : !v.deleted_at && (
+                    <Button size="sm" variant="outline" className="text-slate-300 border-slate-500/40"
+                      onClick={() => handleAnexarClick(v.id)}>
+                      <Paperclip className="w-3 h-3 mr-1" /> Anexar origem
                     </Button>
                   )}
                   {v.status === "EM_HOMOLOGACAO" && !v.deleted_at && (
