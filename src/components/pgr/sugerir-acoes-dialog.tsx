@@ -217,12 +217,18 @@ export function SugerirAcoesDialog({
             <BookOpen className="h-4 w-4" />Biblioteca de ações (NR-01)
           </DialogTitle>
           <DialogDescription>
-            Catálogo normativo de medidas de controle. As sugestões respeitam a hierarquia
-            eliminação → substituição → engenharia → administrativa → EPI.
+            Catálogo normativo próprio com <b>{bib.length}</b> medidas de controle. As sugestões respeitam a
+            hierarquia eliminação → substituição → engenharia → administrativa → EPI (NR-01).
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-3">
+        <Tabs value={aba} onValueChange={(v) => setAba(v as "sugestoes" | "catalogo")}>
+          <TabsList className="h-auto flex-wrap justify-start gap-1 p-1">
+            <TabsTrigger value="sugestoes">Sugestões para o risco</TabsTrigger>
+            <TabsTrigger value="catalogo">Catálogo completo ({bib.length})</TabsTrigger>
+          </TabsList>
+
+        <TabsContent value="sugestoes" className="space-y-3">
           <div>
             <Label>Risco do inventário</Label>
             <Select value={riscoId} onValueChange={setRiscoId}>
@@ -251,22 +257,26 @@ export function SugerirAcoesDialog({
             <div className="py-8 text-center text-muted-foreground text-sm">Carregando biblioteca…</div>
           ) : sugestoes.length === 0 ? (
             <Card className="p-6 text-center text-sm text-muted-foreground">
-              Nenhuma ação correspondente. Ajuste o nome do perigo ou cadastre a ação manualmente.
+              Nenhuma ação correspondente a esse perigo. Use a aba <b>Catálogo completo</b> para escolher
+              qualquer uma das {bib.length} ações, ou cadastre a ação manualmente.
             </Card>
           ) : (
             <div className="space-y-1.5 max-h-[45vh] overflow-y-auto pr-1">
-              {sugestoes.map((s) => (
+              {sugestoes.map((s) => {
+                const usada = jaNoPlano.has(s.id);
+                return (
                 <Card
                   key={s.id}
-                  className={`p-3 cursor-pointer transition ${sel.has(s.id) ? "border-primary/60 bg-primary/5" : ""}`}
-                  onClick={() => toggle(s.id)}
+                  className={`p-3 transition ${usada ? "opacity-60" : "cursor-pointer"} ${sel.has(s.id) ? "border-primary/60 bg-primary/5" : ""}`}
+                  onClick={() => { if (!usada) toggle(s.id); }}
                 >
                   <div className="flex items-start gap-3">
-                    <Checkbox checked={sel.has(s.id)} onCheckedChange={() => toggle(s.id)} className="mt-0.5" />
+                    <Checkbox checked={sel.has(s.id)} disabled={usada} onCheckedChange={() => toggle(s.id)} className="mt-0.5" />
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold text-sm">{s.acao}</div>
                       {s.como && <div className="text-xs text-muted-foreground mt-0.5">{s.como}</div>}
                       <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                        {usada && <Badge variant="outline" className="text-[10px]">já no plano</Badge>}
                         <Badge variant="outline" className={`text-[10px] ${HIERARQUIA_COLOR[s.hierarquia]}`}>
                           {HIERARQUIA_LABEL[s.hierarquia]}
                         </Badge>
@@ -279,10 +289,92 @@ export function SugerirAcoesDialog({
                     </div>
                   </div>
                 </Card>
-              ))}
+                );
+              })}
             </div>
           )}
-        </div>
+        </TabsContent>
+
+        <TabsContent value="catalogo" className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+            <Input placeholder="Buscar ação, perigo ou norma…" value={busca} onChange={(e) => setBusca(e.target.value)} />
+            <Select value={fCat} onValueChange={setFCat}>
+              <SelectTrigger><SelectValue placeholder="Categoria" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as categorias ({bib.length})</SelectItem>
+                {Object.entries(contagem).map(([k, n]) => (
+                  <SelectItem key={k} value={k}>{CATEGORIA_LABEL[k] ?? k} ({n})</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={fHier} onValueChange={setFHier}>
+              <SelectTrigger><SelectValue placeholder="Hierarquia" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as hierarquias</SelectItem>
+                {(Object.entries(HIERARQUIA_LABEL) as [string, string][]).map(([k, l]) => (
+                  <SelectItem key={k} value={k}>{l}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label>Vincular ao risco</Label>
+            <Select value={riscoId} onValueChange={setRiscoId}>
+              <SelectTrigger><SelectValue placeholder="Selecione o risco" /></SelectTrigger>
+              <SelectContent>
+                {riscos.map((r) => (
+                  <SelectItem key={r.id} value={r.id}>
+                    {r.perigo} — {CATEGORIA_LABEL[r.categoria] ?? r.categoria}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="text-xs text-muted-foreground">{catalogo.length} ação(ões) no filtro</div>
+
+          {isLoading ? (
+            <div className="py-8 text-center text-muted-foreground text-sm">Carregando biblioteca…</div>
+          ) : (
+            <div className="space-y-1.5 max-h-[45vh] overflow-y-auto pr-1">
+              {catalogo.map((a) => {
+                const usada = jaNoPlano.has(a.id);
+                return (
+                  <Card
+                    key={a.id}
+                    className={`p-3 transition ${usada ? "opacity-60" : "cursor-pointer"} ${sel.has(a.id) ? "border-primary/60 bg-primary/5" : ""}`}
+                    onClick={() => { if (!usada) toggle(a.id); }}
+                  >
+                    <div className="flex items-start gap-3">
+                      <Checkbox checked={sel.has(a.id)} disabled={usada} onCheckedChange={() => toggle(a.id)} className="mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-sm">{a.acao}</div>
+                        {a.como && <div className="text-xs text-muted-foreground mt-0.5">{a.como}</div>}
+                        <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                          {usada && <Badge variant="outline" className="text-[10px]">já no plano</Badge>}
+                          <Badge variant="outline" className="text-[10px]">{CATEGORIA_LABEL[a.categoria] ?? a.categoria}</Badge>
+                          <Badge variant="outline" className={`text-[10px] ${HIERARQUIA_COLOR[a.hierarquia]}`}>
+                            {HIERARQUIA_LABEL[a.hierarquia]}
+                          </Badge>
+                          <Badge variant="outline" className={`text-[10px] ${PRIORIDADE_COLOR[a.prioridade]}`}>
+                            {PRIORIDADE_LABEL[a.prioridade]}
+                          </Badge>
+                          <Badge variant="outline" className="text-[10px]">{a.prazo_dias} dias</Badge>
+                          {a.norma_ref && <Badge variant="outline" className="text-[10px]">{a.norma_ref}</Badge>}
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
+              {catalogo.length === 0 && (
+                <Card className="p-6 text-center text-sm text-muted-foreground">Nada encontrado com esses filtros.</Card>
+              )}
+            </div>
+          )}
+        </TabsContent>
+        </Tabs>
 
         <DialogFooter className="gap-2 sm:justify-between">
           <Button
