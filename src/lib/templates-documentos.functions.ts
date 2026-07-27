@@ -277,6 +277,63 @@ export const novaRevisaoTemplate = createServerFn({ method: "POST" })
     return { ok: true, revisao: proxima };
   });
 
+/* ---------- ANEXAR ORIGEM A REVISÃO EXISTENTE ---------- */
+const AnexarOrigemSchema = z.object({
+  versionId: z.string().uuid(),
+  fileName: z.string().min(1).max(200),
+  contentType: z.string().max(200).optional(),
+  base64: z.string().min(1),
+});
+
+export const anexarOrigemRevisao = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => AnexarOrigemSchema.parse(i))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: v, error: vErr } = await supabaseAdmin
+      .from("document_template_versions")
+      .select("id, template_id, revisao, origem_path, origem_nome")
+      .eq("id", data.versionId)
+      .single();
+    if (vErr || !v) throw new Error("Versão não encontrada.");
+
+    const oBuf = decodeB64(data.base64);
+    const ext = (data.fileName.split(".").pop() ?? "bin").toLowerCase().slice(0, 8);
+    const { data: tpl } = await supabaseAdmin
+      .from("document_templates")
+      .select("codigo")
+      .eq("id", v.template_id)
+      .single();
+    const codigo = tpl?.codigo ?? "sem-codigo";
+    const oPath = `${codigo}/origem/rev-${String(v.revisao).padStart(2, "0")}-${Date.now()}.${ext}`;
+
+    const { error: oErr } = await supabaseAdmin.storage
+      .from("templates-homologados")
+      .upload(oPath, oBuf, {
+        contentType: data.contentType || "application/octet-stream",
+        upsert: false,
+      });
+    if (oErr) throw new Error(`Falha no upload do documento de origem: ${oErr.message}`);
+
+    const { error: updErr } = await supabaseAdmin
+      .from("document_template_versions")
+      .update({
+        origem_path: oPath,
+        origem_nome: data.fileName,
+        origem_tipo: data.contentType || null,
+        origem_tamanho: oBuf.byteLength,
+      })
+      .eq("id", data.versionId);
+    if (updErr) {
+      await supabaseAdmin.storage.from("templates-homologados").remove([oPath]);
+      throw new Error(`Falha ao registrar documento de origem: ${updErr.message}`);
+    }
+
+    return { ok: true };
+  });
+
 /* ---------- HOMOLOGAR ---------- */
 export const homologarVersao = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
