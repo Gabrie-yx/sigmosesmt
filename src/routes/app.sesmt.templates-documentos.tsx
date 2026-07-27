@@ -11,6 +11,7 @@ import {
   arquivarVersao,
   restaurarVersao,
   excluirVersaoDefinitivo,
+  anexarOrigemRevisao,
 } from "@/lib/templates-documentos.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { Card } from "@/components/ui/card";
@@ -28,7 +29,7 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { FileText, Upload, History, Download, FileDown, ShieldAlert, CheckCircle2, Archive, RotateCcw, AlertCircle, Trash2 } from "lucide-react";
+import { FileText, Upload, History, Download, FileDown, ShieldAlert, CheckCircle2, Archive, RotateCcw, AlertCircle, Trash2, Paperclip } from "lucide-react";
 import { toast } from "sonner";
 import { hasOverlay } from "@/lib/pdf-overlay-maps";
 
