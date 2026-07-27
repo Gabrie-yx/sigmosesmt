@@ -37,7 +37,7 @@ export const listarTemplates = createServerFn({ method: "GET" })
 
     const { data: versions } = await supabase
       .from("document_template_versions")
-      .select("id, template_id, revisao, status, uploaded_at, uploaded_by, motivo_alteracao, arquivo_hash, arquivo_nome, deleted_at")
+      .select("id, template_id, revisao, status, uploaded_at, uploaded_by, motivo_alteracao, arquivo_hash, arquivo_nome, deleted_at, origem_nome, origem_tipo, origem_path")
       .is("deleted_at", null)
       .order("revisao", { ascending: false });
 
@@ -55,9 +55,20 @@ export const listarTemplates = createServerFn({ method: "GET" })
 
     return (templates ?? []).map((t: any) => {
       const vs = byTemplate.get(t.id) ?? [];
-      const atual = vs.find((v: any) => v.status === "HOMOLOGADA" || v.status === "EM_HOMOLOGACAO") ?? vs[0] ?? null;
+      // Regra ISO: a revisão que o sistema EMITE é sempre a última HOMOLOGADA.
+      // Uma revisão em homologação fica visível à parte, sem virar fonte de emissão.
+      const homologada = vs.find((v: any) => v.status === "HOMOLOGADA") ?? null;
+      const emHomologacao = vs.find((v: any) => v.status === "EM_HOMOLOGACAO") ?? null;
+      const atual = homologada ?? emHomologacao ?? vs[0] ?? null;
       const pendente = (pendencias ?? []).find((p: any) => p.template_id === t.id) ?? null;
-      return { ...t, versao_atual: atual, total_versoes: vs.length, pendente };
+      return {
+        ...t,
+        versao_atual: atual,
+        versao_vigente: homologada,
+        versao_em_homologacao: emHomologacao,
+        total_versoes: vs.length,
+        pendente,
+      };
     });
   });
 
@@ -78,21 +89,26 @@ export const historicoTemplate = createServerFn({ method: "GET" })
 /* ---------- URL ASSINADA PARA DOWNLOAD ---------- */
 export const signedUrlTemplate = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i) => z.object({ versionId: z.string().uuid() }).parse(i))
+  .inputValidator((i) =>
+    z.object({ versionId: z.string().uuid(), tipo: z.enum(["pdf", "origem"]).default("pdf") }).parse(i),
+  )
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: v, error } = await supabaseAdmin
       .from("document_template_versions")
-      .select("arquivo_path, arquivo_nome")
+      .select("arquivo_path, arquivo_nome, origem_path, origem_nome")
       .eq("id", data.versionId)
       .single();
     if (error || !v) throw new Error("Versão não encontrada.");
+    const path = data.tipo === "origem" ? v.origem_path : v.arquivo_path;
+    const nome = data.tipo === "origem" ? v.origem_nome : v.arquivo_nome;
+    if (!path) throw new Error("Esta revisão não possui documento de origem anexado.");
     const { data: signed, error: sErr } = await supabaseAdmin.storage
       .from("templates-homologados")
-      .createSignedUrl(v.arquivo_path, 300, { download: v.arquivo_nome });
+      .createSignedUrl(path, 300, { download: nome ?? undefined });
     if (sErr || !signed) throw new Error("Falha ao gerar link de download.");
-    return { url: signed.signedUrl, nome: v.arquivo_nome };
+    return { url: signed.signedUrl, nome: nome ?? "documento" };
   });
 
 /* ---------- BAIXAR PDF ATIVO DE UM TEMPLATE (por código) ----------
