@@ -204,7 +204,7 @@ export function buildOssPdf(data: OSSPdfData): jsPDF {
 
   // ====================== CABEÇALHO (3 colunas) ======================
   // [Logo DMN] | [Título centralizado] | [Metadados FOR-SEG / Revisão / Data]
-  const hdrH = 22;
+  const hdrH = 19;
   const logoW = 38;
   const metaW = 42;
   const titleW = innerW - logoW - metaW;
@@ -231,35 +231,35 @@ export function buildOssPdf(data: OSSPdfData): jsPDF {
   doc.setTextColor(0);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(13);
-  doc.text("Ordem de Serviço", titleCx, y + 8, { align: "center" });
+  doc.text("Ordem de Serviço", titleCx, y + 7, { align: "center" });
   doc.setFontSize(11);
-  doc.text("Segurança e Saúde no Trabalho", titleCx, y + 14, { align: "center" });
+  doc.text("Segurança e Saúde no Trabalho", titleCx, y + 12.5, { align: "center" });
   doc.setFontSize(10);
-  doc.text('NR 1, Item 1.4.1 "c"', titleCx, y + 19, { align: "center" });
+  doc.text('NR 1, Item 1.4.1 "c"', titleCx, y + 17.5, { align: "center" });
 
   // Coluna 3 — metadados (FOR-SEG 01 / Revisão / Data / Pág)
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   const metaX = margin + logoW + titleW + 2;
-  doc.text("CÓD.: FOR-SEG 01", metaX, y + 5);
-  doc.text(`REVISÃO: ${String(data.revisao ?? 0).padStart(2, "0")}`, metaX, y + 10);
-  doc.text(`DATA: ${brDate(data.emitido_em)}`, metaX, y + 15);
-  doc.text("PÁG.: 01/01", metaX, y + 20);
+  doc.text("CÓD.: FOR-SEG 01", metaX, y + 4.5);
+  doc.text(`REVISÃO: ${String(data.revisao ?? 0).padStart(2, "0")}`, metaX, y + 8.8);
+  doc.text(`DATA: ${brDate(data.emitido_em)}`, metaX, y + 13.1);
+  doc.text("PÁG.: 01/01", metaX, y + 17.4);
 
   y += hdrH;
 
   // ====================== IDENTIFICAÇÃO ======================
-  const rowH = 6;
+  const rowH = 5.4;
   const labelBoldField = (
     x: number, yy: number, w: number, label: string, value: string,
   ) => {
     doc.rect(x, yy, w, rowH);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8);
-    doc.text(label, x + 1.5, yy + 4);
+    doc.text(label, x + 1.5, yy + 3.7);
     const labelW = doc.getTextWidth(label) + 2;
     doc.setFont("helvetica", "normal");
-    doc.text(value ?? "", x + 1.5 + labelW, yy + 4);
+    doc.text(value ?? "", x + 1.5 + labelW, yy + 3.7);
   };
 
   // Linha 1: Razão Social | CNPJ | Data
@@ -285,14 +285,14 @@ export function buildOssPdf(data: OSSPdfData): jsPDF {
 
   // Helper: barra de título de seção (fundo cinza)
   const sectionBar = (title: string) => {
-    ensureSpace(5 + 6);
+    ensureSpace(4.6 + 6);
     doc.setFillColor(225, 225, 225);
-    doc.rect(margin, y, innerW, 5, "FD");
+    doc.rect(margin, y, innerW, 4.6, "FD");
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8.5);
     doc.setTextColor(0);
-    doc.text(title, margin + 1.5, y + 3.6);
-    y += 5;
+    doc.text(title, margin + 1.5, y + 3.4);
+    y += 4.6;
   };
 
   // Helper: bloco de texto com moldura
@@ -300,19 +300,19 @@ export function buildOssPdf(data: OSSPdfData): jsPDF {
     const size = opts?.size ?? 8;
     doc.setFont("helvetica", opts?.italic ? "italic" : "normal");
     doc.setFontSize(size);
-    const lineH = size * 0.42;
+    const lineH = size * 0.4;
     const lines = doc.splitTextToSize(text || "", innerW - 3);
-    const h = Math.max(opts?.minH ?? 0, lines.length * lineH + 2);
+    const h = Math.max(opts?.minH ?? 0, lines.length * lineH + 1.8);
     ensureSpace(h);
     doc.rect(margin, y, innerW, h);
     doc.setTextColor(0);
-    doc.text(lines, margin + 1.5, y + lineH + 0.5);
+    doc.text(lines, margin + 1.5, y + lineH + 0.4);
     y += h;
   };
 
   // ====================== 1. Descrição da Atividade ======================
   sectionBar("1. Descrição da Atividade:");
-  textBlock(data.conteudo.descricao_atividades || "", { minH: 22 });
+  textBlock(data.conteudo.descricao_atividades || "", { minH: 12 });
 
   // Bloco "Caro empregado"
   textBlock("Caro empregado,\n" + TXT_CARO_EMPREGADO, { size: 7 });
@@ -334,8 +334,8 @@ export function buildOssPdf(data: OSSPdfData): jsPDF {
     ];
     // bloco com labels em bold e valor à frente
     doc.setFontSize(8);
-    const lineH = 4.2;
-    const padding = 1.4;
+    const lineH = 3.5;
+    const padding = 1.1;
     const labelColW = 32;
     // calcula altura considerando wrap dos valores
     let totalH = padding * 2;
@@ -344,7 +344,7 @@ export function buildOssPdf(data: OSSPdfData): jsPDF {
     );
     wrapped.forEach((w) => { totalH += Math.max(lineH, w.length * lineH); });
     doc.rect(margin, y, innerW, totalH);
-    let cy = y + padding + 3;
+    let cy = y + padding + 2.7;
     rows.forEach(([lab, val], i) => {
       doc.setFont("helvetica", "bold");
       doc.text(lab, margin + 1.5, cy);
@@ -368,7 +368,7 @@ export function buildOssPdf(data: OSSPdfData): jsPDF {
   const epis = parseEpis(data.conteudo.epis_obrigatorios, data.episCatalog);
   // pareia em 2 colunas
   const rows: Array<[string, string, string, string]> = [];
-  const minRows = 5;
+  const minRows = 3;
   for (let i = 0; i < epis.length; i += 2) {
     rows.push([
       epis[i]?.desc ?? "", epis[i]?.ca ?? "",
@@ -381,7 +381,7 @@ export function buildOssPdf(data: OSSPdfData): jsPDF {
     startY: y,
     margin: { left: margin, right: margin },
     theme: "grid",
-    styles: { fontSize: 8, cellPadding: 1.2, lineColor: [0, 0, 0], lineWidth: 0.2, textColor: 0 },
+    styles: { fontSize: 8, cellPadding: 0.9, lineColor: [0, 0, 0], lineWidth: 0.2, textColor: 0 },
     head: [["Descrição", "CA", "Descrição", "CA"]],
     headStyles: { fillColor: [255, 255, 255], textColor: 0, fontStyle: "bold", halign: "left" },
     body: rows,
@@ -421,19 +421,19 @@ export function buildOssPdf(data: OSSPdfData): jsPDF {
 
   // ====================== TERMO DE RESPONSABILIDADE ======================
   // Mantém o TERMO + assinaturas sempre na mesma página (não cortar no meio).
-  ensureSpace(5 + 14 + 22);
+  ensureSpace(4.6 + 10 + 20);
   // Barra de título centralizada
   doc.setFillColor(225, 225, 225);
-  doc.rect(margin, y, innerW, 5, "FD");
+  doc.rect(margin, y, innerW, 4.6, "FD");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
-  doc.text("TERMO DE RESPONSABILIDADE", W / 2, y + 3.6, { align: "center" });
-  y += 5;
+  doc.text("TERMO DE RESPONSABILIDADE", W / 2, y + 3.4, { align: "center" });
+  y += 4.6;
 
-  textBlock(TXT_TERMO, { size: 8, minH: 8 });
+  textBlock(TXT_TERMO, { size: 8, minH: 6 });
 
   // ====================== ASSINATURAS ======================
-  const sigH = 22;
+  const sigH = 20;
   ensureSpace(sigH);
   doc.rect(margin, y, innerW, sigH);
   doc.line(margin + innerW / 2, y, margin + innerW / 2, y + sigH);
