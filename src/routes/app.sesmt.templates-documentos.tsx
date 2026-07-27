@@ -363,6 +363,9 @@ function HistoryDialog({ template, onClose }: { template: any; onClose: () => vo
   const arquivar = useServerFn(arquivarVersao);
   const restaurar = useServerFn(restaurarVersao);
   const excluir = useServerFn(excluirVersaoDefinitivo);
+  const anexarOrigem = useServerFn(anexarOrigemRevisao);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [pendingVersionId, setPendingVersionId] = useState<string | null>(null);
 
   const { data: versoes, isLoading, refetch } = useQuery({
     queryKey: ["document-template-history", template.id],
@@ -390,6 +393,50 @@ function HistoryDialog({ template, onClose }: { template: any; onClose: () => vo
       qc.invalidateQueries({ queryKey: ["document-templates"] });
     } catch (e: any) {
       toast.error(e?.message ?? "Falha.");
+    }
+  }
+
+  async function toB64(f: File) {
+    const buf = await f.arrayBuffer();
+    const bytes = new Uint8Array(buf);
+    let bin = "";
+    const CHUNK = 0x8000;
+    for (let i = 0; i < bytes.length; i += CHUNK) {
+      bin += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + CHUNK)) as any);
+    }
+    return btoa(bin);
+  }
+
+  function handleAnexarClick(versionId: string) {
+    setPendingVersionId(versionId);
+    fileInputRef.current?.click();
+  }
+
+  async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (!f || !pendingVersionId) return;
+    if (f.size > 20 * 1024 * 1024) {
+      toast.error("Arquivo maior que 20 MB.");
+      return;
+    }
+    try {
+      const b64 = await toB64(f);
+      await anexarOrigem({
+        data: {
+          versionId: pendingVersionId,
+          fileName: f.name,
+          contentType: f.type || "application/octet-stream",
+          base64: b64,
+        },
+      });
+      toast.success("Documento de origem anexado.");
+      await refetch();
+      qc.invalidateQueries({ queryKey: ["document-templates"] });
+    } catch (err: any) {
+      toast.error(err?.message ?? "Falha ao anexar documento de origem.");
+    } finally {
+      setPendingVersionId(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }
 
