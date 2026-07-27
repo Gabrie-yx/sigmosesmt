@@ -488,6 +488,7 @@ export function PdfSignerDialog({
           id: p.id,
           nome: p.nome,
           cargo: p.cargo,
+          employee_id: p.employeeId ?? null,
           page: p.page,
           x: p.x,
           y: p.y,
@@ -519,6 +520,26 @@ export function PdfSignerDialog({
           .single();
         if (insErr) throw insErr;
         if (inserted?.id) setActiveDocumentId(inserted.id);
+      }
+
+      // Trilha de auditoria: quem carimbou assinatura de quais funcionários.
+      const funcs = placements
+        .filter((p) => !!p.employeeId)
+        .map((p) => ({ employee_id: p.employeeId as string, nome: p.nome, pagina: p.page }));
+      try {
+        await registrarCarimboAssinaturas({
+          data: {
+            documento_id: targetDocumentId ?? null,
+            nome_arquivo: nomeArquivo,
+            modulo: docData.modulo,
+            pdf_path: fullPath,
+            funcionarios: funcs,
+            total_assinaturas: placements.length,
+          },
+        });
+      } catch (auditErr) {
+        console.error("[PdfSigner] falha ao registrar auditoria", auditErr);
+        if (funcs.length > 0) toast.warning("Documento salvo, mas o registro de auditoria falhou.");
       }
 
       qc.invalidateQueries({ queryKey: ["documentos-assinados"] });
