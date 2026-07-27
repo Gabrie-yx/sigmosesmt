@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/select";
 import {
   ShieldAlert, Plus, Pencil, Trash2, Users, Layers, Grid3x3, ListChecks, AlertTriangle, Save, HardHat,
-  Sparkles, Wand2, Loader2,
+  Sparkles, Wand2, Loader2, BookOpen,
   ClipboardList, Bot,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -33,6 +33,27 @@ import {
   classifyAiha, AIHA_LABEL, AIHA_COLOR, AIHA_CELL, AIHA_PRIORIZACAO,
   PROB_LABELS, SEV_LABELS, CATEGORIA_LABEL, type AihaClass,
 } from "@/lib/aiha";
+import { SugerirAcoesDialog, type RiscoAlvo } from "@/components/pgr/sugerir-acoes-dialog";
+import {
+  HIERARQUIA_LABEL, HIERARQUIA_COLOR, PRIORIDADE_LABEL, PRIORIDADE_COLOR, PRIORIDADE_ORDEM,
+  type Prioridade, type Hierarquia,
+} from "@/lib/pgr-acoes-biblioteca";
+
+function FiltroSelect({
+  label, value, onChange, options,
+}: { label: string; value: string; onChange: (v: string) => void; options: [string, string][] }) {
+  return (
+    <div>
+      <Label className="text-[11px] text-muted-foreground">{label}</Label>
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+        <SelectContent>
+          {options.map(([v, l]) => (<SelectItem key={v} value={v} className="text-xs">{l}</SelectItem>))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
 
 export const Route = createFileRoute("/app/pgr")({
   component: PgrPage,
