@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, Save, Trash2, MousePointerClick, X, Library, Pencil, Move, PenTool, Download, Printer } from "lucide-react";
+import { ChevronLeft, ChevronRight, Save, Trash2, MousePointerClick, X, Library, Pencil, Move, PenTool, Download, Printer, Users, Search, ShieldCheck } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PDFDocument } from "pdf-lib";
@@ -11,6 +11,9 @@ import { SignaturePadDialog, type AssinaturaResult } from "@/components/signatur
 import { SignatureGallery } from "@/components/signature-gallery";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { printPdf } from "@/lib/pdf-print";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { registrarCarimboAssinaturas } from "@/lib/assinador-audit.functions";
 
 // pdfjs-dist usa DOMMatrix / Path2D — só pode carregar no browser.
 type PdfJsModule = typeof import("pdfjs-dist");
@@ -44,6 +47,7 @@ type Placement = {
   dataUrl: string;
   nome: string;
   cargo: string;
+  employeeId?: string | null;
 };
 
 type SavedSig = {
