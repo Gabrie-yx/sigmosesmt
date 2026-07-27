@@ -371,10 +371,11 @@ export const excluirVersaoDefinitivo = createServerFn({ method: "POST" })
     if (v.status === "HOMOLOGADA" || v.status === "EM_HOMOLOGACAO") {
       const { data: anterior } = await supabaseAdmin
         .from("document_template_versions")
-        .select("id, revisao")
+        .select("id, revisao, homologada_em")
         .eq("template_id", v.template_id)
         .is("deleted_at", null)
         .eq("status", "SUPERSEDIDA")
+        .not("homologada_em", "is", null)
         .order("revisao", { ascending: false })
         .limit(1);
       if (anterior && anterior[0]) {
