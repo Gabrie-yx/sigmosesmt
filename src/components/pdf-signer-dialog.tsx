@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, Save, Trash2, MousePointerClick, X, Library, Pencil, Move, PenTool, Download, Printer } from "lucide-react";
+import { ChevronLeft, ChevronRight, Save, Trash2, MousePointerClick, X, Library, Pencil, Move, PenTool, Download, Printer, Users, Search, ShieldCheck } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PDFDocument } from "pdf-lib";
@@ -11,6 +11,9 @@ import { SignaturePadDialog, type AssinaturaResult } from "@/components/signatur
 import { SignatureGallery } from "@/components/signature-gallery";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { printPdf } from "@/lib/pdf-print";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { registrarCarimboAssinaturas } from "@/lib/assinador-audit.functions";
 
 // pdfjs-dist usa DOMMatrix / Path2D — só pode carregar no browser.
 type PdfJsModule = typeof import("pdfjs-dist");
@@ -44,6 +47,7 @@ type Placement = {
   dataUrl: string;
   nome: string;
   cargo: string;
+  employeeId?: string | null;
 };
 
 type SavedSig = {
@@ -146,7 +150,9 @@ export function PdfSignerDialog({
   const [renderScale, setRenderScale] = useState(1.0); // canvas px / pt
   const [placements, setPlacements] = useState<Placement[]>([]);
   const [picking, setPicking] = useState(false);
-  const [pendingSig, setPendingSig] = useState<{ dataUrl: string; nome: string; cargo: string } | null>(null);
+  const [pendingSig, setPendingSig] = useState<{ dataUrl: string; nome: string; cargo: string; employeeId?: string | null } | null>(null);
+  const [empCompany, setEmpCompany] = useState<string>("");
+  const [empBusca, setEmpBusca] = useState("");
   const [openPad, setOpenPad] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -177,6 +183,40 @@ export function PdfSignerDialog({
     },
     enabled: open,
   });
+
+  // --- Assinaturas de funcionários (employees.assinatura_url) ---
+  const { data: companies = [] } = useQuery({
+    queryKey: ["signer-companies"],
+    enabled: open,
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("companies").select("id,name").order("name");
+      if (error) throw error;
+      return data as { id: string; name: string }[];
+    },
+  });
+
+  const { data: empSigs = [], isFetching: empLoading } = useQuery({
+    queryKey: ["signer-employee-signatures", empCompany],
+    enabled: open && !!empCompany,
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("employees")
+        .select("id,nome,matricula,assinatura_url,status")
+        .eq("company_id", empCompany)
+        .not("assinatura_url", "is", null)
+        .order("nome");
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  const empFiltrados = empSigs.filter((e: any) =>
+    !empBusca.trim() ||
+    String(e.nome ?? "").toLowerCase().includes(empBusca.trim().toLowerCase()) ||
+    String(e.matricula ?? "").toLowerCase().includes(empBusca.trim().toLowerCase()),
+  );
 
   // Load PDF and existing placements when source/documentId changes
   useEffect(() => {
@@ -288,6 +328,7 @@ export function PdfSignerDialog({
           dataUrl: pendingSig.dataUrl,
           nome: pendingSig.nome,
           cargo: pendingSig.cargo,
+          employeeId: pendingSig.employeeId ?? null,
         },
       ]);
       toast.success(`Assinatura de ${pendingSig.nome} posicionada na página ${pageNum}`);
@@ -447,6 +488,7 @@ export function PdfSignerDialog({
           id: p.id,
           nome: p.nome,
           cargo: p.cargo,
+          employee_id: p.employeeId ?? null,
           page: p.page,
           x: p.x,
           y: p.y,
@@ -478,6 +520,26 @@ export function PdfSignerDialog({
           .single();
         if (insErr) throw insErr;
         if (inserted?.id) setActiveDocumentId(inserted.id);
+      }
+
+      // Trilha de auditoria: quem carimbou assinatura de quais funcionários.
+      const funcs = placements
+        .filter((p) => !!p.employeeId)
+        .map((p) => ({ employee_id: p.employeeId as string, nome: p.nome, pagina: p.page }));
+      try {
+        await registrarCarimboAssinaturas({
+          data: {
+            documento_id: targetDocumentId ?? null,
+            nome_arquivo: nomeArquivo,
+            modulo: docData.modulo,
+            pdf_path: fullPath,
+            funcionarios: funcs,
+            total_assinaturas: placements.length,
+          },
+        });
+      } catch (auditErr) {
+        console.error("[PdfSigner] falha ao registrar auditoria", auditErr);
+        if (funcs.length > 0) toast.warning("Documento salvo, mas o registro de auditoria falhou.");
       }
 
       qc.invalidateQueries({ queryKey: ["documentos-assinados"] });
@@ -682,6 +744,70 @@ export function PdfSignerDialog({
                         <div className="text-[10px] text-white/50 truncate">{s.cargo || "—"}</div>
                       </button>
                     ))}
+                  </div>
+
+                  {/* Assinaturas de Funcionários (employees.assinatura_url) */}
+                  <div className="space-y-2 pt-2 border-t border-white/10">
+                    <div className="flex items-center gap-1.5">
+                      <Users className="h-3.5 w-3.5 text-rose-400" />
+                      <div className="text-[10px] font-bold text-white/50 uppercase tracking-wider">Funcionários</div>
+                    </div>
+                    <Select value={empCompany} onValueChange={setEmpCompany}>
+                      <SelectTrigger className="h-8 text-xs border-white/15 bg-white/5 text-white">
+                        <SelectValue placeholder="Selecione a empresa" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {companies.map((c) => (
+                          <SelectItem key={c.id} value={c.id} className="text-xs">{c.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    {empCompany && (
+                      <>
+                        <div className="relative">
+                          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/40" />
+                          <Input
+                            value={empBusca}
+                            onChange={(e) => setEmpBusca(e.target.value)}
+                            placeholder="Buscar nome ou matrícula…"
+                            className="h-8 pl-7 text-xs border-white/15 bg-white/5 text-white placeholder:text-white/40"
+                          />
+                        </div>
+                        {empLoading && <p className="text-[11px] text-white/50 py-2">Carregando assinaturas…</p>}
+                        {!empLoading && empFiltrados.length === 0 && (
+                          <p className="text-[11px] text-white/50 py-2">
+                            Nenhum funcionário com assinatura cadastrada nesta empresa.
+                          </p>
+                        )}
+                        {empFiltrados.map((e: any) => (
+                          <button
+                            key={e.id}
+                            type="button"
+                            onClick={() => {
+                              setPendingSig({ dataUrl: e.assinatura_url, nome: e.nome, cargo: "", employeeId: e.id });
+                              setPicking(true);
+                            }}
+                            className={`w-full border rounded-md p-2 hover:border-rose-400/60 hover:bg-white/5 text-left transition ${
+                              pendingSig?.employeeId === e.id ? "border-rose-400 ring-2 ring-rose-400/30 bg-rose-500/10" : "border-white/10"
+                            }`}
+                          >
+                            <img src={e.assinatura_url} alt={e.nome} className="h-12 w-full object-contain bg-white/90 rounded mb-1" />
+                            <div className="text-xs font-semibold truncate text-white/90">{e.nome}</div>
+                            <div className="text-[10px] text-white/50 truncate">
+                              {e.matricula ? `Mat. ${e.matricula}` : "—"}{e.status && e.status !== "ATIVO" ? ` · ${e.status}` : ""}
+                            </div>
+                          </button>
+                        ))}
+                        <div className="flex items-start gap-1.5 rounded-md border border-amber-400/25 bg-amber-500/10 p-2">
+                          <ShieldCheck className="h-3.5 w-3.5 text-amber-300 mt-0.5 shrink-0" />
+                          <p className="text-[10px] leading-snug text-amber-100/90">
+                            Ao carimbar a assinatura de um funcionário, o SIGMO registra na trilha de auditoria
+                            quem aplicou, em qual documento e quando.
+                          </p>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               </ScrollArea>
