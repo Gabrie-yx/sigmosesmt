@@ -125,6 +125,8 @@ export async function renderOverlay(input: RenderOverlayInput): Promise<Blob> {
     });
   }
 
+  drawSelo(pdf, font, input.codigo);
+
   const out = await pdf.save();
   return new Blob([out as BlobPart], { type: "application/pdf" });
 }

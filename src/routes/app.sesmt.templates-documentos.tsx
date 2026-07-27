@@ -199,25 +199,38 @@ function UploadDialog({ template, onClose }: { template: any; onClose: () => voi
   const qc = useQueryClient();
   const novaRevisao = useServerFn(novaRevisaoTemplate);
   const [file, setFile] = useState<File | null>(null);
+  const [origem, setOrigem] = useState<File | null>(null);
   const [motivo, setMotivo] = useState("");
   const [uploading, setUploading] = useState(false);
 
   const proximaRev = ((template.versao_atual?.revisao ?? 0) as number) + 1;
 
+  async function toB64(f: File) {
+    const buf = await f.arrayBuffer();
+    const bytes = new Uint8Array(buf);
+    let bin = "";
+    const CHUNK = 0x8000;
+    for (let i = 0; i < bytes.length; i += CHUNK) {
+      bin += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + CHUNK)) as any);
+    }
+    return btoa(bin);
+  }
+
   async function submit() {
     if (!file) return toast.error("Selecione o PDF.");
     if (motivo.trim().length < 3) return toast.error("Descreva o motivo da alteração.");
     if (file.size > 20 * 1024 * 1024) return toast.error("Arquivo maior que 20 MB.");
+    if (origem && origem.size > 20 * 1024 * 1024) return toast.error("Documento de origem maior que 20 MB.");
     setUploading(true);
     try {
-      const buf = await file.arrayBuffer();
-      const bytes = new Uint8Array(buf);
-      let bin = "";
-      const CHUNK = 0x8000;
-      for (let i = 0; i < bytes.length; i += CHUNK) {
-        bin += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + CHUNK)) as any);
-      }
-      const b64 = btoa(bin);
+      const b64 = await toB64(file);
+      const origemPayload = origem
+        ? {
+            fileName: origem.name,
+            contentType: origem.type || "application/octet-stream",
+            base64: await toB64(origem),
+          }
+        : undefined;
       await novaRevisao({
         data: {
           templateId: template.id,
@@ -225,6 +238,7 @@ function UploadDialog({ template, onClose }: { template: any; onClose: () => voi
           contentType: file.type || "application/pdf",
           base64: b64,
           motivo: motivo.trim(),
+          origem: origemPayload,
         },
       });
       toast.success(`Rev.${String(proximaRev).padStart(2, "0")} arquivada. Pendência criada para o motor.`);
@@ -269,6 +283,23 @@ function UploadDialog({ template, onClose }: { template: any; onClose: () => voi
               onChange={(e) => setMotivo(e.target.value)}
               rows={3}
             />
+          </div>
+          <div>
+            <Label>Documento de Origem (opcional)</Label>
+            <Input
+              type="file"
+              accept=".docx,.doc,.xlsx,.xls,.odt,.ods,.pptx,.rtf,.csv"
+              onChange={(e) => setOrigem(e.target.files?.[0] ?? null)}
+            />
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Arquivo editável (DOCX, XLSX, ODT…) que gerou este PDF. Fica arquivado junto da revisão
+              para futuras alterações do formulário.
+            </p>
+            {origem && (
+              <p className="text-xs text-rose-100/60 mt-1">
+                {origem.name} — {(origem.size / 1024).toFixed(0)} KB
+              </p>
+            )}
           </div>
         </div>
         <DialogFooter>
