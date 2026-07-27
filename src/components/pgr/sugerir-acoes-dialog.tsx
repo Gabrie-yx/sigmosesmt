@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sparkles, Wand2, BookOpen } from "lucide-react";
 import { toast } from "sonner";
@@ -31,16 +33,21 @@ export type RiscoAlvo = {
 };
 
 export function SugerirAcoesDialog({
-  open, onOpenChange, riscos, riscosSemPlano,
+  open, onOpenChange, riscos, riscosSemPlano, jaVinculadas = [],
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   riscos: RiscoAlvo[];
   riscosSemPlano: RiscoAlvo[];
+  jaVinculadas?: { inventario_id: string; biblioteca_id: string | null }[];
 }) {
   const qc = useQueryClient();
   const [riscoId, setRiscoId] = useState("");
   const [sel, setSel] = useState<Set<string>>(new Set());
+  const [aba, setAba] = useState<"sugestoes" | "catalogo">("sugestoes");
+  const [busca, setBusca] = useState("");
+  const [fCat, setFCat] = useState("all");
+  const [fHier, setFHier] = useState("all");
 
   const { data: bib = [], isLoading } = useQuery<AcaoBiblioteca[]>({
     queryKey: ["pgr_acoes_biblioteca"],
@@ -59,6 +66,17 @@ export function SugerirAcoesDialog({
   const risco = riscos.find((r) => r.id === riscoId) ?? null;
   const cls = risco ? classifyAiha(risco.probabilidade, risco.severidade) : "NAO_CLASSIFICADO";
 
+  // Ações da biblioteca já vinculadas a cada risco (evita duplicar no plano)
+  const usadasPorRisco = useMemo(() => {
+    const m = new Map<string, Set<string>>();
+    for (const v of jaVinculadas) {
+      if (!v.biblioteca_id) continue;
+      if (!m.has(v.inventario_id)) m.set(v.inventario_id, new Set());
+      m.get(v.inventario_id)!.add(v.biblioteca_id);
+    }
+    return m;
+  }, [jaVinculadas]);
+
   const sugestoes = useMemo(() => {
     if (!risco) return [];
     return sugerirAcoes(bib, {
@@ -70,15 +88,45 @@ export function SugerirAcoesDialog({
     });
   }, [bib, risco, cls]);
 
+  const jaNoPlano = usadasPorRisco.get(riscoId) ?? new Set<string>();
+
   // Pré-seleciona as ações de maior hierarquia de controle
   useEffect(() => {
     const top = [...sugestoes]
-      .filter((s) => s.categoria !== "GERAL")
+      .filter((s) => s.categoria !== "GERAL" && !jaNoPlano.has(s.id))
       .sort((a, b) => HIERARQUIA_ORDEM[a.hierarquia] - HIERARQUIA_ORDEM[b.hierarquia])
       .slice(0, 4)
       .map((s) => s.id);
     setSel(new Set(top));
-  }, [sugestoes]);
+  }, [sugestoes, riscoId]);
+
+  // Catálogo completo (todas as ações da biblioteca, com busca e filtros)
+  const catalogo = useMemo(() => {
+    const q = busca.trim().toLowerCase();
+    return bib
+      .filter((a) => (fCat === "all" ? true : a.categoria === fCat))
+      .filter((a) => (fHier === "all" ? true : a.hierarquia === fHier))
+      .filter((a) =>
+        q.length === 0
+          ? true
+          : [a.acao, a.como ?? "", a.perigo_padrao, a.norma_ref ?? "", (a.palavras_chave ?? []).join(" ")]
+              .join(" ")
+              .toLowerCase()
+              .includes(q),
+      )
+      .sort(
+        (a, b) =>
+          a.categoria.localeCompare(b.categoria) ||
+          HIERARQUIA_ORDEM[a.hierarquia] - HIERARQUIA_ORDEM[b.hierarquia] ||
+          a.acao.localeCompare(b.acao),
+      );
+  }, [bib, busca, fCat, fHier]);
+
+  const contagem = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const a of bib) m[a.categoria] = (m[a.categoria] ?? 0) + 1;
+    return m;
+  }, [bib]);
 
   const toggle = (id: string) =>
     setSel((prev) => {
@@ -90,7 +138,8 @@ export function SugerirAcoesDialog({
   const gerar = useMutation({
     mutationFn: async () => {
       if (!risco) throw new Error("Selecione o risco");
-      const escolhidas = sugestoes.filter((s) => sel.has(s.id));
+      const fonte = aba === "catalogo" ? catalogo : sugestoes;
+      const escolhidas = fonte.filter((s) => sel.has(s.id) && !jaNoPlano.has(s.id));
       if (escolhidas.length === 0) throw new Error("Selecione pelo menos uma ação");
       const prazoBase = prazoPorNivel(cls);
       const rows = escolhidas.map((a) => ({
@@ -99,6 +148,7 @@ export function SugerirAcoesDialog({
         o_que: a.acao,
         por_que: `Controle do perigo "${risco.perigo}" — nível ${AIHA_LABEL[cls]}${a.norma_ref ? ` (${a.norma_ref})` : ""}`,
         como: a.como,
+        onde: risco.fonte_geradora || null,
         quando: prazoParaData(Math.min(a.prazo_dias, prazoBase)),
         prioridade: prioridadePorNivel(cls),
         hierarquia: a.hierarquia,
@@ -122,11 +172,12 @@ export function SugerirAcoesDialog({
       const rows: any[] = [];
       for (const r of riscosSemPlano) {
         const c = classifyAiha(r.probabilidade, r.severidade);
+        const usadas = usadasPorRisco.get(r.id) ?? new Set<string>();
         const top = sugerirAcoes(bib, {
           perigo: r.perigo, categoria: r.categoria, classificacao: c,
           agravo: r.agravo, fonte: r.fonte_geradora,
         })
-          .filter((s) => s.categoria !== "GERAL")
+          .filter((s) => s.categoria !== "GERAL" && !usadas.has(s.id))
           .sort((a, b) => HIERARQUIA_ORDEM[a.hierarquia] - HIERARQUIA_ORDEM[b.hierarquia])
           .slice(0, 3);
         const prazoBase = prazoPorNivel(c);
@@ -137,6 +188,7 @@ export function SugerirAcoesDialog({
             o_que: a.acao,
             por_que: `Controle do perigo "${r.perigo}" — nível ${AIHA_LABEL[c]}${a.norma_ref ? ` (${a.norma_ref})` : ""}`,
             como: a.como,
+            onde: r.fonte_geradora || null,
             quando: prazoParaData(Math.min(a.prazo_dias, prazoBase)),
             prioridade: prioridadePorNivel(c),
             hierarquia: a.hierarquia,
