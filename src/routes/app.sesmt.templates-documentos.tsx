@@ -443,6 +443,13 @@ function HistoryDialog({ template, onClose }: { template: any; onClose: () => vo
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".docx,.doc,.xlsx,.xls,.odt,.ods,.pptx,.rtf,.csv"
+          className="hidden"
+          onChange={handleFileSelected}
+        />
         <DialogHeader>
           <DialogTitle>{template.codigo} — Histórico de revisões</DialogTitle>
           <DialogDescription>{template.nome}</DialogDescription>
