@@ -188,7 +188,12 @@ export function HoraExtraSabadoDialog({
   const { data: employees } = useQuery({
     queryKey: ["he-employees", companyId],
     queryFn: async () => {
-      let q = supabase.from("employees").select("id,nome,setor,company_id").eq("status", "ATIVO").order("nome");
+      let q = supabase
+        .from("employees")
+        .select("id,nome,setor,company_id")
+        .eq("status", "ATIVO")
+        .order("nome")
+        .limit(5000);
       if (companyId) q = q.eq("company_id", companyId);
       return (await q).data ?? [];
     },
