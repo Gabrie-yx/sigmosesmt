@@ -74,6 +74,22 @@ function TemplatesDocumentosPage() {
 
 function PainelInterno() {
   const listar = useServerFn(listarTemplates);
+  const signedUrl = useServerFn(signedUrlTemplate);
+
+  async function baixarDaVersao(versionId: string, tipo: "pdf" | "origem") {
+    try {
+      const { url, nome } = await signedUrl({ data: { versionId, tipo } });
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = nome ?? "documento";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Falha ao gerar download.");
+    }
+  }
+
   const { data: templates, isLoading } = useQuery({
     queryKey: ["document-templates"],
     queryFn: () => listar(),
@@ -179,6 +195,21 @@ function PainelInterno() {
                 </div>
               </div>
               <div className="flex gap-2 flex-wrap pt-2 border-t border-rose-500/10">
+                {t.versao_atual && (
+                  <Button size="sm" variant="outline" onClick={() => baixarDaVersao(t.versao_atual.id, "pdf")}>
+                    <Download className="w-4 h-4 mr-1" /> PDF
+                  </Button>
+                )}
+                {t.versao_atual?.origem_path && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-sky-300 border-sky-500/40"
+                    onClick={() => baixarDaVersao(t.versao_atual.id, "origem")}
+                  >
+                    <FileDown className="w-4 h-4 mr-1" /> Original
+                  </Button>
+                )}
                 {t.total_versoes > 0 && (
                   <Button size="sm" variant="outline" onClick={() => setHistoryFor(t)}>
                     <History className="w-4 h-4 mr-1" /> Histórico ({t.total_versoes})
