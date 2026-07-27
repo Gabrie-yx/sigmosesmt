@@ -77,6 +77,46 @@ function TemplatesDocumentosPage() {
 function PainelInterno() {
   const listar = useServerFn(listarTemplates);
   const signedUrl = useServerFn(signedUrlTemplate);
+  const anexarOrigem = useServerFn(anexarOrigemRevisao);
+  const qcPainel = useQueryClient();
+  const origemInputRef = useRef<HTMLInputElement | null>(null);
+  const [origemVersionId, setOrigemVersionId] = useState<string | null>(null);
+
+  async function fileToB64(f: File) {
+    const bytes = new Uint8Array(await f.arrayBuffer());
+    let bin = "";
+    const CHUNK = 0x8000;
+    for (let i = 0; i < bytes.length; i += CHUNK) {
+      bin += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + CHUNK)) as any);
+    }
+    return btoa(bin);
+  }
+
+  async function onOrigemSelecionada(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (!f || !origemVersionId) return;
+    if (f.size > 20 * 1024 * 1024) {
+      toast.error("Arquivo maior que 20 MB.");
+      return;
+    }
+    try {
+      await anexarOrigem({
+        data: {
+          versionId: origemVersionId,
+          fileName: f.name,
+          contentType: f.type || "application/octet-stream",
+          base64: await fileToB64(f),
+        },
+      });
+      toast.success("Documento de origem anexado.");
+      qcPainel.invalidateQueries({ queryKey: ["document-templates"] });
+    } catch (err: any) {
+      toast.error(err?.message ?? "Falha ao anexar documento de origem.");
+    } finally {
+      setOrigemVersionId(null);
+      if (origemInputRef.current) origemInputRef.current.value = "";
+    }
+  }
 
   async function baixarDaVersao(versionId: string, tipo: "pdf" | "origem") {
     try {
@@ -111,6 +151,13 @@ function PainelInterno() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
+      <input
+        ref={origemInputRef}
+        type="file"
+        accept=".docx,.doc,.xlsx,.xls,.xlsm,.odt,.ods,.odp,.ppt,.pptx,.rtf,.csv,.txt,.dwg,.zip"
+        className="hidden"
+        onChange={onOrigemSelecionada}
+      />
       <header className="flex flex-col gap-2">
         <div className="flex items-center gap-3">
           <FileText className="w-6 h-6 text-rose-300" />
@@ -216,6 +263,19 @@ function PainelInterno() {
                     onClick={() => baixarDaVersao(t.versao_atual.id, "origem")}
                   >
                     <FileDown className="w-4 h-4 mr-1" /> Original
+                  </Button>
+                )}
+                {t.versao_atual && !t.versao_atual.origem_path && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-sky-300 border-sky-500/40"
+                    onClick={() => {
+                      setOrigemVersionId(t.versao_atual.id);
+                      origemInputRef.current?.click();
+                    }}
+                  >
+                    <Paperclip className="w-4 h-4 mr-1" /> Anexar original
                   </Button>
                 )}
                 {t.total_versoes > 0 && (
