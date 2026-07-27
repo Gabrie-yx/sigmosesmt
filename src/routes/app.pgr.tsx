@@ -377,7 +377,7 @@ function GheDialog({
   const [obs, setObs] = useState("");
 
   // Reset on open
-  useMemo(() => {
+  useEffect(() => {
     if (open) {
       setNumero(edit?.numero ?? "");
       setSetor(edit?.setor ?? "");
@@ -1110,7 +1110,7 @@ function InvDialog({
   const [sev, setSev] = useState<number | "">("");
   const [monit, setMonit] = useState("");
 
-  useMemo(() => {
+  useEffect(() => {
     if (open) {
       setGhe(edit?.ghe_id ?? gheDefault ?? "");
       setCat(edit?.categoria ?? "FISICO");
@@ -1571,7 +1571,7 @@ function PlanoDialog({
   const [prioridade, setPrioridade] = useState<Prioridade>("MEDIA");
   const [hierarquia, setHierarquia] = useState<string>("");
 
-  useMemo(() => {
+  useEffect(() => {
     if (open) {
       setInvId(edit?.inventario_id ?? "");
       setOque(edit?.o_que ?? "");
