@@ -8033,6 +8033,57 @@ export type Database = {
         }
         Relationships: []
       }
+      pgr_acoes_biblioteca: {
+        Row: {
+          acao: string
+          ativo: boolean
+          categoria: string
+          como: string | null
+          created_at: string
+          hierarquia: string
+          id: string
+          niveis: string[]
+          norma_ref: string | null
+          palavras_chave: string[]
+          perigo_padrao: string
+          prazo_dias: number
+          prioridade: string
+          updated_at: string
+        }
+        Insert: {
+          acao: string
+          ativo?: boolean
+          categoria: string
+          como?: string | null
+          created_at?: string
+          hierarquia?: string
+          id?: string
+          niveis?: string[]
+          norma_ref?: string | null
+          palavras_chave?: string[]
+          perigo_padrao: string
+          prazo_dias?: number
+          prioridade?: string
+          updated_at?: string
+        }
+        Update: {
+          acao?: string
+          ativo?: boolean
+          categoria?: string
+          como?: string | null
+          created_at?: string
+          hierarquia?: string
+          id?: string
+          niveis?: string[]
+          norma_ref?: string | null
+          palavras_chave?: string[]
+          perigo_padrao?: string
+          prazo_dias?: number
+          prioridade?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pgr_ghe: {
         Row: {
           ativo: boolean
@@ -8250,60 +8301,79 @@ export type Database = {
       }
       pgr_plano_acao: {
         Row: {
+          biblioteca_id: string | null
           como: string | null
           created_at: string
           created_by: string | null
           data_conclusao: string | null
           evidencia_url: string | null
+          hierarquia: string | null
           id: string
           inventario_id: string
           o_que: string
           observacao: string | null
           onde: string | null
           por_que: string | null
+          prioridade: string
           quando: string | null
           quanto: number | null
           quem: string | null
+          responsavel_id: string | null
           status: string
           updated_at: string
         }
         Insert: {
+          biblioteca_id?: string | null
           como?: string | null
           created_at?: string
           created_by?: string | null
           data_conclusao?: string | null
           evidencia_url?: string | null
+          hierarquia?: string | null
           id?: string
           inventario_id: string
           o_que: string
           observacao?: string | null
           onde?: string | null
           por_que?: string | null
+          prioridade?: string
           quando?: string | null
           quanto?: number | null
           quem?: string | null
+          responsavel_id?: string | null
           status?: string
           updated_at?: string
         }
         Update: {
+          biblioteca_id?: string | null
           como?: string | null
           created_at?: string
           created_by?: string | null
           data_conclusao?: string | null
           evidencia_url?: string | null
+          hierarquia?: string | null
           id?: string
           inventario_id?: string
           o_que?: string
           observacao?: string | null
           onde?: string | null
           por_que?: string | null
+          prioridade?: string
           quando?: string | null
           quanto?: number | null
           quem?: string | null
+          responsavel_id?: string | null
           status?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "pgr_plano_acao_biblioteca_id_fkey"
+            columns: ["biblioteca_id"]
+            isOneToOne: false
+            referencedRelation: "pgr_acoes_biblioteca"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "pgr_plano_acao_inventario_id_fkey"
             columns: ["inventario_id"]
