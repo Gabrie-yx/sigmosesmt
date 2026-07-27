@@ -724,6 +724,70 @@ export function PdfSignerDialog({
                       </button>
                     ))}
                   </div>
+
+                  {/* Assinaturas de Funcionários (employees.assinatura_url) */}
+                  <div className="space-y-2 pt-2 border-t border-white/10">
+                    <div className="flex items-center gap-1.5">
+                      <Users className="h-3.5 w-3.5 text-rose-400" />
+                      <div className="text-[10px] font-bold text-white/50 uppercase tracking-wider">Funcionários</div>
+                    </div>
+                    <Select value={empCompany} onValueChange={setEmpCompany}>
+                      <SelectTrigger className="h-8 text-xs border-white/15 bg-white/5 text-white">
+                        <SelectValue placeholder="Selecione a empresa" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {companies.map((c) => (
+                          <SelectItem key={c.id} value={c.id} className="text-xs">{c.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    {empCompany && (
+                      <>
+                        <div className="relative">
+                          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/40" />
+                          <Input
+                            value={empBusca}
+                            onChange={(e) => setEmpBusca(e.target.value)}
+                            placeholder="Buscar nome ou matrícula…"
+                            className="h-8 pl-7 text-xs border-white/15 bg-white/5 text-white placeholder:text-white/40"
+                          />
+                        </div>
+                        {empLoading && <p className="text-[11px] text-white/50 py-2">Carregando assinaturas…</p>}
+                        {!empLoading && empFiltrados.length === 0 && (
+                          <p className="text-[11px] text-white/50 py-2">
+                            Nenhum funcionário com assinatura cadastrada nesta empresa.
+                          </p>
+                        )}
+                        {empFiltrados.map((e: any) => (
+                          <button
+                            key={e.id}
+                            type="button"
+                            onClick={() => {
+                              setPendingSig({ dataUrl: e.assinatura_url, nome: e.nome, cargo: "", employeeId: e.id });
+                              setPicking(true);
+                            }}
+                            className={`w-full border rounded-md p-2 hover:border-rose-400/60 hover:bg-white/5 text-left transition ${
+                              pendingSig?.employeeId === e.id ? "border-rose-400 ring-2 ring-rose-400/30 bg-rose-500/10" : "border-white/10"
+                            }`}
+                          >
+                            <img src={e.assinatura_url} alt={e.nome} className="h-12 w-full object-contain bg-white/90 rounded mb-1" />
+                            <div className="text-xs font-semibold truncate text-white/90">{e.nome}</div>
+                            <div className="text-[10px] text-white/50 truncate">
+                              {e.matricula ? `Mat. ${e.matricula}` : "—"}{e.status && e.status !== "ATIVO" ? ` · ${e.status}` : ""}
+                            </div>
+                          </button>
+                        ))}
+                        <div className="flex items-start gap-1.5 rounded-md border border-amber-400/25 bg-amber-500/10 p-2">
+                          <ShieldCheck className="h-3.5 w-3.5 text-amber-300 mt-0.5 shrink-0" />
+                          <p className="text-[10px] leading-snug text-amber-100/90">
+                            Ao carimbar a assinatura de um funcionário, o SIGMO registra na trilha de auditoria
+                            quem aplicou, em qual documento e quando.
+                          </p>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
               </ScrollArea>
               <div className="border-t border-white/10 p-2 space-y-2">
