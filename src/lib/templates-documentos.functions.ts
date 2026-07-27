@@ -168,6 +168,14 @@ const NovaRevisaoSchema = z.object({
   contentType: z.string().min(1),
   base64: z.string().min(1),
   motivo: z.string().min(3).max(1000),
+  /** Documento de origem editável (DOCX/XLSX/ODT/…) que gerou o PDF homologado. */
+  origem: z
+    .object({
+      fileName: z.string().min(1).max(200),
+      contentType: z.string().max(200).optional(),
+      base64: z.string().min(1),
+    })
+    .optional(),
 });
 
 export const novaRevisaoTemplate = createServerFn({ method: "POST" })
@@ -231,6 +239,29 @@ export const novaRevisaoTemplate = createServerFn({ method: "POST" })
     if (insErr || !nova) {
       await supabaseAdmin.storage.from("templates-homologados").remove([path]);
       throw new Error(`Falha ao registrar versão: ${insErr?.message ?? ""}`);
+    }
+
+    // Documento de origem (opcional): arquivo editável que deu origem ao PDF
+    if (data.origem) {
+      const oBuf = decodeB64(data.origem.base64);
+      const ext = (data.origem.fileName.split(".").pop() ?? "bin").toLowerCase().slice(0, 8);
+      const oPath = `${tpl.codigo}/origem/rev-${String(proxima).padStart(2, "0")}-${Date.now()}.${ext}`;
+      const { error: oErr } = await supabaseAdmin.storage
+        .from("templates-homologados")
+        .upload(oPath, oBuf, {
+          contentType: data.origem.contentType || "application/octet-stream",
+          upsert: false,
+        });
+      if (oErr) throw new Error(`Falha no upload do documento de origem: ${oErr.message}`);
+      await supabaseAdmin
+        .from("document_template_versions")
+        .update({
+          origem_path: oPath,
+          origem_nome: data.origem.fileName,
+          origem_tipo: data.origem.contentType || null,
+          origem_tamanho: oBuf.byteLength,
+        })
+        .eq("id", nova.id);
     }
 
     // Cria pendência automática (+15 dias)
@@ -310,7 +341,7 @@ export const excluirVersaoDefinitivo = createServerFn({ method: "POST" })
 
     const { data: v, error: vErr } = await supabaseAdmin
       .from("document_template_versions")
-      .select("id, template_id, arquivo_path, status")
+      .select("id, template_id, arquivo_path, origem_path, status")
       .eq("id", data.versionId)
       .single();
     if (vErr || !v) throw new Error("Versão não encontrada.");
@@ -331,6 +362,9 @@ export const excluirVersaoDefinitivo = createServerFn({ method: "POST" })
     // remove arquivo do storage (não bloqueia se falhar)
     if (v.arquivo_path) {
       await supabaseAdmin.storage.from("templates-homologados").remove([v.arquivo_path]);
+    }
+    if (v.origem_path) {
+      await supabaseAdmin.storage.from("templates-homologados").remove([v.origem_path]);
     }
 
     // se essa era a revisão ativa, promove a anterior mais recente
