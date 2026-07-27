@@ -12,6 +12,7 @@ import {
   restaurarVersao,
   excluirVersaoDefinitivo,
   anexarOrigemRevisao,
+  criarTemplate,
 } from "@/lib/templates-documentos.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { Card } from "@/components/ui/card";
@@ -29,7 +30,7 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { FileText, Upload, History, Download, FileDown, ShieldAlert, CheckCircle2, Archive, RotateCcw, AlertCircle, Trash2, Paperclip } from "lucide-react";
+import { FileText, Upload, History, Download, FileDown, ShieldAlert, CheckCircle2, Archive, RotateCcw, AlertCircle, Trash2, Paperclip, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { hasOverlay } from "@/lib/pdf-overlay-maps";
 
@@ -98,6 +99,7 @@ function PainelInterno() {
 
   const [uploadFor, setUploadFor] = useState<any>(null);
   const [historyFor, setHistoryFor] = useState<any>(null);
+  const [novoTemplate, setNovoTemplate] = useState<string | null>(null);
 
   const grupos: Array<{ key: string; label: string; match: (c: string) => boolean; hint: string }> = [
     { key: "for-seg", label: "FOR-SEG (Segurança)", match: (c) => c.startsWith("FOR-SEG"), hint: "Formulários operacionais do SESMT — OS, PT, EPI, requisições." },
@@ -139,7 +141,12 @@ function PainelInterno() {
             const lista = byGrupo(g.key);
             return (
               <TabsContent key={g.key} value={g.key} className="mt-4 space-y-3">
-                <p className="text-xs text-rose-100/60 italic">{g.hint}</p>
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <p className="text-xs text-rose-100/60 italic">{g.hint}</p>
+                  <Button size="sm" variant="outline" onClick={() => setNovoTemplate(g.key)}>
+                    <Plus className="w-4 h-4 mr-1" /> Novo template
+                  </Button>
+                </div>
                 {lista.length === 0 && (
                   <Card className="p-6 text-sm text-rose-100/50 italic border-rose-500/20 bg-rose-950/20">
                     Nenhum template nesta série ainda.
@@ -233,7 +240,91 @@ function PainelInterno() {
 
       {uploadFor && <UploadDialog template={uploadFor} onClose={() => setUploadFor(null)} />}
       {historyFor && <HistoryDialog template={historyFor} onClose={() => setHistoryFor(null)} />}
+      {novoTemplate && (
+        <NovoTemplateDialog
+          grupoKey={novoTemplate}
+          onClose={() => setNovoTemplate(null)}
+          onCriado={(t) => {
+            setNovoTemplate(null);
+            setUploadFor(t);
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+function NovoTemplateDialog({
+  grupoKey,
+  onClose,
+  onCriado,
+}: {
+  grupoKey: string;
+  onClose: () => void;
+  onCriado: (t: any) => void;
+}) {
+  const qc = useQueryClient();
+  const criar = useServerFn(criarTemplate);
+  const prefixo = grupoKey === "for-seg" ? "FOR-SEG " : grupoKey === "forcp-gp" ? "FORCP-GP " : "";
+  const [codigo, setCodigo] = useState(prefixo);
+  const [nome, setNome] = useState("");
+  const [descricao, setDescricao] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  async function submit() {
+    if (codigo.trim().length < 2) return toast.error("Informe o código do documento.");
+    if (nome.trim().length < 2) return toast.error("Informe o nome do documento.");
+    setSaving(true);
+    try {
+      const r = await criar({
+        data: { codigo: codigo.trim(), nome: nome.trim(), descricao: descricao.trim() || undefined },
+      });
+      toast.success(`Template ${r.codigo} criado. Agora envie o PDF homologado.`);
+      await qc.invalidateQueries({ queryKey: ["document-templates"] });
+      onCriado({ id: r.id, codigo: r.codigo, nome: nome.trim(), versao_atual: null });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Falha ao criar template.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Novo template homologado</DialogTitle>
+          <DialogDescription>
+            Cadastre o código e o nome do formulário. Em seguida abre a tela de upload do PDF
+            homologado (e do documento de origem editável, se houver).
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <Label>Código</Label>
+            <Input
+              value={codigo}
+              onChange={(e) => setCodigo(e.target.value.toUpperCase())}
+              placeholder="Ex.: MAN-V-005"
+            />
+          </div>
+          <div>
+            <Label>Nome do documento</Label>
+            <Input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex.: Certificado de Calibração" />
+          </div>
+          <div>
+            <Label>Descrição (opcional)</Label>
+            <Textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={2} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={saving}>Cancelar</Button>
+          <Button onClick={submit} disabled={saving || codigo.trim().length < 2 || nome.trim().length < 2}>
+            {saving ? "Criando..." : "Criar e enviar PDF"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
