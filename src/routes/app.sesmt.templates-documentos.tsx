@@ -481,7 +481,7 @@ function UploadDialog({ template, onClose }: { template: any; onClose: () => voi
             <Label>Documento de Origem (opcional)</Label>
             <Input
               type="file"
-              accept=".docx,.doc,.xlsx,.xls,.odt,.ods,.pptx,.rtf,.csv"
+              accept=".docx,.doc,.xlsx,.xls,.xlsm,.odt,.ods,.odp,.ppt,.pptx,.rtf,.csv,.txt,.dwg,.zip"
               onChange={(e) => setOrigem(e.target.files?.[0] ?? null)}
             />
             <p className="text-[11px] text-muted-foreground mt-1">
@@ -597,7 +597,7 @@ function HistoryDialog({ template, onClose }: { template: any; onClose: () => vo
         <input
           ref={fileInputRef}
           type="file"
-          accept=".docx,.doc,.xlsx,.xls,.odt,.ods,.pptx,.rtf,.csv"
+          accept=".docx,.doc,.xlsx,.xls,.xlsm,.odt,.ods,.odp,.ppt,.pptx,.rtf,.csv,.txt,.dwg,.zip"
           className="hidden"
           onChange={handleFileSelected}
         />
