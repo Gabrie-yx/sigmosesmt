@@ -622,8 +622,8 @@ export function HoraExtraSabadoDialog({
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-60" />
             <Input className="pl-9 h-8" placeholder="Buscar funcionário…" value={busca} onChange={(e) => setBusca(e.target.value)} />
           </div>
-          <div className="max-h-40 overflow-y-auto rounded-md border border-white/10 bg-white/[0.03] divide-y divide-white/10">
-            {empsDisponiveis.slice(0, 50).map((e: any) => {
+          <div className="max-h-64 overflow-y-auto rounded-md border border-white/10 bg-white/[0.03] divide-y divide-white/10">
+            {empsDisponiveis.map((e: any) => {
               const bloqueado = e._temRestricao && !e._permitido;
               return (
                 <button
@@ -641,6 +641,11 @@ export function HoraExtraSabadoDialog({
             })}
             {empsDisponiveis.length === 0 && <p className="px-3 py-3 text-xs opacity-60 italic">Nenhum funcionário disponível.</p>}
           </div>
+          {empsDisponiveis.length > 0 && (
+            <p className="mt-1 text-[10px] opacity-60">
+              {empsDisponiveis.length} funcionário{empsDisponiveis.length === 1 ? "" : "s"} disponível{empsDisponiveis.length === 1 ? "" : "eis"} — role a lista para ver todos.
+            </p>
+          )}
           {/* Externo */}
           <div className="mt-2 grid grid-cols-1 md:grid-cols-12 gap-2">
             <Input className="md:col-span-5 h-8" placeholder="Nome de pessoa externa" value={novoExternoNome} onChange={(e) => setNovoExternoNome(e.target.value)} />
