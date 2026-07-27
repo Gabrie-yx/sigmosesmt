@@ -4458,6 +4458,10 @@ export type Database = {
           homologada_por: string | null
           id: string
           motivo_alteracao: string
+          origem_nome: string | null
+          origem_path: string | null
+          origem_tamanho: number | null
+          origem_tipo: string | null
           revisao: number
           status: string
           tamanho_bytes: number | null
@@ -4477,6 +4481,10 @@ export type Database = {
           homologada_por?: string | null
           id?: string
           motivo_alteracao: string
+          origem_nome?: string | null
+          origem_path?: string | null
+          origem_tamanho?: number | null
+          origem_tipo?: string | null
           revisao: number
           status?: string
           tamanho_bytes?: number | null
@@ -4496,6 +4504,10 @@ export type Database = {
           homologada_por?: string | null
           id?: string
           motivo_alteracao?: string
+          origem_nome?: string | null
+          origem_path?: string | null
+          origem_tamanho?: number | null
+          origem_tipo?: string | null
           revisao?: number
           status?: string
           tamanho_bytes?: number | null

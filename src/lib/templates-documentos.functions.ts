@@ -37,7 +37,7 @@ export const listarTemplates = createServerFn({ method: "GET" })
 
     const { data: versions } = await supabase
       .from("document_template_versions")
-      .select("id, template_id, revisao, status, uploaded_at, uploaded_by, motivo_alteracao, arquivo_hash, arquivo_nome, deleted_at")
+      .select("id, template_id, revisao, status, uploaded_at, uploaded_by, motivo_alteracao, arquivo_hash, arquivo_nome, deleted_at, origem_nome, origem_tipo, origem_path")
       .is("deleted_at", null)
       .order("revisao", { ascending: false });
 
@@ -55,9 +55,20 @@ export const listarTemplates = createServerFn({ method: "GET" })
 
     return (templates ?? []).map((t: any) => {
       const vs = byTemplate.get(t.id) ?? [];
-      const atual = vs.find((v: any) => v.status === "HOMOLOGADA" || v.status === "EM_HOMOLOGACAO") ?? vs[0] ?? null;
+      // Regra ISO: a revisão que o sistema EMITE é sempre a última HOMOLOGADA.
+      // Uma revisão em homologação fica visível à parte, sem virar fonte de emissão.
+      const homologada = vs.find((v: any) => v.status === "HOMOLOGADA") ?? null;
+      const emHomologacao = vs.find((v: any) => v.status === "EM_HOMOLOGACAO") ?? null;
+      const atual = homologada ?? emHomologacao ?? vs[0] ?? null;
       const pendente = (pendencias ?? []).find((p: any) => p.template_id === t.id) ?? null;
-      return { ...t, versao_atual: atual, total_versoes: vs.length, pendente };
+      return {
+        ...t,
+        versao_atual: atual,
+        versao_vigente: homologada,
+        versao_em_homologacao: emHomologacao,
+        total_versoes: vs.length,
+        pendente,
+      };
     });
   });
 
@@ -78,21 +89,26 @@ export const historicoTemplate = createServerFn({ method: "GET" })
 /* ---------- URL ASSINADA PARA DOWNLOAD ---------- */
 export const signedUrlTemplate = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i) => z.object({ versionId: z.string().uuid() }).parse(i))
+  .inputValidator((i) =>
+    z.object({ versionId: z.string().uuid(), tipo: z.enum(["pdf", "origem"]).default("pdf") }).parse(i),
+  )
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: v, error } = await supabaseAdmin
       .from("document_template_versions")
-      .select("arquivo_path, arquivo_nome")
+      .select("arquivo_path, arquivo_nome, origem_path, origem_nome")
       .eq("id", data.versionId)
       .single();
     if (error || !v) throw new Error("Versão não encontrada.");
+    const path = data.tipo === "origem" ? v.origem_path : v.arquivo_path;
+    const nome = data.tipo === "origem" ? v.origem_nome : v.arquivo_nome;
+    if (!path) throw new Error("Esta revisão não possui documento de origem anexado.");
     const { data: signed, error: sErr } = await supabaseAdmin.storage
       .from("templates-homologados")
-      .createSignedUrl(v.arquivo_path, 300, { download: v.arquivo_nome });
+      .createSignedUrl(path, 300, { download: nome ?? undefined });
     if (sErr || !signed) throw new Error("Falha ao gerar link de download.");
-    return { url: signed.signedUrl, nome: v.arquivo_nome };
+    return { url: signed.signedUrl, nome: nome ?? "documento" };
   });
 
 /* ---------- BAIXAR PDF ATIVO DE UM TEMPLATE (por código) ----------
@@ -152,6 +168,14 @@ const NovaRevisaoSchema = z.object({
   contentType: z.string().min(1),
   base64: z.string().min(1),
   motivo: z.string().min(3).max(1000),
+  /** Documento de origem editável (DOCX/XLSX/ODT/…) que gerou o PDF homologado. */
+  origem: z
+    .object({
+      fileName: z.string().min(1).max(200),
+      contentType: z.string().max(200).optional(),
+      base64: z.string().min(1),
+    })
+    .optional(),
 });
 
 export const novaRevisaoTemplate = createServerFn({ method: "POST" })
@@ -215,6 +239,29 @@ export const novaRevisaoTemplate = createServerFn({ method: "POST" })
     if (insErr || !nova) {
       await supabaseAdmin.storage.from("templates-homologados").remove([path]);
       throw new Error(`Falha ao registrar versão: ${insErr?.message ?? ""}`);
+    }
+
+    // Documento de origem (opcional): arquivo editável que deu origem ao PDF
+    if (data.origem) {
+      const oBuf = decodeB64(data.origem.base64);
+      const ext = (data.origem.fileName.split(".").pop() ?? "bin").toLowerCase().slice(0, 8);
+      const oPath = `${tpl.codigo}/origem/rev-${String(proxima).padStart(2, "0")}-${Date.now()}.${ext}`;
+      const { error: oErr } = await supabaseAdmin.storage
+        .from("templates-homologados")
+        .upload(oPath, oBuf, {
+          contentType: data.origem.contentType || "application/octet-stream",
+          upsert: false,
+        });
+      if (oErr) throw new Error(`Falha no upload do documento de origem: ${oErr.message}`);
+      await supabaseAdmin
+        .from("document_template_versions")
+        .update({
+          origem_path: oPath,
+          origem_nome: data.origem.fileName,
+          origem_tipo: data.origem.contentType || null,
+          origem_tamanho: oBuf.byteLength,
+        })
+        .eq("id", nova.id);
     }
 
     // Cria pendência automática (+15 dias)
@@ -294,7 +341,7 @@ export const excluirVersaoDefinitivo = createServerFn({ method: "POST" })
 
     const { data: v, error: vErr } = await supabaseAdmin
       .from("document_template_versions")
-      .select("id, template_id, arquivo_path, status")
+      .select("id, template_id, arquivo_path, origem_path, status")
       .eq("id", data.versionId)
       .single();
     if (vErr || !v) throw new Error("Versão não encontrada.");
@@ -316,15 +363,19 @@ export const excluirVersaoDefinitivo = createServerFn({ method: "POST" })
     if (v.arquivo_path) {
       await supabaseAdmin.storage.from("templates-homologados").remove([v.arquivo_path]);
     }
+    if (v.origem_path) {
+      await supabaseAdmin.storage.from("templates-homologados").remove([v.origem_path]);
+    }
 
     // se essa era a revisão ativa, promove a anterior mais recente
     if (v.status === "HOMOLOGADA" || v.status === "EM_HOMOLOGACAO") {
       const { data: anterior } = await supabaseAdmin
         .from("document_template_versions")
-        .select("id, revisao")
+        .select("id, revisao, homologada_em")
         .eq("template_id", v.template_id)
         .is("deleted_at", null)
         .eq("status", "SUPERSEDIDA")
+        .not("homologada_em", "is", null)
         .order("revisao", { ascending: false })
         .limit(1);
       if (anterior && anterior[0]) {

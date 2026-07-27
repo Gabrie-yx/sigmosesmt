@@ -28,7 +28,7 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { FileText, Upload, History, Download, ShieldAlert, CheckCircle2, Archive, RotateCcw, AlertCircle, Trash2 } from "lucide-react";
+import { FileText, Upload, History, Download, FileDown, ShieldAlert, CheckCircle2, Archive, RotateCcw, AlertCircle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { hasOverlay } from "@/lib/pdf-overlay-maps";
 
@@ -166,6 +166,16 @@ function PainelInterno() {
                       <AlertCircle className="w-3 h-3" /> Alinhar motor
                     </Badge>
                   )}
+                  {t.versao_vigente && t.versao_em_homologacao && (
+                    <Badge variant="outline" className="bg-sky-500/20 text-sky-200 border-sky-500/30">
+                      Rev.{String(t.versao_em_homologacao.revisao).padStart(2, "0")} aguardando homologação
+                    </Badge>
+                  )}
+                  {t.versao_atual?.origem_nome && (
+                    <Badge variant="outline" className="bg-slate-500/20 text-slate-200 border-slate-500/30">
+                      Origem anexada
+                    </Badge>
+                  )}
                 </div>
               </div>
               <div className="flex gap-2 flex-wrap pt-2 border-t border-rose-500/10">
@@ -199,25 +209,38 @@ function UploadDialog({ template, onClose }: { template: any; onClose: () => voi
   const qc = useQueryClient();
   const novaRevisao = useServerFn(novaRevisaoTemplate);
   const [file, setFile] = useState<File | null>(null);
+  const [origem, setOrigem] = useState<File | null>(null);
   const [motivo, setMotivo] = useState("");
   const [uploading, setUploading] = useState(false);
 
   const proximaRev = ((template.versao_atual?.revisao ?? 0) as number) + 1;
 
+  async function toB64(f: File) {
+    const buf = await f.arrayBuffer();
+    const bytes = new Uint8Array(buf);
+    let bin = "";
+    const CHUNK = 0x8000;
+    for (let i = 0; i < bytes.length; i += CHUNK) {
+      bin += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + CHUNK)) as any);
+    }
+    return btoa(bin);
+  }
+
   async function submit() {
     if (!file) return toast.error("Selecione o PDF.");
     if (motivo.trim().length < 3) return toast.error("Descreva o motivo da alteração.");
     if (file.size > 20 * 1024 * 1024) return toast.error("Arquivo maior que 20 MB.");
+    if (origem && origem.size > 20 * 1024 * 1024) return toast.error("Documento de origem maior que 20 MB.");
     setUploading(true);
     try {
-      const buf = await file.arrayBuffer();
-      const bytes = new Uint8Array(buf);
-      let bin = "";
-      const CHUNK = 0x8000;
-      for (let i = 0; i < bytes.length; i += CHUNK) {
-        bin += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + CHUNK)) as any);
-      }
-      const b64 = btoa(bin);
+      const b64 = await toB64(file);
+      const origemPayload = origem
+        ? {
+            fileName: origem.name,
+            contentType: origem.type || "application/octet-stream",
+            base64: await toB64(origem),
+          }
+        : undefined;
       await novaRevisao({
         data: {
           templateId: template.id,
@@ -225,6 +248,7 @@ function UploadDialog({ template, onClose }: { template: any; onClose: () => voi
           contentType: file.type || "application/pdf",
           base64: b64,
           motivo: motivo.trim(),
+          origem: origemPayload,
         },
       });
       toast.success(`Rev.${String(proximaRev).padStart(2, "0")} arquivada. Pendência criada para o motor.`);
@@ -270,6 +294,23 @@ function UploadDialog({ template, onClose }: { template: any; onClose: () => voi
               rows={3}
             />
           </div>
+          <div>
+            <Label>Documento de Origem (opcional)</Label>
+            <Input
+              type="file"
+              accept=".docx,.doc,.xlsx,.xls,.odt,.ods,.pptx,.rtf,.csv"
+              onChange={(e) => setOrigem(e.target.files?.[0] ?? null)}
+            />
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Arquivo editável (DOCX, XLSX, ODT…) que gerou este PDF. Fica arquivado junto da revisão
+              para futuras alterações do formulário.
+            </p>
+            {origem && (
+              <p className="text-xs text-rose-100/60 mt-1">
+                {origem.name} — {(origem.size / 1024).toFixed(0)} KB
+              </p>
+            )}
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={uploading}>Cancelar</Button>
@@ -296,9 +337,9 @@ function HistoryDialog({ template, onClose }: { template: any; onClose: () => vo
     queryFn: () => hist({ data: { templateId: template.id } }),
   });
 
-  async function baixar(id: string) {
+  async function baixar(id: string, tipo: "pdf" | "origem" = "pdf") {
     try {
-      const { url } = await signedUrl({ data: { versionId: id } });
+      const { url } = await signedUrl({ data: { versionId: id, tipo } });
       window.open(url, "_blank");
     } catch (e: any) {
       toast.error(e?.message ?? "Falha ao gerar download.");
@@ -337,6 +378,11 @@ function HistoryDialog({ template, onClose }: { template: any; onClose: () => vo
                     {v.arquivo_nome} · {fmtDate(v.uploaded_at)}
                   </p>
                   <p className="text-xs text-rose-100/80 mt-1"><strong>Motivo:</strong> {v.motivo_alteracao}</p>
+                  {v.origem_nome && (
+                    <p className="text-xs text-rose-100/70 mt-1">
+                      <strong>Documento de origem:</strong> {v.origem_nome}
+                    </p>
+                  )}
                   {v.arquivo_hash && (
                     <p className="text-[10px] font-mono text-rose-100/40 mt-1 break-all">SHA-256: {v.arquivo_hash}</p>
                   )}
@@ -345,6 +391,12 @@ function HistoryDialog({ template, onClose }: { template: any; onClose: () => vo
                   <Button size="sm" variant="outline" onClick={() => baixar(v.id)}>
                     <Download className="w-3 h-3 mr-1" /> Baixar
                   </Button>
+                  {v.origem_path && (
+                    <Button size="sm" variant="outline" className="text-sky-300 border-sky-500/40"
+                      onClick={() => baixar(v.id, "origem")}>
+                      <FileDown className="w-3 h-3 mr-1" /> Origem
+                    </Button>
+                  )}
                   {v.status === "EM_HOMOLOGACAO" && !v.deleted_at && (
                     <Button size="sm" variant="outline" className="text-emerald-300 border-emerald-500/40"
                       onClick={() => act(() => homologar({ data: { versionId: v.id } }), "Revisão homologada.")}>
