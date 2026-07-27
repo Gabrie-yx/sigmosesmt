@@ -391,7 +391,7 @@ export function SugerirAcoesDialog({
           </Button>
           <div className="flex gap-2">
             <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
-            <Button onClick={() => gerar.mutate()} disabled={gerar.isPending || sel.size === 0} className="gap-2">
+            <Button onClick={() => gerar.mutate()} disabled={gerar.isPending || sel.size === 0 || !riscoId} className="gap-2">
               <Sparkles className="h-4 w-4" />
               {gerar.isPending ? "Gerando…" : `Adicionar ${sel.size} ao plano`}
             </Button>
