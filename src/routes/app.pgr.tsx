@@ -1551,6 +1551,10 @@ function PlanoTab() {
         onOpenChange={setBibOpen}
         riscos={inv as unknown as RiscoAlvo[]}
         riscosSemPlano={sugeridos as unknown as RiscoAlvo[]}
+        jaVinculadas={planos.map((p) => ({
+          inventario_id: p.inventario_id,
+          biblioteca_id: (p as unknown as { biblioteca_id: string | null }).biblioteca_id ?? null,
+        }))}
       />
     </div>
   );
