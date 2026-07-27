@@ -1460,6 +1460,7 @@ function PlanoTab() {
                     id: "", inventario_id: r.id, o_que: "", por_que: `Mitigar: ${r.perigo}`,
                     onde: null, quem: null, quando: null, como: null, quanto: null,
                     status: "PENDENTE", data_conclusao: null, observacao: null,
+                    prioridade: "MEDIA", hierarquia: null,
                   });
                   setOpen(true);
                 }}>
