@@ -292,6 +292,7 @@ export function PdfSignerDialog({
           dataUrl: pendingSig.dataUrl,
           nome: pendingSig.nome,
           cargo: pendingSig.cargo,
+          employeeId: pendingSig.employeeId ?? null,
         },
       ]);
       toast.success(`Assinatura de ${pendingSig.nome} posicionada na página ${pageNum}`);
