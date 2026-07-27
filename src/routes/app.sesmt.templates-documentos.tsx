@@ -475,10 +475,15 @@ function HistoryDialog({ template, onClose }: { template: any; onClose: () => vo
                   <Button size="sm" variant="outline" onClick={() => baixar(v.id)}>
                     <Download className="w-3 h-3 mr-1" /> Baixar
                   </Button>
-                  {v.origem_path && (
+                  {v.origem_path ? (
                     <Button size="sm" variant="outline" className="text-sky-300 border-sky-500/40"
                       onClick={() => baixar(v.id, "origem")}>
                       <FileDown className="w-3 h-3 mr-1" /> Origem
+                    </Button>
+                  ) : !v.deleted_at && (
+                    <Button size="sm" variant="outline" className="text-slate-300 border-slate-500/40"
+                      onClick={() => handleAnexarClick(v.id)}>
+                      <Paperclip className="w-3 h-3 mr-1" /> Anexar origem
                     </Button>
                   )}
                   {v.status === "EM_HOMOLOGACAO" && !v.deleted_at && (
