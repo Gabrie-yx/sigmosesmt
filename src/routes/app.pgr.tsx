@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SignedAvatarImg } from "@/components/signed-avatar-img";
@@ -115,7 +115,7 @@ function PgrPage() {
 
       <div className="flex-1 min-h-0 overflow-y-auto">
         <Tabs value={tab} onValueChange={setTab} className="p-6 space-y-4">
-          <TabsList className="bg-white border">
+          <TabsList className="bg-white border h-auto flex-wrap justify-start gap-1 p-1">
             <TabsTrigger value="ghe" className="gap-2"><Layers className="h-4 w-4" />GHEs</TabsTrigger>
             <TabsTrigger value="inv" className="gap-2"><Grid3x3 className="h-4 w-4" />Inventário de Riscos</TabsTrigger>
             <TabsTrigger value="plano" className="gap-2"><ListChecks className="h-4 w-4" />Plano de Ação (5W2H)</TabsTrigger>
@@ -377,7 +377,7 @@ function GheDialog({
   const [obs, setObs] = useState("");
 
   // Reset on open
-  useMemo(() => {
+  useEffect(() => {
     if (open) {
       setNumero(edit?.numero ?? "");
       setSetor(edit?.setor ?? "");
@@ -1110,7 +1110,7 @@ function InvDialog({
   const [sev, setSev] = useState<number | "">("");
   const [monit, setMonit] = useState("");
 
-  useMemo(() => {
+  useEffect(() => {
     if (open) {
       setGhe(edit?.ghe_id ?? gheDefault ?? "");
       setCat(edit?.categoria ?? "FISICO");
@@ -1551,6 +1551,10 @@ function PlanoTab() {
         onOpenChange={setBibOpen}
         riscos={inv as unknown as RiscoAlvo[]}
         riscosSemPlano={sugeridos as unknown as RiscoAlvo[]}
+        jaVinculadas={planos.map((p) => ({
+          inventario_id: p.inventario_id,
+          biblioteca_id: (p as unknown as { biblioteca_id: string | null }).biblioteca_id ?? null,
+        }))}
       />
     </div>
   );
@@ -1571,7 +1575,7 @@ function PlanoDialog({
   const [prioridade, setPrioridade] = useState<Prioridade>("MEDIA");
   const [hierarquia, setHierarquia] = useState<string>("");
 
-  useMemo(() => {
+  useEffect(() => {
     if (open) {
       setInvId(edit?.inventario_id ?? "");
       setOque(edit?.o_que ?? "");
