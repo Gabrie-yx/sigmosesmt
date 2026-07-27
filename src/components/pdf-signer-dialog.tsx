@@ -150,7 +150,9 @@ export function PdfSignerDialog({
   const [renderScale, setRenderScale] = useState(1.0); // canvas px / pt
   const [placements, setPlacements] = useState<Placement[]>([]);
   const [picking, setPicking] = useState(false);
-  const [pendingSig, setPendingSig] = useState<{ dataUrl: string; nome: string; cargo: string } | null>(null);
+  const [pendingSig, setPendingSig] = useState<{ dataUrl: string; nome: string; cargo: string; employeeId?: string | null } | null>(null);
+  const [empCompany, setEmpCompany] = useState<string>("");
+  const [empBusca, setEmpBusca] = useState("");
   const [openPad, setOpenPad] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -181,6 +183,40 @@ export function PdfSignerDialog({
     },
     enabled: open,
   });
+
+  // --- Assinaturas de funcionários (employees.assinatura_url) ---
+  const { data: companies = [] } = useQuery({
+    queryKey: ["signer-companies"],
+    enabled: open,
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("companies").select("id,name").order("name");
+      if (error) throw error;
+      return data as { id: string; name: string }[];
+    },
+  });
+
+  const { data: empSigs = [], isFetching: empLoading } = useQuery({
+    queryKey: ["signer-employee-signatures", empCompany],
+    enabled: open && !!empCompany,
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("employees")
+        .select("id,nome,matricula,assinatura_url,status")
+        .eq("company_id", empCompany)
+        .not("assinatura_url", "is", null)
+        .order("nome");
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  const empFiltrados = empSigs.filter((e: any) =>
+    !empBusca.trim() ||
+    String(e.nome ?? "").toLowerCase().includes(empBusca.trim().toLowerCase()) ||
+    String(e.matricula ?? "").toLowerCase().includes(empBusca.trim().toLowerCase()),
+  );
 
   // Load PDF and existing placements when source/documentId changes
   useEffect(() => {
