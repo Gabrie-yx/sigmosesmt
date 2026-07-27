@@ -17,24 +17,38 @@ export type RenderOverlayInput = {
 };
 
 const _cache = new Map<string, Uint8Array>();
+/** Metadados da revisão usada no render (pra estampar o selo do rodapé). */
+const _meta = new Map<string, { revisao: number; status: string; fonte: "painel" | "asset" }>();
+
+export function getTemplateMeta(codigo: string) {
+  return _meta.get(codigo) ?? null;
+}
 
 export async function loadTemplateBytes(codigo: string): Promise<Uint8Array> {
   const hit = _cache.get(codigo);
   if (hit) return hit;
-  if (codigo === "FOR-SEG-04") {
-    const assetRes = await fetch(pteOfficialAsset.url);
-    if (assetRes.ok) {
-      const bytes = new Uint8Array(await assetRes.arrayBuffer());
-      _cache.set(codigo, bytes);
-      return bytes;
+  // Fonte da verdade = revisão homologada no painel de Templates.
+  // O asset embarcado só entra como rede de segurança se o painel não tiver PDF.
+  try {
+    const res = await baixarTemplateAtivoPorCodigo({ data: { codigo } });
+    const bin = atob(res.base64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    _cache.set(codigo, bytes);
+    _meta.set(codigo, { revisao: res.revisao, status: res.status, fonte: "painel" });
+    return bytes;
+  } catch (e) {
+    if (codigo === "FOR-SEG-04") {
+      const assetRes = await fetch(pteOfficialAsset.url);
+      if (assetRes.ok) {
+        const bytes = new Uint8Array(await assetRes.arrayBuffer());
+        _cache.set(codigo, bytes);
+        _meta.set(codigo, { revisao: 0, status: "ASSET", fonte: "asset" });
+        return bytes;
+      }
     }
+    throw e;
   }
-  const res = await baixarTemplateAtivoPorCodigo({ data: { codigo } });
-  const bin = atob(res.base64);
-  const bytes = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-  _cache.set(codigo, bytes);
-  return bytes;
 }
 
 function truncateToWidth(text: string, font: PDFFont, size: number, maxW: number): string {
@@ -113,6 +127,24 @@ export async function renderOverlay(input: RenderOverlayInput): Promise<Blob> {
 
   const out = await pdf.save();
   return new Blob([out as BlobPart], { type: "application/pdf" });
+}
+
+/** Selo discreto de rastreabilidade no rodapé de cada página (ISO 9001 / 4.4). */
+function drawSelo(pdf: PDFDocument, font: PDFFont, codigo: string) {
+  const meta = _meta.get(codigo);
+  const rev = meta?.fonte === "painel" ? `Rev.${String(meta.revisao).padStart(2, "0")}` : "Rev. embarcada";
+  const emitido = new Date().toLocaleDateString("pt-BR");
+  const texto = `${codigo} · ${rev} · emitido pelo SIGMO em ${emitido}`;
+  const size = 5.2;
+  for (const page of pdf.getPages()) {
+    page.drawText(texto, {
+      x: 14,
+      y: 6,
+      size,
+      font,
+      color: rgb(0.45, 0.45, 0.45),
+    });
+  }
 }
 
 export async function preloadTemplate(codigo: string): Promise<Uint8Array> {
