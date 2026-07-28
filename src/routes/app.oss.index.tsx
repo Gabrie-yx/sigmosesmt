@@ -22,6 +22,7 @@ import {
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
 import { buildOssPdf } from "@/lib/oss-pdf";
+import { gerarPdfFaltantesOss } from "@/lib/oss-faltantes-pdf";
 const PDFPreviewDialog = lazy(() =>
   import("@/components/pdf-preview-dialog").then((m) => ({ default: m.PDFPreviewDialog })),
 );
@@ -139,6 +140,9 @@ function OssIndexPage() {
   const [viewMode, setViewMode] = useState<"MES" | "LISTA">("MES");
   const [filterAssin, setFilterAssin] = useState<"TODOS" | "COM" | "SEM">("TODOS");
   const [qFalt, setQFalt] = useState("");
+  const [faltEmpresa, setFaltEmpresa] = useState("TODAS");
+  const [faltCargo, setFaltCargo] = useState("TODOS");
+  const [faltMotivo, setFaltMotivo] = useState("TODOS");
   const [collapsedMeses, setCollapsedMeses] = useState<Record<string, boolean>>({});
   const [collapsedDias, setCollapsedDias] = useState<Record<string, boolean>>({});
   const [previewDoc, setPreviewDoc] = useState<{ doc: jsPDF; name: string } | null>(null);
@@ -258,14 +262,42 @@ function OssIndexPage() {
   // Faltantes filtrados pela busca da aba "Sem OSS"
   const faltantesFiltrados = useMemo(() => {
     const s = qFalt.trim().toLowerCase();
-    if (!s) return faltantes;
-    return faltantes.filter((f) =>
-      f.nome.toLowerCase().includes(s) ||
-      (f.cargo ?? "").toLowerCase().includes(s) ||
-      (f.cpf ?? "").includes(s) ||
-      (f.empresa ?? "").toLowerCase().includes(s),
-    );
-  }, [faltantes, qFalt]);
+    return faltantes.filter((f) => {
+      if (faltEmpresa !== "TODAS" && (f.empresa ?? "—") !== faltEmpresa) return false;
+      if (faltCargo !== "TODOS" && (f.cargo ?? "—") !== faltCargo) return false;
+      if (faltMotivo !== "TODOS" && f.motivo !== faltMotivo) return false;
+      if (!s) return true;
+      return (
+        f.nome.toLowerCase().includes(s) ||
+        (f.cargo ?? "").toLowerCase().includes(s) ||
+        (f.cpf ?? "").includes(s) ||
+        (f.empresa ?? "").toLowerCase().includes(s)
+      );
+    });
+  }, [faltantes, qFalt, faltEmpresa, faltCargo, faltMotivo]);
+
+  const empresasFaltantes = useMemo(
+    () => Array.from(new Set(faltantes.map((f) => f.empresa ?? "—"))).sort((a, b) => a.localeCompare(b, "pt-BR")),
+    [faltantes],
+  );
+  const cargosFaltantes = useMemo(
+    () => Array.from(new Set(faltantes.map((f) => f.cargo ?? "—"))).sort((a, b) => a.localeCompare(b, "pt-BR")),
+    [faltantes],
+  );
+
+  const gerarPdfFaltantes = () => {
+    if (faltantesFiltrados.length === 0) { toast.info("Nada para exportar com esses filtros."); return; }
+    const doc = gerarPdfFaltantesOss(faltantesFiltrados, {
+      empresaLabel: faltEmpresa === "TODAS" ? "Todas" : faltEmpresa,
+      cargoLabel: faltCargo === "TODOS" ? "Todos" : faltCargo,
+      situacaoLabel:
+        faltMotivo === "TODOS" ? "Todas"
+          : faltMotivo === "VENCIDA" ? "OS vencida"
+          : faltMotivo === "CARGO_MUDOU" ? "Mudou de cargo" : "Nunca recebeu",
+    });
+    const slug = (faltEmpresa === "TODAS" ? "todas-empresas" : faltEmpresa).replace(/[^\w-]+/g, "_");
+    setPreviewDoc({ doc, name: `Sem-OS-${slug}-${new Date().toISOString().slice(0, 10)}.pdf` });
+  };
 
   // KPIs sempre calculados sobre as ATIVAS (ignora substituídas/canceladas)
   const kpis = useMemo(() => {
@@ -916,17 +948,58 @@ function OssIndexPage() {
         )}
         {aba === "SEM_OSS" && (
           <Card className="overflow-hidden">
-            <div className="p-4 border-b bg-amber-50/60 flex items-center gap-3 flex-wrap">
-              <UserX className="h-5 w-5 text-amber-700" />
-              <div className="min-w-0">
-                <p className="text-sm font-black text-slate-900">Funcionários ativos sem OS vigente</p>
-                <p className="text-[11px] text-slate-600">
-                  Nunca receberam, mudaram de cargo ou estão com a OS vencida — emita uma a uma.
-                </p>
+            <div className="p-4 border-b border-border bg-muted/40 space-y-3">
+              <div className="flex items-center gap-3 flex-wrap">
+                <UserX className="h-5 w-5 text-muted-foreground shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-sm font-black text-foreground">Funcionários ativos sem OS vigente</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Nunca receberam, mudaram de cargo ou estão com a OS vencida — filtre por empresa e emita o relatório.
+                  </p>
+                </div>
+                <Badge variant="outline" className="ml-auto text-[10px]">
+                  {faltantesFiltrados.length} de {faltantes.length}
+                </Badge>
               </div>
-              <div className="relative ml-auto w-full sm:w-64">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-                <Input value={qFalt} onChange={(e) => setQFalt(e.target.value)} placeholder="Buscar nome, cargo, empresa..." className="pl-8 h-9" />
+              <div className="flex gap-2 flex-wrap items-center">
+                <div className="relative flex-1 min-w-[200px] max-w-xs">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input value={qFalt} onChange={(e) => setQFalt(e.target.value)} placeholder="Buscar nome, cargo, empresa..." className="pl-8 h-9" />
+                </div>
+                <Select value={faltEmpresa} onValueChange={setFaltEmpresa}>
+                  <SelectTrigger className="h-9 w-52"><SelectValue placeholder="Empresa" /></SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    <SelectItem value="TODAS">Todas as empresas</SelectItem>
+                    {empresasFaltantes.map((e) => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Select value={faltCargo} onValueChange={setFaltCargo}>
+                  <SelectTrigger className="h-9 w-48"><Briefcase className="h-3.5 w-3.5 mr-1" /><SelectValue placeholder="Cargo" /></SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    <SelectItem value="TODOS">Todos os cargos</SelectItem>
+                    {cargosFaltantes.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Select value={faltMotivo} onValueChange={setFaltMotivo}>
+                  <SelectTrigger className="h-9 w-44"><SelectValue placeholder="Situação" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="TODOS">Qualquer situação</SelectItem>
+                    <SelectItem value="NUNCA_RECEBEU">Nunca recebeu</SelectItem>
+                    <SelectItem value="CARGO_MUDOU">Mudou de cargo</SelectItem>
+                    <SelectItem value="VENCIDA">OS vencida</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button variant="outline" size="sm" className="h-9" onClick={gerarPdfFaltantes} title="Gerar PDF da lista filtrada">
+                  <FileDown className="h-3.5 w-3.5 mr-1" />PDF
+                </Button>
+                {(qFalt || faltEmpresa !== "TODAS" || faltCargo !== "TODOS" || faltMotivo !== "TODOS") && (
+                  <Button
+                    variant="ghost" size="sm" className="h-9"
+                    onClick={() => { setQFalt(""); setFaltEmpresa("TODAS"); setFaltCargo("TODOS"); setFaltMotivo("TODOS"); }}
+                  >
+                    <XIcon className="h-3.5 w-3.5 mr-1" />Limpar
+                  </Button>
+                )}
               </div>
             </div>
             {faltantesFiltrados.length === 0 ? (
@@ -950,32 +1023,31 @@ function OssIndexPage() {
                     <TableRow key={f.employee_id}>
                       <TableCell>
                         <button type="button" onClick={() => setQuickViewEmpId(f.employee_id)} className="text-left group">
-                          <div className="font-medium text-sm text-slate-900 group-hover:text-rose-600 group-hover:underline">{f.nome}</div>
-                          <div className="text-[10px] text-slate-500">{f.cpf ?? ""}</div>
+                          <div className="font-medium text-sm text-foreground group-hover:text-primary group-hover:underline">{f.nome}</div>
+                          <div className="text-[10px] text-muted-foreground">{f.cpf ?? ""}</div>
                         </button>
                       </TableCell>
-                      <TableCell className="text-sm">{f.cargo ?? "—"}</TableCell>
-                      <TableCell className="text-xs text-slate-600">{f.empresa ?? "—"}</TableCell>
+                      <TableCell className="text-sm text-foreground">{f.cargo ?? "—"}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{f.empresa ?? "—"}</TableCell>
                       <TableCell>
                         <Badge
                           variant="outline"
                           className={`text-[10px] ${
                             f.motivo === "VENCIDA"
-                              ? "bg-red-50 text-red-700 border-red-200"
+                              ? "bg-destructive/10 text-destructive border-destructive/30"
                               : f.motivo === "CARGO_MUDOU"
-                                ? "bg-amber-50 text-amber-800 border-amber-300"
-                                : "bg-slate-100 text-slate-700 border-slate-300"
+                                ? "bg-accent/15 text-accent-foreground border-accent/40"
+                                : "bg-muted text-muted-foreground border-border"
                           }`}
                         >
                           {f.motivo === "VENCIDA" ? "OS vencida" : f.motivo === "CARGO_MUDOU" ? "Mudou de cargo" : "Nunca recebeu"}
                         </Badge>
-                        <div className="text-[10px] text-slate-500 mt-0.5">{f.detalhe}</div>
+                        <div className="text-[10px] text-muted-foreground mt-0.5">{f.detalhe}</div>
                       </TableCell>
                       <TableCell className="text-right">
                         {isEditor && (
                           <Button
                             size="sm"
-                            className="bg-rose-600 hover:bg-rose-700"
                             onClick={() => {
                               setEmitirPrefill({
                                 companyId: f.company_id ?? "",
