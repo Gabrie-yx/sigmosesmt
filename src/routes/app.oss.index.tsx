@@ -948,17 +948,58 @@ function OssIndexPage() {
         )}
         {aba === "SEM_OSS" && (
           <Card className="overflow-hidden">
-            <div className="p-4 border-b bg-amber-50/60 flex items-center gap-3 flex-wrap">
-              <UserX className="h-5 w-5 text-amber-700" />
-              <div className="min-w-0">
-                <p className="text-sm font-black text-slate-900">Funcionários ativos sem OS vigente</p>
-                <p className="text-[11px] text-slate-600">
-                  Nunca receberam, mudaram de cargo ou estão com a OS vencida — emita uma a uma.
-                </p>
+            <div className="p-4 border-b border-border bg-muted/40 space-y-3">
+              <div className="flex items-center gap-3 flex-wrap">
+                <UserX className="h-5 w-5 text-muted-foreground shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-sm font-black text-foreground">Funcionários ativos sem OS vigente</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Nunca receberam, mudaram de cargo ou estão com a OS vencida — filtre por empresa e emita o relatório.
+                  </p>
+                </div>
+                <Badge variant="outline" className="ml-auto text-[10px]">
+                  {faltantesFiltrados.length} de {faltantes.length}
+                </Badge>
               </div>
-              <div className="relative ml-auto w-full sm:w-64">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-                <Input value={qFalt} onChange={(e) => setQFalt(e.target.value)} placeholder="Buscar nome, cargo, empresa..." className="pl-8 h-9" />
+              <div className="flex gap-2 flex-wrap items-center">
+                <div className="relative flex-1 min-w-[200px] max-w-xs">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input value={qFalt} onChange={(e) => setQFalt(e.target.value)} placeholder="Buscar nome, cargo, empresa..." className="pl-8 h-9" />
+                </div>
+                <Select value={faltEmpresa} onValueChange={setFaltEmpresa}>
+                  <SelectTrigger className="h-9 w-52"><SelectValue placeholder="Empresa" /></SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    <SelectItem value="TODAS">Todas as empresas</SelectItem>
+                    {empresasFaltantes.map((e) => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Select value={faltCargo} onValueChange={setFaltCargo}>
+                  <SelectTrigger className="h-9 w-48"><Briefcase className="h-3.5 w-3.5 mr-1" /><SelectValue placeholder="Cargo" /></SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    <SelectItem value="TODOS">Todos os cargos</SelectItem>
+                    {cargosFaltantes.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Select value={faltMotivo} onValueChange={setFaltMotivo}>
+                  <SelectTrigger className="h-9 w-44"><SelectValue placeholder="Situação" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="TODOS">Qualquer situação</SelectItem>
+                    <SelectItem value="NUNCA_RECEBEU">Nunca recebeu</SelectItem>
+                    <SelectItem value="CARGO_MUDOU">Mudou de cargo</SelectItem>
+                    <SelectItem value="VENCIDA">OS vencida</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button variant="outline" size="sm" className="h-9" onClick={gerarPdfFaltantes} title="Gerar PDF da lista filtrada">
+                  <FileDown className="h-3.5 w-3.5 mr-1" />PDF
+                </Button>
+                {(qFalt || faltEmpresa !== "TODAS" || faltCargo !== "TODOS" || faltMotivo !== "TODOS") && (
+                  <Button
+                    variant="ghost" size="sm" className="h-9"
+                    onClick={() => { setQFalt(""); setFaltEmpresa("TODAS"); setFaltCargo("TODOS"); setFaltMotivo("TODOS"); }}
+                  >
+                    <XIcon className="h-3.5 w-3.5 mr-1" />Limpar
+                  </Button>
+                )}
               </div>
             </div>
             {faltantesFiltrados.length === 0 ? (
