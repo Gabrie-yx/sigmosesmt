@@ -2,13 +2,31 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-// Lê do .env (VITE_*) para permitir apontar o app para o Supabase local da DMN.
-// Os valores abaixo são apenas fallback do ambiente Cloud original.
-const SUPABASE_URL =
-  import.meta.env.VITE_SUPABASE_URL || "https://mokuitocaihpgtlglrtg.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY =
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+// Fonte única: .env (VITE_*). No servidor da DMN isso aponta para o Supabase local.
+// O fallback Cloud existe apenas para o ambiente de edição/preview do Lovable.
+const CLOUD_FALLBACK_URL = "https://mokuitocaihpgtlglrtg.supabase.co";
+const CLOUD_FALLBACK_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1va3VpdG9jYWlocGd0bGdscnRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMjc5OTYsImV4cCI6MjA5MjkwMzk5Nn0.rTZsC23QkQ4Xrq910UNLMCLsOW-jXPHlHHek5X2my_s";
+
+const ENV_URL = import.meta.env.VITE_SUPABASE_URL;
+const ENV_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+const SUPABASE_URL = ENV_URL || CLOUD_FALLBACK_URL;
+const SUPABASE_PUBLISHABLE_KEY = ENV_KEY || CLOUD_FALLBACK_KEY;
+
+/** true quando o app está falando com um Supabase que NÃO é o Cloud. */
+export const IS_BACKEND_LOCAL = SUPABASE_URL !== CLOUD_FALLBACK_URL;
+export const SUPABASE_ENDPOINT = SUPABASE_URL;
+
+if (!ENV_URL || !ENV_KEY) {
+  // Alerta explícito: se isso aparecer no servidor da DMN, o .env está errado
+  // e o sistema está usando a nuvem sem querer.
+  console.warn(
+    "[SIGMO] VITE_SUPABASE_URL/KEY ausentes no .env — usando fallback Cloud. " +
+      "No servidor da DMN isso NÃO deve acontecer.",
+  );
+}
+
 const isBrowser = typeof window !== "undefined" && typeof window.document !== "undefined";
 
 // Import the supabase client like this:
