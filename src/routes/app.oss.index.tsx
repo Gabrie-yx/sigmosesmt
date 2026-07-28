@@ -696,8 +696,29 @@ function OssIndexPage() {
             );
           })}
         </div>
+        {/* Abas */}
+        <div className="mt-3 flex gap-1 border-b border-slate-200">
+          {([
+            { k: "EMITIDAS" as const, label: "OS emitidas", count: emissoes.length },
+            { k: "SEM_OSS" as const, label: "Sem OS emitida", count: faltantes.length },
+          ]).map((t) => (
+            <button
+              key={t.k}
+              onClick={() => setAba(t.k)}
+              className={`px-3 py-2 text-xs font-bold rounded-t-md border-b-2 -mb-px transition ${
+                aba === t.k
+                  ? "border-rose-600 text-rose-700 bg-white"
+                  : "border-transparent text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              {t.k === "SEM_OSS" && <UserX className="h-3.5 w-3.5 inline mr-1 -mt-0.5" />}
+              {t.label}
+              <Badge variant="outline" className="ml-1.5 text-[10px]">{t.count}</Badge>
+            </button>
+          ))}
+        </div>
         {/* Filtros */}
-        <div className="mt-3 flex gap-2 flex-wrap items-center">
+        <div className={`mt-3 flex gap-2 flex-wrap items-center ${aba === "EMITIDAS" ? "" : "hidden"}`}>
           <div className="relative flex-1 min-w-[200px] max-w-sm">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
             <Input value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} placeholder="Buscar funcionário, cargo, CPF..." className="pl-8 h-9" />
