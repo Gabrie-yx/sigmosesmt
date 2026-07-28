@@ -120,6 +120,13 @@ function OssIndexPage() {
   const [page, setPage] = useState(1);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const [emitirOpen, setEmitirOpen] = useState(false);
+  const [emitirPrefill, setEmitirPrefill] = useState<{ companyId: string; employeeId: string; motivo: string } | null>(null);
+  const [aba, setAba] = useState<"EMITIDAS" | "SEM_OSS">("EMITIDAS");
+  const [viewMode, setViewMode] = useState<"MES" | "LISTA">("MES");
+  const [filterAssin, setFilterAssin] = useState<"TODOS" | "COM" | "SEM">("TODOS");
+  const [qFalt, setQFalt] = useState("");
+  const [collapsedMeses, setCollapsedMeses] = useState<Record<string, boolean>>({});
+  const [collapsedDias, setCollapsedDias] = useState<Record<string, boolean>>({});
   const [previewDoc, setPreviewDoc] = useState<{ doc: jsPDF; name: string } | null>(null);
 
   const { data: emissoes = [], isLoading } = useQuery({
