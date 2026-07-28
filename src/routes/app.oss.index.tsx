@@ -22,6 +22,7 @@ import {
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
 import { buildOssPdf } from "@/lib/oss-pdf";
+import { gerarPdfFaltantesOss } from "@/lib/oss-faltantes-pdf";
 const PDFPreviewDialog = lazy(() =>
   import("@/components/pdf-preview-dialog").then((m) => ({ default: m.PDFPreviewDialog })),
 );
