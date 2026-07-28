@@ -6,15 +6,48 @@ A única coisa que vem da nuvem é o **código** (`git pull`).
 
 ## 1. Arquivo `/home/sigmo/app/.env` (servidor)
 ```
-VITE_SUPABASE_URL=http://172.19.0.5:8000
+VITE_SUPABASE_URL=http://192.168.200.5:8000
 VITE_SUPABASE_PUBLISHABLE_KEY=<ANON_KEY do /opt/supabase/supabase/docker/.env>
 VITE_SUPABASE_PROJECT_ID=sigmo-dmn
 
-SUPABASE_URL=http://172.19.0.5:8000
+SUPABASE_URL=http://192.168.200.5:8000
 SUPABASE_PUBLISHABLE_KEY=<mesma ANON_KEY>
 SUPABASE_SERVICE_ROLE_KEY=<SERVICE_ROLE_KEY do /opt/supabase/supabase/docker/.env>
 ```
 Sem essas variáveis o app cai no fallback da nuvem e mostra aviso no console.
+
+## 1.1. Mudar a rede Docker do Supabase (fazer uma vez)
+
+O Supabase self-hosted usa a rede padrão `supabase_default`. Para evitar conflito com a rede da DMN/REAN, o TI deve fixar ela em `192.168.200.0/24`.
+
+1. Abrir o arquivo `/opt/supabase/supabase/docker/docker-compose.yml`.
+2. No final do arquivo, encontrar a seção `networks:` e alterar para:
+   ```yaml
+   networks:
+     supabase_default:
+       driver: bridge
+       ipam:
+         driver: default
+         config:
+           - subnet: 192.168.200.0/24
+             gateway: 192.168.200.1
+   ```
+3. Parar e remover a rede antiga (vai derrubar o Supabase por alguns minutos):
+   ```bash
+   cd /opt/supabase/supabase/docker
+   sudo docker compose down
+   sudo docker network rm supabase_default
+   ```
+4. Subir de novo com a rede nova:
+   ```bash
+   sudo docker compose up -d
+   ```
+5. Descobrir o IP do container `supabase-kong` na nova rede:
+   ```bash
+   sudo docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' supabase-kong
+   ```
+   O resultado esperado é `192.168.200.5`. Se vier outro, ajuste o `.env` do app e o `vite.config.ts`.
+6. Atualizar o `/home/sigmo/app/.env` com o novo IP do passo 5.
 
 ## 2. Checagem automática
 ```
