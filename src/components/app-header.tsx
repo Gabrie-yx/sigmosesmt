@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
+import { IS_BACKEND_LOCAL, SUPABASE_ENDPOINT } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { LogOut, Download, Upload, Menu, MoreVertical, HelpCircle } from "lucide-react";
@@ -81,6 +82,18 @@ export function AppHeader() {
             </p>
           </div>
         </Link>
+
+        <span
+          title={`Banco de dados: ${SUPABASE_ENDPOINT}`}
+          className={
+            "hidden sm:inline-flex items-center rounded-md px-2 py-0.5 text-[9px] font-black uppercase tracking-wider ring-1 shrink-0 " +
+            (IS_BACKEND_LOCAL
+              ? "bg-white/15 text-white ring-white/30"
+              : "bg-amber-400/20 text-amber-100 ring-amber-300/50")
+          }
+        >
+          {IS_BACKEND_LOCAL ? "Servidor DMN" : "Nuvem"}
+        </span>
 
         <div className="flex items-center gap-1 md:gap-1.5 shrink-0 ml-auto">
           <PendenciasBadge />
