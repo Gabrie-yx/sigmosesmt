@@ -795,6 +795,7 @@ function OssIndexPage() {
       </div>
 
       <div className="flex-1 overflow-y-auto p-6">
+        {aba === "EMITIDAS" && (
         <Card>
           {isLoading && <div className="p-6 text-sm text-slate-500">Carregando...</div>}
           {!isLoading && filtered.length === 0 && (
@@ -808,7 +809,56 @@ function OssIndexPage() {
               )}
             </div>
           )}
-          {!isLoading && filtered.length > 0 && !agruparCargo && (
+          {!isLoading && filtered.length > 0 && !agruparCargo && viewMode === "MES" && (
+            <div className="p-3 space-y-3">
+              {porMes.map((m) => {
+                const mColl = collapsedMeses[m.mes] ?? false;
+                return (
+                  <div key={m.mes} className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+                    <button
+                      type="button"
+                      onClick={() => setCollapsedMeses((s) => ({ ...s, [m.mes]: !mColl }))}
+                      className="w-full flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-rose-50 to-white hover:from-rose-100 text-left transition"
+                    >
+                      {mColl ? <ChevronRight className="h-4 w-4 text-rose-600" /> : <ChevronDown className="h-4 w-4 text-rose-600" />}
+                      <span className="font-black text-sm text-slate-900 capitalize">{labelMes(m.mes)}</span>
+                      <Badge variant="outline" className="text-[10px]">{m.total} OS</Badge>
+                      {m.assin > 0 && <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200">{m.assin} assinadas</Badge>}
+                      {m.pend > 0 && <Badge variant="outline" className="text-[10px] bg-amber-50 text-amber-800 border-amber-300">{m.pend} sem assinatura</Badge>}
+                      <span className="ml-auto text-[10px] text-slate-400">{m.dias.length} dia(s)</span>
+                    </button>
+                    {!mColl && (
+                      <div className="divide-y">
+                        {m.dias.map(([dia, itens]) => {
+                          const dColl = collapsedDias[dia] ?? false;
+                          return (
+                            <div key={dia}>
+                              <button
+                                type="button"
+                                onClick={() => setCollapsedDias((s) => ({ ...s, [dia]: !dColl }))}
+                                className="w-full flex items-center gap-2 px-6 py-2 bg-slate-50 hover:bg-slate-100 text-left transition"
+                              >
+                                {dColl ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                                <span className="text-xs font-bold text-slate-700">{labelDia(dia)}</span>
+                                <Badge variant="outline" className="text-[10px]">{itens.length}</Badge>
+                              </button>
+                              {!dColl && (
+                                <Table>
+                                  {tableHeader}
+                                  <TableBody>{itens.map(renderRow)}</TableBody>
+                                </Table>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          {!isLoading && filtered.length > 0 && !agruparCargo && viewMode === "LISTA" && (
             <>
               <Table>
                 {tableHeader}
@@ -863,13 +913,100 @@ function OssIndexPage() {
             </div>
           )}
         </Card>
+        )}
+        {aba === "SEM_OSS" && (
+          <Card className="overflow-hidden">
+            <div className="p-4 border-b bg-amber-50/60 flex items-center gap-3 flex-wrap">
+              <UserX className="h-5 w-5 text-amber-700" />
+              <div className="min-w-0">
+                <p className="text-sm font-black text-slate-900">Funcionários ativos sem OS vigente</p>
+                <p className="text-[11px] text-slate-600">
+                  Nunca receberam, mudaram de cargo ou estão com a OS vencida — emita uma a uma.
+                </p>
+              </div>
+              <div className="relative ml-auto w-full sm:w-64">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+                <Input value={qFalt} onChange={(e) => setQFalt(e.target.value)} placeholder="Buscar nome, cargo, empresa..." className="pl-8 h-9" />
+              </div>
+            </div>
+            {faltantesFiltrados.length === 0 ? (
+              <div className="p-8 text-center">
+                <CheckCircle2 className="h-12 w-12 mx-auto text-emerald-400 mb-3" />
+                <p className="text-sm text-slate-600">Todos os funcionários ativos possuem OS vigente. 🎉</p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Funcionário</TableHead>
+                    <TableHead>Cargo</TableHead>
+                    <TableHead>Empresa</TableHead>
+                    <TableHead>Situação</TableHead>
+                    <TableHead className="text-right">Ação</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {faltantesFiltrados.map((f) => (
+                    <TableRow key={f.employee_id}>
+                      <TableCell>
+                        <button type="button" onClick={() => setQuickViewEmpId(f.employee_id)} className="text-left group">
+                          <div className="font-medium text-sm text-slate-900 group-hover:text-rose-600 group-hover:underline">{f.nome}</div>
+                          <div className="text-[10px] text-slate-500">{f.cpf ?? ""}</div>
+                        </button>
+                      </TableCell>
+                      <TableCell className="text-sm">{f.cargo ?? "—"}</TableCell>
+                      <TableCell className="text-xs text-slate-600">{f.empresa ?? "—"}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={`text-[10px] ${
+                            f.motivo === "VENCIDA"
+                              ? "bg-red-50 text-red-700 border-red-200"
+                              : f.motivo === "CARGO_MUDOU"
+                                ? "bg-amber-50 text-amber-800 border-amber-300"
+                                : "bg-slate-100 text-slate-700 border-slate-300"
+                          }`}
+                        >
+                          {f.motivo === "VENCIDA" ? "OS vencida" : f.motivo === "CARGO_MUDOU" ? "Mudou de cargo" : "Nunca recebeu"}
+                        </Badge>
+                        <div className="text-[10px] text-slate-500 mt-0.5">{f.detalhe}</div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {isEditor && (
+                          <Button
+                            size="sm"
+                            className="bg-rose-600 hover:bg-rose-700"
+                            onClick={() => {
+                              setEmitirPrefill({
+                                companyId: f.company_id ?? "",
+                                employeeId: f.employee_id,
+                                motivo: f.motivo === "CARGO_MUDOU" ? "MUDANCA_CARGO" : f.motivo === "VENCIDA" ? "RECICLAGEM_ANUAL" : "ADMISSAO",
+                              });
+                              setEmitirOpen(true);
+                            }}
+                          >
+                            <Plus className="h-3.5 w-3.5 mr-1" />Emitir OS
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </Card>
+        )}
       </div>
 
       {emitirOpen && (
         <EmitirOssDialog
           open={true}
-          onClose={() => setEmitirOpen(false)}
-          onIssued={() => qc.invalidateQueries({ queryKey: ["oss-emissoes"] })}
+          prefill={emitirPrefill}
+          onClose={() => { setEmitirOpen(false); setEmitirPrefill(null); }}
+          onIssued={() => {
+            qc.invalidateQueries({ queryKey: ["oss-emissoes"] });
+            qc.invalidateQueries({ queryKey: ["oss-employees-ativos"] });
+          }}
         />
       )}
       {!!previewDoc && (
