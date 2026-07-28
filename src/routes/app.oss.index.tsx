@@ -33,7 +33,7 @@ import type jsPDF from "jspdf";
 export const Route = createFileRoute("/app/oss/")({
   component: OssIndexPage,
   head: () => ({ meta: [{ title: "Ordens de Serviço de Segurança · SIGMO" }] }),
-  validateSearch: (search: Record<string, unknown>) => ({
+  validateSearch: (search: { filter?: unknown }) => ({
     filter: (search.filter as string | undefined) ?? undefined,
   }),
 });

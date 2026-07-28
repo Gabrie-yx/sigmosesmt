@@ -29,7 +29,7 @@ function FieldBox({ label, children }: { label: string; children: React.ReactNod
 }
 
 export const Route = createFileRoute("/app/producao/criar-ordem")({
-  validateSearch: (s: Record<string, unknown>) => ({ id: typeof s.id === "string" ? s.id : undefined }),
+  validateSearch: (s: { id?: unknown }) => ({ id: typeof s.id === "string" ? s.id : undefined }),
   component: CriarOrdemPage,
 });
 
