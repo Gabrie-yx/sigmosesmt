@@ -8445,6 +8445,42 @@ export type Database = {
           },
         ]
       }
+      pgr_versoes: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          data_vigencia: string
+          descricao: string | null
+          id: string
+          numero: string
+          observacao: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          data_vigencia?: string
+          descricao?: string | null
+          id?: string
+          numero: string
+          observacao?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          data_vigencia?: string
+          descricao?: string | null
+          id?: string
+          numero?: string
+          observacao?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       plano_acoes: {
         Row: {
           como: string | null
