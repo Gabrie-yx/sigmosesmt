@@ -302,13 +302,35 @@ function OssIndexPage() {
     return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
   }, [filtered, agruparCargo]);
 
+  // Agrupamento Mês → Dia (visão padrão)
+  const porMes = useMemo(() => {
+    const meses = new Map<string, Map<string, Emissao[]>>();
+    for (const e of filtered) {
+      const dia = e.emitido_em.slice(0, 10);
+      const mes = dia.slice(0, 7);
+      if (!meses.has(mes)) meses.set(mes, new Map());
+      const dias = meses.get(mes)!;
+      if (!dias.has(dia)) dias.set(dia, []);
+      dias.get(dia)!.push(e);
+    }
+    return Array.from(meses.entries())
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([mes, dias]) => ({
+        mes,
+        dias: Array.from(dias.entries()).sort((a, b) => b[0].localeCompare(a[0])),
+        total: Array.from(dias.values()).reduce((n, l) => n + l.length, 0),
+        pend: Array.from(dias.values()).flat().filter((i) => !i.assinado_em && !i.pdf_assinado_path && i.status !== "ASSINADO").length,
+        assin: Array.from(dias.values()).flat().filter((i) => !!i.assinado_em || !!i.pdf_assinado_path || i.status === "ASSINADO").length,
+      }));
+  }, [filtered]);
+
   const algumFiltro =
     !!q || filterStatus !== "ATIVAS" || filterCargo !== "TODOS" ||
-    filterMotivo !== "TODOS" || filterVenc !== "TODOS";
+    filterMotivo !== "TODOS" || filterVenc !== "TODOS" || filterAssin !== "TODOS";
 
   const limparFiltros = () => {
     setQ(""); setFilterStatus("ATIVAS"); setFilterCargo("TODOS");
-    setFilterMotivo("TODOS"); setFilterVenc("TODOS"); setPage(1);
+    setFilterMotivo("TODOS"); setFilterVenc("TODOS"); setFilterAssin("TODOS"); setPage(1);
   };
 
   const exportCSV = () => {
