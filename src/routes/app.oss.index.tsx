@@ -739,16 +739,26 @@ function OssIndexPage() {
               <SelectItem value="SEM_DATA">Sem validade</SelectItem>
             </SelectContent>
           </Select>
-          <Button
-            variant={agruparCargo ? "default" : "outline"}
-            size="sm"
-            className="h-9"
-            onClick={() => setAgruparCargo((v) => !v)}
-            title="Agrupar a lista por cargo"
-          >
-            <Briefcase className="h-3.5 w-3.5 mr-1" />
-            {agruparCargo ? "Agrupado por cargo" : "Agrupar por cargo"}
-          </Button>
+          <Select value={filterAssin} onValueChange={(v) => { setFilterAssin(v as any); setPage(1); }}>
+            <SelectTrigger className="h-9 w-44"><SelectValue placeholder="Assinatura" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="TODOS">Qualquer assinatura</SelectItem>
+              <SelectItem value="COM">Com assinatura</SelectItem>
+              <SelectItem value="SEM">Sem assinatura</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={agruparCargo ? "CARGO" : viewMode} onValueChange={(v) => {
+            if (v === "CARGO") { setAgruparCargo(true); }
+            else { setAgruparCargo(false); setViewMode(v as any); }
+            setPage(1);
+          }}>
+            <SelectTrigger className="h-9 w-44"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="MES">Visão: Mês → Dia</SelectItem>
+              <SelectItem value="LISTA">Visão: Lista</SelectItem>
+              <SelectItem value="CARGO">Visão: Por cargo</SelectItem>
+            </SelectContent>
+          </Select>
           <Button variant="outline" size="sm" className="h-9" onClick={exportCSV} title="Baixar CSV filtrado">
             <FileDown className="h-3.5 w-3.5 mr-1" />CSV
           </Button>
