@@ -1,6 +1,6 @@
 ---
 name: Deploy SIGMO servidor DMN (RODANDO)
-description: SIGMO deployado e rodando no servidor DMN via Bun+PM2 desde 11/07/2026. Supabase mantido no Cloud (não migrou pra self-hosted). Endpoint interno 172.18.0.50:8080/app. Atualização: Supabase self-hosted em rede 192.168.200.0/24 (Kong 192.168.200.5:8000).
+description: SIGMO deployado e rodando no servidor DMN via Bun+PM2 desde 11/07/2026. Supabase self-hosted local na rede 192.168.200.0/24 (Kong 192.168.200.11:8000). Migração de dados em andamento.
 type: feature
 ---
 Status: **RODANDO EM PRODUÇÃO INTERNA** desde sábado 11/07/2026.
@@ -13,12 +13,12 @@ Status: **RODANDO EM PRODUÇÃO INTERNA** desde sábado 11/07/2026.
 - App em `/home/sigmo/app` (ZIP extraído), 756 pacotes instalados via `bun install`.
 - Endpoint interno: **http://172.18.0.50:8080/app** (acessado via VPN DMN).
 - Rodando com `pm2 start` (`bun run dev --host 0.0.0.0`).
-- **Atualização rede Docker (28/07/2026):** a rede `supabase_default` foi movida para `192.168.200.0/24` e o container `supabase-kong` responde em `192.168.200.5:8000`. Se o `.env` ainda apontar para IPs antigos, o app não consegue falar com o banco local.
+- **Atualização rede Docker (28/07/2026):** a rede `supabase_default` foi movida para `192.168.200.0/24` e o container `supabase-kong` responde em `192.168.200.11:8000`. Se o `.env` ainda apontar para IPs antigos, o app não consegue falar com o banco local.
 
 ### Supabase
-- **NÃO migrou pra self-hosted.** Mantido no Supabase Cloud (projeto `mokuitocaihpgtlglrtg`).
-- `.env` no servidor aponta pras chaves do Cloud.
-- Plano original de Supabase self-hosted foi arquivado — Cloud tá atendendo.
+- **Migração para self-hosted em andamento.** A rede Docker foi fixada em `192.168.200.0/24` e o Supabase local está respondendo em `192.168.200.11:8000`.
+- O `.env` do servidor deve apontar para o Supabase local (`192.168.200.11:8000`), não para o Cloud. Ver documento-mãe `mem://features/migracao-supabase-servidor.md`.
+- Cloud ainda existe como backup/código-fonte, mas os dados operacionais devem ir todo para o servidor local.
 
 ### Pendências reais (não bloqueiam operação)
 - LOVABLE_API_KEY e SERVICE_ROLE_KEY conferir se estão no `.env` do servidor (IA/OCR/admin).
