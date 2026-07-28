@@ -1,25 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-
-const tokenSchema = z.string().uuid();
-
-const COTACAO_MAX_ATTEMPTS = 5;
-const COTACAO_WINDOW_MINUTES = 60;
-
-function extractClientInfo() {
-  const request = getRequest();
-  const headers = request.headers;
-  const fwd = headers.get("x-forwarded-for") ?? "";
-  const ip =
-    headers.get("cf-connecting-ip") ||
-    fwd.split(",")[0]?.trim() ||
-    headers.get("x-real-ip") ||
-    null;
-  const ua = headers.get("user-agent")?.slice(0, 300) ?? null;
-  return { ip, ua };
-}
+import { tokenSchema } from "@/lib/rc-public.shared";
 
 export const getRcByToken = createServerFn({ method: "GET" })
   .inputValidator((input: { token: string }) => ({ token: tokenSchema.parse(input.token) }))
@@ -80,6 +62,7 @@ export const marcarRcCotada = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { extractClientInfo, COTACAO_MAX_ATTEMPTS, COTACAO_WINDOW_MINUTES } = await import("@/lib/rc-public.server");
     const { ip, ua } = extractClientInfo();
 
     const { data: rc, error: e1 } = await supabaseAdmin
