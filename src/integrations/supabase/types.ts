@@ -7733,8 +7733,11 @@ export type Database = {
           motivo_cancelamento: string | null
           motivo_emissao: Database["public"]["Enums"]["oss_motivo"]
           observacoes: string | null
+          origem_riscos: string | null
           pdf_assinado_path: string | null
           pdf_gerado_path: string | null
+          pgr_versao_id: string | null
+          riscos_hash: string | null
           status: Database["public"]["Enums"]["oss_status"]
           template_id: string
           template_revisao: number
@@ -7756,8 +7759,11 @@ export type Database = {
           motivo_cancelamento?: string | null
           motivo_emissao?: Database["public"]["Enums"]["oss_motivo"]
           observacoes?: string | null
+          origem_riscos?: string | null
           pdf_assinado_path?: string | null
           pdf_gerado_path?: string | null
+          pgr_versao_id?: string | null
+          riscos_hash?: string | null
           status?: Database["public"]["Enums"]["oss_status"]
           template_id: string
           template_revisao: number
@@ -7779,8 +7785,11 @@ export type Database = {
           motivo_cancelamento?: string | null
           motivo_emissao?: Database["public"]["Enums"]["oss_motivo"]
           observacoes?: string | null
+          origem_riscos?: string | null
           pdf_assinado_path?: string | null
           pdf_gerado_path?: string | null
+          pgr_versao_id?: string | null
+          riscos_hash?: string | null
           status?: Database["public"]["Enums"]["oss_status"]
           template_id?: string
           template_revisao?: number
@@ -7824,6 +7833,13 @@ export type Database = {
             referencedColumns: ["employee_id"]
           },
           {
+            foreignKeyName: "oss_emissoes_pgr_versao_id_fkey"
+            columns: ["pgr_versao_id"]
+            isOneToOne: false
+            referencedRelation: "pgr_versoes"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "oss_emissoes_template_id_fkey"
             columns: ["template_id"]
             isOneToOne: false
@@ -7837,6 +7853,7 @@ export type Database = {
           ativo: boolean
           cargo: string
           cbo: string | null
+          complemento_sesmt: string | null
           created_at: string
           created_by: string | null
           descricao_atividades: string
@@ -7844,7 +7861,9 @@ export type Database = {
           hash_conteudo: string | null
           id: string
           medidas_preventivas: string
+          origem_riscos: string
           penalidades: string
+          pgr_versao_id: string | null
           procedimentos_emergencia: string
           proibicoes: string
           revisao: number
@@ -7854,6 +7873,8 @@ export type Database = {
           risco_fisico: string | null
           risco_psicossocial: string | null
           risco_quimico: string | null
+          riscos_hash: string | null
+          riscos_sincronizado_em: string | null
           riscos_texto: string
           setor: string | null
           titulo: string
@@ -7865,6 +7886,7 @@ export type Database = {
           ativo?: boolean
           cargo: string
           cbo?: string | null
+          complemento_sesmt?: string | null
           created_at?: string
           created_by?: string | null
           descricao_atividades?: string
@@ -7872,7 +7894,9 @@ export type Database = {
           hash_conteudo?: string | null
           id?: string
           medidas_preventivas?: string
+          origem_riscos?: string
           penalidades?: string
+          pgr_versao_id?: string | null
           procedimentos_emergencia?: string
           proibicoes?: string
           revisao?: number
@@ -7882,6 +7906,8 @@ export type Database = {
           risco_fisico?: string | null
           risco_psicossocial?: string | null
           risco_quimico?: string | null
+          riscos_hash?: string | null
+          riscos_sincronizado_em?: string | null
           riscos_texto?: string
           setor?: string | null
           titulo: string
@@ -7893,6 +7919,7 @@ export type Database = {
           ativo?: boolean
           cargo?: string
           cbo?: string | null
+          complemento_sesmt?: string | null
           created_at?: string
           created_by?: string | null
           descricao_atividades?: string
@@ -7900,7 +7927,9 @@ export type Database = {
           hash_conteudo?: string | null
           id?: string
           medidas_preventivas?: string
+          origem_riscos?: string
           penalidades?: string
+          pgr_versao_id?: string | null
           procedimentos_emergencia?: string
           proibicoes?: string
           revisao?: number
@@ -7910,6 +7939,8 @@ export type Database = {
           risco_fisico?: string | null
           risco_psicossocial?: string | null
           risco_quimico?: string | null
+          riscos_hash?: string | null
+          riscos_sincronizado_em?: string | null
           riscos_texto?: string
           setor?: string | null
           titulo?: string
@@ -7917,7 +7948,15 @@ export type Database = {
           updated_by?: string | null
           validade_meses?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "oss_templates_pgr_versao_id_fkey"
+            columns: ["pgr_versao_id"]
+            isOneToOne: false
+            referencedRelation: "pgr_versoes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pcmso_coordenadores: {
         Row: {
