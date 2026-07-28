@@ -1062,7 +1062,7 @@ function EmitirOssDialog({ open, onClose, onIssued, prefill }: {
   const [companyId, setCompanyId] = useState<string>(prefill?.companyId ?? "");
   const [employeeId, setEmployeeId] = useState<string>(prefill?.employeeId ?? "");
   const [templateId, setTemplateId] = useState<string>("");
-  const [motivo, setMotivo] = useState<string>("ADMISSAO");
+  const [motivo, setMotivo] = useState<string>(prefill?.motivo ?? "ADMISSAO");
 
   // Lista de empresas (ATIVAS)
   const { data: companies = [] } = useQuery({
