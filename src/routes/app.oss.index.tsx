@@ -535,6 +535,17 @@ function OssIndexPage() {
           <Badge variant="outline" className={`${meta.cls} text-[10px]`}>
             <Icon className="h-3 w-3 mr-1" />{meta.label}
           </Badge>
+          <div className="mt-1">
+            {temAssinatura(em) ? (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full border text-[9px] bg-emerald-50 text-emerald-700 border-emerald-200">
+                <CheckCircle2 className="h-2.5 w-2.5" /> Com assinatura
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full border text-[9px] bg-slate-50 text-slate-600 border-slate-200">
+                <FileWarning className="h-2.5 w-2.5" /> Sem assinatura
+              </span>
+            )}
+          </div>
         </TableCell>
         <TableCell className="text-xs">{formatDateBR(em.emitido_em.slice(0, 10))}</TableCell>
         <TableCell>
