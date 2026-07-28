@@ -10,7 +10,7 @@ type: feature
 - Banco Cloud: projeto `mokuitocaihpgtlglrtg` (Supabase FRANK).
 - Servidor local: `dmnsgm0001`, Supabase self-hosted via Docker Compose.
 - Rede Docker: `supabase_default` migrada para `192.168.200.0/24` (gateway `192.168.200.1`).
-- Container `supabase-kong`: `192.168.200.5:8000` (porta 8000 exposta para o host).
+- Container `supabase-kong`: `192.168.200.11:8000` (porta 8000 exposta para o host).
 
 ### O que já foi feito
 - Schema `public` criado no banco local (via migrations do repositório).
