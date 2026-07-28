@@ -139,6 +139,9 @@ function OssIndexPage() {
   const [viewMode, setViewMode] = useState<"MES" | "LISTA">("MES");
   const [filterAssin, setFilterAssin] = useState<"TODOS" | "COM" | "SEM">("TODOS");
   const [qFalt, setQFalt] = useState("");
+  const [faltEmpresa, setFaltEmpresa] = useState("TODAS");
+  const [faltCargo, setFaltCargo] = useState("TODOS");
+  const [faltMotivo, setFaltMotivo] = useState("TODOS");
   const [collapsedMeses, setCollapsedMeses] = useState<Record<string, boolean>>({});
   const [collapsedDias, setCollapsedDias] = useState<Record<string, boolean>>({});
   const [previewDoc, setPreviewDoc] = useState<{ doc: jsPDF; name: string } | null>(null);
@@ -258,14 +261,42 @@ function OssIndexPage() {
   // Faltantes filtrados pela busca da aba "Sem OSS"
   const faltantesFiltrados = useMemo(() => {
     const s = qFalt.trim().toLowerCase();
-    if (!s) return faltantes;
-    return faltantes.filter((f) =>
-      f.nome.toLowerCase().includes(s) ||
-      (f.cargo ?? "").toLowerCase().includes(s) ||
-      (f.cpf ?? "").includes(s) ||
-      (f.empresa ?? "").toLowerCase().includes(s),
-    );
-  }, [faltantes, qFalt]);
+    return faltantes.filter((f) => {
+      if (faltEmpresa !== "TODAS" && (f.empresa ?? "—") !== faltEmpresa) return false;
+      if (faltCargo !== "TODOS" && (f.cargo ?? "—") !== faltCargo) return false;
+      if (faltMotivo !== "TODOS" && f.motivo !== faltMotivo) return false;
+      if (!s) return true;
+      return (
+        f.nome.toLowerCase().includes(s) ||
+        (f.cargo ?? "").toLowerCase().includes(s) ||
+        (f.cpf ?? "").includes(s) ||
+        (f.empresa ?? "").toLowerCase().includes(s)
+      );
+    });
+  }, [faltantes, qFalt, faltEmpresa, faltCargo, faltMotivo]);
+
+  const empresasFaltantes = useMemo(
+    () => Array.from(new Set(faltantes.map((f) => f.empresa ?? "—"))).sort((a, b) => a.localeCompare(b, "pt-BR")),
+    [faltantes],
+  );
+  const cargosFaltantes = useMemo(
+    () => Array.from(new Set(faltantes.map((f) => f.cargo ?? "—"))).sort((a, b) => a.localeCompare(b, "pt-BR")),
+    [faltantes],
+  );
+
+  const gerarPdfFaltantes = () => {
+    if (faltantesFiltrados.length === 0) { toast.info("Nada para exportar com esses filtros."); return; }
+    const doc = gerarPdfFaltantesOss(faltantesFiltrados, {
+      empresaLabel: faltEmpresa === "TODAS" ? "Todas" : faltEmpresa,
+      cargoLabel: faltCargo === "TODOS" ? "Todos" : faltCargo,
+      situacaoLabel:
+        faltMotivo === "TODOS" ? "Todas"
+          : faltMotivo === "VENCIDA" ? "OS vencida"
+          : faltMotivo === "CARGO_MUDOU" ? "Mudou de cargo" : "Nunca recebeu",
+    });
+    const slug = (faltEmpresa === "TODAS" ? "todas-empresas" : faltEmpresa).replace(/[^\w-]+/g, "_");
+    setPreviewDoc({ doc, name: `Sem-OS-${slug}-${new Date().toISOString().slice(0, 10)}.pdf` });
+  };
 
   // KPIs sempre calculados sobre as ATIVAS (ignora substituídas/canceladas)
   const kpis = useMemo(() => {
