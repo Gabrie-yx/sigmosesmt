@@ -1023,32 +1023,31 @@ function OssIndexPage() {
                     <TableRow key={f.employee_id}>
                       <TableCell>
                         <button type="button" onClick={() => setQuickViewEmpId(f.employee_id)} className="text-left group">
-                          <div className="font-medium text-sm text-slate-900 group-hover:text-rose-600 group-hover:underline">{f.nome}</div>
-                          <div className="text-[10px] text-slate-500">{f.cpf ?? ""}</div>
+                          <div className="font-medium text-sm text-foreground group-hover:text-primary group-hover:underline">{f.nome}</div>
+                          <div className="text-[10px] text-muted-foreground">{f.cpf ?? ""}</div>
                         </button>
                       </TableCell>
-                      <TableCell className="text-sm">{f.cargo ?? "—"}</TableCell>
-                      <TableCell className="text-xs text-slate-600">{f.empresa ?? "—"}</TableCell>
+                      <TableCell className="text-sm text-foreground">{f.cargo ?? "—"}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{f.empresa ?? "—"}</TableCell>
                       <TableCell>
                         <Badge
                           variant="outline"
                           className={`text-[10px] ${
                             f.motivo === "VENCIDA"
-                              ? "bg-red-50 text-red-700 border-red-200"
+                              ? "bg-destructive/10 text-destructive border-destructive/30"
                               : f.motivo === "CARGO_MUDOU"
-                                ? "bg-amber-50 text-amber-800 border-amber-300"
-                                : "bg-slate-100 text-slate-700 border-slate-300"
+                                ? "bg-accent/15 text-accent-foreground border-accent/40"
+                                : "bg-muted text-muted-foreground border-border"
                           }`}
                         >
                           {f.motivo === "VENCIDA" ? "OS vencida" : f.motivo === "CARGO_MUDOU" ? "Mudou de cargo" : "Nunca recebeu"}
                         </Badge>
-                        <div className="text-[10px] text-slate-500 mt-0.5">{f.detalhe}</div>
+                        <div className="text-[10px] text-muted-foreground mt-0.5">{f.detalhe}</div>
                       </TableCell>
                       <TableCell className="text-right">
                         {isEditor && (
                           <Button
                             size="sm"
-                            className="bg-rose-600 hover:bg-rose-700"
                             onClick={() => {
                               setEmitirPrefill({
                                 companyId: f.company_id ?? "",
