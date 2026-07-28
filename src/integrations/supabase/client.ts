@@ -2,8 +2,13 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = "https://mokuitocaihpgtlglrtg.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1va3VpdG9jYWlocGd0bGdscnRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMjc5OTYsImV4cCI6MjA5MjkwMzk5Nn0.rTZsC23QkQ4Xrq910UNLMCLsOW-jXPHlHHek5X2my_s";
+// Lê do .env (VITE_*) para permitir apontar o app para o Supabase local da DMN.
+// Os valores abaixo são apenas fallback do ambiente Cloud original.
+const SUPABASE_URL =
+  import.meta.env.VITE_SUPABASE_URL || "https://mokuitocaihpgtlglrtg.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY =
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1va3VpdG9jYWlocGd0bGdscnRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMjc5OTYsImV4cCI6MjA5MjkwMzk5Nn0.rTZsC23QkQ4Xrq910UNLMCLsOW-jXPHlHHek5X2my_s";
 const isBrowser = typeof window !== "undefined" && typeof window.document !== "undefined";
 
 // Import the supabase client like this:
