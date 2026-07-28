@@ -100,6 +100,20 @@ function bucketVencimento(em: Emissao): VencBucket {
 
 const PAGE_SIZE = 50;
 
+const MESES_PT = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+function labelMes(ym: string) {
+  const [y, m] = ym.split("-");
+  return `${MESES_PT[Number(m) - 1] ?? m} / ${y}`;
+}
+function labelDia(d: string) {
+  const dt = new Date(d + "T00:00:00");
+  const semana = ["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"][dt.getDay()];
+  return `${formatDateBR(d)} · ${semana}`;
+}
+function temAssinatura(e: Emissao) {
+  return !!e.assinado_em || !!e.pdf_assinado_path || e.status === "ASSINADO";
+}
+
 function OssIndexPage() {
   const qc = useQueryClient();
   const { isEditor } = useAuth();
