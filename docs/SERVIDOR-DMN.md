@@ -6,11 +6,11 @@ A única coisa que vem da nuvem é o **código** (`git pull`).
 
 ## 1. Arquivo `/home/sigmo/app/.env` (servidor)
 ```
-VITE_SUPABASE_URL=http://172.18.0.50:8000
+VITE_SUPABASE_URL=http://172.19.0.5:8000
 VITE_SUPABASE_PUBLISHABLE_KEY=<ANON_KEY do /opt/supabase/supabase/docker/.env>
 VITE_SUPABASE_PROJECT_ID=sigmo-dmn
 
-SUPABASE_URL=http://172.18.0.50:8000
+SUPABASE_URL=http://172.19.0.5:8000
 SUPABASE_PUBLISHABLE_KEY=<mesma ANON_KEY>
 SUPABASE_SERVICE_ROLE_KEY=<SERVICE_ROLE_KEY do /opt/supabase/supabase/docker/.env>
 ```

@@ -1,6 +1,6 @@
 ---
 name: Deploy SIGMO servidor DMN (RODANDO)
-description: SIGMO deployado e rodando no servidor DMN via Bun+PM2 desde 11/07/2026. Supabase mantido no Cloud (não migrou pra self-hosted). Endpoint interno 172.18.0.50:8080/app.
+description: SIGMO deployado e rodando no servidor DMN via Bun+PM2 desde 11/07/2026. Supabase mantido no Cloud (não migrou pra self-hosted). Endpoint interno 172.18.0.50:8080/app. Atualização: Supabase self-hosted em 172.19.0.5:8000.
 type: feature
 ---
 Status: **RODANDO EM PRODUÇÃO INTERNA** desde sábado 11/07/2026.
@@ -13,6 +13,7 @@ Status: **RODANDO EM PRODUÇÃO INTERNA** desde sábado 11/07/2026.
 - App em `/home/sigmo/app` (ZIP extraído), 756 pacotes instalados via `bun install`.
 - Endpoint interno: **http://172.18.0.50:8080/app** (acessado via VPN DMN).
 - Rodando com `pm2 start` (`bun run dev --host 0.0.0.0`).
+- **Atualização rede Docker (28/07/2026):** a rede `supabase_default` agora está em `172.19.0.0/24` e o container `supabase-kong` responde em `172.19.0.5:8000`. Se o `.env` ainda apontar para `172.18.0.50:8000`, o app não consegue falar com o banco local.
 
 ### Supabase
 - **NÃO migrou pra self-hosted.** Mantido no Supabase Cloud (projeto `mokuitocaihpgtlglrtg`).
