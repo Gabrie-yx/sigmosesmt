@@ -14,7 +14,7 @@ export default defineConfig({
   },
   vite: {
     server: {
-      allowedHosts: ["sigmo.dmnestaleiro.com.br", "172.19.0.5", "localhost"],
+      allowedHosts: ["sigmo.dmnestaleiro.com.br", "192.168.200.5", "localhost"],
     },
   },
 });
