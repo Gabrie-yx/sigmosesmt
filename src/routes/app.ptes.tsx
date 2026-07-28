@@ -36,7 +36,7 @@ import {
 
 export const Route = createFileRoute("/app/ptes")({
   component: PtesPage,
-  validateSearch: (s: Record<string, unknown>) => ({
+  validateSearch: (s: { apr_id?: unknown; filter?: unknown }) => ({
     apr_id: typeof s.apr_id === "string" ? s.apr_id : undefined,
     filter: typeof s.filter === "string" ? (s.filter as "all" | "linked" | "orphan") : undefined,
   }),

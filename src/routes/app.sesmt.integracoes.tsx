@@ -175,8 +175,8 @@ function IntegracoesPage() {
   return (
     <div className="h-full overflow-y-auto custom-scrollbar">
       <div className="max-w-7xl mx-auto px-6 md:px-14 py-8">
-        <Link to="/app/sesmt" className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-widest text-[rgba(245,225,225,0.55)] hover:text-brand transition-colors mb-4">
-          <ArrowLeft className="h-3.5 w-3.5" /> Voltar para SESMT
+        <Link to="/app" className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-widest text-[rgba(245,225,225,0.55)] hover:text-brand transition-colors mb-4">
+          <ArrowLeft className="h-3.5 w-3.5" /> Voltar para o painel
         </Link>
 
         <div className="flex items-center justify-between gap-4 mb-6">

@@ -16,7 +16,7 @@ import { prefetchAvatarUrls } from "@/lib/signed-avatar-url";
 
 export const Route = createFileRoute("/app/employees/")({
   component: EmployeesPage,
-  validateSearch: (search: Record<string, unknown>) => ({
+  validateSearch: (search: { new?: unknown; company?: unknown; filter?: unknown }) => ({
     new: search.new === 1 || search.new === "1" ? 1 : undefined,
     company: typeof search.company === "string" ? search.company : undefined,
     filter: typeof search.filter === "string" ? search.filter : undefined,
