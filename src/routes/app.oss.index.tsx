@@ -1055,9 +1055,12 @@ function UploadAssinadoButton({ onPick, disabled }: { onPick: (f: File) => void;
 // =====================================================
 // Emitir OSS Dialog
 // =====================================================
-function EmitirOssDialog({ open, onClose, onIssued }: { open: boolean; onClose: () => void; onIssued: () => void }) {
-  const [companyId, setCompanyId] = useState<string>("");
-  const [employeeId, setEmployeeId] = useState<string>("");
+function EmitirOssDialog({ open, onClose, onIssued, prefill }: {
+  open: boolean; onClose: () => void; onIssued: () => void;
+  prefill?: { companyId: string; employeeId: string; motivo: string } | null;
+}) {
+  const [companyId, setCompanyId] = useState<string>(prefill?.companyId ?? "");
+  const [employeeId, setEmployeeId] = useState<string>(prefill?.employeeId ?? "");
   const [templateId, setTemplateId] = useState<string>("");
   const [motivo, setMotivo] = useState<string>("ADMISSAO");
 
