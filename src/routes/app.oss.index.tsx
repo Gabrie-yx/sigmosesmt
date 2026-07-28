@@ -159,6 +159,7 @@ function OssIndexPage() {
   type Faltante = {
     employee_id: string; nome: string; cpf: string | null; matricula: string | null;
     admissao: string | null; cargo: string | null; empresa: string | null;
+    company_id: string | null;
     motivo: "NUNCA_RECEBEU" | "CARGO_MUDOU" | "VENCIDA";
     detalhe: string;
   };
@@ -210,6 +211,7 @@ function OssIndexPage() {
         admissao: emp.admissao,
         cargo: cargoAtual,
         empresa: emp.companies?.name ?? null,
+        company_id: emp.company_id ?? null,
         motivo,
         detalhe,
       });
@@ -225,6 +227,11 @@ function OssIndexPage() {
       if (filterCargo !== "TODOS" && e.cargo_snapshot !== filterCargo) return false;
       if (filterMotivo !== "TODOS" && e.motivo_emissao !== filterMotivo) return false;
       if (filterVenc !== "TODOS" && bucketVencimento(e) !== filterVenc) return false;
+      if (filterAssin !== "TODOS") {
+        const temAssin = !!e.assinado_em || !!e.pdf_assinado_path || e.status === "ASSINADO";
+        if (filterAssin === "COM" && !temAssin) return false;
+        if (filterAssin === "SEM" && temAssin) return false;
+      }
       if (!s) return true;
       return (
         (e.employees?.nome ?? "").toLowerCase().includes(s) ||
@@ -232,7 +239,19 @@ function OssIndexPage() {
         (e.employees?.cpf ?? "").includes(s)
       );
     });
-  }, [emissoes, q, filterStatus, filterCargo, filterMotivo, filterVenc]);
+  }, [emissoes, q, filterStatus, filterCargo, filterMotivo, filterVenc, filterAssin]);
+
+  // Faltantes filtrados pela busca da aba "Sem OSS"
+  const faltantesFiltrados = useMemo(() => {
+    const s = qFalt.trim().toLowerCase();
+    if (!s) return faltantes;
+    return faltantes.filter((f) =>
+      f.nome.toLowerCase().includes(s) ||
+      (f.cargo ?? "").toLowerCase().includes(s) ||
+      (f.cpf ?? "").includes(s) ||
+      (f.empresa ?? "").toLowerCase().includes(s),
+    );
+  }, [faltantes, qFalt]);
 
   // KPIs sempre calculados sobre as ATIVAS (ignora substituídas/canceladas)
   const kpis = useMemo(() => {
