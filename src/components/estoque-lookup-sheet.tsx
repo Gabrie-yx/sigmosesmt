@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Boxes, Search, Copy, ArrowDownToLine, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
+import { EpiThumb } from "@/components/epi-thumb";
 
 type EstoqueItem = {
   id: string;
@@ -127,11 +128,7 @@ export function EstoqueLookupSheet({ triggerLabel = "Consultar Estoque SESMT", o
             const caVencido = i.ca_validade && i.ca_validade < today;
             return (
               <div key={i.id} className="group border border-white/10 rounded-lg p-2.5 transition-all duration-200 flex gap-3 hover:bg-gradient-to-r hover:from-red-600/25 hover:via-rose-500/15 hover:to-transparent hover:border-rose-300/60 hover:shadow-[0_0_28px_-4px_rgba(244,63,94,0.65),inset_0_0_0_1px_rgba(255,255,255,0.08)] hover:-translate-y-0.5">
-                {i.imagem_url ? (
-                  <img src={i.imagem_url} alt="" className="h-14 w-14 rounded object-cover border flex-shrink-0" />
-                ) : (
-                  <div className="h-14 w-14 rounded border bg-slate-100 flex-shrink-0" />
-                )}
+                <EpiThumb url={i.imagem_url} alt={i.nome_material} className="h-14 w-14" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-bold text-sm text-slate-50 truncate">{i.nome_material}</span>
