@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { HardHat, ChevronLeft, Search, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useMemo, useState } from "react";
+import { EpiThumb } from "@/components/epi-thumb";
 
 export const Route = createFileRoute("/app/sesmt/catalogos/epis")({
   component: EpisPage,
@@ -151,13 +152,7 @@ function EpisPage() {
                   <tr key={e.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
                     <td className="px-3 py-2.5">
                       <div className="flex items-center gap-2">
-                        {e.imagem_url ? (
-                          <img src={e.imagem_url} alt="" className="h-8 w-8 rounded object-cover border border-slate-200" />
-                        ) : (
-                          <div className="h-8 w-8 rounded bg-slate-100 grid place-items-center">
-                            <HardHat className="h-4 w-4 text-slate-400" />
-                          </div>
-                        )}
+                        <EpiThumb url={e.imagem_url} alt={e.nome_material} className="h-8 w-8" />
                         <div className="min-w-0">
                           <p className="font-semibold text-slate-800 truncate">{e.nome_material}</p>
                           {e.codigo_material && (

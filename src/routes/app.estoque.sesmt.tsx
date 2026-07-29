@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { EpiThumb } from "@/components/epi-thumb";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -573,21 +574,7 @@ export function EstoqueSesmtPage() {
                     </TableCell>
                   )}
                   <TableCell>
-                    {i.imagem_url ? (
-                      <img
-                        src={i.imagem_url}
-                        alt=""
-                        loading="lazy"
-                        decoding="async"
-                        width={40}
-                        height={40}
-                        className="h-10 w-10 rounded object-cover border border-slate-200"
-                      />
-                    ) : (
-                      <div className="h-10 w-10 rounded border border-dashed border-slate-300 flex items-center justify-center text-slate-300">
-                        <ImageIcon className="h-4 w-4" />
-                      </div>
-                    )}
+                    <EpiThumb url={i.imagem_url} alt={i.nome_material} className="h-10 w-10" />
                   </TableCell>
                   <TableCell className="font-bold text-slate-800 uppercase">{i.nome_material}</TableCell>
                   <TableCell className="text-xs">
