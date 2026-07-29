@@ -1,3 +1,4 @@
+import { uuid } from "@/lib/uuid";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -318,7 +319,7 @@ export function PdfSignerDialog({
       setPlacements((prev) => [
         ...prev,
         {
-          id: crypto.randomUUID(),
+          id: uuid(),
           page: pageNum,
           x: xClamped,
           y: yClamped,

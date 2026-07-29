@@ -1,3 +1,4 @@
+import { uuid } from "@/lib/uuid";
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -308,12 +309,12 @@ export function HoraExtraSabadoDialog({
   function addEmp(e: any) {
     setFuncs((prev) => [
       ...prev,
-      { key: crypto.randomUUID(), employee_id: e.id, nome: e.nome, externo: false, transporte: false, alimentacao: false, presenca: null },
+      { key: uuid(), employee_id: e.id, nome: e.nome, externo: false, transporte: false, alimentacao: false, presenca: null },
     ]);
   }
   function addTodos() {
     const novos = empsDisponiveis.filter((e: any) => e._permitido).map((e: any) => ({
-      key: crypto.randomUUID(),
+      key: uuid(),
       employee_id: e.id,
       nome: e.nome,
       externo: false,
@@ -328,7 +329,7 @@ export function HoraExtraSabadoDialog({
     if (!nome) return;
     setFuncs((prev) => [
       ...prev,
-      { key: crypto.randomUUID(), employee_id: null, nome, externo: true, funcao: novoExternoFuncao.trim(), transporte: false, alimentacao: false, presenca: null },
+      { key: uuid(), employee_id: null, nome, externo: true, funcao: novoExternoFuncao.trim(), transporte: false, alimentacao: false, presenca: null },
     ]);
     setNovoExternoNome(""); setNovoExternoFuncao("");
   }

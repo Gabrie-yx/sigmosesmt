@@ -1,3 +1,4 @@
+import { uuid } from "@/lib/uuid";
 // Configurações → Produtividade — CRUD de Snippets, Templates de Perfil e Anexos Padrão de PDF.
 // Só admin acessa. Snippets: usuários comuns também podem criar/editar os próprios (não-oficiais).
 import { createFileRoute } from "@tanstack/react-router";
@@ -716,7 +717,7 @@ function AnexoDialog({
     try {
       let arquivo_path = editing?.arquivo_path ?? "";
       if (file) {
-        const key = `${escopo}/${crypto.randomUUID()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+        const key = `${escopo}/${uuid()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
         const { error: upErr } = await supabase.storage
           .from("pdf-anexos-padrao")
           .upload(key, file, { contentType: "application/pdf" });

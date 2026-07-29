@@ -1,3 +1,4 @@
+import { uuid } from "@/lib/uuid";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, type QueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -186,7 +187,7 @@ export function AtestadosTab({ empId, canEdit, canDelete, qc }: Props) {
     setUploadingId(at.id);
     try {
       const ext = file.name.split(".").pop();
-      const newPath = `atestados/${empId}/${crypto.randomUUID()}.${ext}`;
+      const newPath = `atestados/${empId}/${uuid()}.${ext}`;
       const { error: upErr } = await supabase.storage
         .from("employee-docs")
         .upload(newPath, file, { upsert: false });
@@ -530,7 +531,7 @@ function AtestadoFormDialog({
       let arquivo_path: string | null | undefined = isEdit ? atestado.arquivo_path : null;
       if (arquivo) {
         const ext = arquivo.name.split(".").pop();
-        const newPath = `atestados/${empId}/${crypto.randomUUID()}.${ext}`;
+        const newPath = `atestados/${empId}/${uuid()}.${ext}`;
         const { error: upErr } = await supabase.storage
           .from("employee-docs")
           .upload(newPath, arquivo, { upsert: false });

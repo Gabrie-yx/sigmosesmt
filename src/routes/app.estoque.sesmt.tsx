@@ -1,3 +1,4 @@
+import { uuid } from "@/lib/uuid";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -818,7 +819,7 @@ function detectTipoFromName(nome: string): { tipo: string; base: string; variaca
 
 async function uploadFotoEpi(file: File): Promise<string> {
   const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
-  const path = `${crypto.randomUUID()}.${ext}`;
+  const path = `${uuid()}.${ext}`;
   const { error } = await supabase.storage.from("epis-fotos").upload(path, file, {
     cacheControl: "3600",
     upsert: false,

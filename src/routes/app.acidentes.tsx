@@ -1,3 +1,4 @@
+import { uuid } from "@/lib/uuid";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -867,7 +868,7 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
           continue;
         }
         const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-        const path = `acidentes/${crypto.randomUUID()}-${safe}`;
+        const path = `acidentes/${uuid()}-${safe}`;
         const { error } = await supabase.storage.from("incident-photos").upload(path, file, {
           contentType: file.type,
           upsert: false,
