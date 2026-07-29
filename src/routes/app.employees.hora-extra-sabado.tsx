@@ -413,7 +413,8 @@ function HoraExtraSabadoPage() {
   }, [filtradas]);
 
   // Mês aberto por padrão: o mais recente com fichas.
-  const mesAtivo = mesAberto ?? gruposPorMes[0]?.key ?? null;
+  // Nenhum card abre sozinho: só expande quando o usuário clica.
+  const mesAtivo = mesAberto;
 
   const empresasUnicas = useMemo(() => {
     const s = new Set<string>();
@@ -504,7 +505,7 @@ function HoraExtraSabadoPage() {
       ) : (
         <div className="max-w-6xl mx-auto space-y-6">
           {/* Grade de cards mensais — cada card expande mostrando os dias dentro dele */}
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 items-start">
+          <div className="grid gap-6 sm:grid-cols-2 items-start">
             {gruposPorMes.map((grupo) => {
               const aberto = mesAtivo === grupo.key;
               const empresasCount = new Set(
