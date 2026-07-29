@@ -105,12 +105,46 @@ export const inviteUser = createServerFn({ method: "POST" })
       redirectTo,
     });
     if (mailErr) {
-      // se falhar o email, remove o convite para não ficar órfão
-      await supabaseAdmin.from("user_invites").delete().eq("email", data.email).is("accepted_at", null);
-      throw new Error(mailErr.message);
+      // Instalação on-premise (DMN) roda sem SMTP: o Supabase local não consegue
+      // enviar o e-mail de convite. Nesse caso criamos a conta direto com senha
+      // provisória e aplicamos papel/módulos na hora — o admin repassa a senha.
+      const tempPassword = generateTempPassword();
+      const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
+        email: data.email,
+        password: tempPassword,
+        email_confirm: true,
+        user_metadata: { full_name: data.full_name },
+      });
+      const newUserId = created?.user?.id;
+      if (createErr || !newUserId) {
+        // não conseguimos nem enviar e-mail nem criar a conta: limpa o convite órfão
+        await supabaseAdmin.from("user_invites").delete().eq("email", data.email).is("accepted_at", null);
+        throw new Error(
+          `Não foi possível enviar o convite (${mailErr.message}) nem criar a conta (${createErr?.message ?? "erro desconhecido"})`,
+        );
+      }
+
+      await applyAccess(supabaseAdmin, newUserId, {
+        role: data.role,
+        modules: data.modules,
+        menus: data.menus,
+      });
+      await supabaseAdmin
+        .from("user_invites")
+        .update({ accepted_at: new Date().toISOString() })
+        .eq("email", data.email)
+        .is("accepted_at", null);
+      await logAdminEvent(supabaseAdmin, {
+        action: "USER_CREATED_OFFLINE",
+        target_user_id: newUserId,
+        actor_user_id: context.userId,
+        payload: { email: data.email, role: data.role, reason: mailErr.message },
+      });
+
+      return { ok: true, mode: "manual" as const, email: data.email, temp_password: tempPassword };
     }
 
-    return { ok: true };
+    return { ok: true, mode: "email" as const };
   });
 
 export const resendInvite = createServerFn({ method: "POST" })
