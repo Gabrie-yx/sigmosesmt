@@ -503,8 +503,8 @@ function HoraExtraSabadoPage() {
         </div>
       ) : (
         <div className="max-w-6xl mx-auto space-y-6">
-          {/* Grade de cards mensais no estilo Saídas — glow âmbar por trás e flares nas bordas */}
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {/* Grade de cards mensais — cada card expande mostrando os dias dentro dele */}
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 items-start">
             {gruposPorMes.map((grupo) => {
               const aberto = mesAtivo === grupo.key;
               const empresasCount = new Set(
@@ -518,76 +518,12 @@ function HoraExtraSabadoPage() {
                   empresasCount={empresasCount}
                   ativo={aberto}
                   onClick={() => setMesAberto(aberto ? "" : grupo.key)}
+                  itens={grupo.itens}
+                  onFichaClick={(id) => setDetalheId(id)}
                 />
               );
             })}
           </div>
-
-          {/* Fichas do mês ativo, logo abaixo da grade */}
-          {gruposPorMes.filter((g) => g.key === mesAtivo).map((grupo) => (
-            <section key={grupo.key} className="space-y-3">
-              <div className="flex items-center gap-2 px-1">
-                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-amber-400/30 to-transparent" />
-                <span className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-200/90 capitalize">
-                  {grupo.label} · {grupo.itens.length} ficha{grupo.itens.length === 1 ? "" : "s"}
-                </span>
-                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-amber-400/30 to-transparent" />
-              </div>
-              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                {grupo.itens.map((f: any) => {
-                  const d = new Date(f.data + "T12:00:00");
-                  const dia = DIAS[d.getDay()];
-                  const qtd = f.hora_extra_sabado_funcionarios?.length ?? 0;
-                  const indeferida = f.status === "INDEFERIDA";
-                  const aprovada = f.status === "APROVADA";
-                  return (
-                    <button
-                      key={f.id}
-                      onClick={() => setDetalheId(f.id)}
-                      className={`group w-full text-left rounded-xl border bg-white/[0.02] hover:bg-white/[0.06] hover:-translate-y-0.5 transition-all px-3 py-2.5 grid grid-cols-[auto_1px_minmax(0,1fr)] items-center gap-3 ${
-                        indeferida
-                          ? "animate-indeferida"
-                          : "border-white/10 hover:border-rose-400/40"
-                      }`}
-                    >
-                      <div className="flex flex-col items-center justify-center w-11 shrink-0">
-                        <span className="text-[9px] font-black uppercase tracking-widest text-rose-300">{dia.slice(0,3)}</span>
-                        <span className="text-lg font-black tabular-nums text-slate-100 leading-none">{d.getDate().toString().padStart(2,"0")}</span>
-                      </div>
-                      <div className="h-9 w-px bg-white/10" />
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <Building2 className="h-3 w-3 text-rose-300 shrink-0" />
-                          <span className="text-xs font-bold text-slate-100 truncate min-w-0 flex-1">{f.companies?.name ?? "—"}</span>
-                          {indeferida && (
-                            <span className="shrink-0 inline-flex items-center rounded border border-amber-400/60 bg-destructive/25 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-amber-200">
-                              Indef.
-                            </span>
-                          )}
-                          {aprovada && (
-                            <span className="shrink-0 inline-flex items-center rounded border border-emerald-400/50 bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-emerald-200">
-                              Aprov.
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-[11px] text-slate-300 truncate flex items-center gap-1.5 mt-0.5 min-w-0">
-                          <Clock className="h-3 w-3 text-rose-300 shrink-0" />
-                          <span className="truncate">{f.horario_inicio ?? "—"}{f.horario_fim ? ` – ${f.horario_fim}` : ""} · {f.turno ?? "—"}º</span>
-                          <Users className="h-3 w-3 shrink-0 ml-1" />
-                          <span className="tabular-nums shrink-0">{qtd}</span>
-                        </div>
-                        {indeferida && f.motivo_indeferimento && (
-                          <div className="mt-1 text-[10px] text-rose-100/90 line-clamp-1">
-                            <span className="font-black text-amber-300">Motivo:</span> {f.motivo_indeferimento}
-                          </div>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-          ))}
         </div>
       )}
 
