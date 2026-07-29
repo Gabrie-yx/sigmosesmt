@@ -86,17 +86,6 @@ async function applyAccess(
   }
 }
 
-async function assertAdminLegacy(supabase: any, userId: string) {
-  const { data, error } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId)
-    .eq("role", "admin")
-    .maybeSingle();
-  if (error) throw new Error(error.message);
-  if (!data) throw new Error("Apenas administradores podem gerenciar usuários");
-}
-
 async function logAdminEvent(supabaseAdmin: any, args: {
   action: string;
   target_user_id: string;
