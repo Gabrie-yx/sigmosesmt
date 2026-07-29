@@ -37,14 +37,40 @@ function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string;
 }
 
 function MesHoraExtraCard({
-  label, total, empresasCount, ativo, onClick,
+  label, total, empresasCount, ativo, onClick, itens, onFichaClick,
 }: {
   label: string;
   total: number;
   empresasCount: number;
   ativo: boolean;
   onClick: () => void;
+  itens: any[];
+  onFichaClick: (id: string) => void;
 }) {
+  // Dias agrupados em ordem cronológica (YYYY-MM-DD ASC).
+  // Dentro de cada dia, fichas ordenadas alfabeticamente por empresa.
+  const dias = useMemo(() => {
+    const map = new Map<string, any[]>();
+    itens.forEach((f: any) => {
+      const key = f.data;
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(f);
+    });
+    return Array.from(map.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, fichas]) => {
+        const d = new Date(key + "T12:00:00");
+        const diaLabel = `${DIAS[d.getDay()].slice(0, 3)} ${d.getDate().toString().padStart(2, "0")}`;
+        return {
+          key,
+          diaLabel,
+          fichas: fichas.sort((a, b) =>
+            (a.companies?.name ?? "").localeCompare(b.companies?.name ?? "", "pt-BR"),
+          ),
+        };
+      });
+  }, [itens]);
+
   return (
     <div className="relative">
       {/* Glow âmbar suave atrás do card */}
@@ -57,17 +83,15 @@ function MesHoraExtraCard({
           filter: "blur(18px)",
         }}
       />
-      <button
-        type="button"
-        onClick={onClick}
-        className="group/mescard relative w-full rounded-2xl p-[1px] overflow-hidden text-left transition-transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+      <div
+        className="group/mescard relative w-full rounded-2xl p-[1px] overflow-hidden text-left transition-transform hover:-translate-y-0.5 focus-within:ring-2 focus-within:ring-amber-400/40"
         style={{
           background:
             "linear-gradient(135deg, rgba(245,158,11,0.55) 0%, rgba(255,255,255,0.06) 22%, rgba(255,255,255,0.02) 50%, rgba(255,255,255,0.06) 78%, rgba(245,158,11,0.55) 100%)",
         }}
       >
         <div
-          className="relative rounded-2xl overflow-hidden flex flex-col w-full p-5 min-h-[168px]"
+          className="relative rounded-2xl overflow-hidden flex flex-col w-full min-h-[168px]"
           style={{
             background:
               "linear-gradient(160deg, #0d0a10 0%, #0a070c 55%, #08060a 100%)",
@@ -86,37 +110,105 @@ function MesHoraExtraCard({
           <div aria-hidden className="pointer-events-none absolute inset-0 rounded-2xl"
             style={{ boxShadow: "inset 0 0 0 1px rgba(148,163,184,0.05)" }} />
 
-          <div className="relative flex items-center justify-between mb-3">
-            <span className="text-[10px] font-black uppercase tracking-[0.18em] text-amber-300/90 flex items-center gap-1.5">
-              <Calendar className="h-3 w-3" /> Mensal
-            </span>
-            <ChevronRight className={`h-4 w-4 text-amber-300/60 transition-transform ${ativo ? "translate-x-0.5 text-amber-200" : "group-hover/mescard:translate-x-0.5 group-hover/mescard:text-amber-200"}`} />
-          </div>
-
-          <div className="relative flex-1 flex flex-col justify-center">
-            <h3 className="text-xl md:text-2xl font-black uppercase tracking-tight text-white leading-tight capitalize">
-              {label}
-            </h3>
-            <div className="mt-3 flex items-baseline gap-2">
-              <span className="text-5xl font-black text-amber-300">
-                {total}
+          <button
+            type="button"
+            onClick={onClick}
+            className="relative w-full text-left p-5 focus:outline-none"
+          >
+            <div className="relative flex items-center justify-between mb-3">
+              <span className="text-[10px] font-black uppercase tracking-[0.18em] text-amber-300/90 flex items-center gap-1.5">
+                <Calendar className="h-3 w-3" /> Mensal
               </span>
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">
-                ficha{total === 1 ? "" : "s"}
+              <ChevronRight className={`h-4 w-4 text-amber-300/60 transition-transform ${ativo ? "rotate-90 text-amber-200" : "group-hover/mescard:rotate-90 group-hover/mescard:text-amber-200"}`} />
+            </div>
+
+            <div className="relative flex-1 flex flex-col justify-center">
+              <h3 className="text-xl md:text-2xl font-black uppercase tracking-tight text-white leading-tight capitalize">
+                {label}
+              </h3>
+              <div className="mt-3 flex items-baseline gap-2">
+                <span className="text-5xl font-black text-amber-300">
+                  {total}
+                </span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">
+                  ficha{total === 1 ? "" : "s"}
+                </span>
+              </div>
+            </div>
+
+            <div className="relative flex items-center justify-between pt-3 mt-3 border-t border-white/10">
+              <span className="text-[9.5px] font-black uppercase tracking-wider text-slate-400">
+                {empresasCount} empresa{empresasCount === 1 ? "" : "s"}
+              </span>
+              <span className="text-[9.5px] font-black uppercase tracking-wider text-amber-300/85">
+                {ativo ? "Fechar" : "Ver fichas"}
               </span>
             </div>
-          </div>
+          </button>
 
-          <div className="relative flex items-center justify-between pt-3 mt-3 border-t border-white/10">
-            <span className="text-[9.5px] font-black uppercase tracking-wider text-slate-400">
-              {empresasCount} empresa{empresasCount === 1 ? "" : "s"}
-            </span>
-            <span className="text-[9.5px] font-black uppercase tracking-wider text-amber-300/85">
-              {ativo ? "Fechar" : "Ver fichas"}
-            </span>
-          </div>
+          {/* Dias dentro do card, visíveis quando expandido */}
+          {ativo && (
+            <div className="px-4 pb-4 pt-1 border-t border-white/10 space-y-2">
+              {dias.map(({ key, diaLabel, fichas }) => (
+                <div key={key} className="rounded-xl bg-black/30 border border-white/[0.06] overflow-hidden">
+                  <div className="px-3 py-1.5 bg-amber-500/[0.08] border-b border-white/[0.06]">
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-200/90">
+                      {diaLabel} · {fichas.length} ficha{fichas.length === 1 ? "" : "s"}
+                    </span>
+                  </div>
+                  <div className="p-1.5 space-y-1">
+                    {fichas.map((f: any) => {
+                      const qtd = f.hora_extra_sabado_funcionarios?.length ?? 0;
+                      const indeferida = f.status === "INDEFERIDA";
+                      const aprovada = f.status === "APROVADA";
+                      return (
+                        <button
+                          key={f.id}
+                          onClick={() => onFichaClick(f.id)}
+                          className={`w-full text-left rounded-lg border px-2.5 py-2 grid grid-cols-[1px_minmax(0,1fr)] items-center gap-2.5 transition-all hover:bg-white/[0.05] ${
+                            indeferida
+                              ? "border-amber-400/30 bg-amber-500/[0.04]"
+                              : "border-white/10 bg-white/[0.02] hover:border-rose-400/40"
+                          }`}
+                        >
+                          <div className="h-8 w-px bg-white/10" />
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <Building2 className="h-3 w-3 text-rose-300 shrink-0" />
+                              <span className="text-xs font-bold text-slate-100 truncate min-w-0 flex-1">{f.companies?.name ?? "—"}</span>
+                              {indeferida && (
+                                <span className="shrink-0 inline-flex items-center rounded border border-amber-400/60 bg-destructive/25 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-amber-200">
+                                  Indef.
+                                </span>
+                              )}
+                              {aprovada && (
+                                <span className="shrink-0 inline-flex items-center rounded border border-emerald-400/50 bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-emerald-200">
+                                  Aprov.
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[11px] text-slate-300 truncate flex items-center gap-1.5 mt-0.5 min-w-0">
+                              <Clock className="h-3 w-3 text-rose-300 shrink-0" />
+                              <span className="truncate">{f.horario_inicio ?? "—"}{f.horario_fim ? ` – ${f.horario_fim}` : ""} · {f.turno ?? "—"}º</span>
+                              <Users className="h-3 w-3 shrink-0 ml-1" />
+                              <span className="tabular-nums shrink-0">{qtd}</span>
+                            </div>
+                            {indeferida && f.motivo_indeferimento && (
+                              <div className="mt-1 text-[10px] text-rose-100/90 line-clamp-1">
+                                <span className="font-black text-amber-300">Motivo:</span> {f.motivo_indeferimento}
+                              </div>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      </button>
+      </div>
     </div>
   );
 }
