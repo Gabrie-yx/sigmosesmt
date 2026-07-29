@@ -185,7 +185,7 @@ function UsersPage() {
     if (!fName || !fEmail) return toast.error("Preencha nome e e-mail");
     setSubmitting(true);
     try {
-      await inviteFn({
+      const res: any = await inviteFn({
         data: {
           email: fEmail,
           full_name: fName,
@@ -195,7 +195,16 @@ function UsersPage() {
           redirect_to: `${window.location.origin}/reset-password`,
         },
       });
-      toast.success("Convite enviado por e-mail");
+      if (res?.mode === "manual" && res?.temp_password) {
+        const credenciais = `E-mail: ${res.email}\nSenha provisória: ${res.temp_password}`;
+        try { await navigator.clipboard.writeText(credenciais); } catch { /* ignore */ }
+        toast.success("Conta criada com senha provisória", {
+          description: `${credenciais}\n\n(copiado para a área de transferência — o servidor está sem envio de e-mail)`,
+          duration: 60000,
+        });
+      } else {
+        toast.success("Convite enviado por e-mail");
+      }
       setInviteOpen(false);
       setFName(""); setFEmail(""); setFRole("editor"); setFModules(["sesmt"]); setFMenus([]);
       qc.invalidateQueries({ queryKey: ["users-admin"] });
