@@ -18,7 +18,19 @@ function resolveInviteRedirect(redirectTo: string) {
     throw new Error("Link de convite inválido");
   }
 
-  if (redirectUrl.protocol !== "https:" && redirectUrl.hostname !== "localhost") {
+  // Permite http apenas em hosts locais/rede privada (servidor DMN on-premise,
+  // que roda em http://172.18.0.50:8080 sem TLS ainda).
+  const host = redirectUrl.hostname;
+  const isPrivateHost =
+    host === "localhost" ||
+    host === "127.0.0.1" ||
+    host === "[::1]" ||
+    host.endsWith(".local") ||
+    /^10\./.test(host) ||
+    /^192\.168\./.test(host) ||
+    /^172\.(1[6-9]|2\d|3[01])\./.test(host);
+
+  if (redirectUrl.protocol !== "https:" && !(redirectUrl.protocol === "http:" && isPrivateHost)) {
     throw new Error("Link de convite deve usar HTTPS");
   }
   if (redirectUrl.pathname !== INVITE_REDIRECT_PATH) {
