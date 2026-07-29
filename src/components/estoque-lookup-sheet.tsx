@@ -1,3 +1,4 @@
+import { copyToClipboard } from "@/lib/clipboard";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -66,7 +67,7 @@ export function EstoqueLookupSheet({ triggerLabel = "Consultar Estoque SESMT", o
 
   const copy = async (text: string, label: string) => {
     try {
-      await navigator.clipboard.writeText(text);
+      await copyToClipboard(text);
       toast.success(`${label} copiado`);
     } catch {
       toast.error("Não foi possível copiar");

@@ -1,3 +1,4 @@
+import { copyToClipboard } from "@/lib/clipboard";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -493,7 +494,7 @@ function CampanhasTab() {
               variant="outline"
               className="w-full"
               onClick={() => {
-                navigator.clipboard.writeText(tokensGerados.map((t) => t.url).join("\n"));
+                copyToClipboard(tokensGerados.map((t) => t.url).join("\n"));
                 toast.success("Todos os links copiados!");
               }}
             >
@@ -513,7 +514,7 @@ function CampanhasTab() {
                   <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0 text-sky-300 hover:bg-sky-500/20" title="Mostrar QR Code" onClick={() => setQrLink({ url: t.url, idx: i + 1 })}>
                     <QrCode className="h-3 w-3" />
                   </Button>
-                  <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => { navigator.clipboard.writeText(t.url); toast.success("Copiado"); }}>
+                  <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => { copyToClipboard(t.url); toast.success("Copiado"); }}>
                     <Copy className="h-3 w-3" />
                   </Button>
                 </div>
