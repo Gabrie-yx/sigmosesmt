@@ -19,7 +19,7 @@ export const Route = createFileRoute("/app")({
 });
 
 function AppLayout() {
-  const { session, loading, requiresMfa, mfaSatisfied, graceActive, graceDaysLeft, aal, isMarcadorPuro, isPorteiroPuro, roles, user } = useAuth();
+  const { session, loading, requiresMfa, mfaSatisfied, graceActive, graceDaysLeft, aal, isMarcadorPuro, isPorteiroPuro, roles, user, mfaHardBlock } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -88,6 +88,45 @@ function AppLayout() {
           >
             Sair
           </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Conta em domínio corporativo (DMN / ATEM): 2FA é obrigatório e sem carência.
+  // Enquanto não estiver em AAL2, só a tela de segurança fica acessível.
+  const isSegurancaRoute = location.pathname.startsWith("/app/conta/seguranca");
+  if (mfaHardBlock && !isSegurancaRoute) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center px-6 text-slate-100"
+        style={{ background: "linear-gradient(180deg, #5a0f22 0%, #3a0a18 45%, #1f0610 100%)" }}
+      >
+        <div className="max-w-md text-center space-y-4">
+          <ShieldAlert className="h-12 w-12 text-amber-400 mx-auto" />
+          <h1 className="text-xl font-black">Verificação em duas etapas obrigatória</h1>
+          <p className="text-sm text-rose-100/80">
+            Sua conta ({user?.email}) é de domínio corporativo. Por política de segurança
+            do SIGMO, o acesso só é liberado com MFA (2FA) ativo e verificado nesta sessão —
+            sem período de carência.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-2 justify-center">
+            <Link
+              to="/app/conta/seguranca"
+              className="inline-flex items-center justify-center rounded-md bg-amber-400 px-4 py-2 text-sm font-bold text-amber-950"
+            >
+              Configurar MFA agora
+            </Link>
+            <Button
+              variant="secondary"
+              onClick={async () => {
+                await supabase.auth.signOut();
+                navigate({ to: "/login", replace: true });
+              }}
+            >
+              Sair
+            </Button>
+          </div>
         </div>
       </div>
     );

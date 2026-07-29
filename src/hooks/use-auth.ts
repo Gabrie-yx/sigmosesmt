@@ -3,6 +3,7 @@ import type { Session, User } from "@supabase/supabase-js";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { MENU_BY_KEY } from "@/lib/menu-catalog";
+import { isCorporateEmail } from "@/lib/corporate-domains";
 import type { AppModule, AppRole } from "@/lib/access-control";
 
 export type { AppModule, AppRole };
@@ -152,13 +153,19 @@ export function useAuth() {
     && !roles.includes("editor") && !roles.includes("tst")
     && !roles.includes("compras");
   // MFA obrigatório pra qualquer usuário com papel (regra de 03/07/2026).
-  const requiresMfa = roles.length > 0;
-  const graceActive = !!(mfaGraceUntil && mfaGraceUntil.getTime() > Date.now());
+  // Contas corporativas (@dmnestaleiro / @atem ...) — regra de 29/07/2026:
+  // MFA obrigatório SEMPRE, sem carência e com bloqueio duro de acesso.
+  const isCorporate = isCorporateEmail(user?.email);
+  const requiresMfa = roles.length > 0 || isCorporate;
+  const graceActive =
+    !isCorporate && !!(mfaGraceUntil && mfaGraceUntil.getTime() > Date.now());
   const graceDaysLeft = mfaGraceUntil
     ? Math.max(0, Math.ceil((mfaGraceUntil.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
     : 0;
   // Satisfeito se não exige, ou já autenticou 2FA, ou ainda está dentro do grace de 7 dias.
   const mfaSatisfied = !requiresMfa || aal === "aal2" || graceActive;
+  // Bloqueio duro: conta corporativa sem 2FA verificado nesta sessão.
+  const mfaHardBlock = isCorporate && aal !== "aal2";
 
   function hasModule(m: AppModule): boolean {
     if (isAdmin) return true;
@@ -191,6 +198,7 @@ export function useAuth() {
   return {
     session, user, roles, modules, aal, mfaActive, loading,
     isAdmin, isModerator, isEditor, requiresMfa, mfaSatisfied,
+    isCorporate, mfaHardBlock,
     isExtraSabadoMarcador, isMarcadorPuro, isSupervisorExtraGeral, isPorteiroPuro,
     hasModule, hasMenu,
     menuKeys, modulesWithMenuConfig,
