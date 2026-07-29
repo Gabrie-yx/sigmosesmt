@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getRequestHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { appModuleSchema, managedAppRoleSchema } from "@/lib/access-control";
@@ -19,40 +18,13 @@ function resolveInviteRedirect(redirectTo: string) {
     throw new Error(`Link de convite inválido: "${redirectTo}"`);
   }
 
-  // http só é aceito quando o próprio SIGMO está sendo servido sem TLS
-  // (instalação on-premise DMN em http://172.18.0.50:8080) ou em host
-  // local/rede privada. Em qualquer host público continua exigindo https.
-  if (redirectUrl.protocol !== "https:") {
-    if (redirectUrl.protocol !== "http:") {
-      throw new Error(`Protocolo não permitido no link de convite: ${redirectUrl.protocol}`);
-    }
-    const host = redirectUrl.hostname.replace(/^\[|\]$/g, "");
-    const isPrivateHost =
-      host === "localhost" ||
-      host === "127.0.0.1" ||
-      host === "::1" ||
-      host.endsWith(".local") ||
-      host.endsWith(".lan") ||
-      host.endsWith(".internal") ||
-      /^10\./.test(host) ||
-      /^192\.168\./.test(host) ||
-      /^169\.254\./.test(host) ||
-      /^172\.(1[6-9]|2[0-9]|3[01])\./.test(host);
-
-    // Mesma origem do request que chegou no server function (deploy sem TLS).
-    let sameHostAsRequest = false;
-    try {
-      const reqHost =
-        getRequestHeader("x-forwarded-host") ?? getRequestHeader("host") ?? "";
-      sameHostAsRequest =
-        !!reqHost && reqHost.split(":")[0].toLowerCase() === host.toLowerCase();
-    } catch { /* fora de contexto de request */ }
-
-    if (!isPrivateHost && !sameHostAsRequest) {
-      throw new Error(
-        `Link de convite deve usar HTTPS (recebido: ${redirectUrl.origin})`,
-      );
-    }
+  // Instalação on-premise (DMN) roda sem TLS por enquanto, então http é aceito.
+  // A proteção real do redirect é a allow list do Supabase Auth
+  // (supabase/config.toml → additional_redirect_urls), que rejeita qualquer
+  // destino não cadastrado. Aqui só bloqueamos protocolos exóticos
+  // (javascript:, data:, file: ...).
+  if (redirectUrl.protocol !== "https:" && redirectUrl.protocol !== "http:") {
+    throw new Error(`Protocolo não permitido no link de convite: ${redirectUrl.protocol}`);
   }
 
   if (redirectUrl.pathname.replace(/\/+$/, "") !== INVITE_REDIRECT_PATH) {
