@@ -1,3 +1,4 @@
+import { copyToClipboard } from "@/lib/clipboard";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -75,7 +76,7 @@ export function DenunciasTab() {
             <p className="text-xs text-emerald-100/70 mt-1">Compartilhe este link com todos os colaboradores. Não exige login, é 100% anônimo.</p>
             <div className="flex items-center gap-2 mt-2">
               <code className="flex-1 text-xs bg-slate-900 rounded px-2 py-1.5 text-emerald-200 break-all">{linkPublico}</code>
-              <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(linkPublico); toast.success("Link copiado"); }}>
+              <Button size="sm" variant="outline" onClick={() => { copyToClipboard(linkPublico); toast.success("Link copiado"); }}>
                 <Copy className="h-3.5 w-3.5 mr-1" /> Copiar
               </Button>
             </div>

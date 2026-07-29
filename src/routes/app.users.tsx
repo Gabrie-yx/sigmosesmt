@@ -1,3 +1,4 @@
+import { copyToClipboard } from "@/lib/clipboard";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -197,7 +198,7 @@ function UsersPage() {
       });
       if (res?.mode === "manual" && res?.temp_password) {
         const credenciais = `E-mail: ${res.email}\nSenha provisória: ${res.temp_password}`;
-        try { await navigator.clipboard.writeText(credenciais); } catch { /* ignore */ }
+        try { await copyToClipboard(credenciais); } catch { /* ignore */ }
         toast.success("Conta criada com senha provisória", {
           description: `${credenciais}\n\n(copiado para a área de transferência — o servidor está sem envio de e-mail)`,
           duration: 60000,
@@ -917,7 +918,7 @@ function UsersPage() {
                 className="w-full"
                 onClick={() => {
                   const txt = `Acesso ao SIGMO (48h)\nLink: ${investorCreds.link}\nE-mail: ${investorCreds.email}\nSenha: ${investorCreds.password}`;
-                  navigator.clipboard.writeText(txt);
+                  copyToClipboard(txt);
                   toast.success("Credenciais copiadas");
                 }}
               >
@@ -973,7 +974,7 @@ function UsersPage() {
                 setResetBusy(true);
                 try {
                   await resetPwdFn({ data: { user_id: resetTarget.id, new_password: resetPwd } });
-                  await navigator.clipboard.writeText(resetPwd).catch(() => {});
+                  await copyToClipboard(resetPwd).catch(() => {});
                   toast.success("Senha trocada e copiada para a área de transferência");
                   setResetOpen(false);
                   setResetPwd("");

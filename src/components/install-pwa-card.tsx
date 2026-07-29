@@ -1,3 +1,4 @@
+import { copyToClipboard } from "@/lib/clipboard";
 import { useEffect, useState } from "react";
 import { CheckCircle2, Copy, Download, ExternalLink, MoreVertical, Plus, Share, Smartphone } from "lucide-react";
 
@@ -66,7 +67,8 @@ export function InstallPwaCard() {
 
   const copyLink = async () => {
     try {
-      await navigator.clipboard.writeText(installUrl);
+      const ok = await copyToClipboard(installUrl);
+      if (!ok) throw new Error("copy");
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1800);
     } catch {
