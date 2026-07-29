@@ -57,7 +57,7 @@ function MesHoraExtraCard({
       map.get(key)!.push(f);
     });
     return Array.from(map.entries())
-      .sort(([a], [b]) => a.localeCompare(b))
+      .sort(([a], [b]) => b.localeCompare(a))
       .map(([key, fichas]) => {
         const d = new Date(key + "T12:00:00");
         const diaLabel = `${DIAS[d.getDay()].slice(0, 3)} ${d.getDate().toString().padStart(2, "0")}`;
