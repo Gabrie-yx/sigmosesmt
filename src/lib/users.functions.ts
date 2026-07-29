@@ -50,6 +50,53 @@ async function assertAdmin(supabase: any, userId: string) {
   if (!data) throw new Error("Apenas administradores podem gerenciar usuários");
 }
 
+/** Senha provisória forte, usada quando a instalação não tem SMTP. */
+function generateTempPassword() {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  const base = Array.from(bytes, (b) => alphabet[b % alphabet.length]).join("");
+  return `${base}!7`;
+}
+
+/** Aplica papel, módulos e menus para um usuário recém-criado. */
+async function applyAccess(
+  supabaseAdmin: any,
+  userId: string,
+  access: { role: string; modules: string[]; menus: string[] },
+) {
+  await supabaseAdmin.from("user_roles").delete().eq("user_id", userId);
+  const { error: roleErr } = await supabaseAdmin
+    .from("user_roles")
+    .insert({ user_id: userId, role: access.role });
+  if (roleErr) throw new Error(roleErr.message);
+
+  await supabaseAdmin.from("user_module_access").delete().eq("user_id", userId);
+  if (access.modules.length > 0) {
+    await supabaseAdmin
+      .from("user_module_access")
+      .insert(access.modules.map((m) => ({ user_id: userId, module: m, enabled: true })));
+  }
+
+  await supabaseAdmin.from("user_menu_access").delete().eq("user_id", userId);
+  if (access.menus.length > 0) {
+    await supabaseAdmin
+      .from("user_menu_access")
+      .insert(access.menus.map((k) => ({ user_id: userId, menu_key: k, enabled: true })));
+  }
+}
+
+async function assertAdminLegacy(supabase: any, userId: string) {
+  const { data, error } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", "admin")
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Apenas administradores podem gerenciar usuários");
+}
+
 async function logAdminEvent(supabaseAdmin: any, args: {
   action: string;
   target_user_id: string;
