@@ -57,7 +57,7 @@ function MesHoraExtraCard({
       map.get(key)!.push(f);
     });
     return Array.from(map.entries())
-      .sort(([a], [b]) => a.localeCompare(b))
+      .sort(([a], [b]) => b.localeCompare(a))
       .map(([key, fichas]) => {
         const d = new Date(key + "T12:00:00");
         const diaLabel = `${DIAS[d.getDay()].slice(0, 3)} ${d.getDate().toString().padStart(2, "0")}`;
@@ -413,7 +413,8 @@ function HoraExtraSabadoPage() {
   }, [filtradas]);
 
   // Mês aberto por padrão: o mais recente com fichas.
-  const mesAtivo = mesAberto ?? gruposPorMes[0]?.key ?? null;
+  // Nenhum card abre sozinho: só expande quando o usuário clica.
+  const mesAtivo = mesAberto;
 
   const empresasUnicas = useMemo(() => {
     const s = new Set<string>();
@@ -504,7 +505,7 @@ function HoraExtraSabadoPage() {
       ) : (
         <div className="max-w-6xl mx-auto space-y-6">
           {/* Grade de cards mensais — cada card expande mostrando os dias dentro dele */}
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 items-start">
+          <div className="grid gap-6 sm:grid-cols-2 items-start">
             {gruposPorMes.map((grupo) => {
               const aberto = mesAtivo === grupo.key;
               const empresasCount = new Set(
@@ -529,7 +530,7 @@ function HoraExtraSabadoPage() {
 
       {/* Modal de detalhes */}
       <Dialog open={!!detalheId} onOpenChange={(o) => !o && setDetalheId(null)}>
-        <DialogContent className="w-full sm:max-w-3xl bg-[#1a0608]/95 backdrop-blur-sm border-white/10 text-slate-100 p-0 overflow-hidden">
+        <DialogContent className="w-full sm:max-w-4xl bg-[#1a0608]/95 backdrop-blur-sm border-white/10 text-slate-100 p-0 overflow-hidden">
           {fichaDetalhe && (() => {
             const d = new Date(fichaDetalhe.data + "T12:00:00");
             const dia = DIAS[d.getDay()];
@@ -559,9 +560,9 @@ function HoraExtraSabadoPage() {
                 </DialogHeader>
 
                 {/* Corpo em 2 colunas: info à esquerda, funcionários à direita */}
-                <div className="grid md:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] gap-0 max-h-[60vh]">
+                <div className="grid md:grid-cols-[220px_minmax(0,1fr)] gap-0 max-h-[62vh]">
                   {/* Coluna esquerda: metadados */}
-                  <div className="p-5 space-y-3 border-b md:border-b-0 md:border-r border-white/[0.06] overflow-y-auto">
+                  <div className="p-4 space-y-3 border-b md:border-b-0 md:border-r border-white/[0.06] overflow-y-auto bg-white/[0.015]">
                     {fichaDetalhe.setor && (
                       <InfoRow icon={<MapPin className="h-3.5 w-3.5" />} label="Setor" value={fichaDetalhe.setor} />
                     )}
@@ -586,7 +587,7 @@ function HoraExtraSabadoPage() {
                   </div>
 
                   {/* Coluna direita: funcionários */}
-                  <div className="p-5 overflow-hidden flex flex-col">
+                  <div className="p-4 overflow-hidden flex flex-col">
                     <div className="flex items-center gap-2 mb-2 shrink-0">
                       <Users className="h-3.5 w-3.5 text-rose-300" />
                       <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">
@@ -605,7 +606,13 @@ function HoraExtraSabadoPage() {
                         grupos.get(emp)!.push(f);
                       }
                       const ordenadas = Array.from(grupos.entries())
-                        .sort(([a], [b]) => a.localeCompare(b, "pt-BR"));
+                        .sort(([a], [b]) => a.localeCompare(b, "pt-BR"))
+                        .map(([emp, lista]) => [
+                          emp,
+                          [...lista].sort((a: any, b: any) =>
+                            (a.nome ?? "").localeCompare(b.nome ?? "", "pt-BR", { sensitivity: "base" }),
+                          ),
+                        ] as [string, any[]]);
                       return (
                         <div className="flex-1 overflow-y-auto rounded-lg border border-white/[0.08] bg-black/30">
                           {ordenadas.map(([empresa, lista]) => (
@@ -614,9 +621,9 @@ function HoraExtraSabadoPage() {
                                 <span className="text-[9px] font-black uppercase tracking-[0.2em] text-rose-200 truncate">{empresa}</span>
                                 <span className="text-[9px] font-bold text-rose-100/60 tabular-nums shrink-0 ml-2">{lista.length}</span>
                               </div>
-                              <ul className="divide-y divide-white/[0.04]">
+                              <ul className="grid sm:grid-cols-2 gap-x-4">
                                 {lista.map((f: any) => (
-                                  <li key={f.id} className="px-3 py-1.5 flex items-center justify-between gap-2 text-xs hover:bg-white/[0.02]">
+                                  <li key={f.id} className="px-3 py-1.5 flex items-center justify-between gap-2 text-xs border-b border-white/[0.04] hover:bg-white/[0.02]">
                                     <span className="truncate text-slate-100">
                                       {f.nome}
                                       {f.externo ? <span className="ml-1 text-[9px] text-amber-300">(ext)</span> : null}
