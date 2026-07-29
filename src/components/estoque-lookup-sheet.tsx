@@ -67,7 +67,8 @@ export function EstoqueLookupSheet({ triggerLabel = "Consultar Estoque SESMT", o
 
   const copy = async (text: string, label: string) => {
     try {
-      await copyToClipboard(text);
+      const ok = await copyToClipboard(text);
+      if (!ok) throw new Error("copy");
       toast.success(`${label} copiado`);
     } catch {
       toast.error("Não foi possível copiar");

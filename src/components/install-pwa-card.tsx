@@ -67,7 +67,8 @@ export function InstallPwaCard() {
 
   const copyLink = async () => {
     try {
-      await copyToClipboard(installUrl);
+      const ok = await copyToClipboard(installUrl);
+      if (!ok) throw new Error("copy");
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1800);
     } catch {
