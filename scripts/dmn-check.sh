@@ -34,11 +34,23 @@ done
 say ""
 say "3) Supabase local respondendo"
 url="${SUPABASE_URL:-${VITE_SUPABASE_URL:-}}"
+key="${SUPABASE_PUBLISHABLE_KEY:-${VITE_SUPABASE_PUBLISHABLE_KEY:-}}"
 if [ -n "$url" ]; then
-  code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "$url/auth/v1/health" 2>/dev/null)
-  if [ "$code" = "200" ]; then pass "GoTrue respondendo em $url"; else bad "sem resposta de $url/auth/v1/health (HTTP $code)"; fi
-  code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 -H "apikey: ${SUPABASE_PUBLISHABLE_KEY:-}" "$url/rest/v1/" 2>/dev/null)
-  if [ "$code" = "200" ] || [ "$code" = "404" ]; then pass "PostgREST respondendo"; else bad "PostgREST não respondeu (HTTP $code)"; fi
+  # Kong exige apikey. 401/403 = serviço VIVO mas pedindo chave (não é queda).
+  # Só 000 (timeout/conexão recusada) ou 5xx significam serviço fora do ar.
+  alive(){ case "$1" in 000|5??) return 1 ;; *) return 0 ;; esac; }
+
+  code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 \
+    -H "apikey: $key" -H "Authorization: Bearer $key" \
+    "$url/auth/v1/health" 2>/dev/null)
+  if alive "$code"; then pass "GoTrue respondendo em $url (HTTP $code)"
+  else bad "GoTrue fora do ar em $url/auth/v1/health (HTTP $code)"; fi
+
+  code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 \
+    -H "apikey: $key" -H "Authorization: Bearer $key" \
+    "$url/rest/v1/" 2>/dev/null)
+  if alive "$code"; then pass "PostgREST respondendo (HTTP $code)"
+  else bad "PostgREST fora do ar (HTTP $code)"; fi
 fi
 
 say ""
