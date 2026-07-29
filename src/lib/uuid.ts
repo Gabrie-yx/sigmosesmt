@@ -1,4 +1,3 @@
-import { uuid } from "@/lib/uuid";
 /**
  * UUID v4 seguro em qualquer contexto.
  *
