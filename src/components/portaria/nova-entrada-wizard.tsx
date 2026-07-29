@@ -1,3 +1,4 @@
+import { uuid } from "@/lib/uuid";
 // Wizard "Nova Entrada" — mobile-first, 4 passos.
 // Fluxo: 1) CPF → se já cadastrado pula pro passo 3;  2) dados novos;
 // 3) foto rosto + motivo + empresa visitada;  4) veículo opcional + acompanhantes.
@@ -293,7 +294,7 @@ export function NovaEntradaWizard({
       setSaving(true);
       const cpfLimpo = onlyDigits(cpfInput);
       // Gera ID da visita ANTES dos uploads (path das fotos usa esse id)
-      const visitaId = crypto.randomUUID();
+      const visitaId = uuid();
 
       // Upload das fotos — sempre usando arquivos já comprimidos pelo FotoField.
       const uploads: Record<string, string | null> = {

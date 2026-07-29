@@ -1,3 +1,4 @@
+import { uuid } from "@/lib/uuid";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -1851,7 +1852,7 @@ function AddCotacaoDialogImpl({
     setBusy(true);
     try {
       const ext = file.name.split(".").pop() || "bin";
-      const path = `${rcId}/${crypto.randomUUID()}.${ext}`;
+      const path = `${rcId}/${uuid()}.${ext}`;
       const up = await supabase.storage.from("rc-cotacoes").upload(path, file, {
         contentType: file.type,
         upsert: false,

@@ -1,3 +1,4 @@
+import { uuid } from "@/lib/uuid";
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -201,7 +202,7 @@ function InspecaoDetail() {
         const file = await comprimirImagem(original);
         const hash = await sha256(file);
         const ext = (file.name.split(".").pop() ?? "jpg").toLowerCase();
-        const path = `${id}/${Date.now()}-${crypto.randomUUID()}-${hash.slice(0, 8)}.${ext}`;
+        const path = `${id}/${Date.now()}-${uuid()}-${hash.slice(0, 8)}.${ext}`;
         const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, file, { contentType: file.type || "image/jpeg" });
         if (upErr) throw upErr;
         const { error } = await supabase.from("inspecao_fotos").insert({
