@@ -1,4 +1,17 @@
 ---
+
+## PAUSA 29/07/2026 — ponto exato de retomada
+
+`audit_logs` (17.695 linhas, ~160 MB) é a última tabela pendente na nuvem.
+
+- Host do pooler que FUNCIONA: `aws-1-us-east-1.pooler.supabase.com` porta **6543** (transaction mode).
+  - `aws-0/aws-1-sa-east-1` e `us-east-2` → `tenant/user not found`.
+  - Host direto `db.<ref>.supabase.co` → só IPv6, servidor não alcança.
+- Como o modo é transaction, **não usar pg_dump** — usar `\copy ... TO csv` fatiado por período
+  (mai, jun, 01–15/jul, 16/jul+) e depois `\copy ... FROM` no banco local.
+- Senha do banco foi resetada e exposta no chat → **resetar de novo** ao concluir.
+
+Próximo comando ao retomar: exportar os 4 CSVs em /tmp e conferir com `ls -lh /tmp/audit_*.csv`.
 name: Migração Supabase FRANK → servidor DMN
 description: Status da migração do banco SIGMO do Supabase Cloud para o Supabase self-hosted no servidor DMN. Pausada, retomada, fases e bloqueios.
 type: feature
