@@ -160,7 +160,7 @@ export function gerarRelatorioIndicadoresPDF(p: RelatorioIndicadoresParams): jsP
     doc.setFontSize(size);
     const lines = doc.splitTextToSize(txt, maxW) as string[];
     ensure(lines.length * 4.3 + 2);
-    doc.text(lines, M, y, { align: "justify", maxWidth: maxW });
+    doc.text(lines, M, y);
     y += lines.length * 4.3 + 2;
   };
 
@@ -450,7 +450,7 @@ export function gerarRelatorioIndicadoresPDF(p: RelatorioIndicadoresParams): jsP
       ?? `${ind.descricao} Resultado de ${ind.tipo === "PCT" ? `${ind.valor}%` : ind.valor} frente à meta de ${ind.menorMelhor ? "≤" : "≥"} ${ind.meta}${ind.tipo === "PCT" ? "%" : ""}.`;
     const lines = doc.splitTextToSize(txt, maxW - 4) as string[];
     ensure(lines.length * 4);
-    doc.text(lines, M + 4, y, { maxWidth: maxW - 4 });
+    doc.text(lines, M + 4, y);
     y += lines.length * 4 + 3;
     doc.setTextColor(0, 0, 0);
   });
