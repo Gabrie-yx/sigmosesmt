@@ -37,9 +37,6 @@ wait_up(){
 cd "$APP" || die "diretório $APP não existe"
 mkdir -p "$BK"
 
-# ------------------------------------------------ trava contra deploy duplicado
-exec 9>"$BK/.deploy.lock"
-flock -n 9 || die "já existe um deploy em andamento. Abortando."
 
 # ------------------------------------------------ sobrevive à queda do SSH
 # Se a sessão cair no meio, o deploy continua e o log fica em /home/sigmo/deploy.log
@@ -52,6 +49,10 @@ if [ -z "${DEPLOY_DETACHED:-}" ] && [ -t 1 ]; then
   wait $! 2>/dev/null
   exit 0
 fi
+
+# ------------------------------------------------ trava contra deploy duplicado
+exec 9>"$BK/.deploy.lock"
+flock -n 9 || die "já existe um deploy em andamento. Abortando."
 
 # ------------------------------------------------ 0. trava de ambiente local
 say "Conferindo ambiente local"
