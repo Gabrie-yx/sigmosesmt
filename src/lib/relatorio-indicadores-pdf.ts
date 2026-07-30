@@ -138,8 +138,8 @@ export function gerarRelatorioIndicadoresPDF(p: RelatorioIndicadoresParams): jsP
   const novaPagina = () => { doc.addPage(); y = drawHeader(); };
   const ensure = (need: number) => { if (y + need > FOOT) novaPagina(); };
 
-  const titulo = (txt: string) => {
-    ensure(14);
+  const titulo = (txt: string, need = 0) => {
+    ensure(14 + need);
     y += 2;
     doc.setFillColor(241, 245, 249);
     doc.rect(M, y - 4.4, maxW, 6.8, "F");
@@ -155,13 +155,39 @@ export function gerarRelatorioIndicadoresPDF(p: RelatorioIndicadoresParams): jsP
     y += 9;
   };
 
-  const paragrafo = (txt: string, size = 9) => {
-    doc.setFont("helvetica", "normal");
+  /** Quebra manual por largura real do texto (evita esticar/truncar). */
+  const wrap = (txt: string, width: number, size: number, style: "normal" | "bold" = "normal") => {
+    doc.setFont("helvetica", style);
     doc.setFontSize(size);
-    const lines = doc.splitTextToSize(txt, maxW) as string[];
-    ensure(lines.length * 4.3 + 2);
-    doc.text(lines, M, y);
-    y += lines.length * 4.3 + 2;
+    const out: string[] = [];
+    String(txt ?? "").split(/\r?\n/).forEach((par) => {
+      let cur = "";
+      par.split(/\s+/).filter(Boolean).forEach((wd) => {
+        const test = cur ? `${cur} ${wd}` : wd;
+        if (doc.getTextWidth(test) <= width || !cur) cur = test;
+        else { out.push(cur); cur = wd; }
+      });
+      out.push(cur);
+    });
+    return out.length ? out : [""];
+  };
+
+  /** Desenha linha a linha, quebrando página quando necessário. */
+  const drawLines = (lines: string[], x: number, size: number, lh: number, style: "normal" | "bold" = "normal") => {
+    doc.setFont("helvetica", style);
+    doc.setFontSize(size);
+    lines.forEach((ln) => {
+      ensure(lh + 2);
+      doc.text(ln, x, y);
+      y += lh;
+    });
+  };
+
+  const paragrafo = (txt: string, size = 9) => {
+    const lines = wrap(txt, maxW, size);
+    drawLines(lines, M, size, 4.3);
+    y += 2;
+    doc.setTextColor(0, 0, 0);
   };
 
   /* ------------------------------ gauge donut ---------------------------- */
