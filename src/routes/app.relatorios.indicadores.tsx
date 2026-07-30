@@ -10,7 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
-import { FileBarChart2, Loader2, Sparkles } from "lucide-react";
+import { SignaturePadDialog } from "@/components/signature-pad-dialog";
+import { FileBarChart2, Loader2, Sparkles, PenLine, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type jsPDF from "jspdf";
 import {
@@ -74,7 +75,21 @@ function RelatorioIndicadoresPage() {
   const [gestorCargo, setGestorCargo] = useState("Gestão / Direção");
   const [sesmtSig, setSesmtSig] = useState<string | null>(null);
   const [engSig, setEngSig] = useState<string | null>(null);
+  const [sigTarget, setSigTarget] = useState<null | "sesmt" | "eng">(null);
   const [preview, setPreview] = useState<{ doc: jsPDF; fileName: string } | null>(null);
+
+  /* assinaturas salvas do usuário (galeria) — permite escolher antes de gerar */
+  const { data: minhasAssinaturas } = useQuery({
+    queryKey: ["rel-ind-signatures"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("user_signatures")
+        .select("id,label,signature_data,is_default")
+        .order("is_default", { ascending: false })
+        .order("created_at", { ascending: false });
+      return data ?? [];
+    },
+  });
 
   const range = useMemo(
     () => periodoRange(tipo, Number(ano), tipo === "MENSAL" ? Number(mes) : Number(trimestre)),
@@ -461,16 +476,65 @@ function RelatorioIndicadoresPage() {
             <Textarea rows={4} value={conclusao} onChange={(e) => setConclusao(e.target.value)}
               placeholder="Análise crítica final, encaminhamentos e responsáveis…" />
           </div>
+          <div className="grid md:grid-cols-2 gap-3">
+            {([
+              { key: "sesmt" as const, label: "Assinatura · Responsável SESMT", val: sesmtSig, set: setSesmtSig },
+              { key: "eng" as const, label: "Assinatura · Gestão / Direção", val: engSig, set: setEngSig },
+            ]).map((slot) => (
+              <div key={slot.key} className="rounded-lg border p-3 flex flex-col gap-2">
+                <Label className="text-xs">{slot.label}</Label>
+                <div className="h-16 rounded-md bg-muted/40 flex items-center justify-center overflow-hidden">
+                  {slot.val ? (
+                    <img src={slot.val} alt={slot.label} className="max-h-14 object-contain" />
+                  ) : (
+                    <span className="text-[11px] text-muted-foreground">Nenhuma assinatura selecionada</span>
+                  )}
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button size="sm" variant="outline" onClick={() => setSigTarget(slot.key)}>
+                    <PenLine className="h-3.5 w-3.5 mr-1" /> Galeria / desenhar
+                  </Button>
+                  {(minhasAssinaturas ?? []).slice(0, 3).map((s: any) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      title={s.label}
+                      onClick={() => slot.set(s.signature_data)}
+                      className="h-9 w-20 rounded border bg-background hover:border-primary transition-colors overflow-hidden flex items-center justify-center"
+                    >
+                      <img src={s.signature_data} alt={s.label} className="max-h-8 object-contain" />
+                    </button>
+                  ))}
+                  {slot.val && (
+                    <Button size="sm" variant="ghost" onClick={() => slot.set(null)}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
           <div className="flex justify-end">
             <Button onClick={() => { try { gerar(); } catch (e: any) { toast.error(e?.message ?? "Erro ao gerar"); } }} disabled={!calc}>
               <FileBarChart2 className="h-4 w-4 mr-2" /> Gerar relatório
             </Button>
           </div>
           <p className="text-[11px] text-muted-foreground">
-            As assinaturas são aplicadas na tela de visualização — use a galeria de assinaturas nos slots “Responsável SESMT” e “Gestão”.
+            Escolha as assinaturas acima antes de gerar — elas também podem ser trocadas na tela de visualização do PDF.
           </p>
         </Card>
       </div>
+
+      <SignaturePadDialog
+        open={!!sigTarget}
+        onClose={() => setSigTarget(null)}
+        title={sigTarget === "eng" ? "Assinatura · Gestão / Direção" : "Assinatura · Responsável SESMT"}
+        onConfirm={(r) => {
+          if (sigTarget === "eng") setEngSig(r.dataUrl);
+          else setSesmtSig(r.dataUrl);
+          setSigTarget(null);
+        }}
+      />
 
       <PDFPreviewDialog
         open={!!preview}
