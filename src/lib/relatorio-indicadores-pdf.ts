@@ -502,7 +502,7 @@ export function gerarRelatorioIndicadoresPDF(p: RelatorioIndicadoresParams): jsP
   doc.setFontSize(9);
   doc.setTextColor(...SLATE);
   doc.text(`${cidade}, ${dataExt}.`, M, y);
-  y += 12;
+  y += 22;
 
   const assinaturaBloco = (x: number, w: number, sig: string | null | undefined, nome?: string | null, cargo?: string | null, registro?: string | null) => {
     if (sig) {
