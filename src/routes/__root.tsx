@@ -149,6 +149,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const persister = useMemo(() => createIdbPersister(), []);
 
 
   // Convites e recuperação de senha do Supabase chegam com tokens no hash
