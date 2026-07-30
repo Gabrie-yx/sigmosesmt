@@ -250,6 +250,8 @@ export function ExtintorInspecaoFotoDialog({
 }) {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const isOnline = useIsOnline();
+
 
   const [aba, setAba] = useState<Slot>("etiqueta");
   const [etiqueta, setEtiqueta] = useState<FotoState>(empty());
