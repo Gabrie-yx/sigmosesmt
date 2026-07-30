@@ -19,10 +19,13 @@ export function registerSIGMOPWA() {
     hostname.endsWith(".beta.lovable.dev");
 
   const isIframe = window.self !== window.top;
-  const swOff = new URLSearchParams(window.location.search).has("sw");
+  const swOff = new URLSearchParams(window.location.search).get("sw") === "off";
+  // Service Worker só funciona em contexto seguro (HTTPS ou localhost).
+  // O SIGMO interno roda em HTTP, então aqui o SW simplesmente não existe.
+  const isSecure = window.isSecureContext === true;
   const isDev = import.meta.env.DEV;
 
-  if (isDev || isPreview || isIframe || swOff) {
+  if (isDev || isPreview || isIframe || swOff || !isSecure) {
     // Em ambientes de preview/dev, garante que nenhum SW de app shell fique preso.
     navigator.serviceWorker
       .getRegistrations()
@@ -46,7 +49,13 @@ export function registerSIGMOPWA() {
       console.error("[SIGMO PWA] Erro ao registrar SW:", error);
     },
     onNeedRefresh() {
-      // Atualização disponível — recarrega para aplicar a nova versão.
+      // Recarrega uma única vez por sessão para não entrar em loop de reload.
+      try {
+        if (sessionStorage.getItem("sigmo-sw-reloaded") === "1") return;
+        sessionStorage.setItem("sigmo-sw-reloaded", "1");
+      } catch {
+        return;
+      }
       window.location.reload();
     },
     onOfflineReady() {
