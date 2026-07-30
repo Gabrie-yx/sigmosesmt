@@ -300,6 +300,13 @@ export function ExtintorInspecaoFotoDialog({
     const previewUrl = URL.createObjectURL(file);
     setAvarias((prev) => [...prev, { id, file, previewUrl, path: null, uploading: true }]);
     try {
+      if (!isOnline) {
+        setAvarias((prev) =>
+          prev.map((a) => (a.id === id ? { ...a, path: `offline://avaria-${id}`, uploading: false } : a)),
+        );
+        toast.info("Modo offline: foto guardada para sincronização.");
+        return;
+      }
       const blob = await compressImage(file);
       const path = `${user!.id}/${Date.now()}-avaria.jpg`;
       const { error } = await supabase.storage.from(BUCKET).upload(path, blob, {
