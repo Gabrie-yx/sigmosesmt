@@ -39,7 +39,7 @@ export async function loadTemplateBytes(codigo: string): Promise<Uint8Array> {
     return bytes;
   } catch (e) {
     if (codigo === "FOR-SEG-04") {
-      const assetRes = await fetch(pteOfficialAsset.url);
+      const assetRes = await fetch(pteOfficialUrl);
       if (assetRes.ok) {
         const bytes = new Uint8Array(await assetRes.arrayBuffer());
         _cache.set(codigo, bytes);
