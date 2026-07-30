@@ -1,4 +1,5 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
+import { uuid } from "@/lib/uuid";
 
 export const OFFLINE_DB_NAME = "sigmo-offline";
 export const OFFLINE_DB_VERSION = 1;
@@ -100,9 +101,12 @@ export async function setOfflineStore<T>(
   const ids: string[] = [];
 
   for (const row of rows) {
-    const id = String(row[idField]);
+    if (row == null) continue;
+    const raw = row[idField];
+    if (raw === undefined || raw === null) continue;
+    const id = String(raw);
+    if (!(id in map)) ids.push(id);
     map[id] = row;
-    ids.push(id);
   }
 
   await db.put("store", {
@@ -128,7 +132,7 @@ export async function getOfflineStore<T>(key: string): Promise<OfflineStoreEntry
 export async function getOfflineStoreRows<T>(key: string): Promise<T[]> {
   const entry = await getOfflineStore<T>(key);
   if (!entry) return [];
-  return entry.ids.map((id) => entry.rows[id]);
+  return entry.ids.map((id) => entry.rows[id]).filter((r): r is T => r !== undefined && r !== null);
 }
 
 /**
@@ -146,7 +150,7 @@ export async function enqueueSync<T>(item: Omit<SyncQueueItem<T>, "id" | "create
   const db = await getOfflineDB();
   const full: SyncQueueItem<T> = {
     ...item,
-    id: crypto.randomUUID(),
+    id: uuid(),
     createdAt: new Date().toISOString(),
     attempts: 0,
     status: "pending",
@@ -160,7 +164,15 @@ export async function enqueueSync<T>(item: Omit<SyncQueueItem<T>, "id" | "create
  */
 export async function listPendingSync(): Promise<SyncQueueItem[]> {
   const db = await getOfflineDB();
-  return db.getAll("sync_queue");
+  const all = await db.getAll("sync_queue");
+  // Ordem cronológica: a fila precisa sincronizar na ordem em que foi criada.
+  return all.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+}
+
+/** Quantidade de itens ainda não sincronizados (pendentes ou com falha). */
+export async function countPendingSync(): Promise<number> {
+  const all = await listPendingSync();
+  return all.length;
 }
 
 /**
@@ -186,7 +198,7 @@ export async function removeSyncItem(id: string) {
  */
 export async function saveOfflineFile(file: Blob, name: string, type: string, bucket?: string, path?: string) {
   const db = await getOfflineDB();
-  const id = crypto.randomUUID();
+  const id = uuid();
   const entry: OfflineFile = {
     id,
     bucket,
