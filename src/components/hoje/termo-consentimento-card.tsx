@@ -21,10 +21,12 @@ export function TermoConsentimentoCard() {
       if (error) throw error;
       const rows = data ?? [];
       const blindados = rows.filter((r: any) => r.status_probatorio === "BLINDADO").length;
-      const pendentes = rows.filter((r: any) => r.status_probatorio === "PENDENTE_TERMO");
-      const semSig = rows.filter((r: any) => r.status_probatorio === "SEM_ASSINATURA").length;
+      const pendentes = rows.filter(
+        (r: any) => r.status_probatorio === "PENDENTE_TERMO" || r.status_probatorio === "TERMO_DESATUALIZADO",
+      );
+      const desatualizados = rows.filter((r: any) => r.status_probatorio === "TERMO_DESATUALIZADO").length;
       const total = rows.length;
-      return { total, blindados, pendentes, semSig };
+      return { total, blindados, pendentes, desatualizados };
     },
   });
 
@@ -47,14 +49,14 @@ export function TermoConsentimentoCard() {
           </div>
           <div className="flex-1">
             <div className="text-[10px] uppercase tracking-widest text-amber-300/80 font-black">
-              Blindagem Jurídica das Assinaturas (Lei 14.063/2020)
+              Blindagem Jurídica — Termo LGPD v2 (Lei 14.063/2020 · LGPD 13.709/2018)
             </div>
             <div className="text-xl font-black text-rose-50">
-              {data?.blindados ?? 0} blindados · {pendCount} pendentes · {data?.semSig ?? 0} sem assinatura
+              {data?.blindados ?? 0} blindados · {pendCount} a coletar · {data?.desatualizados ?? 0} em modelo antigo
             </div>
             <div className="text-xs text-[rgba(245,225,225,0.6)] mt-0.5">
               Cobertura atual: <strong className="text-rose-100">{cobertura}%</strong> ·
-              Pendentes têm assinatura cadastrada mas <em>nunca</em> assinaram o Termo de Consentimento (retroativo).
+              Inclui quem assinou o modelo antigo (v1) e precisa <em>recoletar</em> no novo termo em 3 blocos.
             </div>
           </div>
           {pendCount > 0 && (
@@ -73,7 +75,7 @@ export function TermoConsentimentoCard() {
         {expanded && pendCount > 0 && (
           <div className="mt-4 border-t border-white/10 pt-4">
             <div className="text-[10px] uppercase tracking-widest text-rose-100/70 font-black mb-2">
-              Funcionários pendentes
+              Funcionários a coletar / recoletar
             </div>
             <div className="max-h-72 overflow-auto divide-y divide-white/5 rounded-lg border border-white/10">
               {pendentes.slice(0, 200).map((p: any) => (
@@ -83,8 +85,9 @@ export function TermoConsentimentoCard() {
                   className="w-full flex items-center justify-between gap-2 px-3 py-2 hover:bg-amber-400/5 text-left"
                 >
                   <span className="text-sm text-rose-50 truncate">{p.nome}</span>
-                  <Badge className="bg-amber-500/15 text-amber-200 border border-amber-400/30 text-[10px]">
-                    <FileSignature className="h-3 w-3 mr-1" /> Gerar termo
+                  <Badge className="bg-amber-500/15 text-amber-200 border border-amber-400/30 text-[10px] shrink-0">
+                    <FileSignature className="h-3 w-3 mr-1" />
+                    {p.status_probatorio === "TERMO_DESATUALIZADO" ? "Recoletar (v1)" : "Coletar termo"}
                   </Badge>
                 </button>
               ))}

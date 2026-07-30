@@ -31,7 +31,7 @@ export type TermoConsentimentoPdfParams = {
   dpoEmail?: string | null;
   /** Código/hash de verificação impresso no rodapé. */
   codigoVerificacao?: string | null;
-  /** Marca d'água "VIA PARA ASSINATURA" (usado na geração da via em branco). */
+  /** Via em branco para impressão: quadros de escolha saem vazios para marcação de próprio punho. */
   viaParaAssinatura?: boolean;
 };
 
@@ -215,7 +215,7 @@ export function gerarTermoConsentimentoPDF(p: TermoConsentimentoPdfParams): jsPD
     "com usuário responsável, data, hora e documento de destino; (iii) posso solicitar a qualquer momento " +
     "o extrato dos documentos em que minha assinatura foi utilizada.",
   );
-  checkbox(true, "AUTORIZO o uso da minha assinatura eletrônica simples, nos limites acima.");
+  checkbox(p.viaParaAssinatura ? null : true, "AUTORIZO o uso da minha assinatura eletrônica simples, nos limites acima.");
 
   // ===== BLOCO 2 =====
   tituloBloco("BLOCO 2 — USO DE FOTOGRAFIA (IMAGEM) NO SISTEMA (consentimento específico)");
@@ -340,19 +340,6 @@ export function gerarTermoConsentimentoPDF(p: TermoConsentimentoPdfParams): jsPD
     doc.setFontSize(8);
     doc.text("Responsável pela coleta (SESMT/RH)", margin, y);
     doc.text("Testemunha (nome e CPF)", pageW - margin - 78, y);
-  }
-
-  // ===== Marca d'água da via em branco =====
-  if (p.viaParaAssinatura) {
-    const total = doc.getNumberOfPages();
-    for (let i = 1; i <= total; i++) {
-      doc.setPage(i);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(46);
-      doc.setTextColor(226, 232, 240);
-      doc.text("VIA PARA ASSINATURA", pageW / 2, pageH / 2, { align: "center", angle: 32 });
-      doc.setTextColor(0, 0, 0);
-    }
   }
 
   // ===== Rodapé em todas as páginas =====
