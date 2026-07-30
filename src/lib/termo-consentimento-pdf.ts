@@ -31,7 +31,7 @@ export type TermoConsentimentoPdfParams = {
   dpoEmail?: string | null;
   /** Código/hash de verificação impresso no rodapé. */
   codigoVerificacao?: string | null;
-  /** Marca d'água "VIA PARA ASSINATURA" (usado na geração da via em branco). */
+  /** Via em branco para impressão: quadros de escolha saem vazios para marcação de próprio punho. */
   viaParaAssinatura?: boolean;
 };
 
@@ -340,22 +340,6 @@ export function gerarTermoConsentimentoPDF(p: TermoConsentimentoPdfParams): jsPD
     doc.setFontSize(8);
     doc.text("Responsável pela coleta (SESMT/RH)", margin, y);
     doc.text("Testemunha (nome e CPF)", pageW - margin - 78, y);
-  }
-
-  // ===== Marca d'água da via em branco =====
-  if (p.viaParaAssinatura) {
-    const total = doc.getNumberOfPages();
-    for (let i = 1; i <= total; i++) {
-      doc.setPage(i);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(40);
-      doc.setTextColor(203, 213, 225);
-      const gs = (doc as any).GState;
-      if (gs) (doc as any).setGState(new gs({ opacity: 0.16 }));
-      doc.text("VIA PARA ASSINATURA", pageW / 2, pageH / 2, { align: "center", angle: 32 });
-      if (gs) (doc as any).setGState(new gs({ opacity: 1 }));
-      doc.setTextColor(0, 0, 0);
-    }
   }
 
   // ===== Rodapé em todas as páginas =====
