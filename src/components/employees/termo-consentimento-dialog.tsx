@@ -599,23 +599,35 @@ export function TermoConsentimentoDialog({
           >
             Fechar
           </Button>
-          {(status === "BLINDADO" || status === "DESATUALIZADO") && (
-            <Button
-              variant="outline"
-              onClick={visualizar}
-              className="border-emerald-400/50 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20 hover:text-white"
-            >
-              <Eye className="h-4 w-4 mr-1" /> Visualizar termo
-            </Button>
-          )}
-          {(termoExistente?.scan_path || termoExistente?.scan_url) && (
-            <Button
-              variant="outline"
-              onClick={verDigitalizado}
-              className="border-sky-400/50 bg-sky-500/10 text-sky-200 hover:bg-sky-500/20 hover:text-white"
-            >
-              <FileSignature className="h-4 w-4 mr-1" /> Ver digitalizado
-            </Button>
+          {(termoExistente?.scan_path || termoExistente?.scan_url) ? (
+            <>
+              <Button
+                variant="outline"
+                onClick={verDigitalizado}
+                className="border-emerald-400/60 bg-emerald-500/15 text-emerald-100 hover:bg-emerald-500/25 hover:text-white"
+              >
+                <FileSignature className="h-4 w-4 mr-1" /> Ver termo assinado
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={visualizar}
+                title="Via gerada pelo sistema, sem as assinaturas de próprio punho"
+                className="text-rose-200/70 hover:bg-rose-900/30 hover:text-white"
+              >
+                <Eye className="h-4 w-4 mr-1" /> Via em branco
+              </Button>
+            </>
+          ) : (
+            (status === "BLINDADO" || status === "DESATUALIZADO") && (
+              <Button
+                variant="outline"
+                onClick={visualizar}
+                className="border-emerald-400/50 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20 hover:text-white"
+              >
+                <Eye className="h-4 w-4 mr-1" /> Visualizar termo
+              </Button>
+            )
           )}
           {status === "BLINDADO" && (
             <Button
