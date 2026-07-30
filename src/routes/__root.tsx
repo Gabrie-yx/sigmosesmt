@@ -149,6 +149,8 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useOfflineSync();
+
 
   // Convites e recuperação de senha do Supabase chegam com tokens no hash
   // (#access_token=...&type=invite|recovery). O supabase-js cria sessão
