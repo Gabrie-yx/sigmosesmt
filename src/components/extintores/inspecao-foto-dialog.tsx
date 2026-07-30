@@ -4,10 +4,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Camera, RotateCcw, Loader2, Sparkles, CheckCircle2, AlertTriangle, Trash2, Plus } from "lucide-react";
+import { Camera, RotateCcw, Loader2, Sparkles, CheckCircle2, AlertTriangle, Trash2, Plus, WifiOff } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useIsOnline } from "@/hooks/use-is-online";
+import { enqueueSync } from "@/lib/offline-db";
 
 const BUCKET = "extintores-inspecoes";
 const MAX_AVARIAS = 4;
