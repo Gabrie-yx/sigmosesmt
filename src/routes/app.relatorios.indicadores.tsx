@@ -478,8 +478,8 @@ function RelatorioIndicadoresPage() {
           </div>
           <div className="grid md:grid-cols-2 gap-3">
             {([
-              { key: "sesmt" as const, label: "Assinatura · Responsável SESMT", val: sesmtSig, set: setSesmtSig },
-              { key: "eng" as const, label: "Assinatura · Gestão / Direção", val: engSig, set: setEngSig },
+              { key: "eng" as const, label: "Assinatura · Responsável SESMT", val: engSig, set: setEngSig },
+              { key: "sesmt" as const, label: "Assinatura · Gestão / Direção", val: sesmtSig, set: setSesmtSig },
             ]).map((slot) => (
               <div key={slot.key} className="rounded-lg border p-3 flex flex-col gap-2">
                 <Label className="text-xs">{slot.label}</Label>
@@ -528,7 +528,7 @@ function RelatorioIndicadoresPage() {
       <SignaturePadDialog
         open={!!sigTarget}
         onClose={() => setSigTarget(null)}
-        title={sigTarget === "eng" ? "Assinatura · Gestão / Direção" : "Assinatura · Responsável SESMT"}
+        title={sigTarget === "eng" ? "Assinatura · Responsável SESMT" : "Assinatura · Gestão / Direção"}
         onConfirm={(r) => {
           if (sigTarget === "eng") setEngSig(r.dataUrl);
           else setSesmtSig(r.dataUrl);
@@ -544,7 +544,7 @@ function RelatorioIndicadoresPage() {
         title={`Relatório ${tipo === "MENSAL" ? "Mensal" : "Trimestral"} de Indicadores · ${range.label}`}
         signable
         useSignatureGallery
-        signatureLabels={{ sesmt: "Responsável SESMT", eng: "Gestão / Direção" }}
+        signatureLabels={{ eng: "Responsável SESMT", sesmt: "Gestão / Direção" }}
         sesmtSig={sesmtSig}
         engSig={engSig}
         onChangeSesmtSig={(v) => { setSesmtSig(v); gerar({ sesmt: v }); }}
