@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, FileText, Upload, Printer, CheckCircle2, AlertTriangle, Download, FileSignature } from "lucide-react";
-import { buildEpiFichaPdf, openEpiFichaPdf } from "@/lib/epi-ficha-pdf";
+import { buildEpiFichaPdf } from "@/lib/epi-ficha-pdf";
 import { buildFichaOficialBytes, bytesToPreviewDoc } from "@/lib/epi-ficha-oficial";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import { lazy, Suspense } from "react";
@@ -226,26 +226,28 @@ export function FichasMensaisPanel({ embedded = false }: { embedded?: boolean })
 
   const baixarPdf = useMutation({
     mutationFn: async (r: Row) => {
-      // Se já tem ficha assinada E está atualizada, baixa do storage
-      if (r.arquivo_path && !r.desatualizada) {
-        const bucket = r.arquivo_bucket ?? "epi-fichas-mensais";
-        const { data, error } = await supabase.storage
-          .from(bucket)
-          .createSignedUrl(r.arquivo_path, 300);
-        if (error) throw error;
-        const bytes = new Uint8Array(await (await fetch(data.signedUrl)).arrayBuffer());
-        setPreview({ doc: bytesToPreviewDoc(bytes, nomeArquivo(r)), name: nomeArquivo(r) });
-        return;
-      }
-      // Assinada porém desatualizada → avisa e regenera com todas as entregas do mês
+      // Visualização/impressão SEMPRE no modelo homologado FOR-SEG 02.
       if (r.arquivo_path && r.desatualizada) {
         toast.info("Ficha assinada está desatualizada (novas entregas no mês). Gerando ficha atualizada — assine novamente.");
       }
-      // senão gera no PDF-mãe homologado FOR-SEG 02
       const bytes = await gerarBytes(r);
       setPreview({ doc: bytesToPreviewDoc(bytes, nomeArquivo(r)), name: nomeArquivo(r) });
     },
     onError: (e: any) => toast.error(e.message ?? "Erro ao gerar PDF"),
+  });
+
+  /** Abre o arquivo assinado original (modelo antigo), preservado para auditoria. */
+  const abrirOriginal = useMutation({
+    mutationFn: async (r: Row) => {
+      if (!r.arquivo_path) return;
+      const bucket = r.arquivo_bucket ?? "epi-fichas-mensais";
+      const { data, error } = await supabase.storage.from(bucket).createSignedUrl(r.arquivo_path, 300);
+      if (error) throw error;
+      const bytes = new Uint8Array(await (await fetch(data.signedUrl)).arrayBuffer());
+      const name = `Assinada_${nomeArquivo(r)}`;
+      setPreview({ doc: bytesToPreviewDoc(bytes, name), name });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro ao abrir ficha assinada"),
   });
 
   const abrirAssinador = useMutation({
@@ -361,10 +363,13 @@ export function FichasMensaisPanel({ embedded = false }: { embedded?: boolean })
                       </Button>
                     )}
                     <Button size="sm" variant="outline" onClick={() => baixarPdf.mutate(r)} disabled={baixarPdf.isPending}>
-                      {r.status === "ASSINADA"
-                        ? <><Download className="h-4 w-4 mr-1" /> Baixar / Imprimir</>
-                        : <><Printer className="h-4 w-4 mr-1" /> Ver / Imprimir</>}
+                      <Printer className="h-4 w-4 mr-1" /> Ver FOR-SEG 02
                     </Button>
+                    {r.arquivo_path && (
+                      <Button size="sm" variant="ghost" onClick={() => abrirOriginal.mutate(r)} disabled={abrirOriginal.isPending} title="Arquivo assinado original">
+                        <Download className="h-4 w-4 mr-1" /> Assinada
+                      </Button>
+                    )}
                   </div>
                 </TableCell>
               </TableRow>
