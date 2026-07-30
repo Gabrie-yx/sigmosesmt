@@ -13321,29 +13321,14 @@ export type Database = {
         Row: {
           assinatura_url: string | null
           company_id: string | null
+          consente_imagem: boolean | null
           employee_id: string | null
+          modalidade: string | null
           nome: string | null
           status_probatorio: string | null
           termo_consentimento_data: string | null
           termo_consentimento_id: string | null
-        }
-        Insert: {
-          assinatura_url?: string | null
-          company_id?: string | null
-          employee_id?: string | null
-          nome?: string | null
-          status_probatorio?: never
-          termo_consentimento_data?: string | null
-          termo_consentimento_id?: string | null
-        }
-        Update: {
-          assinatura_url?: string | null
-          company_id?: string | null
-          employee_id?: string | null
-          nome?: string | null
-          status_probatorio?: never
-          termo_consentimento_data?: string | null
-          termo_consentimento_id?: string | null
+          versao_termo: number | null
         }
         Relationships: [
           {
