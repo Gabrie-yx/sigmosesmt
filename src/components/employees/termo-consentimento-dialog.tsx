@@ -206,22 +206,8 @@ export function TermoConsentimentoDialog({
     if (!emp || !termoExistente) return;
     const fileName = `termo-consentimento-${(emp.nome || "func").replace(/\s+/g, "-").toLowerCase()}.pdf`;
 
-    // 1) Se já existe PDF arquivado, tenta abrir o Storage (sempre gera signed URL fresca)
-    if (termoExistente.pdf_path) {
-      try {
-        const { data: signed, error } = await supabase.storage
-          .from("termos-consentimento")
-          .createSignedUrl(termoExistente.pdf_path, 60 * 60);
-        if (!error && signed?.signedUrl) {
-          window.open(signed.signedUrl, "_blank", "noopener,noreferrer");
-          return;
-        }
-      } catch (e) {
-        console.warn("Falha ao abrir PDF arquivado, regenerando:", e);
-      }
-    }
-
-    // 2) Fallback: regenera em memória (mesmo hash/conteúdo)
+    // Sempre regenera em memória (mesmo conteúdo do PDF arquivado) para exibir
+    // DENTRO do sistema via PDFPreviewDialog — nunca abrir aba do navegador.
     const sigClean = await fetchSignatureAsCleanDataUrl(emp.assinatura_url);
     const iso = termoExistente.data_assinatura as string;
     const pdf = gerarTermoConsentimentoPDF({
