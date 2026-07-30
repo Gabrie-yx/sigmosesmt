@@ -7,7 +7,7 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import sigmoLogo from "@/assets/sigmo-logo.png";
+import sigmoLogo from "@/assets/sigmo-logo-white.png";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
