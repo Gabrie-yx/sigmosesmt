@@ -317,7 +317,10 @@ function ExtintoresPage() {
             <div>
               <div className="text-[10px] font-black uppercase tracking-[0.3em] text-white/70">SESMT · NR-23 · NBR 12962</div>
               <h1 className="heading-display text-2xl md:text-3xl leading-tight">Controle de Extintores</h1>
-              <div className="text-xs text-white/80 mt-0.5">Inventário, inspeções mensais e conformidade FOR-SFG 08</div>
+              <div className="flex items-center gap-2 text-xs text-white/80 mt-0.5">
+                <span>Inventário, inspeções mensais e conformidade FOR-SFG 08</span>
+                <ConnectionBadge />
+              </div>
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
