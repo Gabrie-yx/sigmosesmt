@@ -834,11 +834,15 @@ function TstPanel() {
                 <div className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-300/80">Dias sem Acidente · Registrável</div>
                 <div className="text-4xl md:text-5xl font-black tabular-nums leading-none mt-1 text-emerald-300"
                   style={{ textShadow: "0 0 25px rgba(16,185,129,0.6), 0 0 50px rgba(16,185,129,0.25)" }}>
-                  {recordeAcidente.atual}
+                  {recordeAcidente.atual ?? "—"}
                   <span className="text-base text-emerald-400/70 ml-2 font-bold tracking-wide">dias</span>
                 </div>
-                {recordeAcidente.dataInicio && (
-                  <div className="text-[10px] text-slate-400 mt-1">Contagem iniciada em {new Date(recordeAcidente.dataInicio + "T00:00").toLocaleDateString("pt-BR")}</div>
+                {recordeAcidente.dataInicio ? (
+                  <div className="text-[10px] text-slate-400 mt-1">
+                    Último acidente em {new Date(recordeAcidente.dataInicio + "T00:00").toLocaleDateString("pt-BR")}
+                  </div>
+                ) : (
+                  <div className="text-[10px] text-slate-400 mt-1">Nenhum acidente registrado no sistema</div>
                 )}
               </div>
             </div>
@@ -857,16 +861,17 @@ function TstPanel() {
               <div className="text-right">
                 <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Diferença</div>
                 <div className={`text-2xl font-black tabular-nums tracking-tight ${
-                  recordeAcidente.atual >= recordeAcidente.recorde ? "text-emerald-300" : "text-slate-300"
+                  (recordeAcidente.atual ?? 0) >= recordeAcidente.recorde ? "text-emerald-300" : "text-slate-300"
                 }`}>
-                  {recordeAcidente.atual >= recordeAcidente.recorde ? "+" : "−"}
-                  {Math.abs(recordeAcidente.recorde - recordeAcidente.atual)}
+                  {recordeAcidente.atual === null
+                    ? "—"
+                    : `${recordeAcidente.atual >= recordeAcidente.recorde ? "+" : "−"}${Math.abs(recordeAcidente.recorde - recordeAcidente.atual)}`}
                 </div>
               </div>
             </div>
           </div>
           {/* barra de progresso até o recorde */}
-          {recordeAcidente.recorde > 0 && (
+          {recordeAcidente.recorde > 0 && recordeAcidente.atual !== null && (
             <div className="px-4 md:px-5 pb-4">
               <div className="flex justify-between text-[9px] font-black uppercase tracking-wider text-slate-500 mb-1">
                 <span>Progresso até o recorde</span>
