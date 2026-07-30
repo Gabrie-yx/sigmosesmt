@@ -326,10 +326,10 @@ function RelatorioIndicadoresPage() {
       responsavelNome: respNome,
       responsavelCargo: respCargo,
       responsavelRegistro: respRegistro,
-      assinaturaDataUrl: over?.sesmt !== undefined ? over.sesmt : sesmtSig,
+      assinaturaDataUrl: over?.eng !== undefined ? over.eng : engSig,
       gestorNome,
       gestorCargo,
-      assinaturaGestorDataUrl: over?.eng !== undefined ? over.eng : engSig,
+      assinaturaGestorDataUrl: over?.sesmt !== undefined ? over.sesmt : sesmtSig,
       dataExtenso: hojeExtenso(),
     });
     setPreview({
