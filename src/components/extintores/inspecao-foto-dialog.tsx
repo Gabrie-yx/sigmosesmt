@@ -431,6 +431,11 @@ export function ExtintorInspecaoFotoDialog({
           </DialogTitle>
           <DialogDescription>
             Envie as fotos obrigatórias para iniciar a análise automática do extintor.
+            {!isOnline && (
+              <span className="ml-2 inline-flex items-center gap-1 text-amber-400">
+                <WifiOff className="h-3 w-3" /> Modo offline ativo
+              </span>
+            )}
           </DialogDescription>
           {extintor && (
             <div className="text-xs text-muted-foreground mt-1">
