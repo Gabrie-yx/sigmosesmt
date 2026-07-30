@@ -68,10 +68,45 @@ function startSessionSub() {
   // SSR guard: supabase.auth toca localStorage — não roda no servidor.
   if (typeof window === "undefined") return;
   sessionSubStarted = true;
-  supabase.auth.getSession().then(({ data }) => {
-    cachedSession = data.session;
+
+  const settle = (s: Session | null) => {
+    cachedSession = s;
     sessionListeners.forEach((fn) => fn(cachedSession ?? null, "INITIAL"));
-  });
+  };
+
+  // Rede fora / Supabase lento: nunca deixa a UI presa em "Carregando...".
+  const bail = setTimeout(() => {
+    if (cachedSession === undefined) settle(null);
+  }, 8000);
+
+  supabase.auth
+    .getSession()
+    .then(async ({ data, error }) => {
+      if (error) {
+        // Refresh token inválido/ausente (ex.: após migração de servidor):
+        // limpa o resíduo local e manda pro login em vez de travar.
+        try {
+          await supabase.auth.signOut({ scope: "local" });
+        } catch {
+          /* noop */
+        }
+        settle(null);
+        return;
+      }
+      settle(data.session ?? null);
+    })
+    .catch(async () => {
+      try {
+        await supabase.auth.signOut({ scope: "local" });
+      } catch {
+        /* noop */
+      }
+      settle(null);
+    })
+    .finally(() => {
+      clearTimeout(bail);
+      if (cachedSession === undefined) settle(null);
+    });
   supabase.auth.onAuthStateChange((event, s) => {
     // TOKEN_REFRESHED não muda uid; só notifica se mudou de fato.
     const prevUid = cachedSession?.user?.id ?? null;
