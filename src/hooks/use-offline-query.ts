@@ -4,9 +4,10 @@ import { useIsOnline } from "@/hooks/use-is-online";
 
 /**
  * Hook wrapper em useQuery que persiste resultados no IndexedDB.
- * Quando o dispositivo está offline, retorna os dados do cache local.
+ * - Online: busca na rede e atualiza o cache local.
+ * - Offline (ou falha de rede): devolve o que está no cache local.
  */
-export function useOfflineQuery<T extends { id: string | number }>(
+export function useOfflineQuery<T extends Record<string, any>>(
   key: string,
   queryFn: () => Promise<T[]>,
   idField: keyof T,
@@ -14,15 +15,32 @@ export function useOfflineQuery<T extends { id: string | number }>(
 ) {
   const isOnline = useIsOnline();
 
-  return useQuery({
+  return useQuery<T[], Error>({
     queryKey: [key],
+    // networkMode "always" evita que o React Query pause a query quando
+    // navigator.onLine === false — precisamos rodar para ler o IndexedDB.
+    networkMode: "always",
+    retry: (failureCount) => isOnline && failureCount < 2,
     queryFn: async () => {
-      if (isOnline) {
-        const rows = await queryFn();
-        await setOfflineStore(key, rows, idField);
-        return rows;
+      if (!isOnline) {
+        return getOfflineStoreRows<T>(key);
       }
-      return getOfflineStoreRows<T>(key);
+
+      try {
+        const rows = await queryFn();
+        try {
+          await setOfflineStore(key, rows, idField);
+        } catch {
+          /* falha ao gravar cache não pode derrubar a tela */
+        }
+        return rows;
+      } catch (err) {
+        // navigator.onLine mente com frequência (wifi sem internet).
+        // Se houver cache, usa o cache em vez de quebrar a tela.
+        const cached = await getOfflineStoreRows<T>(key);
+        if (cached.length > 0) return cached;
+        throw err;
+      }
     },
     ...options,
   });
@@ -35,4 +53,3 @@ export async function getLastSyncAt(key: string): Promise<string | null> {
   const entry = await getOfflineStore(key);
   return entry?.updatedAt ?? null;
 }
-
