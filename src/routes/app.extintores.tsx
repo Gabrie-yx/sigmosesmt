@@ -127,31 +127,32 @@ function ExtintoresPage() {
     },
   });
 
-  const extintores = useQuery({
-    queryKey: ["extintores"],
-    queryFn: async () => {
+  const extintores = useOfflineQuery(
+    "extintores",
+    async () => {
       const { data, error } = await supabase.from("extintores").select("*").order("numero");
       if (error) throw error;
       return (data ?? []) as Extintor[];
     },
-    refetchOnWindowFocus: true,
-    refetchOnMount: "always",
-  });
+    "id",
+    { refetchOnWindowFocus: true },
+  );
 
-  const inspecoes = useQuery({
-    queryKey: ["extintor-inspecoes"],
-    queryFn: async () => {
+  const inspecoes = useOfflineQuery(
+    "extintor-inspecoes",
+    async () => {
       const { data, error } = await supabase
         .from("extintor_inspecoes").select("*").order("data_inspecao", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Inspecao[];
     },
-  });
+    "id",
+  );
 
   // Última inspeção IA por extintor (para expandir NCs concretas em pendências)
-  const inspecoesFotos = useQuery({
-    queryKey: ["extintor-inspecoes-fotos-recentes"],
-    queryFn: async () => {
+  const inspecoesFotos = useOfflineQuery(
+    "extintor-inspecoes-fotos-recentes",
+    async () => {
       const { data, error } = await supabase
         .from("extintor_inspecoes_fotos")
         .select("id, extintor_id, status_geral, nao_conformidades, divergencia_detectada, divergencia_descricao, inspecionado_em")
@@ -159,7 +160,8 @@ function ExtintoresPage() {
       if (error) throw error;
       return (data ?? []) as any[];
     },
-  });
+    "id",
+  );
 
   const ultimaIaPorExt = useMemo(() => {
     const map = new Map<string, any>();
