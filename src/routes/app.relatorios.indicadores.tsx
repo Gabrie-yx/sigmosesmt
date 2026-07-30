@@ -10,7 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
-import { FileBarChart2, Loader2, Sparkles } from "lucide-react";
+import { SignaturePadDialog } from "@/components/signature-pad-dialog";
+import { FileBarChart2, Loader2, Sparkles, PenLine, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type jsPDF from "jspdf";
 import {
@@ -74,7 +75,21 @@ function RelatorioIndicadoresPage() {
   const [gestorCargo, setGestorCargo] = useState("Gestão / Direção");
   const [sesmtSig, setSesmtSig] = useState<string | null>(null);
   const [engSig, setEngSig] = useState<string | null>(null);
+  const [sigTarget, setSigTarget] = useState<null | "sesmt" | "eng">(null);
   const [preview, setPreview] = useState<{ doc: jsPDF; fileName: string } | null>(null);
+
+  /* assinaturas salvas do usuário (galeria) — permite escolher antes de gerar */
+  const { data: minhasAssinaturas } = useQuery({
+    queryKey: ["rel-ind-signatures"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("user_signatures")
+        .select("id,label,signature_data,is_default")
+        .order("is_default", { ascending: false })
+        .order("created_at", { ascending: false });
+      return data ?? [];
+    },
+  });
 
   const range = useMemo(
     () => periodoRange(tipo, Number(ano), tipo === "MENSAL" ? Number(mes) : Number(trimestre)),
