@@ -12,6 +12,8 @@ export type TermoConsentimentoPdfParams = {
   assinaturaDataUrl?: string | null;
   logoDataUrl?: string | null;
   coletadoPorNome?: string | null;
+  /** Consentimento específico para uso da FOTO (imagem) dentro do sistema. Default: true */
+  consenteImagem?: boolean;
 };
 
 /**
@@ -39,9 +41,9 @@ export function gerarTermoConsentimentoPDF(p: TermoConsentimentoPdfParams): jsPD
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
-  doc.text("TERMO DE CONSENTIMENTO PARA USO DE", pageW / 2, y, { align: "center" });
+  doc.text("TERMO DE CONSENTIMENTO PARA USO DE ASSINATURA", pageW / 2, y, { align: "center" });
   y += 6;
-  doc.text("ASSINATURA ELETRÔNICA SIMPLES", pageW / 2, y, { align: "center" });
+  doc.text("ELETRÔNICA SIMPLES E DE IMAGEM (FOTO) NO SISTEMA", pageW / 2, y, { align: "center" });
   y += 5;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
@@ -101,8 +103,6 @@ export function gerarTermoConsentimentoPDF(p: TermoConsentimentoPdfParams): jsPD
       "REVOGAÇÃO deste consentimento por escrito ao SESMT, hipótese em que o uso futuro será cessado, " +
       "sem prejuízo da validade dos documentos já emitidos.",
     "",
-    "Declaro, por fim, que li e compreendi integralmente o presente termo e o assino de livre e " +
-      "espontânea vontade.",
   ];
 
   const lineH = 4.6;
@@ -117,6 +117,62 @@ export function gerarTermoConsentimentoPDF(p: TermoConsentimentoPdfParams): jsPD
     doc.text(lines, margin, y, { align: "justify", maxWidth: maxW });
     y += lines.length * lineH;
   });
+
+  // ---- Bloco específico e destacado: USO DE IMAGEM (FOTO) ----
+  const consenteImagem = p.consenteImagem !== false;
+  const imgBody = [
+    "AUTORIZO, de forma livre, informada, específica e destacada, o uso da minha FOTOGRAFIA " +
+      "(imagem de rosto) EXCLUSIVAMENTE PARA FINS DE IDENTIFICAÇÃO INTERNA DENTRO DO SISTEMA SIGMO, " +
+      "a saber: cadastro/ficha do colaborador, crachá e listas internas de identificação, controle de " +
+      "presença e rastreabilidade de entregas de EPI, treinamentos e demais registros internos de SST.",
+    "",
+    "FICA EXPRESSAMENTE VEDADO o uso da minha imagem para finalidade publicitária, comercial, " +
+      "institucional externa, redes sociais, site, campanhas de marketing ou qualquer divulgação a " +
+      "terceiros estranhos à relação de trabalho, salvo mediante novo consentimento específico e por escrito.",
+    "",
+    "ESTOU CIENTE de que a foto é armazenada em ambiente controlado, com acesso restrito a usuários " +
+      "autorizados, tratada com base no art. 7º, I e V, da LGPD, e de que posso REVOGAR este " +
+      "consentimento a qualquer tempo por escrito ao SESMT, hipótese em que a imagem será removida do " +
+      "sistema, ressalvada a guarda legal obrigatória de registros de SST.",
+  ];
+
+  if (y + 46 > pageH - 80) { doc.addPage(); y = margin; }
+  y += 4;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.text("CONSENTIMENTO ESPECÍFICO — USO DE IMAGEM (FOTO) NO SISTEMA", margin, y);
+  y += 5;
+  doc.setFont("helvetica", "normal");
+  imgBody.forEach((para) => {
+    if (para === "") { y += 2; return; }
+    const lines = doc.splitTextToSize(para, maxW);
+    if (y + lines.length * lineH > pageH - 80) { doc.addPage(); y = margin; }
+    doc.text(lines, margin, y, { align: "justify", maxWidth: maxW });
+    y += lines.length * lineH;
+  });
+
+  // Opt-in explícito (SIM/NÃO)
+  y += 3;
+  if (y + 10 > pageH - 80) { doc.addPage(); y = margin; }
+  doc.setDrawColor(0, 0, 0);
+  const box = 3.6;
+  doc.rect(margin, y - 3, box, box);
+  if (consenteImagem) doc.text("X", margin + 0.8, y - 0.2);
+  doc.text("SIM, autorizo o uso da minha foto no sistema, nos limites acima.", margin + box + 3, y);
+  y += 6;
+  doc.rect(margin, y - 3, box, box);
+  if (!consenteImagem) doc.text("X", margin + 0.8, y - 0.2);
+  doc.text("NÃO autorizo o uso da minha foto no sistema.", margin + box + 3, y);
+  y += 8;
+
+  const fecho = doc.splitTextToSize(
+    "Declaro, por fim, que li e compreendi integralmente o presente termo, inclusive o bloco específico " +
+      "de uso de imagem, e o assino de livre e espontânea vontade.",
+    maxW,
+  );
+  if (y + fecho.length * lineH > pageH - 80) { doc.addPage(); y = margin; }
+  doc.text(fecho, margin, y, { align: "justify", maxWidth: maxW });
+  y += fecho.length * lineH;
 
   // Local e data
   y += 6;

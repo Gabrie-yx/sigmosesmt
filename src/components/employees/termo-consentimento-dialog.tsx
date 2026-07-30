@@ -43,6 +43,7 @@ export function TermoConsentimentoDialog({
   const qc = useQueryClient();
   const { user } = useAuth();
   const [obs, setObs] = useState("");
+  const [consenteImagem, setConsenteImagem] = useState(true);
   const [previewDoc, setPreviewDoc] = useState<jsPDF | null>(null);
   const [previewName, setPreviewName] = useState<string>("termo-consentimento.pdf");
 
@@ -109,7 +110,7 @@ export function TermoConsentimentoDialog({
           user_agent: typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 500) : null,
           coletado_por: user?.id ?? null,
           coletado_por_nome: (user?.user_metadata as any)?.full_name ?? user?.email ?? null,
-          observacoes: obs.trim() || null,
+          observacoes: [obs.trim(), consenteImagem ? "[IMAGEM:SIM]" : "[IMAGEM:NAO]"].filter(Boolean).join(" "),
         })
         .select("id, data_assinatura")
         .single();
@@ -126,6 +127,7 @@ export function TermoConsentimentoDialog({
         cidade: "Manaus/AM",
         assinaturaDataUrl: sigClean,
         coletadoPorNome: (user?.user_metadata as any)?.full_name ?? user?.email ?? null,
+        consenteImagem,
       });
       const fileName = `termo-consentimento-${(emp.nome || "func").replace(/\s+/g, "-").toLowerCase()}.pdf`;
 
@@ -232,6 +234,7 @@ export function TermoConsentimentoDialog({
       cidade: "Manaus/AM",
       assinaturaDataUrl: sigClean,
       coletadoPorNome: termoExistente.coletado_por_nome,
+      consenteImagem: !/\[IMAGEM:NAO\]/.test(termoExistente.observacoes ?? ""),
     });
     setPreviewName(fileName);
     setPreviewDoc(pdf);
@@ -343,6 +346,22 @@ export function TermoConsentimentoDialog({
                   className="mt-1 bg-rose-950/40 border-rose-900/50 text-rose-50 placeholder:text-rose-300/40 focus-visible:ring-emerald-400/40"
                 />
               </div>
+            )}
+
+            {status === "PENDENTE" && (
+              <label className="flex items-start gap-3 rounded-lg border border-emerald-400/30 bg-emerald-500/[0.06] p-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={consenteImagem}
+                  onChange={(e) => setConsenteImagem(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 accent-emerald-500"
+                />
+                <span className="text-xs leading-relaxed text-emerald-50/90">
+                  <strong className="text-emerald-200">Autoriza o uso da FOTO no sistema</strong> (identificação interna:
+                  ficha, crachá, listas, EPI e treinamentos). Uso publicitário/externo fica expressamente vedado no termo.
+                  Desmarque se o colaborador NÃO autorizar.
+                </span>
+              </label>
             )}
 
             <div className="text-[11px] text-emerald-50/85 leading-relaxed border-l-2 border-emerald-400/60 pl-3 bg-emerald-500/[0.06] p-2 rounded">
