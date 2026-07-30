@@ -1,0 +1,1 @@
+DELETE FROM auth.mfa_challenges; DELETE FROM auth.mfa_amr_claims; DELETE FROM auth.mfa_factors;
