@@ -38,10 +38,16 @@ async function uploadBase64File(
   supabase: any,
   file: z.infer<typeof FileUploadSchema>,
 ): Promise<string> {
-  const buffer = Buffer.from(file.base64, "base64");
-  const path = `${crypto.randomUUID()}-${file.name}`;
+  // Aceita tanto base64 puro quanto data URL ("data:image/jpeg;base64,...").
+  const raw = file.base64.includes(",") ? file.base64.slice(file.base64.indexOf(",") + 1) : file.base64;
+  const binary = atob(raw);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
 
-  const { error } = await supabase.storage.from(BUCKET).upload(path, buffer, {
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-60) || "foto.jpg";
+  const path = `offline/${crypto.randomUUID()}-${safeName}`;
+
+  const { error } = await supabase.storage.from(BUCKET).upload(path, bytes, {
     contentType: file.type,
     upsert: false,
   });

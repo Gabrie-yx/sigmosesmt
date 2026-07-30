@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useOfflineQuery } from "@/hooks/use-offline-query";
 import { useIsOnline } from "@/hooks/use-is-online";
+import { countPendingSync } from "@/lib/offline-db";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -86,9 +87,30 @@ type Inspecao = any;
 
 function ConnectionBadge() {
   const isOnline = useIsOnline();
+  const [pendentes, setPendentes] = useState(0);
+
+  useEffect(() => {
+    let alive = true;
+    const check = () => {
+      countPendingSync()
+        .then((n) => { if (alive) setPendentes(n); })
+        .catch(() => {});
+    };
+    check();
+    const t = window.setInterval(check, 15000);
+    return () => { alive = false; window.clearInterval(t); };
+  }, [isOnline]);
+
   return (
+    <span className="inline-flex items-center gap-1.5">
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${isOnline ? "bg-emerald-500/20 text-emerald-200 border border-emerald-400/30" : "bg-amber-500/20 text-amber-200 border border-amber-400/30"}`}>
       {isOnline ? "online" : "offline"}
+    </span>
+    {pendentes > 0 && (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-sky-500/20 text-sky-100 border border-sky-400/30">
+        {pendentes} p/ sincronizar
+      </span>
+    )}
     </span>
   );
 }
