@@ -18,6 +18,7 @@ import {
   type TermoModalidade,
 } from "@/lib/termo-consentimento-pdf";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
+import { FilePreviewDialog } from "@/components/file-preview-dialog";
 import { SignaturePadDialog } from "@/components/signature-pad-dialog";
 import type jsPDF from "jspdf";
 
@@ -35,6 +36,36 @@ async function sha256Hex(text: string): Promise<string | null> {
   } catch {
     return null;
   }
+}
+
+const BUCKET_TERMOS = "termos-consentimento";
+
+/** Upload resiliente: tenta 3x (falhas de rede em HTTP/servidor local são comuns). */
+async function uploadComRetry(path: string, body: Blob | File, contentType: string) {
+  let ultimo = "";
+  for (let tentativa = 1; tentativa <= 3; tentativa++) {
+    try {
+      const { error } = await supabase.storage
+        .from(BUCKET_TERMOS)
+        .upload(path, body, { contentType, upsert: true });
+      if (!error) return;
+      ultimo = error.message;
+      if (/bucket not found/i.test(error.message)) {
+        throw new Error(
+          `O repositório de arquivos "${BUCKET_TERMOS}" não existe neste servidor. Crie o bucket antes de anexar termos.`,
+        );
+      }
+    } catch (e: any) {
+      if (/repositório de arquivos/.test(e?.message ?? "")) throw e;
+      ultimo = e?.message ?? String(e);
+    }
+    await new Promise((r) => setTimeout(r, 600 * tentativa));
+  }
+  throw new Error(
+    /failed to fetch/i.test(ultimo)
+      ? "Sem conexão com o servidor de arquivos. Verifique a rede/VPN e tente novamente (o arquivo pode ser grande demais)."
+      : `Falha ao anexar o digitalizado: ${ultimo}`,
+  );
 }
 
 export function TermoConsentimentoDialog({
@@ -56,6 +87,8 @@ export function TermoConsentimentoDialog({
   const [scanFile, setScanFile] = useState<File | null>(null);
   const [previewDoc, setPreviewDoc] = useState<jsPDF | null>(null);
   const [previewName, setPreviewName] = useState<string>("termo-consentimento.pdf");
+  const [scanPreviewUrl, setScanPreviewUrl] = useState<string | null>(null);
+  const [scanPreviewName, setScanPreviewName] = useState<string>("termo-digitalizado.pdf");
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -150,6 +183,17 @@ export function TermoConsentimentoDialog({
       });
       const hash = await sha256Hex(payload);
 
+      // 1) Sobe o digitalizado ANTES de gravar o registro, para não deixar registro órfão.
+      let scanPathPronto: string | null = null;
+      if (modalidade === "PAPEL_DIGITALIZADO" && scanFile) {
+        if (scanFile.size > 25 * 1024 * 1024) {
+          throw new Error("Arquivo muito grande (máx. 25 MB). Digitalize em resolução menor ou compacte o PDF.");
+        }
+        const ext = (scanFile.name.split(".").pop() || "pdf").toLowerCase().replace(/[^a-z0-9]/g, "");
+        scanPathPronto = `${emp.id}/scan-${Date.now()}.${ext || "pdf"}`;
+        await uploadComRetry(scanPathPronto, scanFile, scanFile.type || "application/pdf");
+      }
+
       const { data: row, error } = await supabase
         .from("assinaturas_termos_consentimento")
         .insert({
@@ -169,22 +213,21 @@ export function TermoConsentimentoDialog({
         })
         .select("id, data_assinatura")
         .single();
-      if (error) throw error;
+      if (error) {
+        if (scanPathPronto) {
+          try { await supabase.storage.from(BUCKET_TERMOS).remove([scanPathPronto]); } catch { /* ignore */ }
+        }
+        throw error;
+      }
 
-      // Anexa o termo digitalizado (fluxo papel)
-      if (modalidade === "PAPEL_DIGITALIZADO" && scanFile) {
-        const ext = (scanFile.name.split(".").pop() || "pdf").toLowerCase();
-        const path = `${emp.id}/scan-${row.id}.${ext}`;
-        const up = await supabase.storage
-          .from("termos-consentimento")
-          .upload(path, scanFile, { contentType: scanFile.type || "application/pdf", upsert: true });
-        if (up.error) throw new Error(`Falha ao anexar o digitalizado: ${up.error.message}`);
+      // Vincula o digitalizado ao registro criado
+      if (scanPathPronto) {
         const { data: signed } = await supabase.storage
-          .from("termos-consentimento")
-          .createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
+          .from(BUCKET_TERMOS)
+          .createSignedUrl(scanPathPronto, 60 * 60 * 24 * 365 * 10);
         await supabase
           .from("assinaturas_termos_consentimento")
-          .update({ scan_path: path, scan_url: signed?.signedUrl ?? null })
+          .update({ scan_path: scanPathPronto, scan_url: signed?.signedUrl ?? null })
           .eq("id", row.id);
       }
 
@@ -202,18 +245,14 @@ export function TermoConsentimentoDialog({
       try {
         const blob = pdf.output("blob") as Blob;
         const path = `${emp.id}/${row.id}.pdf`;
-        const up = await supabase.storage
-          .from("termos-consentimento")
-          .upload(path, blob, { contentType: "application/pdf", upsert: true });
-        if (!up.error) {
-          const { data: signed } = await supabase.storage
-            .from("termos-consentimento")
-            .createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
-          await supabase
-            .from("assinaturas_termos_consentimento")
-            .update({ pdf_path: path, pdf_url: signed?.signedUrl ?? null })
-            .eq("id", row.id);
-        }
+        await uploadComRetry(path, blob, "application/pdf");
+        const { data: signed } = await supabase.storage
+          .from(BUCKET_TERMOS)
+          .createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
+        await supabase
+          .from("assinaturas_termos_consentimento")
+          .update({ pdf_path: path, pdf_url: signed?.signedUrl ?? null })
+          .eq("id", row.id);
       } catch (e) {
         console.warn("Falha ao arquivar PDF no Storage:", e);
       }
@@ -280,6 +319,25 @@ export function TermoConsentimentoDialog({
     });
     setPreviewName(`termo-consentimento-${(emp.nome || "func").replace(/\s+/g, "-").toLowerCase()}.pdf`);
     setPreviewDoc(pdf);
+  };
+
+  /** Abre o digitalizado (PDF/imagem) DENTRO do sistema, com URL assinada fresca. */
+  const verDigitalizado = async () => {
+    if (!termoExistente?.scan_path && !termoExistente?.scan_url) return;
+    let url = termoExistente.scan_url as string | null;
+    if (termoExistente.scan_path) {
+      const { data } = await supabase.storage
+        .from(BUCKET_TERMOS)
+        .createSignedUrl(termoExistente.scan_path, 60 * 60);
+      url = data?.signedUrl ?? url;
+    }
+    if (!url) {
+      toast.error("Não foi possível localizar o arquivo digitalizado.");
+      return;
+    }
+    const ext = (termoExistente.scan_path?.split(".").pop() || "pdf").toLowerCase();
+    setScanPreviewName(`termo-digitalizado-${(emp?.nome || "func").replace(/\s+/g, "-").toLowerCase()}.${ext}`);
+    setScanPreviewUrl(url);
   };
 
   const podeRegistrar =
@@ -550,6 +608,15 @@ export function TermoConsentimentoDialog({
               <Eye className="h-4 w-4 mr-1" /> Visualizar termo
             </Button>
           )}
+          {(termoExistente?.scan_path || termoExistente?.scan_url) && (
+            <Button
+              variant="outline"
+              onClick={verDigitalizado}
+              className="border-sky-400/50 bg-sky-500/10 text-sky-200 hover:bg-sky-500/20 hover:text-white"
+            >
+              <FileSignature className="h-4 w-4 mr-1" /> Ver digitalizado
+            </Button>
+          )}
           {status === "BLINDADO" && (
             <Button
               variant="outline"
@@ -605,6 +672,14 @@ export function TermoConsentimentoDialog({
       doc={previewDoc}
       fileName={previewName}
       title="Termo de Consentimento"
+    />
+
+    <FilePreviewDialog
+      open={!!scanPreviewUrl}
+      onClose={() => setScanPreviewUrl(null)}
+      url={scanPreviewUrl}
+      fileName={scanPreviewName}
+      title="Termo assinado digitalizado"
     />
     </>
   );
