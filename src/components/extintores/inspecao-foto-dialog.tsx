@@ -69,7 +69,7 @@ async function compressImage(file: File, maxSide = 1600, quality = 0.85): Promis
   return await new Promise((res) => canvas.toBlob((b) => res(b!), "image/jpeg", quality));
 }
 
-async function fileToBase64(file: File): Promise<string> {
+async function fileToBase64(file: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
@@ -270,8 +270,9 @@ export function ExtintorInspecaoFotoDialog({
     setter({ file, previewUrl, path: null, uploading: true });
     try {
       if (!isOnline) {
-        // Offline: guarda o arquivo localmente sem upload.
-        setter({ file, previewUrl, path: `offline://${slot}`, uploading: false });
+        // Offline: comprime e guarda o arquivo localmente, sem upload.
+        const offlineBlob = await compressImage(file).catch(() => file as Blob);
+        setter({ file: offlineBlob as File, previewUrl, path: `offline://${slot}`, uploading: false });
         toast.info("Modo offline: foto guardada para sincronização.");
         return;
       }
@@ -283,8 +284,11 @@ export function ExtintorInspecaoFotoDialog({
       if (error) throw error;
       setter({ file, previewUrl, path, uploading: false });
     } catch (e: any) {
-      toast.error(`Falha no upload: ${e.message ?? e}`);
-      setter(empty());
+      // Wi-Fi sem internet: cai para o modo offline em vez de perder a foto.
+      const offlineBlob = await compressImage(file).catch(() => file as Blob);
+      setter({ file: offlineBlob as File, previewUrl, path: `offline://${slot}`, uploading: false });
+      toast.warning("Sem conexão estável. Foto guardada para sincronizar depois.");
+      console.error("[SIGMO Offline] upload falhou:", e?.message ?? e);
     }
   };
 
@@ -301,8 +305,11 @@ export function ExtintorInspecaoFotoDialog({
     setAvarias((prev) => [...prev, { id, file, previewUrl, path: null, uploading: true }]);
     try {
       if (!isOnline) {
+        const offlineBlob = await compressImage(file).catch(() => file as Blob);
         setAvarias((prev) =>
-          prev.map((a) => (a.id === id ? { ...a, path: `offline://avaria-${id}`, uploading: false } : a)),
+          prev.map((a) =>
+            a.id === id ? { ...a, file: offlineBlob as File, path: `offline://avaria-${id}`, uploading: false } : a,
+          ),
         );
         toast.info("Modo offline: foto guardada para sincronização.");
         return;
@@ -315,8 +322,14 @@ export function ExtintorInspecaoFotoDialog({
       if (error) throw error;
       setAvarias((prev) => prev.map((a) => a.id === id ? { ...a, path, uploading: false } : a));
     } catch (e: any) {
-      toast.error(`Falha no upload: ${e.message ?? e}`);
-      setAvarias((prev) => prev.filter((a) => a.id !== id));
+      const offlineBlob = await compressImage(file).catch(() => file as Blob);
+      setAvarias((prev) =>
+        prev.map((a) =>
+          a.id === id ? { ...a, file: offlineBlob as File, path: `offline://avaria-${id}`, uploading: false } : a,
+        ),
+      );
+      toast.warning("Sem conexão estável. Foto guardada para sincronizar depois.");
+      console.error("[SIGMO Offline] upload falhou:", e?.message ?? e);
     }
   };
 
@@ -330,6 +343,9 @@ export function ExtintorInspecaoFotoDialog({
   const avariasOk = avarias.filter((a) => a.path).length;
 
   const reset = () => {
+    for (const url of [etiqueta.previewUrl, manometro.previewUrl, inmetro.previewUrl, ...avarias.map((a) => a.previewUrl)]) {
+      if (url) { try { URL.revokeObjectURL(url); } catch { /* ignore */ } }
+    }
     setEtiqueta(empty()); setManometro(empty()); setInmetro(empty()); setAvarias([]);
     setAba("etiqueta");
   };
@@ -345,10 +361,15 @@ export function ExtintorInspecaoFotoDialog({
       return;
     }
 
-    const avariasPaths = avarias.map((a) => a.path).filter((p): p is string => !!p);
+    const avariasPaths = avarias
+      .map((a) => a.path)
+      .filter((p): p is string => !!p && !p.startsWith("offline://"));
     const extraPath = avariasPaths[0] ?? null;
 
-    if (!isOnline) {
+    // Se alguma foto ficou apenas local, o fluxo precisa ir para a fila offline.
+    const temFotoLocal = [etiqueta, manometro, inmetro].some((f) => f.path?.startsWith("offline://"));
+
+    if (!isOnline || temFotoLocal) {
       // Modo offline: guarda a inspeção na fila para sincronização futura.
       try {
         const [etiquetaBase64, manometroBase64, inmetroBase64, extraBase64] = await Promise.all([
