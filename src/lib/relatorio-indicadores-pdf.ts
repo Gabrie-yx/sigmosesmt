@@ -138,8 +138,8 @@ export function gerarRelatorioIndicadoresPDF(p: RelatorioIndicadoresParams): jsP
   const novaPagina = () => { doc.addPage(); y = drawHeader(); };
   const ensure = (need: number) => { if (y + need > FOOT) novaPagina(); };
 
-  const titulo = (txt: string) => {
-    ensure(14);
+  const titulo = (txt: string, need = 0) => {
+    ensure(14 + need);
     y += 2;
     doc.setFillColor(241, 245, 249);
     doc.rect(M, y - 4.4, maxW, 6.8, "F");
@@ -155,13 +155,39 @@ export function gerarRelatorioIndicadoresPDF(p: RelatorioIndicadoresParams): jsP
     y += 9;
   };
 
-  const paragrafo = (txt: string, size = 9) => {
-    doc.setFont("helvetica", "normal");
+  /** Quebra manual por largura real do texto (evita esticar/truncar). */
+  const wrap = (txt: string, width: number, size: number, style: "normal" | "bold" = "normal") => {
+    doc.setFont("helvetica", style);
     doc.setFontSize(size);
-    const lines = doc.splitTextToSize(txt, maxW) as string[];
-    ensure(lines.length * 4.3 + 2);
-    doc.text(lines, M, y);
-    y += lines.length * 4.3 + 2;
+    const out: string[] = [];
+    String(txt ?? "").split(/\r?\n/).forEach((par) => {
+      let cur = "";
+      par.split(/\s+/).filter(Boolean).forEach((wd) => {
+        const test = cur ? `${cur} ${wd}` : wd;
+        if (doc.getTextWidth(test) <= width || !cur) cur = test;
+        else { out.push(cur); cur = wd; }
+      });
+      out.push(cur);
+    });
+    return out.length ? out : [""];
+  };
+
+  /** Desenha linha a linha, quebrando página quando necessário. */
+  const drawLines = (lines: string[], x: number, size: number, lh: number, style: "normal" | "bold" = "normal") => {
+    doc.setFont("helvetica", style);
+    doc.setFontSize(size);
+    lines.forEach((ln) => {
+      ensure(lh + 2);
+      doc.text(ln, x, y);
+      y += lh;
+    });
+  };
+
+  const paragrafo = (txt: string, size = 9) => {
+    const lines = wrap(txt, maxW, size);
+    drawLines(lines, M, size, 4.3);
+    y += 2;
+    doc.setTextColor(0, 0, 0);
   };
 
   /* ------------------------------ gauge donut ---------------------------- */
@@ -389,7 +415,7 @@ export function gerarRelatorioIndicadoresPDF(p: RelatorioIndicadoresParams): jsP
   y = (doc as any).lastAutoTable.finalY + 6;
 
   /* ------------------------------- gráficos ------------------------------- */
-  titulo("4. Evolução e distribuição");
+  titulo("4. Evolução e distribuição", 52);
   {
     const halfW = (maxW - 8) / 2;
     ensure(52);
@@ -432,10 +458,20 @@ export function gerarRelatorioIndicadoresPDF(p: RelatorioIndicadoresParams): jsP
   }
 
   /* --------------------------- análise crítica ---------------------------- */
-  titulo("5. Análise crítica por indicador");
+  {
+    const primeiro = p.indicadores[0];
+    const need = primeiro
+      ? 6 + wrap(primeiro.analise ?? primeiro.descricao, maxW - 4, 8).length * 4
+      : 0;
+    titulo("5. Análise crítica por indicador", need);
+  }
   p.indicadores.forEach((ind) => {
-    ensure(14);
     const cor = statusCor(ind);
+    const txt = ind.analise
+      ?? `${ind.descricao} Resultado de ${ind.tipo === "PCT" ? `${ind.valor}%` : ind.valor} frente à meta de ${ind.menorMelhor ? "≤" : "≥"} ${ind.meta}${ind.tipo === "PCT" ? "%" : ""}.`;
+    const lines = wrap(txt, maxW - 4, 8);
+    // mantém o cabeçalho junto de pelo menos duas linhas de texto
+    ensure(6 + Math.min(lines.length, 2) * 4 + 3);
     doc.setFillColor(...cor);
     doc.roundedRect(M, y - 3, 1.6, 5.5, 0.4, 0.4, "F");
     doc.setFont("helvetica", "bold");
@@ -443,38 +479,43 @@ export function gerarRelatorioIndicadoresPDF(p: RelatorioIndicadoresParams): jsP
     doc.setTextColor(...SLATE);
     doc.text(`${ind.codigo} · ${ind.nome} — ${statusTexto(ind)}`, M + 4, y);
     y += 4.2;
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
     doc.setTextColor(51, 65, 85);
-    const txt = ind.analise
-      ?? `${ind.descricao} Resultado de ${ind.tipo === "PCT" ? `${ind.valor}%` : ind.valor} frente à meta de ${ind.menorMelhor ? "≤" : "≥"} ${ind.meta}${ind.tipo === "PCT" ? "%" : ""}.`;
-    const lines = doc.splitTextToSize(txt, maxW - 4) as string[];
-    ensure(lines.length * 4);
-    doc.text(lines, M + 4, y);
-    y += lines.length * 4 + 3;
+    drawLines(lines, M + 4, 8, 4);
+    y += 3;
     doc.setTextColor(0, 0, 0);
   });
 
   /* ------------------------------ conclusão ------------------------------- */
   if (p.conclusao?.trim()) {
-    titulo("6. Conclusão e encaminhamentos");
+    titulo("6. Conclusão e encaminhamentos", 12);
     paragrafo(p.conclusao.trim());
   }
 
   /* ------------------------------ assinaturas ----------------------------- */
-  ensure(50);
-  y = Math.max(y + 6, FOOT - 44);
+  const ASSIN_H = 44;
+  y += 8;
+  if (y + ASSIN_H > FOOT) novaPagina();
+  else if (FOOT - (y + ASSIN_H) < 26) y = FOOT - ASSIN_H; // encosta no rodapé se sobrar pouco
   const cidade = p.cidade?.trim() || "Manaus/AM";
   const dataExt = p.dataExtenso?.trim() || hojeExtenso();
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   doc.setTextColor(...SLATE);
   doc.text(`${cidade}, ${dataExt}.`, M, y);
-  y += 12;
+  y += 22;
 
   const assinaturaBloco = (x: number, w: number, sig: string | null | undefined, nome?: string | null, cargo?: string | null, registro?: string | null) => {
     if (sig) {
-      try { doc.addImage(sig, "PNG", x + w / 2 - 22, y - 14, 44, 14, undefined, "FAST"); } catch { /* ignore */ }
+      try {
+        const props = doc.getImageProperties(sig);
+        const maxSigW = Math.min(52, w - 8);
+        const maxSigH = 16;
+        const ratio = props.width && props.height ? props.width / props.height : 3;
+        let sw = maxSigW;
+        let sh = sw / ratio;
+        if (sh > maxSigH) { sh = maxSigH; sw = sh * ratio; }
+        doc.addImage(sig, "PNG", x + w / 2 - sw / 2, y - sh + 0.5, sw, sh, undefined, "FAST");
+      } catch { /* assinatura opcional */ }
     }
     doc.setDrawColor(...SLATE);
     doc.setLineWidth(0.3);
