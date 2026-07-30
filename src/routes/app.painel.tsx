@@ -572,20 +572,35 @@ function TstPanel() {
 
   // === Dias sem acidente — atual + recorde (filtra empresa quando selecionada) ===
   const recordeAcidente = useMemo(() => {
-    const all = ((data as any)?.recordes ?? []) as any[];
-    const filtered = filterCompany === "ALL"
-      ? all
-      : all.filter((r) => r.company_id === filterCompany);
-    if (filtered.length === 0) return { atual: 0, recorde: 0, dataInicio: null as string | null };
-    // Pega o mais recente data_inicio (contagem atual)
-    const atualRec = filtered
-      .filter((r) => r.data_inicio)
-      .sort((a, b) => (b.data_inicio || "").localeCompare(a.data_inicio || ""))[0];
-    const recorde = Math.max(...filtered.map((r) => Number(r.recorde_dias || 0)), 0);
-    const atual = atualRec?.data_inicio
-      ? Math.max(0, Math.floor((today.getTime() - new Date(atualRec.data_inicio + "T00:00").getTime()) / dayMs))
+    const byCompany = <T extends { company_id?: string | null }>(arr: T[]) =>
+      filterCompany === "ALL" ? arr : arr.filter((r) => r.company_id === filterCompany);
+
+    // Escopo REGISTRÁVEL = qualquer acidente de trabalho registrado.
+    const recordes = byCompany(((data as any)?.recordes ?? []) as any[])
+      .filter((r) => r.escopo === "REGISTRAVEL");
+    const recorde = recordes.length
+      ? Math.max(...recordes.map((r) => Number(r.recorde_dias || 0)), 0)
       : 0;
-    return { atual, recorde, dataInicio: atualRec?.data_inicio ?? null };
+
+    // A contagem atual começa no DIA DO ÚLTIMO ACIDENTE — nunca no data_inicio
+    // do recorde histórico (esse é o início da melhor sequência passada).
+    const acidentes = byCompany(((data as any)?.acidentes ?? []) as any[])
+      .filter((a) => a.data_acidente);
+    const ultimoAcidente = acidentes.length
+      ? acidentes.map((a) => a.data_acidente as string).sort().at(-1)!
+      : // fallback: data em que o recorde histórico foi quebrado (último acidente conhecido)
+        (recordes.map((r) => r.data_recorde as string | null).filter(Boolean).sort().at(-1) ?? null);
+
+    if (!ultimoAcidente) {
+      // Nunca houve acidente registrado: não há contagem a exibir.
+      return { atual: null as number | null, recorde, dataInicio: null as string | null };
+    }
+
+    const atual = Math.max(
+      0,
+      Math.floor((today.getTime() - new Date(ultimoAcidente + "T00:00").getTime()) / dayMs),
+    );
+    return { atual, recorde, dataInicio: ultimoAcidente };
   }, [data, filterCompany]);
 
   // === DDS Planejado vs Realizado ===
