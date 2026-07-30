@@ -43,6 +43,7 @@ export function TermoConsentimentoDialog({
   const qc = useQueryClient();
   const { user } = useAuth();
   const [obs, setObs] = useState("");
+  const [consenteImagem, setConsenteImagem] = useState(true);
   const [previewDoc, setPreviewDoc] = useState<jsPDF | null>(null);
   const [previewName, setPreviewName] = useState<string>("termo-consentimento.pdf");
 
