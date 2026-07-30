@@ -1,7 +1,7 @@
 import { PDFDocument, StandardFonts, rgb, type PDFFont } from "pdf-lib";
 import { baixarTemplateAtivoPorCodigo } from "@/lib/templates-documentos.functions";
 import { OVERLAY_MAPS, type OverlayField } from "@/lib/pdf-overlay-maps";
-import pteOfficialAsset from "@/assets/permissao-trabalho-especial-pte.pdf.asset.json";
+import pteOfficialUrl from "@/assets/permissao-trabalho-especial-pte.pdf?url";
 
 /**
  * Motor genérico de overlay para templates homologados.
