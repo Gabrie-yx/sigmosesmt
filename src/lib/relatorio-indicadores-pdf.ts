@@ -369,7 +369,7 @@ export function gerarRelatorioIndicadoresPDF(p: RelatorioIndicadoresParams): jsP
     theme: "grid",
     margin: { left: M, right: M },
     styles: { fontSize: 7.6, cellPadding: 1.8, lineColor: [226, 232, 240], textColor: [15, 23, 42] },
-    headStyles: { fillColor: SLATE as unknown as number[], textColor: 255, fontSize: 7.4, fontStyle: "bold" },
+    headStyles: { fillColor: SLATE, textColor: 255, fontSize: 7.4, fontStyle: "bold" },
     columnStyles: {
       0: { cellWidth: 8, halign: "center" },
       2: { cellWidth: 18, halign: "center", fontStyle: "bold" },
@@ -379,7 +379,7 @@ export function gerarRelatorioIndicadoresPDF(p: RelatorioIndicadoresParams): jsP
     didParseCell: (d) => {
       if (d.section === "body" && d.column.index === 4) {
         const ind = p.indicadores[d.row.index];
-        if (ind) d.cell.styles.textColor = statusCor(ind) as unknown as number[];
+        if (ind) d.cell.styles.textColor = statusCor(ind);
       }
     },
   });
