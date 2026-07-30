@@ -175,7 +175,7 @@ export function useAuth() {
   const { roles, modules, menuKeys, modulesWithMenuConfig, aal, mfaActive, mfaGraceUntil } =
     payload ?? EMPTY_PAYLOAD;
 
-  const loading = cachedSession === undefined || (!!uid && payloadLoading && !payload);
+  const loading = !sessionReady || (!!uid && payloadLoading && !payload);
 
   const isAdmin = roles.includes("admin");
   const isModerator = isAdmin || roles.includes("moderador");
