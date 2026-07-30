@@ -31,6 +31,7 @@ import { maskCPF, maskCNPJ, maskPhone, maskCEP, maskRG } from "@/lib/masks";
 import { FileViewerHost, openStorageFile } from "@/components/file-viewer";
 import { openFileViewer } from "@/components/file-viewer";
 import { buildEpiFichaPdf } from "@/lib/epi-ficha-pdf";
+import { buildFichaOficialBytes } from "@/lib/epi-ficha-oficial";
 import { lazy, Suspense } from "react";
 const PdfSignerDialog = lazy(() =>
   import("@/components/pdf-signer-dialog").then((m) => ({ default: m.PdfSignerDialog }))
