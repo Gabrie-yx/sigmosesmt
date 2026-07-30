@@ -2765,9 +2765,25 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
     if (!docsOk) {
       toast.warning(`Atenção: documentação pendente (${(missingDocs ?? []).join(", ")}). Ficha emitida mesmo assim.`);
     }
-    const doc = buildEpiFichaPdf({ emp, company, role, epis: episAtuais });
-    const bytes = new Uint8Array(doc.output("arraybuffer"));
     const fname = `Ficha_EPI_${(emp?.nome ?? "colaborador").replace(/\s+/g, "_")}.pdf`;
+    let bytes: Uint8Array;
+    try {
+      bytes = await buildFichaOficialBytes([
+        {
+          emp: {
+            nome: emp?.nome, matricula: emp?.matricula, cpf: emp?.cpf,
+            funcao: role?.name ?? emp?.funcao, empresa: company?.name,
+            admissao: emp?.admissao,
+          },
+          entregas: episAtuais as any[],
+          localData: `${company?.name ?? ""} ${new Date().toLocaleDateString("pt-BR")}`.trim(),
+        },
+      ]);
+    } catch {
+      toast.warning("Template homologado indisponível — gerando no modelo interno.");
+      const doc = buildEpiFichaPdf({ emp, company, role, epis: episAtuais });
+      bytes = new Uint8Array(doc.output("arraybuffer"));
+    }
     setSignerSrc({ bytes, name: fname, modulo: "ficha-epi", referenciaId: empId });
   }
 
