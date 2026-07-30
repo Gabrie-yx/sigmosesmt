@@ -374,7 +374,7 @@ export function gerarRelatorioIndicadoresPDF(p: RelatorioIndicadoresParams): jsP
       doc.setTextColor(...CINZA);
       doc.setFontSize(6);
       doc.text(
-        `Meta: ${ind.menorMelhor ? "≤" : "≥"} ${ind.meta}${ind.tipo === "PCT" ? "%" : ""}`,
+        `Meta: ${ind.menorMelhor ? "máx." : "mín."} ${ind.meta}${ind.tipo === "PCT" ? "%" : ""}`,
         cx, afterLabel + 5.2, { align: "center" },
       );
       doc.setTextColor(0, 0, 0);
@@ -391,7 +391,7 @@ export function gerarRelatorioIndicadoresPDF(p: RelatorioIndicadoresParams): jsP
       i.codigo,
       i.nome,
       i.tipo === "PCT" ? `${i.valor}%` : `${i.valor}${i.unidade ? " " + i.unidade : ""}`,
-      `${i.menorMelhor ? "≤" : "≥"} ${i.meta}${i.tipo === "PCT" ? "%" : ""}`,
+      `${i.menorMelhor ? "máx." : "mín."} ${i.meta}${i.tipo === "PCT" ? "%" : ""}`,
       statusTexto(i),
       i.detalhe ?? "—",
     ]),
@@ -468,7 +468,7 @@ export function gerarRelatorioIndicadoresPDF(p: RelatorioIndicadoresParams): jsP
   p.indicadores.forEach((ind) => {
     const cor = statusCor(ind);
     const txt = ind.analise
-      ?? `${ind.descricao} Resultado de ${ind.tipo === "PCT" ? `${ind.valor}%` : ind.valor} frente à meta de ${ind.menorMelhor ? "≤" : "≥"} ${ind.meta}${ind.tipo === "PCT" ? "%" : ""}.`;
+      ?? `${ind.descricao} Resultado de ${ind.tipo === "PCT" ? `${ind.valor}%` : ind.valor} frente à meta de ${ind.menorMelhor ? "máx." : "mín."} ${ind.meta}${ind.tipo === "PCT" ? "%" : ""}.`;
     const lines = wrap(txt, maxW - 4, 8);
     // mantém o cabeçalho junto de pelo menos duas linhas de texto
     ensure(6 + Math.min(lines.length, 2) * 4 + 3);
