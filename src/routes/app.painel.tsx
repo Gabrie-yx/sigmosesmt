@@ -572,20 +572,35 @@ function TstPanel() {
 
   // === Dias sem acidente — atual + recorde (filtra empresa quando selecionada) ===
   const recordeAcidente = useMemo(() => {
-    const all = ((data as any)?.recordes ?? []) as any[];
-    const filtered = filterCompany === "ALL"
-      ? all
-      : all.filter((r) => r.company_id === filterCompany);
-    if (filtered.length === 0) return { atual: 0, recorde: 0, dataInicio: null as string | null };
-    // Pega o mais recente data_inicio (contagem atual)
-    const atualRec = filtered
-      .filter((r) => r.data_inicio)
-      .sort((a, b) => (b.data_inicio || "").localeCompare(a.data_inicio || ""))[0];
-    const recorde = Math.max(...filtered.map((r) => Number(r.recorde_dias || 0)), 0);
-    const atual = atualRec?.data_inicio
-      ? Math.max(0, Math.floor((today.getTime() - new Date(atualRec.data_inicio + "T00:00").getTime()) / dayMs))
+    const byCompany = <T extends { company_id?: string | null }>(arr: T[]) =>
+      filterCompany === "ALL" ? arr : arr.filter((r) => r.company_id === filterCompany);
+
+    // Escopo REGISTRÁVEL = qualquer acidente de trabalho registrado.
+    const recordes = byCompany(((data as any)?.recordes ?? []) as any[])
+      .filter((r) => r.escopo === "REGISTRAVEL");
+    const recorde = recordes.length
+      ? Math.max(...recordes.map((r) => Number(r.recorde_dias || 0)), 0)
       : 0;
-    return { atual, recorde, dataInicio: atualRec?.data_inicio ?? null };
+
+    // A contagem atual começa no DIA DO ÚLTIMO ACIDENTE — nunca no data_inicio
+    // do recorde histórico (esse é o início da melhor sequência passada).
+    const acidentes = byCompany(((data as any)?.acidentes ?? []) as any[])
+      .filter((a) => a.data_acidente);
+    const ultimoAcidente = acidentes.length
+      ? acidentes.map((a) => a.data_acidente as string).sort().at(-1)!
+      : // fallback: data em que o recorde histórico foi quebrado (último acidente conhecido)
+        (recordes.map((r) => r.data_recorde as string | null).filter(Boolean).sort().at(-1) ?? null);
+
+    if (!ultimoAcidente) {
+      // Nunca houve acidente registrado: não há contagem a exibir.
+      return { atual: null as number | null, recorde, dataInicio: null as string | null };
+    }
+
+    const atual = Math.max(
+      0,
+      Math.floor((today.getTime() - new Date(ultimoAcidente + "T00:00").getTime()) / dayMs),
+    );
+    return { atual, recorde, dataInicio: ultimoAcidente };
   }, [data, filterCompany]);
 
   // === DDS Planejado vs Realizado ===
@@ -819,11 +834,15 @@ function TstPanel() {
                 <div className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-300/80">Dias sem Acidente · Registrável</div>
                 <div className="text-4xl md:text-5xl font-black tabular-nums leading-none mt-1 text-emerald-300"
                   style={{ textShadow: "0 0 25px rgba(16,185,129,0.6), 0 0 50px rgba(16,185,129,0.25)" }}>
-                  {recordeAcidente.atual}
+                  {recordeAcidente.atual ?? "—"}
                   <span className="text-base text-emerald-400/70 ml-2 font-bold tracking-wide">dias</span>
                 </div>
-                {recordeAcidente.dataInicio && (
-                  <div className="text-[10px] text-slate-400 mt-1">Contagem iniciada em {new Date(recordeAcidente.dataInicio + "T00:00").toLocaleDateString("pt-BR")}</div>
+                {recordeAcidente.dataInicio ? (
+                  <div className="text-[10px] text-slate-400 mt-1">
+                    Último acidente em {new Date(recordeAcidente.dataInicio + "T00:00").toLocaleDateString("pt-BR")}
+                  </div>
+                ) : (
+                  <div className="text-[10px] text-slate-400 mt-1">Nenhum acidente registrado no sistema</div>
                 )}
               </div>
             </div>
@@ -842,16 +861,17 @@ function TstPanel() {
               <div className="text-right">
                 <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Diferença</div>
                 <div className={`text-2xl font-black tabular-nums tracking-tight ${
-                  recordeAcidente.atual >= recordeAcidente.recorde ? "text-emerald-300" : "text-slate-300"
+                  (recordeAcidente.atual ?? 0) >= recordeAcidente.recorde ? "text-emerald-300" : "text-slate-300"
                 }`}>
-                  {recordeAcidente.atual >= recordeAcidente.recorde ? "+" : "−"}
-                  {Math.abs(recordeAcidente.recorde - recordeAcidente.atual)}
+                  {recordeAcidente.atual === null
+                    ? "—"
+                    : `${recordeAcidente.atual >= recordeAcidente.recorde ? "+" : "−"}${Math.abs(recordeAcidente.recorde - recordeAcidente.atual)}`}
                 </div>
               </div>
             </div>
           </div>
           {/* barra de progresso até o recorde */}
-          {recordeAcidente.recorde > 0 && (
+          {recordeAcidente.recorde > 0 && recordeAcidente.atual !== null && (
             <div className="px-4 md:px-5 pb-4">
               <div className="flex justify-between text-[9px] font-black uppercase tracking-wider text-slate-500 mb-1">
                 <span>Progresso até o recorde</span>
