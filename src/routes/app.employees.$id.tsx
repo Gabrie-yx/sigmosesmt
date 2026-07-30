@@ -37,7 +37,6 @@ const PdfSignerDialog = lazy(() =>
   import("@/components/pdf-signer-dialog").then((m) => ({ default: m.PdfSignerDialog }))
 );
 import { openTermoPerdaPdf } from "@/lib/epi-termo-perda-pdf";
-import { openFichaMensalPdf } from "@/lib/epi-ficha-mensal-pdf";
 import { gerarFichaFuncionarioPdf, loadEmployeePhotoDataUrl } from "@/lib/employee-ficha-pdf";
 const PDFPreviewDialog = lazy(() =>
   import("@/components/pdf-preview-dialog").then((m) => ({ default: m.PDFPreviewDialog }))
