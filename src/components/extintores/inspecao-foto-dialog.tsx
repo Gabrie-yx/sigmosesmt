@@ -269,6 +269,12 @@ export function ExtintorInspecaoFotoDialog({
     const previewUrl = URL.createObjectURL(file);
     setter({ file, previewUrl, path: null, uploading: true });
     try {
+      if (!isOnline) {
+        // Offline: guarda o arquivo localmente sem upload.
+        setter({ file, previewUrl, path: `offline://${slot}`, uploading: false });
+        toast.info("Modo offline: foto guardada para sincronização.");
+        return;
+      }
       const blob = await compressImage(file);
       const path = `${user!.id}/${Date.now()}-${slot}.jpg`;
       const { error } = await supabase.storage.from(BUCKET).upload(path, blob, {
@@ -281,6 +287,7 @@ export function ExtintorInspecaoFotoDialog({
       setter(empty());
     }
   };
+
 
   const handleClearFoto = (slot: Exclude<Slot, "avarias">) => setterFor(slot)(empty());
 
