@@ -84,6 +84,15 @@ function readSearchString(params: URLSearchParams, key: string): string | null {
 type Extintor = any;
 type Inspecao = any;
 
+function ConnectionBadge() {
+  const isOnline = useIsOnline();
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${isOnline ? "bg-emerald-500/20 text-emerald-200 border border-emerald-400/30" : "bg-amber-500/20 text-amber-200 border border-amber-400/30"}`}>
+      {isOnline ? "online" : "offline"}
+    </span>
+  );
+}
+
 function ExtintoresPage() {
   const { user, isModerator } = useAuth();
   const qc = useQueryClient();
