@@ -904,61 +904,88 @@ export type Database = {
       }
       assinaturas_termos_consentimento: {
         Row: {
+          assinado_em: string | null
           assinatura_snapshot: string | null
           coletado_por: string | null
           coletado_por_nome: string | null
+          consente_imagem: boolean | null
           created_at: string
           data_assinatura: string
+          dispositivo: string | null
+          dpo_email: string | null
+          dpo_nome: string | null
           employee_id: string
           hash_sha256: string | null
           id: string
           ip_origem: string | null
+          modalidade: string
           motivo_revogacao: string | null
           observacoes: string | null
           pdf_path: string | null
           pdf_url: string | null
           revogado_em: string | null
           revogado_por: string | null
+          scan_path: string | null
+          scan_url: string | null
           updated_at: string
           user_agent: string | null
+          versao_termo: number
         }
         Insert: {
+          assinado_em?: string | null
           assinatura_snapshot?: string | null
           coletado_por?: string | null
           coletado_por_nome?: string | null
+          consente_imagem?: boolean | null
           created_at?: string
           data_assinatura?: string
+          dispositivo?: string | null
+          dpo_email?: string | null
+          dpo_nome?: string | null
           employee_id: string
           hash_sha256?: string | null
           id?: string
           ip_origem?: string | null
+          modalidade?: string
           motivo_revogacao?: string | null
           observacoes?: string | null
           pdf_path?: string | null
           pdf_url?: string | null
           revogado_em?: string | null
           revogado_por?: string | null
+          scan_path?: string | null
+          scan_url?: string | null
           updated_at?: string
           user_agent?: string | null
+          versao_termo?: number
         }
         Update: {
+          assinado_em?: string | null
           assinatura_snapshot?: string | null
           coletado_por?: string | null
           coletado_por_nome?: string | null
+          consente_imagem?: boolean | null
           created_at?: string
           data_assinatura?: string
+          dispositivo?: string | null
+          dpo_email?: string | null
+          dpo_nome?: string | null
           employee_id?: string
           hash_sha256?: string | null
           id?: string
           ip_origem?: string | null
+          modalidade?: string
           motivo_revogacao?: string | null
           observacoes?: string | null
           pdf_path?: string | null
           pdf_url?: string | null
           revogado_em?: string | null
           revogado_por?: string | null
+          scan_path?: string | null
+          scan_url?: string | null
           updated_at?: string
           user_agent?: string | null
+          versao_termo?: number
         }
         Relationships: [
           {
