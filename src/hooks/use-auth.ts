@@ -120,9 +120,14 @@ function startSessionSub() {
 export function useAuth() {
   const qc = useQueryClient();
   const [session, setSession] = useState<Session | null>(cachedSession ?? null);
+  // Estado REATIVO de "auth resolvida". Não dá pra depender de `cachedSession`
+  // (variável de módulo): quando ela vai de undefined -> null o React não
+  // re-renderiza e a tela fica presa em "Carregando...".
+  const [sessionReady, setSessionReady] = useState(cachedSession !== undefined);
 
   useEffect(() => {
     startSessionSub();
+    if (cachedSession !== undefined) setSessionReady(true);
     // uid corrente (rastreado fora do setState pra não rodar side-effect
     // dentro do updater — React 18 strict mode invoca o updater 2x).
     let currentUid = session?.user?.id ?? null;
@@ -131,6 +136,7 @@ export function useAuth() {
       const uidChanged = currentUid !== nextUid;
       currentUid = nextUid;
       setSession(s);
+      setSessionReady(true);
       if (event === "SIGNED_OUT") {
         // limpa cache do user anterior de vez (não espera gcTime).
         qc.removeQueries({ queryKey: ["auth-payload"] });
