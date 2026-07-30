@@ -215,7 +215,7 @@ export function gerarTermoConsentimentoPDF(p: TermoConsentimentoPdfParams): jsPD
     "com usuário responsável, data, hora e documento de destino; (iii) posso solicitar a qualquer momento " +
     "o extrato dos documentos em que minha assinatura foi utilizada.",
   );
-  checkbox(true, "AUTORIZO o uso da minha assinatura eletrônica simples, nos limites acima.");
+  checkbox(p.viaParaAssinatura ? null : true, "AUTORIZO o uso da minha assinatura eletrônica simples, nos limites acima.");
 
   // ===== BLOCO 2 =====
   tituloBloco("BLOCO 2 — USO DE FOTOGRAFIA (IMAGEM) NO SISTEMA (consentimento específico)");
@@ -348,9 +348,12 @@ export function gerarTermoConsentimentoPDF(p: TermoConsentimentoPdfParams): jsPD
     for (let i = 1; i <= total; i++) {
       doc.setPage(i);
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(46);
-      doc.setTextColor(226, 232, 240);
+      doc.setFontSize(40);
+      doc.setTextColor(203, 213, 225);
+      const gs = (doc as any).GState;
+      if (gs) (doc as any).setGState(new gs({ opacity: 0.16 }));
       doc.text("VIA PARA ASSINATURA", pageW / 2, pageH / 2, { align: "center", angle: 32 });
+      if (gs) (doc as any).setGState(new gs({ opacity: 1 }));
       doc.setTextColor(0, 0, 0);
     }
   }
