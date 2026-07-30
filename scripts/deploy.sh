@@ -37,6 +37,23 @@ wait_up(){
 cd "$APP" || die "diretório $APP não existe"
 mkdir -p "$BK"
 
+
+# ------------------------------------------------ sobrevive à queda do SSH
+# Se a sessão cair no meio, o deploy continua e o log fica em /home/sigmo/deploy.log
+if [ -z "${DEPLOY_DETACHED:-}" ] && [ -t 1 ]; then
+  echo "Rodando em segundo plano (imune a queda de SSH)."
+  echo "Acompanhe com:  tail -f /home/sigmo/deploy.log"
+  DEPLOY_DETACHED=1 setsid nohup bash "$0" "$@" > /home/sigmo/deploy.log 2>&1 < /dev/null &
+  disown
+  sleep 2; tail -f /home/sigmo/deploy.log &
+  wait $! 2>/dev/null
+  exit 0
+fi
+
+# ------------------------------------------------ trava contra deploy duplicado
+exec 9>"$BK/.deploy.lock"
+flock -n 9 || die "já existe um deploy em andamento. Abortando."
+
 # ------------------------------------------------ 0. trava de ambiente local
 say "Conferindo ambiente local"
 if [ ! -f .env.local ]; then
