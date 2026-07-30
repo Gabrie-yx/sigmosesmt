@@ -507,6 +507,8 @@ export function ExtintorInspecaoFotoDialog({
           >
             {uploading ? (
               <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Enviando…</>
+            ) : !isOnline ? (
+              <><WifiOff className="h-4 w-4 mr-2" /> Salvar offline</>
             ) : (
               <><Sparkles className="h-4 w-4 mr-2" /> Iniciar análise →</>
             )}
