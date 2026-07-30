@@ -110,7 +110,7 @@ export function TermoConsentimentoDialog({
           user_agent: typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 500) : null,
           coletado_por: user?.id ?? null,
           coletado_por_nome: (user?.user_metadata as any)?.full_name ?? user?.email ?? null,
-          observacoes: obs.trim() || null,
+          observacoes: [obs.trim(), consenteImagem ? "[IMAGEM:SIM]" : "[IMAGEM:NAO]"].filter(Boolean).join(" "),
         })
         .select("id, data_assinatura")
         .single();
@@ -127,6 +127,7 @@ export function TermoConsentimentoDialog({
         cidade: "Manaus/AM",
         assinaturaDataUrl: sigClean,
         coletadoPorNome: (user?.user_metadata as any)?.full_name ?? user?.email ?? null,
+        consenteImagem,
       });
       const fileName = `termo-consentimento-${(emp.nome || "func").replace(/\s+/g, "-").toLowerCase()}.pdf`;
 
@@ -233,6 +234,7 @@ export function TermoConsentimentoDialog({
       cidade: "Manaus/AM",
       assinaturaDataUrl: sigClean,
       coletadoPorNome: termoExistente.coletado_por_nome,
+      consenteImagem: !/\[IMAGEM:NAO\]/.test(termoExistente.observacoes ?? ""),
     });
     setPreviewName(fileName);
     setPreviewDoc(pdf);
