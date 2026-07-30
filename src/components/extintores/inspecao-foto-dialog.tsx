@@ -334,7 +334,7 @@ export function ExtintorInspecaoFotoDialog({
     setAba("etiqueta");
   };
 
-  const handleContinuar = () => {
+  const handleContinuar = async () => {
     if (!extintor) return;
     if (!obrigatoriasOk) {
       toast.error("Envie as 3 fotos obrigatórias antes de continuar.");
@@ -344,9 +344,50 @@ export function ExtintorInspecaoFotoDialog({
       toast.error("Aguarde os uploads terminarem.");
       return;
     }
+
     const avariasPaths = avarias.map((a) => a.path).filter((p): p is string => !!p);
-    // Para manter compatibilidade com o handoff atual: a primeira avaria vai como foto_extra_path.
     const extraPath = avariasPaths[0] ?? null;
+
+    if (!isOnline) {
+      // Modo offline: guarda a inspeção na fila para sincronização futura.
+      try {
+        const [etiquetaBase64, manometroBase64, inmetroBase64, extraBase64] = await Promise.all([
+          etiqueta.file ? fileToBase64(etiqueta.file) : Promise.resolve(""),
+          manometro.file ? fileToBase64(manometro.file) : Promise.resolve(""),
+          inmetro.file ? fileToBase64(inmetro.file) : Promise.resolve(""),
+          avarias[0]?.file ? fileToBase64(avarias[0].file) : Promise.resolve(null),
+        ]);
+
+        if (!etiquetaBase64 || !manometroBase64 || !inmetroBase64) {
+          toast.error("Erro ao ler fotos para armazenamento offline.");
+          return;
+        }
+
+        await enqueueSync({
+          table: "extintor_inspecoes_fotos",
+          operation: "INSERT",
+          payload: {
+            extintor_id: extintor.id,
+            foto_etiqueta: { name: "etiqueta.jpg", type: "image/jpeg", base64: etiquetaBase64 },
+            foto_manometro: { name: "manometro.jpg", type: "image/jpeg", base64: manometroBase64 },
+            foto_inmetro: inmetroBase64 ? { name: "inmetro.jpg", type: "image/jpeg", base64: inmetroBase64 } : null,
+            foto_extra: extraBase64 ? { name: "extra.jpg", type: "image/jpeg", base64: extraBase64 } : null,
+            status_geral: "pendente_revisao",
+            nao_conformidades: [],
+            precisa_revisao: true,
+            observacoes: "Inspeção criada offline. Aguardando análise IA e sincronização.",
+          },
+        });
+
+        toast.success("Inspeção salva offline. Será sincronizada quando houver internet.");
+        onOpenChange(false);
+        reset();
+      } catch (e: any) {
+        toast.error(`Erro ao salvar offline: ${e.message ?? e}`);
+      }
+      return;
+    }
+
     try {
       sessionStorage.setItem(
         `inspecao-foto-prefill:${extintor.id}`,
