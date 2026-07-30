@@ -348,6 +348,22 @@ export function TermoConsentimentoDialog({
               </div>
             )}
 
+            {status === "PENDENTE" && (
+              <label className="flex items-start gap-3 rounded-lg border border-emerald-400/30 bg-emerald-500/[0.06] p-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={consenteImagem}
+                  onChange={(e) => setConsenteImagem(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 accent-emerald-500"
+                />
+                <span className="text-xs leading-relaxed text-emerald-50/90">
+                  <strong className="text-emerald-200">Autoriza o uso da FOTO no sistema</strong> (identificação interna:
+                  ficha, crachá, listas, EPI e treinamentos). Uso publicitário/externo fica expressamente vedado no termo.
+                  Desmarque se o colaborador NÃO autorizar.
+                </span>
+              </label>
+            )}
+
             <div className="text-[11px] text-emerald-50/85 leading-relaxed border-l-2 border-emerald-400/60 pl-3 bg-emerald-500/[0.06] p-2 rounded">
               <strong className="text-emerald-200">Base legal:</strong> Lei 14.063/2020 art. 4º I (assinatura eletrônica simples) · LGPD art. 7º II e V ·
               Código Civil arts. 219 e 225. O PDF gerado inclui cláusula de <strong className="text-emerald-200">ratificação retroativa</strong> de todas as
