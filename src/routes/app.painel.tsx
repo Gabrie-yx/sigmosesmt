@@ -68,9 +68,19 @@ function TstPanel() {
         supabase.from("acidentes_trabalho").select("id,company_id,tipo,data_acidente,dias_perdidos").gte("data_acidente", since12m),
         supabase.from("hht_mensal").select("ano,mes,company_id,hht"),
       ]);
+      // Histórico COMPLETO de acidentes (sem recorte de 12 meses) — usado só
+      // para o KPI "Dias sem Acidente".
+      const acidentesFullRes = await supabase
+        .from("acidentes_trabalho")
+        .select("id,company_id,tipo,data_acidente")
+        .not("data_acidente", "is", null)
+        .order("data_acidente", { ascending: false });
+      if (acidentesFullRes.error) throw acidentesFullRes.error;
       const recordesRes = await supabase
         .from("dias_sem_acidente_recordes")
         .select("id,company_id,escopo,recorde_dias,data_inicio,data_recorde");
+      if (recordesRes.error) throw recordesRes.error;
+      if (acidentes.error) throw acidentes.error;
       const ossRes = await supabase
         .from("oss_emissoes")
         .select("employee_id,status,expira_em")
@@ -104,6 +114,7 @@ function TstPanel() {
         incidentes: incidentes.data ?? [],
         recordes: recordesRes.data ?? [],
         acidentes: acidentes.data ?? [],
+        acidentesFull: acidentesFullRes.data ?? [],
         hht: hht.data ?? [],
         settings: settingsRes.data ?? null,
       };
