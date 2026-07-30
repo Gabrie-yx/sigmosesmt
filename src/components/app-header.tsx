@@ -69,7 +69,7 @@ export function AppHeader() {
         <Link to="/app" className="flex items-center gap-2 hover:opacity-90 transition-opacity shrink-0 min-w-0">
           <img src={dmnLogo} alt="DMN Estaleiro" className="h-9 w-auto object-contain shrink-0" />
           <img
-            src={sigmoLogoFull.url}
+            src={sigmoLogoFull}
             alt="SIGMO — Sistema Integrado de Gestão Modulado"
             className="h-9 w-auto object-contain shrink-0 sm:hidden"
           />
