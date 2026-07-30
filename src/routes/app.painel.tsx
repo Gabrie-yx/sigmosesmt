@@ -43,7 +43,7 @@ function TstPanel() {
   const since = fmt(new Date(today.getTime() - dias * dayMs));
 
   const { data, isLoading } = useQuery({
-    queryKey: ["sesmt-painel-v2", since],
+    queryKey: ["sesmt-painel-v3", since],
     queryFn: async () => {
       const since6m = fmt(new Date(today.getTime() - 180 * dayMs));
       const since12m = fmt(new Date(today.getTime() - 365 * dayMs));
@@ -68,9 +68,19 @@ function TstPanel() {
         supabase.from("acidentes_trabalho").select("id,company_id,tipo,data_acidente,dias_perdidos").gte("data_acidente", since12m),
         supabase.from("hht_mensal").select("ano,mes,company_id,hht"),
       ]);
+      // Histórico COMPLETO de acidentes (sem recorte de 12 meses) — usado só
+      // para o KPI "Dias sem Acidente".
+      const acidentesFullRes = await supabase
+        .from("acidentes_trabalho")
+        .select("id,company_id,tipo,data_acidente")
+        .not("data_acidente", "is", null)
+        .order("data_acidente", { ascending: false });
+      if (acidentesFullRes.error) throw acidentesFullRes.error;
       const recordesRes = await supabase
         .from("dias_sem_acidente_recordes")
         .select("id,company_id,escopo,recorde_dias,data_inicio,data_recorde");
+      if (recordesRes.error) throw recordesRes.error;
+      if (acidentes.error) throw acidentes.error;
       const ossRes = await supabase
         .from("oss_emissoes")
         .select("employee_id,status,expira_em")
@@ -104,6 +114,7 @@ function TstPanel() {
         incidentes: incidentes.data ?? [],
         recordes: recordesRes.data ?? [],
         acidentes: acidentes.data ?? [],
+        acidentesFull: acidentesFullRes.data ?? [],
         hht: hht.data ?? [],
         settings: settingsRes.data ?? null,
       };
@@ -584,21 +595,24 @@ function TstPanel() {
 
     // A contagem atual começa no DIA DO ÚLTIMO ACIDENTE — nunca no data_inicio
     // do recorde histórico (esse é o início da melhor sequência passada).
-    const acidentes = byCompany(((data as any)?.acidentes ?? []) as any[])
-      .filter((a) => a.data_acidente);
+    // Fonte única de verdade: a tabela de acidentes (histórico completo).
+    // Sem fallback para data_recorde — recorde histórico NÃO é acidente.
+    const acidentes = byCompany(((data as any)?.acidentesFull ?? []) as any[])
+      .filter((a) => !!a.data_acidente);
     const ultimoAcidente = acidentes.length
       ? acidentes.map((a) => a.data_acidente as string).sort().at(-1)!
-      : // fallback: data em que o recorde histórico foi quebrado (último acidente conhecido)
-        (recordes.map((r) => r.data_recorde as string | null).filter(Boolean).sort().at(-1) ?? null);
+      : null;
 
     if (!ultimoAcidente) {
       // Nunca houve acidente registrado: não há contagem a exibir.
       return { atual: null as number | null, recorde, dataInicio: null as string | null };
     }
 
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
     const atual = Math.max(
       0,
-      Math.floor((today.getTime() - new Date(ultimoAcidente + "T00:00").getTime()) / dayMs),
+      Math.round((hoje.getTime() - new Date(ultimoAcidente + "T00:00").getTime()) / dayMs),
     );
     return { atual, recorde, dataInicio: ultimoAcidente };
   }, [data, filterCompany]);
