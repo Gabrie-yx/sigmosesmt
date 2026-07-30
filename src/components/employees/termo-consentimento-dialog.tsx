@@ -321,6 +321,25 @@ export function TermoConsentimentoDialog({
     setPreviewDoc(pdf);
   };
 
+  /** Abre o digitalizado (PDF/imagem) DENTRO do sistema, com URL assinada fresca. */
+  const verDigitalizado = async () => {
+    if (!termoExistente?.scan_path && !termoExistente?.scan_url) return;
+    let url = termoExistente.scan_url as string | null;
+    if (termoExistente.scan_path) {
+      const { data } = await supabase.storage
+        .from(BUCKET_TERMOS)
+        .createSignedUrl(termoExistente.scan_path, 60 * 60);
+      url = data?.signedUrl ?? url;
+    }
+    if (!url) {
+      toast.error("Não foi possível localizar o arquivo digitalizado.");
+      return;
+    }
+    const ext = (termoExistente.scan_path?.split(".").pop() || "pdf").toLowerCase();
+    setScanPreviewName(`termo-digitalizado-${(emp?.nome || "func").replace(/\s+/g, "-").toLowerCase()}.${ext}`);
+    setScanPreviewUrl(url);
+  };
+
   const podeRegistrar =
     consenteImagem !== null &&
     (modalidade === "ELETRONICA" ? !!assinaturaAto : !!scanFile);
@@ -589,6 +608,15 @@ export function TermoConsentimentoDialog({
               <Eye className="h-4 w-4 mr-1" /> Visualizar termo
             </Button>
           )}
+          {(termoExistente?.scan_path || termoExistente?.scan_url) && (
+            <Button
+              variant="outline"
+              onClick={verDigitalizado}
+              className="border-sky-400/50 bg-sky-500/10 text-sky-200 hover:bg-sky-500/20 hover:text-white"
+            >
+              <FileSignature className="h-4 w-4 mr-1" /> Ver digitalizado
+            </Button>
+          )}
           {status === "BLINDADO" && (
             <Button
               variant="outline"
@@ -644,6 +672,14 @@ export function TermoConsentimentoDialog({
       doc={previewDoc}
       fileName={previewName}
       title="Termo de Consentimento"
+    />
+
+    <FilePreviewDialog
+      open={!!scanPreviewUrl}
+      onClose={() => setScanPreviewUrl(null)}
+      url={scanPreviewUrl}
+      fileName={scanPreviewName}
+      title="Termo assinado digitalizado"
     />
     </>
   );
