@@ -197,6 +197,7 @@ const SESMT_GROUPS: { title: string; items: LeafItem[] }[] = [
       { to: "/app/sesmt/inspecoes", label: "Inspeções de Segurança", icon: Target },
       { to: "/app/sesmt/terceiros", label: "Painel de Terceiros", icon: Briefcase },
       { to: "/app/relatorios/reincidencia-epi", label: "Reincidência de EPI", icon: Recycle },
+      { to: "/app/relatorios/indicadores", label: "Relatório de Indicadores", icon: Target },
     ],
   },
   {
