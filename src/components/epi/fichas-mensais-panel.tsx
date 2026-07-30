@@ -12,6 +12,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, FileText, Upload, Printer, CheckCircle2, AlertTriangle, Download, FileSignature } from "lucide-react";
 import { buildEpiFichaPdf, openEpiFichaPdf } from "@/lib/epi-ficha-pdf";
+import { buildFichaOficialBytes, bytesToPreviewDoc } from "@/lib/epi-ficha-oficial";
+import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import { lazy, Suspense } from "react";
 const PdfSignerDialog = lazy(() =>
   import("@/components/pdf-signer-dialog").then((m) => ({ default: m.PdfSignerDialog }))
@@ -59,6 +61,7 @@ export function FichasMensaisPanel({ embedded = false }: { embedded?: boolean })
   const [filterMes, setFilterMes] = useState<number | "todos">(now.getMonth() + 1);
 
   const [signer, setSigner] = useState<{ bytes: Uint8Array; name: string; row: Row } | null>(null);
+  const [preview, setPreview] = useState<{ doc: any; name: string } | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["fichas-mensais-base"],
@@ -189,6 +192,38 @@ export function FichasMensaisPanel({ embedded = false }: { embedded?: boolean })
     return ents ?? [];
   }
 
+  /** Gera a ficha no PDF-mãe homologado (FOR-SEG 02); cai no modelo desenhado se o template faltar. */
+  async function gerarBytes(r: Row) {
+    const epis = await buscarEntregas(r);
+    try {
+      return await buildFichaOficialBytes([
+        {
+          emp: {
+            nome: r.nome,
+            matricula: r.matricula,
+            cpf: r.cpf,
+            funcao: r.funcao,
+            empresa: r.empresa,
+            admissao: r.admissao,
+          },
+          entregas: epis as any[],
+          localData: `${r.empresa ?? ""} ${new Date().toLocaleDateString("pt-BR")}`.trim(),
+        },
+      ]);
+    } catch (e: any) {
+      toast.warning("Template homologado indisponível — gerando no modelo interno.");
+      const doc = buildEpiFichaPdf({
+        emp: { nome: r.nome, cpf: r.cpf, admissao: r.admissao, matricula: r.matricula },
+        company: r.company, role: r.role, epis,
+      });
+      return new Uint8Array(doc.output("arraybuffer"));
+    }
+  }
+
+  function nomeArquivo(r: Row) {
+    return `Ficha_EPI_${r.nome.replace(/\s+/g, "_")}_${r.ano}-${String(r.mes).padStart(2, "0")}.pdf`;
+  }
+
   const baixarPdf = useMutation({
     mutationFn: async (r: Row) => {
       // Se já tem ficha assinada E está atualizada, baixa do storage
@@ -198,20 +233,17 @@ export function FichasMensaisPanel({ embedded = false }: { embedded?: boolean })
           .from(bucket)
           .createSignedUrl(r.arquivo_path, 300);
         if (error) throw error;
-        window.open(data.signedUrl, "_blank");
+        const bytes = new Uint8Array(await (await fetch(data.signedUrl)).arrayBuffer());
+        setPreview({ doc: bytesToPreviewDoc(bytes, nomeArquivo(r)), name: nomeArquivo(r) });
         return;
       }
       // Assinada porém desatualizada → avisa e regenera com todas as entregas do mês
       if (r.arquivo_path && r.desatualizada) {
         toast.info("Ficha assinada está desatualizada (novas entregas no mês). Gerando ficha atualizada — assine novamente.");
       }
-      // senão gera no modelo homologado (epi-ficha-pdf)
-      const epis = await buscarEntregas(r);
-      const { url } = openEpiFichaPdf({
-        emp: { nome: r.nome, cpf: r.cpf, admissao: r.admissao, matricula: r.matricula },
-        company: r.company, role: r.role, epis,
-      });
-      window.open(url, "_blank");
+      // senão gera no PDF-mãe homologado FOR-SEG 02
+      const bytes = await gerarBytes(r);
+      setPreview({ doc: bytesToPreviewDoc(bytes, nomeArquivo(r)), name: nomeArquivo(r) });
     },
     onError: (e: any) => toast.error(e.message ?? "Erro ao gerar PDF"),
   });
@@ -220,13 +252,8 @@ export function FichasMensaisPanel({ embedded = false }: { embedded?: boolean })
     mutationFn: async (r: Row) => {
       const epis = await buscarEntregas(r);
       if (!epis.length) throw new Error("Sem entregas nesse mês — nada a assinar.");
-      const doc = buildEpiFichaPdf({
-        emp: { nome: r.nome, cpf: r.cpf, admissao: r.admissao, matricula: r.matricula },
-        company: r.company, role: r.role, epis,
-      });
-      const bytes = new Uint8Array(doc.output("arraybuffer"));
-      const name = `Ficha_EPI_${r.nome.replace(/\s+/g, "_")}_${r.ano}-${String(r.mes).padStart(2,"0")}.pdf`;
-      setSigner({ bytes, name, row: r });
+      const bytes = await gerarBytes(r);
+      setSigner({ bytes, name: nomeArquivo(r), row: r });
     },
     onError: (e: any) => toast.error(e.message ?? "Erro"),
   });
@@ -347,6 +374,7 @@ export function FichasMensaisPanel({ embedded = false }: { embedded?: boolean })
       </Card>
 
       {signer && (
+        <>
         <Suspense fallback={null}>
           <PdfSignerDialog
             open={!!signer}
@@ -358,7 +386,16 @@ export function FichasMensaisPanel({ embedded = false }: { embedded?: boolean })
             onSigned={onSigned}
           />
         </Suspense>
+        </>
       )}
+
+      <PDFPreviewDialog
+        open={!!preview}
+        onClose={() => setPreview(null)}
+        doc={preview?.doc ?? null}
+        fileName={preview?.name ?? "ficha-epi.pdf"}
+        title="Ficha de Entrega de EPI — FOR-SEG 02"
+      />
     </div>
   );
 }
