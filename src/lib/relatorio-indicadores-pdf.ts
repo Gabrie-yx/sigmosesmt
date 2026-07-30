@@ -181,11 +181,13 @@ export function gerarRelatorioIndicadoresPDF(p: RelatorioIndicadoresParams): jsP
     doc.setTextColor(...cor);
     doc.text(valorTxt, cx, cy + 1.4, { align: "center" });
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(6.8);
+    doc.setFontSize(6.6);
     doc.setTextColor(...CINZA);
-    const l = doc.splitTextToSize(label, r * 3.2) as string[];
-    doc.text(l.slice(0, 2), cx, cy + r + 4, { align: "center" });
+    const l = (doc.splitTextToSize(label, r * 3.4) as string[]).slice(0, 2);
+    l.forEach((ln, i) => doc.text(ln, cx, cy + r + 4.6 + i * 3.2, { align: "center" }));
     doc.setTextColor(0, 0, 0);
+    // retorna o Y logo abaixo do bloco de rótulo
+    return cy + r + 4.6 + l.length * 3.2;
   };
 
   /* --------------------------- barras verticais -------------------------- */
@@ -321,14 +323,15 @@ export function gerarRelatorioIndicadoresPDF(p: RelatorioIndicadoresParams): jsP
   {
     const cols = 3;
     const cellW = maxW / cols;
-    const r = 11;
+    const r = 10.5;
+    const rowH = 46;
     const rows = Math.ceil(p.indicadores.length / cols);
-    ensure(rows * 34 + 4);
+    ensure(rows * rowH + 4);
     p.indicadores.forEach((ind, i) => {
       const col = i % cols;
       const row = Math.floor(i / cols);
       const cx = M + cellW * col + cellW / 2;
-      const cy = y + row * 34 + r + 2;
+      const cy = y + row * rowH + r + 2;
       const cor = statusCor(ind);
       const pctGauge = ind.tipo === "PCT"
         ? ind.valor
@@ -336,21 +339,21 @@ export function gerarRelatorioIndicadoresPDF(p: RelatorioIndicadoresParams): jsP
           ? (ind.valor <= ind.meta ? 100 : Math.max(5, Math.round((ind.meta / Math.max(1, ind.valor)) * 100)))
           : Math.min(100, Math.round((ind.valor / Math.max(1, ind.meta)) * 100));
       const valorTxt = ind.tipo === "PCT" ? `${ind.valor}%` : String(ind.valor);
-      gauge(cx, cy, r, pctGauge, cor, `${ind.codigo} · ${ind.nome}`, valorTxt);
+      const afterLabel = gauge(cx, cy, r, pctGauge, cor, `${ind.codigo} · ${ind.nome}`, valorTxt);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(6);
       doc.setTextColor(...cor);
-      doc.text(statusTexto(ind), cx, cy + r + 11, { align: "center" });
+      doc.text(statusTexto(ind), cx, afterLabel + 1.6, { align: "center" });
       doc.setFont("helvetica", "normal");
       doc.setTextColor(...CINZA);
       doc.setFontSize(6);
       doc.text(
         `Meta: ${ind.menorMelhor ? "≤" : "≥"} ${ind.meta}${ind.tipo === "PCT" ? "%" : ""}`,
-        cx, cy + r + 14.5, { align: "center" },
+        cx, afterLabel + 5.2, { align: "center" },
       );
       doc.setTextColor(0, 0, 0);
     });
-    y += rows * 34 + 4;
+    y += rows * rowH + 4;
   }
 
   /* ------------------------------- tabela -------------------------------- */
