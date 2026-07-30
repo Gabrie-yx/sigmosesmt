@@ -1,4 +1,6 @@
 import jsPDF from "jspdf";
+import dmnLogo from "@/assets/dmn-logo.png";
+import { EMPRESA_INFO } from "./empresa-info";
 
 export type TermoConsentimentoPdfParams = {
   funcionarioNome: string;
@@ -34,10 +36,42 @@ export function gerarTermoConsentimentoPDF(p: TermoConsentimentoPdfParams): jsPD
   const margin = 22;
   let y = 18;
 
-  if (p.logoDataUrl) {
-    try { doc.addImage(p.logoDataUrl, "PNG", pageW / 2 - 18, y, 36, 16, undefined, "FAST"); } catch {}
-  }
-  y += 26;
+  // ===== Cabeçalho institucional =====
+  const headTop = 12;
+  const logoW = 30;
+  const logoH = 17;
+  try {
+    doc.addImage(
+      (p.logoDataUrl ?? (dmnLogo as unknown as string)),
+      "PNG",
+      margin,
+      headTop,
+      logoW,
+      logoH,
+      undefined,
+      "FAST",
+    );
+  } catch {}
+
+  const infoX = margin + logoW + 6;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.setTextColor(15, 23, 42);
+  doc.text(EMPRESA_INFO.razao_social, infoX, headTop + 5);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(71, 85, 105);
+  doc.text(`CNPJ ${EMPRESA_INFO.cnpj}`, infoX, headTop + 9.5);
+  doc.text(EMPRESA_INFO.endereco, infoX, headTop + 13);
+  doc.text(`${EMPRESA_INFO.cidade_uf_cep}   ·   ${EMPRESA_INFO.contato}`, infoX, headTop + 16.5);
+  doc.setTextColor(0, 0, 0);
+
+  doc.setDrawColor(178, 34, 34);
+  doc.setLineWidth(0.6);
+  doc.line(margin, headTop + logoH + 3, pageW - margin, headTop + logoH + 3);
+  doc.setLineWidth(0.2);
+
+  y = headTop + logoH + 12;
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
@@ -204,7 +238,9 @@ export function gerarTermoConsentimentoPDF(p: TermoConsentimentoPdfParams): jsPD
   // Rodapé
   doc.setFontSize(7.5);
   doc.setTextColor(110, 110, 110);
-  const footer = `SIGMO · Termo registrado em ${p.dataAssinatura}${p.coletadoPorNome ? ` · Coletado por: ${p.coletadoPorNome}` : ""}`;
+  const footer = `SIGMO · Termo registrado e coletado automaticamente em ${p.dataAssinatura}${p.coletadoPorNome ? ` por ${p.coletadoPorNome}` : ""}`;
+  doc.setDrawColor(203, 213, 225);
+  doc.line(margin, pageH - 14, pageW - margin, pageH - 14);
   doc.text(footer, pageW / 2, pageH - 10, { align: "center" });
   doc.setTextColor(0, 0, 0);
 
