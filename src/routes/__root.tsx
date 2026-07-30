@@ -1,7 +1,7 @@
 import { QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { createIdbPersister } from "@/lib/query-persister";
-import { useOfflineSync } from "@/hooks/use-offline-sync";
+import { OfflineSync } from "@/components/offline-sync";
 import {
   Outlet,
   Link,
@@ -149,7 +149,6 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  useOfflineSync();
 
 
   // Convites e recuperação de senha do Supabase chegam com tokens no hash
@@ -173,18 +172,20 @@ function RootComponent() {
     <PersistQueryClientProvider
       client={queryClient}
       persistOptions={{
-        persister: createIdbPersister(),
+        persister: persister,
         maxAge: 1000 * 60 * 60 * 24 * 7, // 7 dias
         dehydrateOptions: {
           shouldDehydrateQuery: (query) => {
             // Só persiste queries que não sejam de realtime/stream
             const meta = query.meta as { persist?: boolean } | undefined;
-            return meta?.persist !== false;
+            // Só persiste queries bem-sucedidas e não marcadas como voláteis.
+            return query.state.status === "success" && meta?.persist !== false;
           },
         },
       }}
     >
       <PWARegister />
+      <OfflineSync />
       <Outlet />
       <Toaster />
       <PWAInstallPrompt />
