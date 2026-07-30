@@ -200,11 +200,12 @@ function RelatorioIndicadoresPage() {
     });
     const asoBase = Math.max(1, emps.length);
     const asoPct = Math.round(((asoEmDia + asoVencendo) / asoBase) * 100);
-    const asoDonut: FatiaDonut[] = [
+    const asoDonutFull: FatiaDonut[] = [
       { nome: "Em dia", valor: asoEmDia, cor: [16, 185, 129] },
       { nome: "Vence 30d", valor: asoVencendo, cor: [217, 119, 6] },
       { nome: "Vencidos", valor: asoVencido, cor: [220, 38, 38] },
-    ].filter((f) => f.valor > 0);
+    ];
+    const asoDonut = asoDonutFull.filter((f) => f.valor > 0);
 
     /* 04 · DDS realizado x planejado */
     const semanas = Math.max(1, Math.round((new Date(range.fimExcl).getTime() - new Date(range.inicio).getTime()) / (7 * dayMs)));
@@ -290,7 +291,7 @@ function RelatorioIndicadoresPage() {
     return { indicadores, serieAcidentes, serieDds, serieDdsPlan, treinamentosNR, asoDonut, totalEmp: emps.length };
   }, [data, empresaId, range]);
 
-  const gerar = () => {
+  const gerar = (over?: { sesmt?: string | null; eng?: string | null }) => {
     if (!calc) return;
     const doc = gerarRelatorioIndicadoresPDF({
       periodicidade: tipo,
@@ -310,10 +311,10 @@ function RelatorioIndicadoresPage() {
       responsavelNome: respNome,
       responsavelCargo: respCargo,
       responsavelRegistro: respRegistro,
-      assinaturaDataUrl: sesmtSig,
+      assinaturaDataUrl: over?.sesmt !== undefined ? over.sesmt : sesmtSig,
       gestorNome,
       gestorCargo,
-      assinaturaGestorDataUrl: engSig,
+      assinaturaGestorDataUrl: over?.eng !== undefined ? over.eng : engSig,
       dataExtenso: hojeExtenso(),
     });
     setPreview({
@@ -482,8 +483,8 @@ function RelatorioIndicadoresPage() {
         signatureLabels={{ sesmt: "Responsável SESMT", eng: "Gestão / Direção" }}
         sesmtSig={sesmtSig}
         engSig={engSig}
-        onChangeSesmtSig={(v) => { setSesmtSig(v); setTimeout(gerar, 0); }}
-        onChangeEngSig={(v) => { setEngSig(v); setTimeout(gerar, 0); }}
+        onChangeSesmtSig={(v) => { setSesmtSig(v); gerar({ sesmt: v }); }}
+        onChangeEngSig={(v) => { setEngSig(v); gerar({ eng: v }); }}
       />
     </div>
   );
