@@ -4,10 +4,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Camera, RotateCcw, Loader2, Sparkles, CheckCircle2, AlertTriangle, Trash2, Plus } from "lucide-react";
+import { Camera, RotateCcw, Loader2, Sparkles, CheckCircle2, AlertTriangle, Trash2, Plus, WifiOff } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useIsOnline } from "@/hooks/use-is-online";
+import { enqueueSync } from "@/lib/offline-db";
 
 const BUCKET = "extintores-inspecoes";
 const MAX_AVARIAS = 4;
@@ -66,6 +68,19 @@ async function compressImage(file: File, maxSide = 1600, quality = 0.85): Promis
   canvas.getContext("2d")!.drawImage(bmp, 0, 0, w, h);
   return await new Promise((res) => canvas.toBlob((b) => res(b!), "image/jpeg", quality));
 }
+
+async function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      resolve(result.split(",")[1] ?? "");
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 
 function TabFoto({
   slot, foto, onSelect, onClear,
@@ -235,6 +250,8 @@ export function ExtintorInspecaoFotoDialog({
 }) {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const isOnline = useIsOnline();
+
 
   const [aba, setAba] = useState<Slot>("etiqueta");
   const [etiqueta, setEtiqueta] = useState<FotoState>(empty());
@@ -252,6 +269,12 @@ export function ExtintorInspecaoFotoDialog({
     const previewUrl = URL.createObjectURL(file);
     setter({ file, previewUrl, path: null, uploading: true });
     try {
+      if (!isOnline) {
+        // Offline: guarda o arquivo localmente sem upload.
+        setter({ file, previewUrl, path: `offline://${slot}`, uploading: false });
+        toast.info("Modo offline: foto guardada para sincronização.");
+        return;
+      }
       const blob = await compressImage(file);
       const path = `${user!.id}/${Date.now()}-${slot}.jpg`;
       const { error } = await supabase.storage.from(BUCKET).upload(path, blob, {
@@ -265,6 +288,7 @@ export function ExtintorInspecaoFotoDialog({
     }
   };
 
+
   const handleClearFoto = (slot: Exclude<Slot, "avarias">) => setterFor(slot)(empty());
 
   const handleAddAvaria = async (file: File) => {
@@ -276,6 +300,13 @@ export function ExtintorInspecaoFotoDialog({
     const previewUrl = URL.createObjectURL(file);
     setAvarias((prev) => [...prev, { id, file, previewUrl, path: null, uploading: true }]);
     try {
+      if (!isOnline) {
+        setAvarias((prev) =>
+          prev.map((a) => (a.id === id ? { ...a, path: `offline://avaria-${id}`, uploading: false } : a)),
+        );
+        toast.info("Modo offline: foto guardada para sincronização.");
+        return;
+      }
       const blob = await compressImage(file);
       const path = `${user!.id}/${Date.now()}-avaria.jpg`;
       const { error } = await supabase.storage.from(BUCKET).upload(path, blob, {
@@ -303,7 +334,7 @@ export function ExtintorInspecaoFotoDialog({
     setAba("etiqueta");
   };
 
-  const handleContinuar = () => {
+  const handleContinuar = async () => {
     if (!extintor) return;
     if (!obrigatoriasOk) {
       toast.error("Envie as 3 fotos obrigatórias antes de continuar.");
@@ -313,9 +344,50 @@ export function ExtintorInspecaoFotoDialog({
       toast.error("Aguarde os uploads terminarem.");
       return;
     }
+
     const avariasPaths = avarias.map((a) => a.path).filter((p): p is string => !!p);
-    // Para manter compatibilidade com o handoff atual: a primeira avaria vai como foto_extra_path.
     const extraPath = avariasPaths[0] ?? null;
+
+    if (!isOnline) {
+      // Modo offline: guarda a inspeção na fila para sincronização futura.
+      try {
+        const [etiquetaBase64, manometroBase64, inmetroBase64, extraBase64] = await Promise.all([
+          etiqueta.file ? fileToBase64(etiqueta.file) : Promise.resolve(""),
+          manometro.file ? fileToBase64(manometro.file) : Promise.resolve(""),
+          inmetro.file ? fileToBase64(inmetro.file) : Promise.resolve(""),
+          avarias[0]?.file ? fileToBase64(avarias[0].file) : Promise.resolve(null),
+        ]);
+
+        if (!etiquetaBase64 || !manometroBase64 || !inmetroBase64) {
+          toast.error("Erro ao ler fotos para armazenamento offline.");
+          return;
+        }
+
+        await enqueueSync({
+          table: "extintor_inspecoes_fotos",
+          operation: "INSERT",
+          payload: {
+            extintor_id: extintor.id,
+            foto_etiqueta: { name: "etiqueta.jpg", type: "image/jpeg", base64: etiquetaBase64 },
+            foto_manometro: { name: "manometro.jpg", type: "image/jpeg", base64: manometroBase64 },
+            foto_inmetro: inmetroBase64 ? { name: "inmetro.jpg", type: "image/jpeg", base64: inmetroBase64 } : null,
+            foto_extra: extraBase64 ? { name: "extra.jpg", type: "image/jpeg", base64: extraBase64 } : null,
+            status_geral: "pendente_revisao",
+            nao_conformidades: [],
+            precisa_revisao: true,
+            observacoes: "Inspeção criada offline. Aguardando análise IA e sincronização.",
+          },
+        });
+
+        toast.success("Inspeção salva offline. Será sincronizada quando houver internet.");
+        onOpenChange(false);
+        reset();
+      } catch (e: any) {
+        toast.error(`Erro ao salvar offline: ${e.message ?? e}`);
+      }
+      return;
+    }
+
     try {
       sessionStorage.setItem(
         `inspecao-foto-prefill:${extintor.id}`,
@@ -359,6 +431,11 @@ export function ExtintorInspecaoFotoDialog({
           </DialogTitle>
           <DialogDescription>
             Envie as fotos obrigatórias para iniciar a análise automática do extintor.
+            {!isOnline && (
+              <span className="ml-2 inline-flex items-center gap-1 text-amber-400">
+                <WifiOff className="h-3 w-3" /> Modo offline ativo
+              </span>
+            )}
           </DialogDescription>
           {extintor && (
             <div className="text-xs text-muted-foreground mt-1">
@@ -430,6 +507,8 @@ export function ExtintorInspecaoFotoDialog({
           >
             {uploading ? (
               <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Enviando…</>
+            ) : !isOnline ? (
+              <><WifiOff className="h-4 w-4 mr-2" /> Salvar offline</>
             ) : (
               <><Sparkles className="h-4 w-4 mr-2" /> Iniciar análise →</>
             )}

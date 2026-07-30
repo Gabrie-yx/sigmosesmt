@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState, lazy, Suspense } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useOfflineQuery } from "@/hooks/use-offline-query";
+import { useIsOnline } from "@/hooks/use-is-online";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -82,6 +84,15 @@ function readSearchString(params: URLSearchParams, key: string): string | null {
 type Extintor = any;
 type Inspecao = any;
 
+function ConnectionBadge() {
+  const isOnline = useIsOnline();
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${isOnline ? "bg-emerald-500/20 text-emerald-200 border border-emerald-400/30" : "bg-amber-500/20 text-amber-200 border border-amber-400/30"}`}>
+      {isOnline ? "online" : "offline"}
+    </span>
+  );
+}
+
 function ExtintoresPage() {
   const { user, isModerator } = useAuth();
   const qc = useQueryClient();
@@ -125,31 +136,32 @@ function ExtintoresPage() {
     },
   });
 
-  const extintores = useQuery({
-    queryKey: ["extintores"],
-    queryFn: async () => {
+  const extintores = useOfflineQuery(
+    "extintores",
+    async () => {
       const { data, error } = await supabase.from("extintores").select("*").order("numero");
       if (error) throw error;
       return (data ?? []) as Extintor[];
     },
-    refetchOnWindowFocus: true,
-    refetchOnMount: "always",
-  });
+    "id",
+    { refetchOnWindowFocus: true },
+  );
 
-  const inspecoes = useQuery({
-    queryKey: ["extintor-inspecoes"],
-    queryFn: async () => {
+  const inspecoes = useOfflineQuery(
+    "extintor-inspecoes",
+    async () => {
       const { data, error } = await supabase
         .from("extintor_inspecoes").select("*").order("data_inspecao", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Inspecao[];
     },
-  });
+    "id",
+  );
 
   // Última inspeção IA por extintor (para expandir NCs concretas em pendências)
-  const inspecoesFotos = useQuery({
-    queryKey: ["extintor-inspecoes-fotos-recentes"],
-    queryFn: async () => {
+  const inspecoesFotos = useOfflineQuery(
+    "extintor-inspecoes-fotos-recentes",
+    async () => {
       const { data, error } = await supabase
         .from("extintor_inspecoes_fotos")
         .select("id, extintor_id, status_geral, nao_conformidades, divergencia_detectada, divergencia_descricao, inspecionado_em")
@@ -157,7 +169,8 @@ function ExtintoresPage() {
       if (error) throw error;
       return (data ?? []) as any[];
     },
-  });
+    "id",
+  );
 
   const ultimaIaPorExt = useMemo(() => {
     const map = new Map<string, any>();
@@ -313,7 +326,10 @@ function ExtintoresPage() {
             <div>
               <div className="text-[10px] font-black uppercase tracking-[0.3em] text-white/70">SESMT · NR-23 · NBR 12962</div>
               <h1 className="heading-display text-2xl md:text-3xl leading-tight">Controle de Extintores</h1>
-              <div className="text-xs text-white/80 mt-0.5">Inventário, inspeções mensais e conformidade FOR-SFG 08</div>
+              <div className="flex items-center gap-2 text-xs text-white/80 mt-0.5">
+                <span>Inventário, inspeções mensais e conformidade FOR-SFG 08</span>
+                <ConnectionBadge />
+              </div>
             </div>
           </div>
           <div className="flex flex-wrap gap-2">

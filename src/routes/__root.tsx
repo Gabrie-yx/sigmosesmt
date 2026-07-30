@@ -1,4 +1,7 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { createIdbPersister } from "@/lib/query-persister";
+import { useOfflineSync } from "@/hooks/use-offline-sync";
 import {
   Outlet,
   Link,
@@ -12,6 +15,7 @@ import appCss from "../styles.css?url";
 import { Toaster } from "@/components/ui/sonner";
 import { useEffect } from "react";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
+import { PWARegister } from "@/components/pwa-register";
 
 function NotFoundComponent() {
   return (
@@ -145,6 +149,8 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useOfflineSync();
+
 
   // Convites e recuperação de senha do Supabase chegam com tokens no hash
   // (#access_token=...&type=invite|recovery). O supabase-js cria sessão
@@ -164,10 +170,24 @@ function RootComponent() {
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={{
+        persister: createIdbPersister(),
+        maxAge: 1000 * 60 * 60 * 24 * 7, // 7 dias
+        dehydrateOptions: {
+          shouldDehydrateQuery: (query) => {
+            // Só persiste queries que não sejam de realtime/stream
+            const meta = query.meta as { persist?: boolean } | undefined;
+            return meta?.persist !== false;
+          },
+        },
+      }}
+    >
+      <PWARegister />
       <Outlet />
       <Toaster />
       <PWAInstallPrompt />
-    </QueryClientProvider>
+    </PersistQueryClientProvider>
   );
 }
