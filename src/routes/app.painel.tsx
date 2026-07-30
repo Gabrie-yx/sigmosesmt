@@ -43,7 +43,7 @@ function TstPanel() {
   const since = fmt(new Date(today.getTime() - dias * dayMs));
 
   const { data, isLoading } = useQuery({
-    queryKey: ["sesmt-painel-v2", since],
+    queryKey: ["sesmt-painel-v3", since],
     queryFn: async () => {
       const since6m = fmt(new Date(today.getTime() - 180 * dayMs));
       const since12m = fmt(new Date(today.getTime() - 365 * dayMs));
