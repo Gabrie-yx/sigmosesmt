@@ -1,6 +1,7 @@
 import { QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { createIdbPersister } from "@/lib/query-persister";
+import { useOfflineSync } from "@/hooks/use-offline-sync";
 import {
   Outlet,
   Link,
