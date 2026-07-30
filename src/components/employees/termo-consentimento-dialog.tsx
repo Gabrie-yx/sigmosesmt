@@ -257,8 +257,22 @@ export function TermoConsentimentoDialog({
         console.warn("Falha ao arquivar PDF no Storage:", e);
       }
 
-      setPreviewName(fileName);
-      setPreviewDoc(pdf);
+      if (modalidade === "PAPEL_DIGITALIZADO" && scanPathPronto) {
+        // O documento oficial é o digitalizado assinado — abre ele, não a via do sistema.
+        const { data: signedScan } = await supabase.storage
+          .from(BUCKET_TERMOS)
+          .createSignedUrl(scanPathPronto, 60 * 60);
+        if (signedScan?.signedUrl) {
+          const ext = (scanPathPronto.split(".").pop() || "pdf").toLowerCase();
+          setScanPreviewName(
+            `termo-digitalizado-${(emp.nome || "func").replace(/\s+/g, "-").toLowerCase()}.${ext}`,
+          );
+          setScanPreviewUrl(signedScan.signedUrl);
+        }
+      } else {
+        setPreviewName(fileName);
+        setPreviewDoc(pdf);
+      }
       return row;
     },
     onSuccess: async () => {
