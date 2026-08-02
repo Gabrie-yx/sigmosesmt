@@ -905,6 +905,16 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
   const [stepError, setStepError] = useState<string | null>(null);
   const [riscoEditIdx, setRiscoEditIdx] = useState<number | null>(null);
   const [execFilter, setExecFilter] = useState("");
+  // Abre o editor do último risco adicionado (evita índice defasado ao editar APR já salva)
+  const [abrirUltimoRisco, setAbrirUltimoRisco] = useState(false);
+  // Força reset do Select "+ Do catálogo…" para permitir escolher o mesmo item de novo
+  const [catSelectKey, setCatSelectKey] = useState(0);
+  useEffect(() => {
+    if (abrirUltimoRisco && riscos.length > 0) {
+      setRiscoEditIdx(riscos.length - 1);
+      setAbrirUltimoRisco(false);
+    }
+  }, [abrirUltimoRisco, riscos.length]);
 
   function goNext() {
     const err = validateStep(currentStepIdx);
@@ -1231,13 +1241,22 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
                   </Badge>
                 )}
                 <div className="ml-auto flex items-center gap-1.5">
-                  <Select onValueChange={(v) => { addRiscoFromCatalogo(v); setRiscoEditIdx(riscos.length); }}>
+                  <Select
+                    key={catSelectKey}
+                    onValueChange={(v) => {
+                      addRiscoFromCatalogo(v);
+                      setAbrirUltimoRisco(true);
+                      setCatSelectKey((k) => k + 1);
+                    }}
+                  >
                     <SelectTrigger className="w-[220px] h-8 text-xs"><SelectValue placeholder="+ Do catálogo…" /></SelectTrigger>
                     <SelectContent className="max-h-[400px]">
-                      {catRiscos.map((c: any) => <SelectItem key={c.id} value={c.id}>[{c.categoria}] {c.nome}</SelectItem>)}
+                      {catRiscos.length === 0 ? (
+                        <div className="px-2 py-3 text-[11px] text-muted-foreground">Catálogo vazio ou sem permissão de leitura.</div>
+                      ) : catRiscos.map((c: any) => <SelectItem key={c.id} value={c.id}>[{c.categoria}] {c.nome}</SelectItem>)}
                     </SelectContent>
                   </Select>
-                  <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => { addRiscoLivre(); setRiscoEditIdx(riscos.length); }}>
+                  <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => { addRiscoLivre(); setAbrirUltimoRisco(true); }}>
                     <Plus className="h-3.5 w-3.5 mr-1" /> Manual
                   </Button>
                 </div>
