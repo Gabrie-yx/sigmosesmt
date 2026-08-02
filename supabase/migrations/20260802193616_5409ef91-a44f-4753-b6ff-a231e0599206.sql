@@ -1,0 +1,163 @@
+INSERT INTO public.catalogo_riscos (categoria, nome, efeitos_tipicos, medidas_controle_padrao, nrs_aplicaveis, epis_sugeridos)
+SELECT * FROM (VALUES
+('ACIDENTE_MECANICO','Içamento tandem com dois ou mais guindastes',
+ ARRAY['Queda de carga','Sobrecarga de um dos guindastes','Tombamento de equipamento','Esmagamento fatal'],
+ ARRAY['Plano de rigging específico para içamento tandem assinado por engenheiro','Redução da capacidade nominal de cada guindaste para no máximo 75%','Sinaleiro único com comunicação por rádio dedicada','Movimento sincronizado e velocidade reduzida','Isolamento total da área de projeção'],
+ ARRAY['NR-11','NR-12','NR-34'],
+ ARRAY['Capacete com jugular','Colete refletivo','Luva de vaqueta','Bota de segurança']),
+('ACIDENTE_MECANICO','Tombamento de guindaste por instabilidade do solo',
+ ARRAY['Tombamento do equipamento','Queda de carga','Esmagamento de trabalhadores','Danos materiais graves'],
+ ARRAY['Avaliação da capacidade de suporte do terreno antes da montagem','Uso de sapatas/placas de distribuição sob os estabilizadores','Nivelamento e compactação da base','Proibição de operar com estabilizadores parcialmente estendidos','Suspensão da operação em solo encharcado'],
+ ARRAY['NR-11','NR-12','NR-18'],
+ ARRAY['Capacete com jugular','Colete refletivo','Bota de segurança']),
+('ACIDENTE_MECANICO','Colapso de escoramento/berço de embarcação',
+ ARRAY['Queda da embarcação','Esmagamento fatal','Soterramento sob estrutura','Danos estruturais ao casco'],
+ ARRAY['Projeto de escoramento dimensionado e aprovado por engenheiro','Inspeção diária de cavaletes, calços e cunhas','Proibição de remover escoras sem liberação técnica','Controle de recalque e nivelamento do terreno','Sinalização e restrição de circulação sob o casco'],
+ ARRAY['NR-11','NR-18','NR-34'],
+ ARRAY['Capacete com jugular','Bota de segurança','Colete refletivo']),
+('ACIDENTE_MECANICO','Ruptura ou estouro de airbag pressurizado',
+ ARRAY['Onda de choque e projeção de fragmentos','Trauma acústico','Queda ou deslocamento brusco da embarcação','Politraumatismo'],
+ ARRAY['Uso de airbags certificados e dentro da validade','Controle da pressão de trabalho com manômetro calibrado','Inspeção prévia de cortes, abrasões e reparos','Zona de exclusão durante inflagem','Proibição de circulação lateral aos airbags sob carga'],
+ ARRAY['NR-06','NR-12','NR-34'],
+ ARRAY['Capacete com jugular','Óculos de segurança','Protetor auricular','Bota de segurança']),
+('ACIDENTE_MECANICO','Deslocamento inesperado de embarcação sobre airbags',
+ ARRAY['Atropelamento','Esmagamento fatal','Queda de trabalhadores','Perda de controle no lançamento'],
+ ARRAY['Plano de lançamento com cálculo de rampa e frenagem','Cabos de retenção e guinchos dimensionados','Área de trajetória totalmente isolada','Comunicação por rádio e sinal sonoro antes de cada movimento','Proibição de permanência à frente e nas laterais do casco'],
+ ARRAY['NR-11','NR-18','NR-34'],
+ ARRAY['Capacete com jugular','Colete refletivo','Bota de segurança']),
+('ACIDENTE_MECANICO','Chicoteamento de mangueira de ar comprimido',
+ ARRAY['Impacto e trauma facial','Perda de visão','Lesão por jato de ar','Ruptura timpânica'],
+ ARRAY['Uso de cabos de retenção (whip check) em todos os engates','Engates rápidos travados e inspecionados','Despressurização antes de desconectar','Proibição de uso de ar comprimido para limpeza corporal','Pressão limitada ao valor de projeto do equipamento'],
+ ARRAY['NR-06','NR-12','NR-13'],
+ ARRAY['Óculos de segurança','Protetor facial','Protetor auricular','Luva de vaqueta']),
+('ACIDENTE_MECANICO','Retrocesso de chama (flashback) em oxicorte',
+ ARRAY['Explosão de mangueira ou cilindro','Queimaduras graves','Incêndio','Óbito'],
+ ARRAY['Válvulas corta-chama na saída do regulador e na entrada do maçarico','Válvulas de retenção nas mangueiras','Teste de vazamento com solução detectora antes do uso','Cilindros na vertical, presos e afastados de fonte de calor','Purga das mangueiras antes de acender'],
+ ARRAY['NR-12','NR-18','NR-34'],
+ ARRAY['Óculos com lente de oxicorte','Luva de raspa cano longo','Avental de raspa','Perneira de raspa','Bota de segurança']),
+('QUIMICO','Enriquecimento de oxigênio em ambiente confinado',
+ ARRAY['Combustão acelerada de roupas e materiais','Incêndio súbito','Queimaduras extensas'],
+ ARRAY['Proibição de uso de oxigênio para ventilar ou refrescar ambientes','Retirada de maçaricos e mangueiras do interior nas paradas','Monitoramento contínuo de O2 (limite 19,5% a 23%)','Ventilação exclusivamente com ar limpo insuflado','Fechamento dos cilindros no fim da tarefa'],
+ ARRAY['NR-33','NR-34'],
+ ARRAY['Vestimenta antichama','Detector multigás','Luva de raspa']),
+('QUIMICO','Deficiência de oxigênio (atmosfera IPVS)',
+ ARRAY['Perda de consciência','Asfixia','Morte em poucos minutos','Sequelas neurológicas'],
+ ARRAY['Medição da atmosfera antes e durante a entrada','Ventilação e exaustão forçada contínua','Vigia permanente na entrada com meios de resgate','Permissão de Entrada e Trabalho emitida e validada','Equipe de resgate acionável e treinada'],
+ ARRAY['NR-33'],
+ ARRAY['Detector multigás','Cinto tipo paraquedista com trava-quedas','Máscara autônoma ou linha de ar','Capacete com jugular']),
+('ACIDENTE_MECANICO','Falha ou ruptura de corrente de talha manual',
+ ARRAY['Queda de carga','Esmagamento','Fratura e amputação','Golpe por corrente rompida'],
+ ARRAY['Inspeção pré-uso de corrente, gancho e trava de segurança','Carga de trabalho identificada e respeitada','Ponto de ancoragem verificado quanto à resistência','Proibição de emendas, nós ou improvisos na corrente','Ninguém sob a carga durante a movimentação'],
+ ARRAY['NR-11','NR-12'],
+ ARRAY['Capacete com jugular','Luva de vaqueta','Bota de segurança','Óculos de segurança'])
+) AS v(categoria,nome,efeitos_tipicos,medidas_controle_padrao,nrs_aplicaveis,epis_sugeridos)
+WHERE NOT EXISTS (SELECT 1 FROM public.catalogo_riscos c WHERE lower(c.nome)=lower(v.nome));
+
+INSERT INTO public.apr_modelos (codigo, nome, categoria, descricao_curta, atividade_descricao, setor_padrao, local_padrao, condicoes_climaticas, observacoes_gerais, exige_pte, ptes_sugeridas, riscos, ordem, ativo)
+SELECT * FROM (VALUES
+('icamento-tandem-guindastes','Içamento tandem de painel/antepara com dois guindastes','ICAMENTO',
+ 'Içamento sincronizado de painel estrutural com dois guindastes móveis',
+ 'Içamento e posicionamento vertical de painel/antepara de grande porte com dois guindastes móveis operando em tandem, incluindo montagem de estabilizadores, engate, elevação sincronizada e assentamento no berço.',
+ 'PRODUÇÃO','PÁTIO DE MONTAGEM','Tempo firme; operação suspensa com vento forte ou alerta de raios',
+ 'Modelo gerado a partir de registro fotográfico das atividades reais (lote 2). PENDENTE DE REVISÃO/VALIDAÇÃO PELO SESMT.',
+ true, ARRAY['ICAMENTO'],
+ '[
+  {"risco_nome":"Tombamento de guindaste por instabilidade do solo","risco_categoria":"ACIDENTE","passo_a_passo":"Posicionamento e nivelamento dos guindastes com estabilizadores","efeitos_danos":"Tombamento, esmagamento, óbito","probabilidade":2,"severidade":3,"acoes_preventivas":"Avaliar capacidade do terreno; sapatas de distribuição sob todos os estabilizadores; estabilizadores totalmente estendidos; suspender operação em solo encharcado","epis":["Capacete jugular","Colete refletivo","Botina biqueira composite"],"nrs":["NR-11","NR-12","NR-18"]},
+  {"risco_nome":"Içamento tandem com dois ou mais guindastes","risco_categoria":"ACIDENTE","passo_a_passo":"Elevação sincronizada do painel pelos dois guindastes","efeitos_danos":"Sobrecarga, queda de carga, óbito","probabilidade":2,"severidade":3,"acoes_preventivas":"Plano de rigging tandem assinado por engenheiro; usar no máximo 75% da capacidade de cada guindaste; sinaleiro único; movimento lento e sincronizado","epis":["Capacete jugular","Colete refletivo"],"nrs":["NR-11","NR-12","NR-34"]},
+  {"risco_nome":"Queda de carga suspensa","risco_categoria":"ACIDENTE","passo_a_passo":"Engate com cintas e manilhas no painel","efeitos_danos":"Esmagamento, óbito","probabilidade":2,"severidade":3,"acoes_preventivas":"Inspeção pré-uso de cintas, manilhas e ganchos; certificados válidos; isolamento total do raio de ação; ninguém sob a carga","epis":["Capacete jugular","Luva vaqueta"],"nrs":["NR-11","NR-34"]},
+  {"risco_nome":"Prensagem de mãos e pés","risco_categoria":"ACIDENTE","passo_a_passo":"Guia e ajuste fino do painel no ponto de assentamento","efeitos_danos":"Amputação, fratura","probabilidade":2,"severidade":3,"acoes_preventivas":"Uso obrigatório de cabo-guia; mãos fora da linha de fogo; comunicação por rádio com o operador","epis":["Luva anticorte nível 5","Botina biqueira composite"],"nrs":["NR-11","NR-12"]},
+  {"risco_nome":"Atividades simultâneas (trabalhos sobrepostos)","risco_categoria":"ACIDENTE","passo_a_passo":"Coordenação com demais frentes do pátio durante a manobra","efeitos_danos":"Atropelamento, queda de objetos sobre terceiros","probabilidade":2,"severidade":3,"acoes_preventivas":"Paralisar frentes vizinhas durante o içamento; isolamento com fita e vigia de área; DDS específico antes da manobra","epis":["Capacete jugular","Colete refletivo"],"nrs":["NR-01","NR-18","NR-34"]},
+  {"risco_nome":"Descarga atmosférica / tempestade","risco_categoria":"FISICO","passo_a_passo":"Operação a céu aberto durante todo o içamento","efeitos_danos":"Eletrocussão, queda de carga por rajada","probabilidade":2,"severidade":3,"acoes_preventivas":"Monitorar previsão e alerta de raios; paralisar e baixar a carga; retomar 30 min após o último raio","epis":["Capacete jugular","Capa de chuva"],"nrs":["NR-01","NR-34"]}
+ ]'::jsonb, 200, true),
+
+('oxicorte-painel-suspenso','Oxicorte de chapa em painel suspenso por guindaste','CORTE_SOLDA',
+ 'Corte a quente de chapa mantida suspensa/apoiada por guindaste em bloco estrutural',
+ 'Execução de oxicorte para ajuste e separação de chapas em painel de bloco, com a peça sustentada por guindaste e o trabalhador posicionado sobre a estrutura metálica.',
+ 'PRODUÇÃO','BLOCO/PAINEL EM MONTAGEM','A céu aberto; suspender em chuva',
+ 'Modelo gerado a partir de registro fotográfico das atividades reais (lote 2). PENDENTE DE REVISÃO/VALIDAÇÃO PELO SESMT.',
+ true, ARRAY['TRABALHO_QUENTE','ALTURA'],
+ '[
+  {"risco_nome":"Queda de altura","risco_categoria":"ACIDENTE","passo_a_passo":"Acesso e permanência sobre a estrutura do painel","efeitos_danos":"Politraumatismo, óbito","probabilidade":2,"severidade":3,"acoes_preventivas":"Linha de vida ancorada em ponto certificado; cinto paraquedista com talabarte duplo; plataforma ou passadiço com guarda-corpo sempre que possível; APR e PT de altura","epis":["Cinto paraquedista","Talabarte duplo com absorvedor","Capacete jugular"],"nrs":["NR-35","NR-34"]},
+  {"risco_nome":"Retrocesso de chama (flashback) em oxicorte","risco_categoria":"ACIDENTE","passo_a_passo":"Acendimento e operação do maçarico de oxicorte","efeitos_danos":"Explosão de mangueira, queimadura grave","probabilidade":2,"severidade":3,"acoes_preventivas":"Válvulas corta-chama no regulador e no maçarico; teste de vazamento antes do uso; cilindros na vertical, presos e afastados de calor","epis":["Óculos lente oxicorte","Luva raspa cano longo","Avental de raspa"],"nrs":["NR-12","NR-18","NR-34"]},
+  {"risco_nome":"Queda de carga suspensa por falha de chapa/garra","risco_categoria":"ACIDENTE","passo_a_passo":"Corte da chapa mantida suspensa pelo guindaste","efeitos_danos":"Esmagamento, óbito","probabilidade":2,"severidade":3,"acoes_preventivas":"Nunca cortar peça apenas suspensa: escorar e travar antes do corte final; prever ponto de queda da parte cortada; operador do guindaste em posição e comunicação constante","epis":["Capacete jugular","Botina biqueira composite"],"nrs":["NR-11","NR-34"]},
+  {"risco_nome":"Incêndio e explosão","risco_categoria":"ACIDENTE","passo_a_passo":"Projeção de escória e faíscas durante o corte","efeitos_danos":"Incêndio, queimaduras, perda material","probabilidade":2,"severidade":3,"acoes_preventivas":"Permissão de trabalho a quente; remoção de combustíveis num raio de 11 m; manta antifagulha; extintor na frente de serviço; vigia de fogo por 30 min após o término","epis":["Vestimenta antichama","Luva raspa cano longo"],"nrs":["NR-23","NR-34"]},
+  {"risco_nome":"Fumos metálicos (solda)","risco_categoria":"QUIMICO","passo_a_passo":"Exposição aos fumos gerados no corte","efeitos_danos":"Febre dos fumos metálicos, irritação respiratória","probabilidade":3,"severidade":2,"acoes_preventivas":"Posicionar-se contra o vento; exaustão local quando em área semiconfinada; respirador PFF2 com válvula ou semifacial com filtro P2","epis":["Respirador PFF2","Máscara de solda"],"nrs":["NR-09","NR-15","NR-34"]},
+  {"risco_nome":"Queda de objetos","risco_categoria":"ACIDENTE","passo_a_passo":"Manuseio de ferramentas e peças em nível elevado","efeitos_danos":"Trauma craniano em quem está abaixo","probabilidade":2,"severidade":3,"acoes_preventivas":"Amarração de ferramentas; isolamento e sinalização da projeção vertical; proibir circulação sob a frente de corte","epis":["Capacete jugular","Botina biqueira composite"],"nrs":["NR-18","NR-34","NR-35"]}
+ ]'::jsonb, 201, true),
+
+('corte-quente-sob-casco-escorado','Corte a quente sob casco escorado em cavaletes','CORTE_SOLDA',
+ 'Corte e ajuste a quente executado por baixo do casco apoiado em cavaletes e escoras',
+ 'Serviço de corte a quente e ajuste estrutural realizado sob o casco de embarcação apoiada em cavaletes e escoras, com projeção de escória incandescente e exposição a queda de material.',
+ 'PRODUÇÃO','CARREIRA/PÁTIO SOB O CASCO','A céu aberto; suspender em chuva forte',
+ 'Modelo gerado a partir de registro fotográfico das atividades reais (lote 2). PENDENTE DE REVISÃO/VALIDAÇÃO PELO SESMT.',
+ true, ARRAY['TRABALHO_QUENTE'],
+ '[
+  {"risco_nome":"Colapso de escoramento/berço de embarcação","risco_categoria":"ACIDENTE","passo_a_passo":"Permanência e trabalho sob o casco apoiado","efeitos_danos":"Esmagamento fatal","probabilidade":1,"severidade":3,"acoes_preventivas":"Escoramento com projeto aprovado; inspeção diária de cavaletes, calços e cunhas; proibido remover ou cortar escora sem liberação técnica; controlar recalque do terreno","epis":["Capacete jugular","Botina biqueira composite"],"nrs":["NR-11","NR-18","NR-34"]},
+  {"risco_nome":"Contato com peça quente","risco_categoria":"ACIDENTE","passo_a_passo":"Queda de escória e respingos sobre o trabalhador abaixo","efeitos_danos":"Queimadura de 2º e 3º graus","probabilidade":3,"severidade":2,"acoes_preventivas":"Trabalho posicionado fora da vertical da escória; manta antifagulha e anteparos; vestimenta antichama completa e touca árabe","epis":["Vestimenta antichama","Touca árabe","Perneira de raspa","Luva raspa cano longo"],"nrs":["NR-06","NR-34"]},
+  {"risco_nome":"Incêndio e explosão","risco_categoria":"ACIDENTE","passo_a_passo":"Corte a quente com material combustível no piso","efeitos_danos":"Incêndio, queimaduras","probabilidade":2,"severidade":3,"acoes_preventivas":"PT de trabalho a quente; limpeza do piso sob a frente; extintor a até 5 m; vigia de fogo 30 min após o término","epis":["Vestimenta antichama","Luva raspa cano longo"],"nrs":["NR-23","NR-34"]},
+  {"risco_nome":"Postura forçada","risco_categoria":"ERGONOMICO","passo_a_passo":"Corte em posição overhead sob a estrutura","efeitos_danos":"Lombalgia, tendinite de ombro","probabilidade":3,"severidade":2,"acoes_preventivas":"Rodízio a cada 50 min; uso de apoio/banqueta e suporte para maçarico; pausas programadas","epis":["Vestimenta antichama"],"nrs":["NR-17"]},
+  {"risco_nome":"Fumos metálicos (solda)","risco_categoria":"QUIMICO","passo_a_passo":"Acúmulo de fumos sob o casco (área semiconfinada)","efeitos_danos":"Irritação respiratória, febre dos fumos","probabilidade":3,"severidade":2,"acoes_preventivas":"Ventilação forçada sob o casco; respirador PFF2; evitar permanência prolongada na nuvem de fumos","epis":["Respirador PFF2","Máscara de solda"],"nrs":["NR-09","NR-15"]},
+  {"risco_nome":"Queda de objetos","risco_categoria":"ACIDENTE","passo_a_passo":"Peças cortadas caindo do casco","efeitos_danos":"Trauma, fratura, óbito","probabilidade":2,"severidade":3,"acoes_preventivas":"Escorar/pré-fixar a peça antes do corte final; isolar a projeção vertical; sinalizar e proibir circulação","epis":["Capacete jugular","Botina biqueira composite"],"nrs":["NR-18","NR-34"]}
+ ]'::jsonb, 202, true),
+
+('montagem-berco-cama-lancamento','Montagem de berço e cama de lançamento no pátio','MOVIMENTACAO',
+ 'Preparação de cavaletes, calços e cama de lançamento no pátio do estaleiro',
+ 'Montagem, alinhamento e nivelamento dos cavaletes, calços e cama de lançamento no pátio, incluindo transporte manual e mecanizado de perfis e madeiras.',
+ 'PRODUÇÃO','PÁTIO / CARREIRA','A céu aberto, alta exposição solar',
+ 'Modelo gerado a partir de registro fotográfico das atividades reais (lote 2). PENDENTE DE REVISÃO/VALIDAÇÃO PELO SESMT.',
+ false, ARRAY[]::text[],
+ '[
+  {"risco_nome":"Levantamento e movimentação de material","risco_categoria":"ERGONOMICO","passo_a_passo":"Transporte e posicionamento manual de perfis e madeiras","efeitos_danos":"Lombalgia, hérnia de disco","probabilidade":3,"severidade":2,"acoes_preventivas":"Levantamento em dupla acima de 20 kg; uso de carrinho ou talha; técnica de levantamento treinada em DDS","epis":["Luva vaqueta","Botina biqueira composite"],"nrs":["NR-11","NR-17"]},
+  {"risco_nome":"Prensagem / esmagamento em máquinas","risco_categoria":"ACIDENTE","passo_a_passo":"Assentamento de cavaletes e ajuste de calços","efeitos_danos":"Esmagamento de mãos e pés, fratura","probabilidade":2,"severidade":3,"acoes_preventivas":"Uso de barra de ajuste em vez das mãos; mãos fora da linha de fogo; calço somente com a peça estabilizada","epis":["Luva anticorte nível 5","Botina biqueira composite"],"nrs":["NR-11","NR-12"]},
+  {"risco_nome":"Colapso de escoramento/berço de embarcação","risco_categoria":"ACIDENTE","passo_a_passo":"Montagem e alinhamento do berço","efeitos_danos":"Colapso da estrutura, esmagamento","probabilidade":2,"severidade":3,"acoes_preventivas":"Seguir projeto de escoramento; conferir nivelamento e compactação do terreno; liberação técnica antes de receber carga","epis":["Capacete jugular","Botina biqueira composite"],"nrs":["NR-11","NR-18"]},
+  {"risco_nome":"Movimentação de máquinas e veículos no pátio","risco_categoria":"ACIDENTE","passo_a_passo":"Circulação de máquinas na área de montagem","efeitos_danos":"Atropelamento, prensagem","probabilidade":2,"severidade":3,"acoes_preventivas":"Rotas segregadas; sinaleiro em manobras; alarme de ré e giroflex; velocidade máxima sinalizada","epis":["Colete refletivo","Capacete jugular"],"nrs":["NR-11","NR-12","NR-18"]},
+  {"risco_nome":"Exposição solar e calor a céu aberto","risco_categoria":"FISICO","passo_a_passo":"Permanência prolongada no pátio exposto","efeitos_danos":"Insolação, desidratação","probabilidade":3,"severidade":2,"acoes_preventivas":"Pausa 10 min a cada 50 min em sombra; hidratação disponível na frente; protetor solar FPS 50","epis":["Chapéu árabe","Óculos UV","Camisa manga longa"],"nrs":["NR-15","NR-21"]},
+  {"risco_nome":"Queda de mesmo nível","risco_categoria":"ACIDENTE","passo_a_passo":"Circulação em terreno irregular com material disperso","efeitos_danos":"Entorse, fratura, corte","probabilidade":3,"severidade":2,"acoes_preventivas":"Housekeeping contínuo; vias de circulação demarcadas e livres; recolher sobras e cabos do piso","epis":["Botina biqueira composite"],"nrs":["NR-18"]}
+ ]'::jsonb, 203, true),
+
+('airbags-lancamento-inflagem','Posicionamento e inflagem de airbags de lançamento','MOVIMENTACAO',
+ 'Manuseio, posicionamento e inflagem de airbags pneumáticos para lançamento/movimentação de casco',
+ 'Posicionamento manual dos airbags sob o casco, conexão da mangueira de ar comprimido, inflagem controlada e acompanhamento do deslocamento da embarcação sobre os balões.',
+ 'PRODUÇÃO','CARREIRA / RAMPA DE LANÇAMENTO','A céu aberto; suspender em chuva ou solo encharcado',
+ 'Modelo gerado a partir de registro fotográfico das atividades reais (lote 2). PENDENTE DE REVISÃO/VALIDAÇÃO PELO SESMT.',
+ true, ARRAY['ICAMENTO'],
+ '[
+  {"risco_nome":"Ruptura ou estouro de airbag pressurizado","risco_categoria":"ACIDENTE","passo_a_passo":"Inflagem do airbag até a pressão de trabalho","efeitos_danos":"Onda de choque, trauma acústico, politraumatismo","probabilidade":2,"severidade":3,"acoes_preventivas":"Airbags certificados e inspecionados quanto a cortes e abrasões; manômetro calibrado e pressão máxima definida; zona de exclusão durante a inflagem; ninguém em posição lateral ao balão","epis":["Capacete jugular","Óculos de segurança","Protetor auricular"],"nrs":["NR-06","NR-12","NR-34"]},
+  {"risco_nome":"Chicoteamento de mangueira de ar comprimido","risco_categoria":"ACIDENTE","passo_a_passo":"Conexão e desconexão da mangueira no bico do airbag","efeitos_danos":"Trauma facial, perda de visão","probabilidade":2,"severidade":3,"acoes_preventivas":"Cabo de retenção (whip check) em todos os engates; despressurizar antes de desconectar; engates travados e inspecionados","epis":["Óculos de segurança","Protetor facial","Luva vaqueta"],"nrs":["NR-06","NR-12","NR-13"]},
+  {"risco_nome":"Deslocamento inesperado de embarcação sobre airbags","risco_categoria":"ACIDENTE","passo_a_passo":"Acompanhamento do rolamento do casco sobre os balões","efeitos_danos":"Atropelamento, esmagamento fatal","probabilidade":2,"severidade":3,"acoes_preventivas":"Plano de lançamento com cabos de retenção e guincho dimensionado; trajetória isolada; sinal sonoro antes de cada movimento; proibida permanência à frente e nas laterais do casco","epis":["Capacete jugular","Colete refletivo"],"nrs":["NR-11","NR-18","NR-34"]},
+  {"risco_nome":"Postura forçada","risco_categoria":"ERGONOMICO","passo_a_passo":"Posicionamento manual dos airbags agachado no solo","efeitos_danos":"Lombalgia, lesão de joelho","probabilidade":3,"severidade":2,"acoes_preventivas":"Trabalho em dupla; uso de joelheira e apoio; rodízio de função; evitar arrasto manual do balão cheio","epis":["Joelheira","Luva vaqueta"],"nrs":["NR-17"]},
+  {"risco_nome":"Ruído","risco_categoria":"FISICO","passo_a_passo":"Operação de compressor e escape de ar","efeitos_danos":"PAIR, desconforto acústico","probabilidade":3,"severidade":2,"acoes_preventivas":"Compressor afastado da frente de trabalho; protetor auricular obrigatório; limitar tempo de exposição","epis":["Protetor auricular plug","Protetor auricular concha"],"nrs":["NR-15","NR-09"]},
+  {"risco_nome":"Exposição solar e calor a céu aberto","risco_categoria":"FISICO","passo_a_passo":"Atividade prolongada na rampa exposta","efeitos_danos":"Insolação, desidratação","probabilidade":3,"severidade":2,"acoes_preventivas":"Hidratação e pausas em sombra; protetor solar FPS 50; programar tarefa fora do pico térmico","epis":["Chapéu árabe","Óculos UV","Camisa manga longa"],"nrs":["NR-15","NR-21"]}
+ ]'::jsonb, 204, true),
+
+('ventilacao-forcada-espaco-confinado','Ventilação e exaustão forçada para espaço confinado','ESPACO_CONFINADO',
+ 'Instalação e operação de ventilador/exaustor para renovação de ar em tanque ou compartimento',
+ 'Montagem, ligação e operação de ventilador/exaustor com duto flexível para insuflação e exaustão de ar em tanques, porões e compartimentos, garantindo atmosfera segura durante os serviços internos.',
+ 'PRODUÇÃO','TANQUES E COMPARTIMENTOS DA EMBARCAÇÃO','Ambiente confinado, calor elevado',
+ 'Modelo gerado a partir de registro fotográfico das atividades reais (lote 2). PENDENTE DE REVISÃO/VALIDAÇÃO PELO SESMT.',
+ true, ARRAY['ICAMENTO'],
+ '[
+  {"risco_nome":"Deficiência de oxigênio (atmosfera IPVS)","risco_categoria":"QUIMICO","passo_a_passo":"Entrada e permanência no compartimento","efeitos_danos":"Asfixia, perda de consciência, óbito","probabilidade":2,"severidade":3,"acoes_preventivas":"Medição da atmosfera antes e durante toda a permanência; PET emitida; ventilação contínua; vigia permanente na entrada com meios de resgate","epis":["Detector multigás","Cinto paraquedista com trava-quedas","Capacete jugular"],"nrs":["NR-33"]},
+  {"risco_nome":"Enriquecimento de oxigênio em ambiente confinado","risco_categoria":"QUIMICO","passo_a_passo":"Uso de gases e maçaricos no interior do compartimento","efeitos_danos":"Combustão acelerada, incêndio súbito, queimaduras","probabilidade":2,"severidade":3,"acoes_preventivas":"Proibido usar oxigênio para ventilar; retirar maçaricos e mangueiras nas paradas; manter O2 entre 19,5% e 23%; ventilar apenas com ar limpo","epis":["Vestimenta antichama","Detector multigás"],"nrs":["NR-33","NR-34"]},
+  {"risco_nome":"Choque elétrico","risco_categoria":"ACIDENTE","passo_a_passo":"Ligação elétrica do ventilador/exaustor","efeitos_danos":"Choque, fibrilação, queimadura","probabilidade":2,"severidade":3,"acoes_preventivas":"Alimentação com DR e aterramento; cabos íntegros e suspensos; equipamento adequado à área classificada quando aplicável; inspeção antes de energizar","epis":["Luva isolante","Botina biqueira composite"],"nrs":["NR-10","NR-12"]},
+  {"risco_nome":"Prensagem / esmagamento em máquinas","risco_categoria":"ACIDENTE","passo_a_passo":"Contato com o rotor do ventilador","efeitos_danos":"Amputação, corte profundo","probabilidade":2,"severidade":3,"acoes_preventivas":"Grade de proteção fixa e íntegra; proibido operar sem proteção; bloqueio e etiquetagem antes de qualquer limpeza ou ajuste","epis":["Luva anticorte nível 5"],"nrs":["NR-12"]},
+  {"risco_nome":"Ruído","risco_categoria":"FISICO","passo_a_passo":"Operação do ventilador junto à frente de trabalho","efeitos_danos":"PAIR, dificuldade de comunicação","probabilidade":3,"severidade":2,"acoes_preventivas":"Protetor auricular obrigatório; comunicação por rádio ou sinais combinados com o vigia; posicionar o motor fora do compartimento","epis":["Protetor auricular plug","Protetor auricular concha"],"nrs":["NR-15","NR-33"]},
+  {"risco_nome":"Calor (IBUTG)","risco_categoria":"FISICO","passo_a_passo":"Permanência em compartimento fechado e aquecido","efeitos_danos":"Exaustão térmica, desidratação","probabilidade":3,"severidade":2,"acoes_preventivas":"Insuflação de ar contínua; regime de trabalho e pausa conforme IBUTG; hidratação e revezamento controlado pelo vigia","epis":["Vestimenta ventilada","Detector multigás"],"nrs":["NR-15","NR-33"]}
+ ]'::jsonb, 205, true),
+
+('talha-manual-oxiacetileno','Movimentação de perfis com talha manual e corte oxiacetileno','MOVIMENTACAO',
+ 'Posicionamento de perfis com talha de corrente combinado com corte/ajuste a quente',
+ 'Movimentação e ajuste de perfis estruturais utilizando talha manual de corrente ancorada na estrutura, com corte e aquecimento por maçarico oxiacetileno na mesma frente de serviço.',
+ 'PRODUÇÃO','BLOCO / ESTRUTURA EM MONTAGEM','A céu aberto',
+ 'Modelo gerado a partir de registro fotográfico das atividades reais (lote 2). PENDENTE DE REVISÃO/VALIDAÇÃO PELO SESMT.',
+ true, ARRAY['TRABALHO_QUENTE','ICAMENTO'],
+ '[
+  {"risco_nome":"Falha ou ruptura de corrente de talha manual","risco_categoria":"ACIDENTE","passo_a_passo":"Ancoragem da talha e elevação do perfil","efeitos_danos":"Queda de carga, esmagamento, fratura","probabilidade":2,"severidade":3,"acoes_preventivas":"Inspeção pré-uso de corrente, gancho e trava; respeitar a carga de trabalho marcada; verificar resistência do ponto de ancoragem; proibido nó ou emenda na corrente","epis":["Capacete jugular","Luva vaqueta","Botina biqueira composite"],"nrs":["NR-11","NR-12"]},
+  {"risco_nome":"Prensagem de mãos e pés","risco_categoria":"ACIDENTE","passo_a_passo":"Guia e encaixe do perfil na estrutura","efeitos_danos":"Amputação, fratura","probabilidade":3,"severidade":3,"acoes_preventivas":"Uso de cabo-guia e barra de ajuste; mãos fora da linha de fogo; comunicação clara entre a dupla antes de cada movimento","epis":["Luva anticorte nível 5","Botina biqueira composite"],"nrs":["NR-11","NR-12"]},
+  {"risco_nome":"Retrocesso de chama (flashback) em oxicorte","risco_categoria":"ACIDENTE","passo_a_passo":"Uso do maçarico oxiacetileno na mesma frente","efeitos_danos":"Explosão de mangueira, queimadura grave","probabilidade":2,"severidade":3,"acoes_preventivas":"Válvulas corta-chama e de retenção instaladas; teste de vazamento antes do uso; cilindros na vertical, presos, com capacete de proteção e afastados de calor","epis":["Óculos lente oxicorte","Luva raspa cano longo","Avental de raspa"],"nrs":["NR-12","NR-18","NR-34"]},
+  {"risco_nome":"Atividades simultâneas (trabalhos sobrepostos)","risco_categoria":"ACIDENTE","passo_a_passo":"Movimentação de carga junto com trabalho a quente","efeitos_danos":"Queimadura, queda de carga sobre terceiros","probabilidade":3,"severidade":3,"acoes_preventivas":"Sequenciar as tarefas: não movimentar carga com maçarico aceso na mesma peça; delimitar posições; DDS e liberação conjunta na PT","epis":["Capacete jugular","Vestimenta antichama"],"nrs":["NR-01","NR-34"]},
+  {"risco_nome":"Queda de mesmo nível","risco_categoria":"ACIDENTE","passo_a_passo":"Circulação entre correntes, mangueiras e sobras no piso","efeitos_danos":"Entorse, fratura, queda sobre peça cortante","probabilidade":3,"severidade":2,"acoes_preventivas":"Organizar correntes e mangueiras fora da rota de circulação; housekeeping contínuo; recolher sobras metálicas","epis":["Botina biqueira composite"],"nrs":["NR-18"]},
+  {"risco_nome":"Corte por ferramenta / chapa","risco_categoria":"ACIDENTE","passo_a_passo":"Manuseio de perfis e peças com rebarba","efeitos_danos":"Corte profundo, laceração","probabilidade":3,"severidade":2,"acoes_preventivas":"Rebarbar bordas antes do manuseio; luva anticorte nível 5 e manguito; nunca apoiar a mão na linha de corte","epis":["Luva anticorte nível 5","Manguito"],"nrs":["NR-06","NR-12"]}
+ ]'::jsonb, 206, true)
+) AS m(codigo,nome,categoria,descricao_curta,atividade_descricao,setor_padrao,local_padrao,condicoes_climaticas,observacoes_gerais,exige_pte,ptes_sugeridas,riscos,ordem,ativo)
+WHERE NOT EXISTS (SELECT 1 FROM public.apr_modelos a WHERE a.codigo = m.codigo);
