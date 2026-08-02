@@ -432,6 +432,68 @@ export type Database = {
           },
         ]
       }
+      apr_acoes_biblioteca: {
+        Row: {
+          acao: string
+          ativo: boolean
+          catalogo_risco_id: string | null
+          categoria: string
+          como: string | null
+          created_at: string
+          efeitos_danos: string | null
+          epis: string[]
+          hierarquia: string
+          id: string
+          nrs: string[]
+          palavras_chave: string[]
+          prioridade: string
+          risco_padrao: string
+          updated_at: string
+        }
+        Insert: {
+          acao: string
+          ativo?: boolean
+          catalogo_risco_id?: string | null
+          categoria: string
+          como?: string | null
+          created_at?: string
+          efeitos_danos?: string | null
+          epis?: string[]
+          hierarquia?: string
+          id?: string
+          nrs?: string[]
+          palavras_chave?: string[]
+          prioridade?: string
+          risco_padrao: string
+          updated_at?: string
+        }
+        Update: {
+          acao?: string
+          ativo?: boolean
+          catalogo_risco_id?: string | null
+          categoria?: string
+          como?: string | null
+          created_at?: string
+          efeitos_danos?: string | null
+          epis?: string[]
+          hierarquia?: string
+          id?: string
+          nrs?: string[]
+          palavras_chave?: string[]
+          prioridade?: string
+          risco_padrao?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apr_acoes_biblioteca_catalogo_risco_id_fkey"
+            columns: ["catalogo_risco_id"]
+            isOneToOne: false
+            referencedRelation: "catalogo_riscos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       apr_assinaturas: {
         Row: {
           apr_id: string

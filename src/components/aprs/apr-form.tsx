@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { gerarAPR, type APRPdfRisco, type APRPdfAssinatura } from "@/lib/apr-pdf";
 import { DEFAULT_TEXTO_GERAIS } from "@/lib/apr-defaults";
 import { formatDateBR } from "@/lib/utils-date";
+import { AprAcoesSugeridas, type AcaoBiblioteca } from "@/components/aprs/apr-acoes-sugeridas";
 import dmnLogo from "@/assets/dmn-logo.png";
 import {
   detectarExigenciaPTE,
@@ -601,6 +602,24 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
   });
   const removeRisco = (idx: number) => setRiscos((rs) => rs.filter((_, i) => i !== idx).map((r, i) => ({ ...r, ordem: i + 1 })));
   const updateRisco = (idx: number, patch: Partial<Risco>) => setRiscos((rs) => rs.map((r, i) => i === idx ? { ...r, ...patch } : r));
+
+  /** Aplica uma ação da biblioteca ao risco: acrescenta texto, EPIs e NRs sem duplicar. */
+  function aplicarAcaoBiblioteca(idx: number, a: AcaoBiblioteca) {
+    setRiscos((rs) => rs.map((r, i) => {
+      if (i !== idx) return r;
+      const texto = a.como ? `${a.acao} — ${a.como}` : a.acao;
+      const atual = (r.acoes_preventivas ?? "").trim();
+      const jaTem = atual.toLowerCase().includes(a.acao.toLowerCase());
+      const epis = Array.from(new Set([...(r.epis ?? []), ...(a.epis ?? [])]));
+      const nrs = Array.from(new Set([...(r.nrs ?? []), ...(a.nrs ?? [])]));
+      return {
+        ...r,
+        acoes_preventivas: jaTem ? atual : (atual ? `${atual.replace(/;?\s*$/, "")}; ${texto}` : texto),
+        efeitos_danos: (r.efeitos_danos ?? "").trim() || a.efeitos_danos || r.efeitos_danos,
+        epis, nrs,
+      };
+    }));
+  }
 
   // executantes: lista derivada de empresa + assinaturas atuais
   const execAtuais = assinaturas.filter((a) => a.papel === "EXECUTANTE");
@@ -1577,6 +1596,15 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
                 <div className="md:col-span-2">
                   <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Ações Preventivas</label>
                   <Textarea rows={3} className="mt-1 resize-none" value={r.acoes_preventivas ?? ""} onChange={(e) => updateRisco(riscoEditIdx, { acoes_preventivas: e.target.value })} />
+                </div>
+
+                <div className="md:col-span-2">
+                  <AprAcoesSugeridas
+                    riscoNome={r.risco_nome}
+                    passo={r.passo_a_passo}
+                    categoria={r.risco_categoria}
+                    onAplicar={(a) => aplicarAcaoBiblioteca(riscoEditIdx, a)}
+                  />
                 </div>
 
                 <div>
