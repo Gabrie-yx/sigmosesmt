@@ -35,6 +35,7 @@ const CATEGORIAS = [
   { value: "BIOLOGICO", label: "Biológico" },
   { value: "ERGONOMICO", label: "Ergonômico" },
   { value: "ACIDENTE_MECANICO", label: "Acidente / Mecânico" },
+  { value: "PSICOSSOCIAL", label: "Psicossocial" },
 ];
 
 const TONE: Record<string, string> = {
@@ -43,6 +44,7 @@ const TONE: Record<string, string> = {
   BIOLOGICO: "bg-emerald-100 text-emerald-700 border-emerald-200",
   ERGONOMICO: "bg-violet-100 text-violet-700 border-violet-200",
   ACIDENTE_MECANICO: "bg-rose-100 text-rose-700 border-rose-200",
+  PSICOSSOCIAL: "bg-fuchsia-100 text-fuchsia-700 border-fuchsia-200",
 };
 
 const empty: Partial<Risco> = {
