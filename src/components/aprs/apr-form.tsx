@@ -1579,6 +1579,15 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
                   <Textarea rows={3} className="mt-1 resize-none" value={r.acoes_preventivas ?? ""} onChange={(e) => updateRisco(riscoEditIdx, { acoes_preventivas: e.target.value })} />
                 </div>
 
+                <div className="md:col-span-2">
+                  <AprAcoesSugeridas
+                    riscoNome={r.risco_nome}
+                    passo={r.passo_a_passo}
+                    categoria={r.risco_categoria}
+                    onAplicar={(a) => aplicarAcaoBiblioteca(riscoEditIdx, a)}
+                  />
+                </div>
+
                 <div>
                   <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">EPIs (separados por vírgula)</label>
                   <Input className="h-9 mt-1" value={(r.epis ?? []).join(", ")} onChange={(e) => updateRisco(riscoEditIdx, { epis: e.target.value.split(",").map((x) => x.trim()).filter(Boolean) })} />
