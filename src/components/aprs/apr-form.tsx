@@ -905,6 +905,16 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
   const [stepError, setStepError] = useState<string | null>(null);
   const [riscoEditIdx, setRiscoEditIdx] = useState<number | null>(null);
   const [execFilter, setExecFilter] = useState("");
+  // Abre o editor do último risco adicionado (evita índice defasado ao editar APR já salva)
+  const [abrirUltimoRisco, setAbrirUltimoRisco] = useState(false);
+  // Força reset do Select "+ Do catálogo…" para permitir escolher o mesmo item de novo
+  const [catSelectKey, setCatSelectKey] = useState(0);
+  useEffect(() => {
+    if (abrirUltimoRisco && riscos.length > 0) {
+      setRiscoEditIdx(riscos.length - 1);
+      setAbrirUltimoRisco(false);
+    }
+  }, [abrirUltimoRisco, riscos.length]);
 
   function goNext() {
     const err = validateStep(currentStepIdx);
