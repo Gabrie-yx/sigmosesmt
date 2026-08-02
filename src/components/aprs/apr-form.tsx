@@ -602,6 +602,24 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
   const removeRisco = (idx: number) => setRiscos((rs) => rs.filter((_, i) => i !== idx).map((r, i) => ({ ...r, ordem: i + 1 })));
   const updateRisco = (idx: number, patch: Partial<Risco>) => setRiscos((rs) => rs.map((r, i) => i === idx ? { ...r, ...patch } : r));
 
+  /** Aplica uma ação da biblioteca ao risco: acrescenta texto, EPIs e NRs sem duplicar. */
+  function aplicarAcaoBiblioteca(idx: number, a: AcaoBiblioteca) {
+    setRiscos((rs) => rs.map((r, i) => {
+      if (i !== idx) return r;
+      const texto = a.como ? `${a.acao} — ${a.como}` : a.acao;
+      const atual = (r.acoes_preventivas ?? "").trim();
+      const jaTem = atual.toLowerCase().includes(a.acao.toLowerCase());
+      const epis = Array.from(new Set([...(r.epis ?? []), ...(a.epis ?? [])]));
+      const nrs = Array.from(new Set([...(r.nrs ?? []), ...(a.nrs ?? [])]));
+      return {
+        ...r,
+        acoes_preventivas: jaTem ? atual : (atual ? `${atual.replace(/;?\s*$/, "")}; ${texto}` : texto),
+        efeitos_danos: (r.efeitos_danos ?? "").trim() || a.efeitos_danos || r.efeitos_danos,
+        epis, nrs,
+      };
+    }));
+  }
+
   // executantes: lista derivada de empresa + assinaturas atuais
   const execAtuais = assinaturas.filter((a) => a.papel === "EXECUTANTE");
   const empresaFuncs = useMemo(
