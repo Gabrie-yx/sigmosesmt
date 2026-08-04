@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Anchor, Compass, Gem, ShieldCheck, Leaf, Building2, Award, ArrowRight, Waves, Factory, CalendarCheck2 } from "lucide-react";
 import shipyardImg from "@/assets/dmn-shipyard.jpg";
 import isoSeal from "@/assets/iso-9001.png";
-import dmnLogoAsset from "@/assets/dmn-logo-branco.png.asset.json";
+import dmnLogoBranco from "@/assets/dmn-logo-branco-v2.png";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/app/")({
@@ -33,7 +33,7 @@ function HomePage() {
               </div>
               <h1 className="mb-6">
                 <img
-                  src={dmnLogoAsset.url}
+                  src={dmnLogoBranco}
                   alt="Estaleiro DMN"
                   className="w-[280px] md:w-[420px] lg:w-[500px] max-w-full h-auto object-contain drop-shadow-[0_4px_20px_rgba(0,0,0,0.35)]"
                 />
