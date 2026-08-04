@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Button } from "@/components/ui/button";
-import { Download, ExternalLink, Printer, RotateCcw, RotateCw, X, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
+import { Download, FileWarning, Printer, RotateCcw, RotateCw, X, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { printImagePages, printPdf, renderPdfToImagePagesProgressive } from "@/lib/pdf-print";
@@ -17,6 +17,18 @@ export async function openStorageFile(bucket: string, path: string, name?: strin
   const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, 600);
   if (error || !data) {
     toast.error(error?.message ?? "Não foi possível abrir o arquivo");
+    return;
+  }
+  // Confere se o arquivo existe de fato no Storage antes de abrir o modal.
+  // Registro no banco sem arquivo físico devolve 4xx/5xx aqui.
+  try {
+    const probe = await fetch(data.signedUrl, { method: "GET", headers: { Range: "bytes=0-0" } });
+    if (!probe.ok && probe.status !== 206) {
+      toast.error("Este anexo não está mais disponível no servidor. Reenvie o arquivo.");
+      return;
+    }
+  } catch {
+    toast.error("Não foi possível acessar o arquivo no servidor.");
     return;
   }
   const fname = name ?? path.split("/").pop() ?? "arquivo";
@@ -187,9 +199,6 @@ export function FileViewerHost() {
             <Button size="sm" variant="outline" onClick={handleDownload} className="h-8 border-white/20 bg-white/10 text-slate-100 hover:bg-red-700 hover:border-red-700 hover:text-white">
               <Download className="h-4 w-4 mr-1" /> Baixar
             </Button>
-            <Button size="icon" variant="ghost" onClick={() => payload && window.open(payload.url, "_blank")} className="h-8 w-8 text-slate-200 hover:bg-white/15 hover:text-white" title="Abrir em nova aba">
-              <ExternalLink className="h-4 w-4" />
-            </Button>
             <DialogPrimitive.Close className="ml-1 rounded-sm p-1 text-slate-300 opacity-80 hover:bg-white/15 hover:text-white hover:opacity-100" title="Fechar">
               <X className="h-4 w-4" />
             </DialogPrimitive.Close>
@@ -227,9 +236,12 @@ export function FileViewerHost() {
                     Renderizando PDF no SIGMO...
                   </div>
                 ) : pdfError ? (
-                  <div className="flex h-full flex-col items-center justify-center gap-3 text-center text-sm text-slate-600">
-                    <span>Não foi possível renderizar este PDF no modal.</span>
-                    <Button size="sm" variant="outline" onClick={() => window.open(payload.url, "_blank")}>Abrir em nova aba</Button>
+                  <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center text-sm text-slate-600">
+                    <FileWarning className="h-8 w-8 text-slate-400" />
+                    <span className="font-semibold">Não foi possível abrir este PDF.</span>
+                    <span className="text-xs text-slate-500">
+                      O arquivo pode não estar mais armazenado no servidor. Reenvie o anexo para visualizá-lo novamente.
+                    </span>
                   </div>
                 ) : (
                   <div className="mx-auto flex w-full max-w-[980px] flex-col items-center gap-4">
