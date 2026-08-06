@@ -56,7 +56,7 @@ export const HELP_TOPICS: HelpTopic[] = [
     categoria: "Segurança",
     keywords: ["auditoria", "logs", "leitura", "lgpd", "quem viu"],
     oQueE:
-      "Toda vez que alguém abre uma tela com dados pessoais sensíveis (ficha do funcionário, atestados, ASO, PPP, dossiê de contratada), o SIGMO registra silenciosamente quem acessou e quando. Não bloqueia nada — só deixa rastro para auditoria.",
+      "Toda vez que alguém abre uma tela com dados pessoais sensíveis (ficha do funcionário, atestados, ASO, PPP, dossiê de contratada, atendimentos médicos e anamneses ocupacionais), o SIGMO registra silenciosamente quem acessou e quando. Não bloqueia nada — só deixa rastro para auditoria.",
     base: "LGPD art. 37 (registro de operações) · ISO 27001 A.12.4.1",
     rota: "/app/audit",
   },
