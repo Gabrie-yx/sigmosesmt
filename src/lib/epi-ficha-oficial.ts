@@ -43,20 +43,20 @@ export type FichaOficialBlock = {
 
 const PAGE_H = 595.2;
 const ROWS_PER_PAGE = 17;
-const ROW_TOP0 = 104.0;
-const ROW_H = 26.6;
+const ROW_TOP0 = 55.0;
+const ROW_H = 21.0;
 
 /** Colunas da grade (x0, x1) medidas no PDF oficial. */
 const COL = {
-  qt: [3.8, 39.2],
-  und: [39.4, 69.4],
-  espec: [69.6, 256.0],
-  ca: [256.0, 328.6],
-  assEmp: [328.6, 504.8],
-  dataEntrega: [504.8, 575.2],
-  motivo: [575.2, 659.8],
-  dataDevol: [659.8, 727.4],
-  assReceb: [727.4, 814.4],
+  qt: [10, 36],
+  und: [36, 62],
+  espec: [62, 222],
+  ca: [222, 280],
+  assEmp: [280, 420],
+  dataEntrega: [420, 475],
+  motivo: [475, 540],
+  dataDevol: [540, 595],
+  assReceb: [595, 665],
 } as const;
 
 const MOTIVO_CODE: Record<string, string> = {
@@ -149,31 +149,31 @@ export async function buildFichaOficialBytes(blocks: FichaOficialBlock[]): Promi
       out.addPage(p2);
 
       const e = block.emp;
-      // Cabeçalho (página 1)
-      drawText(p1, e.empresa, { x: 50, top: 125, maxW: 465, size: 9, font: bold });
-      drawText(p1, brDate(e.admissao), { x: 624, top: 125, maxW: 170, size: 9, font });
-      drawText(p1, e.nome, { x: 34, top: 147, maxW: 480, size: 9, font: bold });
-      if (e.demissao) drawText(p1, brDate(e.demissao), { x: 658, top: 149, maxW: 74, size: 9, font });
-      drawText(p1, e.funcao, { x: 43, top: 169, maxW: 200, size: 9, font });
-      drawText(p1, e.matricula, { x: 309, top: 169, maxW: 180, size: 9, font });
-      drawText(p1, `${c + 1}/${chunks.length}`, { x: 536, top: 169, maxW: 60, size: 9, font });
+      // Cabeçalho (página 1) - Reajustado conforme Rev. 06/08/2026
+      drawText(p1, e.empresa, { x: 50, top: 104, maxW: 465, size: 9, font: bold });
+      drawText(p1, brDate(e.admissao), { x: 546, top: 104, maxW: 170, size: 9, font });
+      drawText(p1, e.nome, { x: 34, top: 126, maxW: 480, size: 9, font: bold });
+      if (e.demissao) drawText(p1, brDate(e.demissao), { x: 546, top: 126, maxW: 74, size: 9, font });
+      drawText(p1, e.funcao, { x: 43, top: 148, maxW: 200, size: 9, font });
+      drawText(p1, e.matricula, { x: 309, top: 148, maxW: 180, size: 9, font });
+      drawText(p1, `${c + 1}/${chunks.length}`, { x: 536, top: 148, maxW: 60, size: 9, font });
       // Nome da empresa dentro do termo de responsabilidade
-      drawText(p1, e.empresa, { x: 252, top: 215.5, maxW: 152, size: 7.5, font, center: true });
+      drawText(p1, e.empresa, { x: 252, top: 191.5, maxW: 152, size: 7.5, font, center: true });
       // Local e data
-      drawText(p1, block.localData, { x: 84, top: 587, maxW: 200, size: 9, font });
+      drawText(p1, block.localData, { x: 84, top: 624, maxW: 200, size: 9, font });
 
       // Grade de entregas (página 2)
       const rows = chunks[c];
       for (let i = 0; i < rows.length; i++) {
         const r = rows[i];
-        const top = ROW_TOP0 + ROW_H * i + 17.5;
-        const cell = (col: readonly [number, number] | number[], text: string, size = 7.5, center = true) =>
-          drawText(p2, text, { x: col[0] + 2, top, maxW: col[1] - col[0] - 4, size, font, center });
+        const top = ROW_TOP0 + ROW_H * i + 13.5;
+        const cell = (col: readonly [number, number] | number[], text: string, size = 6.5, center = true) =>
+          drawText(p2, text, { x: col[0] + 1, top, maxW: col[1] - col[0] - 2, size, font, center });
 
         cell(COL.qt, r.qtd != null ? String(r.qtd) : "");
         cell(COL.und, r.und ?? "UN");
         drawText(p2, [r.item, r.tamanho ? `(${r.tamanho})` : ""].filter(Boolean).join(" "), {
-          x: COL.espec[0] + 3, top, maxW: COL.espec[1] - COL.espec[0] - 6, size: 7.5, font,
+          x: COL.espec[0] + 2, top, maxW: COL.espec[1] - COL.espec[0] - 4, size: 6.5, font,
         });
         cell(COL.ca, r.ca ?? "");
         cell(COL.dataEntrega, brDate(r.data_entrega));
