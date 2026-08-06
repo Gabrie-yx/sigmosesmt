@@ -166,9 +166,9 @@ export async function buildFichaOficialBytes(blocks: FichaOficialBlock[]): Promi
       const rows = chunks[c];
       for (let i = 0; i < rows.length; i++) {
         const r = rows[i];
-        const top = ROW_TOP0 + ROW_H * i + 17.5;
-        const cell = (col: readonly [number, number] | number[], text: string, size = 7.5, center = true) =>
-          drawText(p2, text, { x: col[0] + 2, top, maxW: col[1] - col[0] - 4, size, font, center });
+        const top = ROW_TOP0 + ROW_H * i + 13.5;
+        const cell = (col: readonly [number, number] | number[], text: string, size = 6.5, center = true) =>
+          drawText(p2, text, { x: col[0] + 1, top, maxW: col[1] - col[0] - 2, size, font, center });
 
         cell(COL.qt, r.qtd != null ? String(r.qtd) : "");
         cell(COL.und, r.und ?? "UN");
