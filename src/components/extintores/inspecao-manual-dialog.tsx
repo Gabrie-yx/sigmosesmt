@@ -422,16 +422,16 @@ export function InspecaoManualDialog({
                           : "border-slate-800 bg-slate-900/40"
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-semibold">{item.titulo}</span>
-                        <Badge variant="outline" className={`text-[9px] ${SEV_COLOR[item.severidade]}`}>
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <span className="text-[15px] font-bold tracking-tight">{item.titulo}</span>
+                        <Badge variant="outline" className={`text-[10px] font-bold px-2 py-0 h-4 uppercase tracking-wider ${SEV_COLOR[item.severidade]}`}>
                           {SEV_LABEL[item.severidade]}
                         </Badge>
-                        <span className="text-[10px] text-muted-foreground">· {item.norma}</span>
+                        <span className="text-[10px] font-medium text-muted-foreground/60 uppercase">· {item.norma}</span>
                       </div>
-                      <div className="text-[11px] text-muted-foreground mt-0.5">{item.desc}</div>
+                      <div className="text-[12px] leading-relaxed text-muted-foreground/90 font-medium italic">{item.desc}</div>
                     </div>
                     <div className="flex gap-1 shrink-0">
                       {(["ok", "nc", "na"] as const).map((s) => {
