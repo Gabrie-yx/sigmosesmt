@@ -166,7 +166,7 @@ export async function buildFichaOficialBytes(blocks: FichaOficialBlock[]): Promi
       const rows = chunks[c];
       for (let i = 0; i < rows.length; i++) {
         const r = rows[i];
-        const top = ROW_TOP0 + ROW_H * i + 13.5;
+        const top = ROW_TOP0 + ROW_H * i + 13.0; // Ajuste fino vertical
         const cell = (col: readonly [number, number] | number[], text: string, size = 6.5, center = true) =>
           drawText(p2, text, { x: col[0] + 1, top, maxW: col[1] - col[0] - 2, size, font, center });
 
