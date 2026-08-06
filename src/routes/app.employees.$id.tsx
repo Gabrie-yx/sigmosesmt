@@ -818,6 +818,15 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
         onOpenChange={setTermoOpen}
         employeeId={emp?.id}
       />
+      <SaidaExpedienteDialog
+        open={saidaExpedienteOpen}
+        onOpenChange={setSaidaExpedienteOpen}
+        editId={null}
+        duplicateData={{
+          company_id: emp?.company_id ?? "",
+          employee_ids: [emp?.id].filter(Boolean) as string[]
+        }}
+      />
       <Suspense fallback={null}>
         {emp?.status === "DESLIGADO" ? (
           <DesligamentoDialog
