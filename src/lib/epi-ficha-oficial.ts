@@ -53,9 +53,9 @@ const COL = {
   espec: [62, 222],
   ca: [222, 280],
   assEmp: [280, 420],
-  dataEntrega: [420, 475],
-  motivo: [475, 540],
-  dataDevol: [540, 595],
+  dataEntrega: [420, 470],
+  motivo: [470, 530],
+  dataDevol: [530, 595],
   assReceb: [595, 665],
 } as const;
 
