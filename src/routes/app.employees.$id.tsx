@@ -67,6 +67,7 @@ import { NewEmployeeDialog } from "@/components/employees/new-employee-dialog";
 import { UserMinus, RotateCcw, Trash, ArrowRightLeft } from "lucide-react";
 import { TransferirEmpresaDialog } from "@/components/employees/transferir-empresa-dialog";
 import { logRead } from "@/lib/audit-read";
+import { SaidaExpedienteDialog } from "@/components/saida-expediente-dialog";
 import { Search } from "lucide-react";
 
 export const Route = createFileRoute("/app/employees/$id")({
