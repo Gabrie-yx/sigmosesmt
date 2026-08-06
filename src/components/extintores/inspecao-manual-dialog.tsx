@@ -393,14 +393,16 @@ export function InspecaoManualDialog({
 
           {/* Checklist */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Checklist mensal (8 itens)
+            <div className="flex items-center justify-between border-b border-white/5 pb-1">
+              <div className="text-[12px] font-bold uppercase tracking-tight text-muted-foreground/80">
+                CHECKLIST MENSAL (8 ITENS)
               </div>
-              <div className="text-[11px] text-muted-foreground">
+              <div className="text-[11px] text-muted-foreground font-medium">
                 {CHECKLIST.filter((c) => itens[c.id] !== null).length}/8 respondidos
                 {ncIds.length > 0 && (
-                  <> · <span className="text-red-400 font-semibold">{ncIds.length} NC</span></>
+                  <span className="ml-1.5 px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/20 font-bold uppercase tracking-wider text-[9px]">
+                    {ncIds.length} NC
+                  </span>
                 )}
               </div>
             </div>
