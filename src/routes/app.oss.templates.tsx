@@ -91,7 +91,7 @@ function OssTemplatesPage() {
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-3">
             <Button asChild variant="ghost" size="sm">
-              <Link to="/app/oss"><ArrowLeft className="h-4 w-4 mr-1" />OSS Emitidas</Link>
+              <Link to="/app/oss" search={{}} as any><ArrowLeft className="h-4 w-4 mr-1" />OSS Emitidas</Link>
             </Button>
             <div>
               <h1 className="text-xl font-black text-slate-900 tracking-tight">Modelos de OSS por Cargo</h1>

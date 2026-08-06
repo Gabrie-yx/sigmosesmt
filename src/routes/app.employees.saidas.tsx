@@ -199,7 +199,7 @@ function SaidasPage() {
     <div className="p-6 md:p-8 animate-fadeIn">
       <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
         <div className="flex items-center gap-3">
-          <Link to="/app/employees" className="rounded-full p-2 hover:bg-slate-100"><ArrowLeft className="h-4 w-4" /></Link>
+          <Link to="/app/employees" search={{}} as any className="rounded-full p-2 hover:bg-slate-100"><ArrowLeft className="h-4 w-4" /></Link>
           <div>
             <h2 className="heading-display text-3xl md:text-4xl text-brand">Saídas durante o expediente</h2>
             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mt-1">Autorizações com assinatura do funcionário e SESMT</p>
