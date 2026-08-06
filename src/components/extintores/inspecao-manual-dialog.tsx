@@ -338,10 +338,12 @@ export function InspecaoManualDialog({
             Confira cada item. Itens críticos em NC bloqueiam o extintor automaticamente.
           </DialogDescription>
           {extintor && (
-            <div className="text-xs text-muted-foreground mt-1">
-              Extintor: <strong className="text-red-500 font-mono">{extintor.numero}</strong>
-              {extintor.tipo_agente && <> · {extintor.tipo_agente}</>}
-              {extintor.localizacao && <> · {extintor.localizacao}</>}
+            <div className="text-xs font-medium text-muted-foreground bg-accent/30 p-2 rounded-md border border-accent/20">
+              Extintor: <strong className="text-red-500 font-bold font-mono">{extintor.numero}</strong>
+              {extintor.tipo_agente && <span className="mx-1">·</span>}
+              {extintor.tipo_agente && <span>{extintor.tipo_agente}</span>}
+              {extintor.localizacao && <span className="mx-1">·</span>}
+              {extintor.localizacao && <span>{extintor.localizacao}</span>}
             </div>
           )}
         </DialogHeader>
