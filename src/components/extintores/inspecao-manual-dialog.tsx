@@ -327,12 +327,14 @@ export function InspecaoManualDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+        <DialogHeader className="space-y-1.5">
+          <div className="flex items-center gap-2">
             <ClipboardEdit className="h-5 w-5 text-emerald-500" />
-            Inspeção mensal — Checklist NR-23
-          </DialogTitle>
-          <DialogDescription>
+            <DialogTitle className="text-xl font-bold tracking-tight">
+              Inspeção mensal — Checklist NR-23
+            </DialogTitle>
+          </div>
+          <DialogDescription className="text-sm font-medium">
             Confira cada item. Itens críticos em NC bloqueiam o extintor automaticamente.
           </DialogDescription>
           {extintor && (
