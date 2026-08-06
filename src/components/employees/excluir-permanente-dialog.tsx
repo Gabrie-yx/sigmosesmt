@@ -42,7 +42,7 @@ export function ExcluirPermanenteDialog({ emp, open, onClose, onDeleted }: Props
       toast.success(`${emp.nome} excluído permanentemente`);
       onClose();
       if (onDeleted) onDeleted();
-      else navigate({ to: "/app/employees" });
+      else navigate({ to: "/app/employees", search: {} as any });
     },
     onError: (e: any) => toast.error(e.message || "Falha ao excluir funcionário"),
   });

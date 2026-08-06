@@ -374,7 +374,7 @@ function OrdensListPage() {
                       <Eye className="h-4 w-4" />
                     </Button>
                     <Button size="icon" variant="ghost" title="Editar"
-                      onClick={() => navigate({ to: "/app/producao/criar-ordem", search: { id: o.id } as any })}>
+                      onClick={() => navigate({ to: "/app/producao/criar-ordem", search: {} as any, search: { id: o.id } as any })}>
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <Button size="icon" variant="ghost" title="Imprimir"
