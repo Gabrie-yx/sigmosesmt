@@ -178,7 +178,7 @@ export async function buildFichaOficialBytes(blocks: FichaOficialBlock[]): Promi
       const e = { ...block.emp, empresa: "Estaleiro DMN" };
       // Cabeçalho (página 1) - Reajustado conforme Rev. 06/08/2026 e orientações visuais
       // 1. Campo "Empresa": "Estaleiro DMN" (estava vazio)
-      drawText(p1, e.empresa, { x: 52, top: 101, maxW: 465, size: 9, font: bold });
+      drawText(p1, e.empresa, { x: 49, top: 98, maxW: 465, size: 9, font: bold });
       drawText(p1, brDate(e.admissao), { x: 546, top: 101, maxW: 170, size: 9, font });
       
       // BUG CRÍTICO 1 - Corrigindo inversão de Nome e Função
