@@ -180,9 +180,14 @@ export async function buildFichaOficialBytes(blocks: FichaOficialBlock[]): Promi
       // 1. Campo "Empresa": "Estaleiro DMN" (estava vazio)
       drawText(p1, e.empresa, { x: 52, top: 101, maxW: 465, size: 9, font: bold });
       drawText(p1, brDate(e.admissao), { x: 546, top: 101, maxW: 170, size: 9, font });
+      
+      // BUG CRÍTICO 1 - Corrigindo inversão de Nome e Função
+      // Nome do funcionário no campo "Nome:"
       drawText(p1, e.nome, { x: 38, top: 123, maxW: 480, size: 9, font: bold });
-      if (e.demissao) drawText(p1, brDate(e.demissao), { x: 546, top: 123, maxW: 74, size: 9, font });
+      // Função do funcionário no campo "Função:"
       drawText(p1, e.funcao, { x: 43, top: 148, maxW: 200, size: 9, font });
+      
+      if (e.demissao) drawText(p1, brDate(e.demissao), { x: 546, top: 123, maxW: 74, size: 9, font });
       drawText(p1, e.matricula, { x: 309, top: 148, maxW: 180, size: 9, font });
       // 3. Numeração da página: movida para o campo PÁG (superior direito, removendo a solta do título)
       drawText(p1, `${c + 1}/${chunks.length}`, { x: 550, top: 38, maxW: 40, size: 8, font, center: true });
