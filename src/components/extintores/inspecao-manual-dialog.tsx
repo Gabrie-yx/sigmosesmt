@@ -163,6 +163,7 @@ export function InspecaoManualDialog({
   const [agente, setAgente] = useState("");
   const [cargaNominal, setCargaNominal] = useState("");
   const [capacidadeExt, setCapacidadeExt] = useState("");
+  const [proximaRecarga, setProximaRecarga] = useState("");
   const [vencimentoN2, setVencimentoN2] = useState("");
   const [vencimentoN3, setVencimentoN3] = useState("");
   const [seloInmetro, setSeloInmetro] = useState("");
@@ -185,8 +186,9 @@ export function InspecaoManualDialog({
         setAgente((extintor as any).tipo_agente || "");
         setCargaNominal(`${(extintor as any).carga_nominal || ""} ${(extintor as any).carga_unidade || ""}`.trim());
         setCapacidadeExt((extintor as any).capacidade_extintora || "");
+        setProximaRecarga((extintor as any).proxima_recarga || "");
         setVencimentoN2((extintor as any).proxima_manutencao_n2 || "");
-        setVencimentoN3((extintor as any).proxima_manutencao_n3 || "");
+        setVencimentoN3((extintor as any).proxima_manutencao_n3 ? new Date((extintor as any).proxima_manutencao_n3).getFullYear().toString() : "");
         setSeloInmetro((extintor as any).numero_selo_inmetro || "");
       }
     }
@@ -321,8 +323,9 @@ export function InspecaoManualDialog({
       await supabase.from("extintores").update({
         tipo_agente: agente || (extintor as any).tipo_agente,
         capacidade_extintora: capacidadeExt || (extintor as any).capacidade_extintora,
+        proxima_recarga: proximaRecarga || (extintor as any).proxima_recarga,
         proxima_manutencao_n2: vencimentoN2 || (extintor as any).proxima_manutencao_n2,
-        proxima_manutencao_n3: vencimentoN3 || (extintor as any).proxima_manutencao_n3,
+        proxima_manutencao_n3: vencimentoN3 ? `${vencimentoN3}-12-31` : (extintor as any).proxima_manutencao_n3,
         numero_selo_inmetro: seloInmetro || (extintor as any).numero_selo_inmetro,
       }).eq("id", extintor.id);
 
@@ -395,11 +398,14 @@ export function InspecaoManualDialog({
                     className="h-7 text-[11px] bg-background/50 border-white/5 py-0 px-2"
                   />
                 </div>
-                <div className="space-y-0.5">
-                  <span className="text-[10px] uppercase font-bold text-muted-foreground block">Última Manutenção</span>
-                  <span className="text-sm font-semibold">
-                    {(extintor as any).data_ultima_recarga ? new Date((extintor as any).data_ultima_recarga).toLocaleDateString("pt-BR") : "-"}
-                  </span>
+                <div className="space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-muted-foreground block text-blue-400">Próxima Recarga:</span>
+                  <Input 
+                    placeholder="Ex: abr/26"
+                    value={proximaRecarga} 
+                    onChange={(e) => setProximaRecarga(e.target.value)} 
+                    className="h-7 text-[11px] bg-background/50 border-blue-500/20 py-0 px-2 focus:border-blue-500/50"
+                  />
                 </div>
                 <div className="space-y-1">
                   <span className="text-[10px] uppercase font-bold text-muted-foreground block text-amber-400">Vencimento (N2) *</span>
@@ -411,9 +417,10 @@ export function InspecaoManualDialog({
                   />
                 </div>
                 <div className="space-y-1">
-                  <span className="text-[10px] uppercase font-bold text-muted-foreground block text-red-400">Teste Hidro (N3) *</span>
+                  <span className="text-[10px] uppercase font-bold text-muted-foreground block text-red-400">PRÓX. TESTE HIDRO:</span>
                   <Input 
-                    type="date"
+                    type="number"
+                    placeholder="Ex: 2027"
                     value={vencimentoN3} 
                     onChange={(e) => setVencimentoN3(e.target.value)} 
                     className="h-7 text-[11px] bg-background/50 border-red-500/20 py-0 px-2 focus:border-red-500/50"
