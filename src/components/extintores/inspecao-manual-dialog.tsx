@@ -433,27 +433,27 @@ export function InspecaoManualDialog({
                       </div>
                       <div className="text-[12px] leading-relaxed text-muted-foreground/90 font-medium italic">{item.desc}</div>
                     </div>
-                    <div className="flex gap-1 shrink-0">
+                    <div className="flex gap-1.5 shrink-0 pt-0.5">
                       {(["ok", "nc", "na"] as const).map((s) => {
                         const sel = status === s;
                         const cls =
                           s === "ok"
                             ? sel
-                              ? "border-emerald-500 bg-emerald-500/20 text-emerald-200"
-                              : "border-slate-700 text-slate-400 hover:border-emerald-500/50"
+                              ? "border-emerald-500 bg-emerald-500 text-emerald-950 ring-2 ring-emerald-500/20"
+                              : "border-slate-700 bg-slate-800/50 text-slate-400 hover:border-emerald-500/50 hover:bg-emerald-500/5"
                             : s === "nc"
                               ? sel
-                                ? "border-red-500 bg-red-500/20 text-red-200"
-                                : "border-slate-700 text-slate-400 hover:border-red-500/50"
+                                ? "border-red-500 bg-red-500 text-red-950 ring-2 ring-red-500/20"
+                                : "border-slate-700 bg-slate-800/50 text-slate-400 hover:border-red-500/50 hover:bg-red-500/5"
                               : sel
-                                ? "border-slate-400 bg-slate-500/20 text-slate-100"
-                                : "border-slate-700 text-slate-400 hover:border-slate-400";
+                                ? "border-slate-400 bg-slate-400 text-slate-950 ring-2 ring-slate-400/20"
+                                : "border-slate-700 bg-slate-800/50 text-slate-400 hover:border-slate-400 hover:bg-slate-400/5";
                         return (
                           <button
                             key={s}
                             type="button"
                             onClick={() => setItens((p) => ({ ...p, [item.id]: s }))}
-                            className={`px-2.5 py-1 rounded border text-[10px] font-bold uppercase tracking-wider transition ${cls}`}
+                            className={`w-11 h-8 rounded-md border text-[11px] font-black uppercase tracking-widest transition-all duration-200 active:scale-95 ${cls}`}
                           >
                             {s === "ok" ? "OK" : s === "nc" ? "NC" : "N/A"}
                           </button>
