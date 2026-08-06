@@ -412,14 +412,14 @@ export function InspecaoManualDialog({
               return (
                 <div
                   key={item.id}
-                  className={`rounded-md border px-3 py-2 transition ${
+                  className={`rounded-lg border-2 px-4 py-3 transition-all duration-200 ${
                     status === "nc"
-                      ? "border-red-500/60 bg-red-500/5"
+                      ? "border-red-500/50 bg-red-500/5 shadow-[0_0_15px_-5px_rgba(239,68,68,0.2)]"
                       : status === "ok"
-                        ? "border-emerald-500/40 bg-emerald-500/5"
+                        ? "border-emerald-500/30 bg-emerald-500/5 shadow-[0_0_15px_-5px_rgba(16,185,129,0.1)]"
                         : status === "na"
-                          ? "border-slate-700 bg-muted/20"
-                          : "border-slate-700 bg-muted/10"
+                          ? "border-slate-800 bg-muted/20"
+                          : "border-slate-800 bg-slate-900/40"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
