@@ -159,6 +159,14 @@ export function InspecaoManualDialog({
   const hojeISO = new Date().toISOString().slice(0, 10);
   const [dataInspecao, setDataInspecao] = useState<string>(hojeISO);
 
+  // Campos técnicos editáveis (caso o inspetor identifique divergência no campo)
+  const [agente, setAgente] = useState("");
+  const [cargaNominal, setCargaNominal] = useState("");
+  const [capacidadeExt, setCapacidadeExt] = useState("");
+  const [vencimentoN2, setVencimentoN2] = useState("");
+  const [vencimentoN3, setVencimentoN3] = useState("");
+  const [seloInmetro, setSeloInmetro] = useState("");
+
   useEffect(() => {
     setRespNome((prev) => prev || userNome || "");
   }, [userNome]);
