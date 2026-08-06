@@ -338,12 +338,53 @@ export function InspecaoManualDialog({
             Confira cada item. Itens críticos em NC bloqueiam o extintor automaticamente.
           </DialogDescription>
           {extintor && (
-            <div className="text-xs font-medium text-muted-foreground bg-accent/30 p-2 rounded-md border border-accent/20">
-              Extintor: <strong className="text-red-500 font-bold font-mono">{extintor.numero}</strong>
-              {extintor.tipo_agente && <span className="mx-1">·</span>}
-              {extintor.tipo_agente && <span>{extintor.tipo_agente}</span>}
-              {extintor.localizacao && <span className="mx-1">·</span>}
-              {extintor.localizacao && <span>{extintor.localizacao}</span>}
+            <div className="bg-accent/30 p-3 rounded-lg border border-accent/20">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-y-3 gap-x-4">
+                <div className="space-y-0.5">
+                  <span className="text-[10px] uppercase font-bold text-muted-foreground block">Extintor</span>
+                  <span className="text-sm font-mono font-bold text-red-500">{extintor.numero}</span>
+                </div>
+                <div className="space-y-0.5">
+                  <span className="text-[10px] uppercase font-bold text-muted-foreground block">Tipo de Agente</span>
+                  <span className="text-sm font-semibold">{(extintor as any).tipo_agente || "-"}</span>
+                </div>
+                <div className="space-y-0.5">
+                  <span className="text-[10px] uppercase font-bold text-muted-foreground block">Carga Nominal</span>
+                  <span className="text-sm font-semibold">
+                    {(extintor as any).carga_nominal} {(extintor as any).carga_unidade}
+                  </span>
+                </div>
+                <div className="space-y-0.5">
+                  <span className="text-[10px] uppercase font-bold text-muted-foreground block">Capacidade</span>
+                  <span className="text-sm font-semibold">{(extintor as any).capacidade_extintora || "-"}</span>
+                </div>
+                <div className="space-y-0.5">
+                  <span className="text-[10px] uppercase font-bold text-muted-foreground block">Última Manutenção</span>
+                  <span className="text-sm font-semibold">
+                    {(extintor as any).data_ultima_recarga ? new Date((extintor as any).data_ultima_recarga).toLocaleDateString("pt-BR") : "-"}
+                  </span>
+                </div>
+                <div className="space-y-0.5">
+                  <span className="text-[10px] uppercase font-bold text-muted-foreground block">Vencimento (N2)</span>
+                  <span className="text-sm font-semibold">
+                    {(extintor as any).proxima_manutencao_n2 ? new Date((extintor as any).proxima_manutencao_n2).toLocaleDateString("pt-BR") : "-"}
+                  </span>
+                </div>
+                <div className="space-y-0.5">
+                  <span className="text-[10px] uppercase font-bold text-muted-foreground block">Teste Hidro (N3)</span>
+                  <span className="text-sm font-semibold">
+                    {(extintor as any).proxima_manutencao_n3 ? new Date((extintor as any).proxima_manutencao_n3).toLocaleDateString("pt-BR") : "-"}
+                  </span>
+                </div>
+                <div className="space-y-0.5">
+                  <span className="text-[10px] uppercase font-bold text-muted-foreground block">Selo Inmetro</span>
+                  <span className="text-sm font-semibold">{(extintor as any).numero_selo_inmetro || "-"}</span>
+                </div>
+              </div>
+              <div className="mt-2 pt-2 border-t border-accent/10 flex items-center gap-1.5">
+                <span className="text-[10px] uppercase font-bold text-muted-foreground">Localização:</span>
+                <span className="text-[11px] font-medium italic">{(extintor as any).localizacao || "Não informada"}</span>
+              </div>
             </div>
           )}
         </DialogHeader>
@@ -356,8 +397,8 @@ export function InspecaoManualDialog({
             </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-muted/20 p-3 rounded-lg border border-white/5">
-            <div className="space-y-1.5">
+          <div className="flex flex-col md:flex-row gap-3 bg-muted/20 p-3 rounded-lg border border-white/5">
+            <div className="flex-1 space-y-1.5">
               <Label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Responsável *</Label>
               <Input
                 value={respNome}
@@ -365,8 +406,8 @@ export function InspecaoManualDialog({
                 className="h-9 bg-background/50 border-white/10 focus:border-emerald-500/50 transition-colors"
               />
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Registro / matrícula</Label>
+            <div className="flex-1 space-y-1.5">
+              <Label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Matrícula</Label>
               <Input
                 placeholder="Ex.: TST-2210"
                 value={respRegistro}
@@ -374,7 +415,7 @@ export function InspecaoManualDialog({
                 className="h-9 bg-background/50 border-white/10 focus:border-emerald-500/50 transition-colors"
               />
             </div>
-            <div className="md:col-span-2 space-y-1.5 pt-1">
+            <div className="flex-1 space-y-1.5">
               <Label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
                 <span>Data da inspeção *</span>
                 {dataInspecao && dataInspecao < hojeISO && (
@@ -388,9 +429,6 @@ export function InspecaoManualDialog({
                 onChange={(e) => setDataInspecao(e.target.value)}
                 className="h-9 bg-background/50 border-white/10 focus:border-emerald-500/50 transition-colors"
               />
-              <p className="text-[10px] text-muted-foreground italic font-medium">
-                * Para lançamentos retroativos (ex.: meses anteriores). Data futura bloqueada.
-              </p>
             </div>
           </div>
 
