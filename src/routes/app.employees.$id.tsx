@@ -412,6 +412,15 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
                 <Clock className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Saída no expediente</span>
               </button>
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new CustomEvent("cmdk:open"))}
+                className="inline-flex h-8 items-center justify-center rounded-full border border-white/15 bg-white/5 hover:bg-white/10 w-8 text-slate-100 shadow-sm backdrop-blur-sm transition-all"
+                title="Buscar outro funcionário (⌘K / Ctrl+K)"
+                aria-label="Buscar funcionário"
+              >
+                <Search className="h-3.5 w-3.5" />
+              </button>
               {isEditor && !isDesligado && (tab === "profile" || tab === "nrs") && (
                 <button
                   type="button"
