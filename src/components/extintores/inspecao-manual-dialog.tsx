@@ -401,7 +401,7 @@ export function InspecaoManualDialog({
                 <div className="space-y-1">
                   <span className="text-[10px] uppercase font-bold text-muted-foreground block text-blue-400">Próxima Recarga:</span>
                   <Input 
-                    placeholder="Ex: abr/26"
+                    type="month"
                     value={proximaRecarga} 
                     onChange={(e) => setProximaRecarga(e.target.value)} 
                     className="h-7 text-[11px] bg-background/50 border-blue-500/20 py-0 px-2 focus:border-blue-500/50"
