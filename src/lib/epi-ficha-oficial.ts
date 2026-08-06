@@ -149,16 +149,16 @@ export async function buildFichaOficialBytes(blocks: FichaOficialBlock[]): Promi
       out.addPage(p2);
 
       const e = block.emp;
-      // Cabeçalho (página 1) - Reajustado conforme Rev. 06/08/2026
-      drawText(p1, e.empresa, { x: 50, top: 104, maxW: 465, size: 9, font: bold });
-      drawText(p1, brDate(e.admissao), { x: 546, top: 104, maxW: 170, size: 9, font });
-      drawText(p1, e.nome, { x: 34, top: 126, maxW: 480, size: 9, font: bold });
-      if (e.demissao) drawText(p1, brDate(e.demissao), { x: 546, top: 126, maxW: 74, size: 9, font });
+      // Cabeçalho (página 1) - Reajustado conforme Rev. 06/08/2026 e orientações visuais
+      drawText(p1, e.empresa, { x: 52, top: 101, maxW: 465, size: 9, font: bold });
+      drawText(p1, brDate(e.admissao), { x: 546, top: 101, maxW: 170, size: 9, font });
+      drawText(p1, e.nome, { x: 38, top: 123, maxW: 480, size: 9, font: bold });
+      if (e.demissao) drawText(p1, brDate(e.demissao), { x: 546, top: 123, maxW: 74, size: 9, font });
       drawText(p1, e.funcao, { x: 43, top: 148, maxW: 200, size: 9, font });
       drawText(p1, e.matricula, { x: 309, top: 148, maxW: 180, size: 9, font });
       drawText(p1, `${c + 1}/${chunks.length}`, { x: 536, top: 148, maxW: 60, size: 9, font });
       // Nome da empresa dentro do termo de responsabilidade
-      drawText(p1, e.empresa, { x: 252, top: 191.5, maxW: 152, size: 7.5, font, center: true });
+      drawText(p1, e.empresa, { x: 236, top: 191.5, maxW: 168, size: 7.5, font, center: true });
       // Local e data
       drawText(p1, block.localData, { x: 84, top: 624, maxW: 200, size: 9, font });
 
