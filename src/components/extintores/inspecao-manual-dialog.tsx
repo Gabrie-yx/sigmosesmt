@@ -356,27 +356,29 @@ export function InspecaoManualDialog({
             </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            <div>
-              <Label className="text-xs">Responsável *</Label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-muted/20 p-3 rounded-lg border border-white/5">
+            <div className="space-y-1.5">
+              <Label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Responsável *</Label>
               <Input
                 value={respNome}
                 onChange={(e) => setRespNome(e.target.value)}
+                className="h-9 bg-background/50 border-white/10 focus:border-emerald-500/50 transition-colors"
               />
             </div>
-            <div>
-              <Label className="text-xs">Registro / matrícula</Label>
+            <div className="space-y-1.5">
+              <Label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Registro / matrícula</Label>
               <Input
                 placeholder="Ex.: TST-2210"
                 value={respRegistro}
                 onChange={(e) => setRespRegistro(e.target.value)}
+                className="h-9 bg-background/50 border-white/10 focus:border-emerald-500/50 transition-colors"
               />
             </div>
-            <div className="md:col-span-2">
-              <Label className="text-xs">
-                Data da inspeção *{" "}
+            <div className="md:col-span-2 space-y-1.5 pt-1">
+              <Label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
+                <span>Data da inspeção *</span>
                 {dataInspecao && dataInspecao < hojeISO && (
-                  <span className="text-amber-400 font-semibold">· RETROATIVA</span>
+                  <Badge variant="outline" className="text-[9px] bg-amber-500/10 text-amber-400 border-amber-500/20 font-black">RETROATIVA</Badge>
                 )}
               </Label>
               <Input
@@ -384,9 +386,10 @@ export function InspecaoManualDialog({
                 max={hojeISO}
                 value={dataInspecao}
                 onChange={(e) => setDataInspecao(e.target.value)}
+                className="h-9 bg-background/50 border-white/10 focus:border-emerald-500/50 transition-colors"
               />
-              <p className="text-[10px] text-muted-foreground mt-1">
-                Use para lançar inspeções de meses anteriores (ex.: maio, junho). Não é possível registrar data futura.
+              <p className="text-[10px] text-muted-foreground italic font-medium">
+                * Para lançamentos retroativos (ex.: meses anteriores). Data futura bloqueada.
               </p>
             </div>
           </div>
