@@ -67,6 +67,7 @@ import { NewEmployeeDialog } from "@/components/employees/new-employee-dialog";
 import { UserMinus, RotateCcw, Trash, ArrowRightLeft } from "lucide-react";
 import { TransferirEmpresaDialog } from "@/components/employees/transferir-empresa-dialog";
 import { logRead } from "@/lib/audit-read";
+import { SaidaExpedienteDialog } from "@/components/saida-expediente-dialog";
 import { Search } from "lucide-react";
 
 export const Route = createFileRoute("/app/employees/$id")({
@@ -216,6 +217,7 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
   const [verPacoteOpen, setVerPacoteOpen] = useState(false);
   const [transferOpen, setTransferOpen] = useState(false);
   const [excluirOpen, setExcluirOpen] = useState(false);
+  const [saidaExpedienteOpen, setSaidaExpedienteOpen] = useState(false);
 
   async function gerarFichaPdf() {
     if (!emp) return;
@@ -403,14 +405,21 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
             <div className="shrink-0 flex flex-row flex-wrap items-center gap-2">
               <button
                 type="button"
-                onClick={() => window.dispatchEvent(new CustomEvent("cmdk:open"))}
+                onClick={() => setSaidaExpedienteOpen(true)}
                 className="inline-flex h-8 items-center gap-1.5 rounded-full border border-white/15 bg-white/5 hover:bg-white/10 hover:border-brand/40 px-2.5 sm:px-3 text-[10px] font-black uppercase tracking-widest text-slate-100 shadow-sm backdrop-blur-sm transition-all"
+                title="Registrar saída no expediente para este colaborador"
+              >
+                <Clock className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Saída no expediente</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new CustomEvent("cmdk:open"))}
+                className="inline-flex h-8 items-center justify-center rounded-full border border-white/15 bg-white/5 hover:bg-white/10 w-8 text-slate-100 shadow-sm backdrop-blur-sm transition-all"
                 title="Buscar outro funcionário (⌘K / Ctrl+K)"
                 aria-label="Buscar funcionário"
               >
                 <Search className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Buscar funcionário</span>
-                <kbd className="ml-1 hidden sm:inline-flex items-center rounded bg-black/30 px-1 text-[9px] font-mono text-slate-300">⌘K</kbd>
               </button>
               {isEditor && !isDesligado && (tab === "profile" || tab === "nrs") && (
                 <button
@@ -818,6 +827,15 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
         open={termoOpen}
         onOpenChange={setTermoOpen}
         employeeId={emp?.id}
+      />
+      <SaidaExpedienteDialog
+        open={saidaExpedienteOpen}
+        onOpenChange={setSaidaExpedienteOpen}
+        editId={null}
+        duplicateData={{
+          company_id: emp?.company_id ?? "",
+          employee_ids: [emp?.id].filter(Boolean) as string[]
+        }}
       />
       <Suspense fallback={null}>
         {emp?.status === "DESLIGADO" ? (
