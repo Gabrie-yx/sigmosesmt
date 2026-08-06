@@ -349,9 +349,11 @@ export function InspecaoManualDialog({
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="text-[11px] text-muted-foreground flex items-start gap-1.5">
-            <Info className="h-3.5 w-3.5 mt-0.5 text-cyan-400 shrink-0" />
-            Marque cada item como <strong>OK</strong>, <strong>NC</strong> ou <strong>N/A</strong>. Itens em NC exigem descrição.
+          <div className="text-[12px] leading-relaxed text-muted-foreground flex items-start gap-2 bg-blue-500/5 p-3 rounded-md border border-blue-500/10">
+            <Info className="h-4 w-4 mt-0.5 text-blue-400 shrink-0" />
+            <span>
+              Marque cada item como <strong className="text-white">OK</strong>, <strong className="text-white">NC</strong> ou <strong className="text-white">N/A</strong>. Itens em <strong className="text-red-400">NC</strong> exigem descrição e foto de evidência.
+            </span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
