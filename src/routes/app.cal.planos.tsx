@@ -375,7 +375,7 @@ function PlanosCalPage() {
           <Link to="/app/cal" search={{ import: "1" }}>
             <Button size="sm" variant="outline"><Upload className="h-3.5 w-3.5 mr-1.5" /> Importar Requisitos</Button>
           </Link>
-          <Link to="/app/cal"><Button variant="outline" size="sm">Ver Requisitos <ArrowRight className="h-3.5 w-3.5 ml-1.5" /></Button></Link>
+          <Link to="/app/cal" search={{}}><Button variant="outline" size="sm">Ver Requisitos <ArrowRight className="h-3.5 w-3.5 ml-1.5" /></Button></Link>
         </div>
       </div>
 

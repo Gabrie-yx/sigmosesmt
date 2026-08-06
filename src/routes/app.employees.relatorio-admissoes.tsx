@@ -145,7 +145,7 @@ function RelatorioAdmissoes() {
         </div>
         <div className="flex items-center gap-2">
           <Button asChild variant="outline" size="sm">
-            <Link to="/app/employees"><ArrowLeft className="h-4 w-4 mr-1" /> Voltar</Link>
+            <Link to="/app/employees" search={{}}><ArrowLeft className="h-4 w-4 mr-1" /> Voltar</Link>
           </Button>
           <Button size="sm" variant="outline" onClick={exportCsv}>
             <FileDown className="h-4 w-4 mr-1" /> CSV

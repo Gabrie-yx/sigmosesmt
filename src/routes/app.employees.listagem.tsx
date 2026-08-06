@@ -99,7 +99,7 @@ function ListagemFuncionariosPage() {
     <div className="p-6 md:p-8 animate-fadeIn">
       <div className="flex items-center justify-between gap-4 flex-wrap mb-6">
         <div className="flex items-center gap-3">
-          <Link to="/app/employees">
+          <Link to="/app/employees" search={{}}>
             <Button variant="ghost" size="icon" className="rounded-full">
               <ArrowLeft className="h-4 w-4" />
             </Button>

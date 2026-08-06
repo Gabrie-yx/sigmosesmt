@@ -154,7 +154,7 @@ function ConfigIndicadores() {
               </div>
             </div>
             <div className="text-[10px] font-bold text-slate-500 max-w-xs text-right">
-              Para alterar, gerencie os funcionários no módulo <Link to="/app/employees" className="text-cyan-400 underline">Funcionários</Link>.
+              Para alterar, gerencie os funcionários no módulo <Link to="/app/employees" search={{}} className="text-cyan-400 underline">Funcionários</Link>.
             </div>
           </div>
         </div>

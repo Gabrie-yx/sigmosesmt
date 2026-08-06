@@ -327,50 +327,58 @@ export function InspecaoManualDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+        <DialogHeader className="space-y-1.5">
+          <div className="flex items-center gap-2">
             <ClipboardEdit className="h-5 w-5 text-emerald-500" />
-            Inspeção mensal — Checklist NR-23
-          </DialogTitle>
-          <DialogDescription>
+            <DialogTitle className="text-xl font-bold tracking-tight">
+              Inspeção mensal — Checklist NR-23
+            </DialogTitle>
+          </div>
+          <DialogDescription className="text-sm font-medium">
             Confira cada item. Itens críticos em NC bloqueiam o extintor automaticamente.
           </DialogDescription>
           {extintor && (
-            <div className="text-xs text-muted-foreground mt-1">
-              Extintor: <strong className="text-red-500 font-mono">{extintor.numero}</strong>
-              {extintor.tipo_agente && <> · {extintor.tipo_agente}</>}
-              {extintor.localizacao && <> · {extintor.localizacao}</>}
+            <div className="text-xs font-medium text-muted-foreground bg-accent/30 p-2 rounded-md border border-accent/20">
+              Extintor: <strong className="text-red-500 font-bold font-mono">{extintor.numero}</strong>
+              {extintor.tipo_agente && <span className="mx-1">·</span>}
+              {extintor.tipo_agente && <span>{extintor.tipo_agente}</span>}
+              {extintor.localizacao && <span className="mx-1">·</span>}
+              {extintor.localizacao && <span>{extintor.localizacao}</span>}
             </div>
           )}
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="text-[11px] text-muted-foreground flex items-start gap-1.5">
-            <Info className="h-3.5 w-3.5 mt-0.5 text-cyan-400 shrink-0" />
-            Marque cada item como <strong>OK</strong>, <strong>NC</strong> ou <strong>N/A</strong>. Itens em NC exigem descrição.
+          <div className="text-[12px] leading-relaxed text-muted-foreground flex items-start gap-2 bg-blue-500/5 p-3 rounded-md border border-blue-500/10">
+            <Info className="h-4 w-4 mt-0.5 text-blue-400 shrink-0" />
+            <span>
+              Marque cada item como <strong className="text-white">OK</strong>, <strong className="text-white">NC</strong> ou <strong className="text-white">N/A</strong>. Itens em <strong className="text-red-400">NC</strong> exigem descrição e foto de evidência.
+            </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            <div>
-              <Label className="text-xs">Responsável *</Label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-muted/20 p-3 rounded-lg border border-white/5">
+            <div className="space-y-1.5">
+              <Label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Responsável *</Label>
               <Input
                 value={respNome}
                 onChange={(e) => setRespNome(e.target.value)}
+                className="h-9 bg-background/50 border-white/10 focus:border-emerald-500/50 transition-colors"
               />
             </div>
-            <div>
-              <Label className="text-xs">Registro / matrícula</Label>
+            <div className="space-y-1.5">
+              <Label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Registro / matrícula</Label>
               <Input
                 placeholder="Ex.: TST-2210"
                 value={respRegistro}
                 onChange={(e) => setRespRegistro(e.target.value)}
+                className="h-9 bg-background/50 border-white/10 focus:border-emerald-500/50 transition-colors"
               />
             </div>
-            <div className="md:col-span-2">
-              <Label className="text-xs">
-                Data da inspeção *{" "}
+            <div className="md:col-span-2 space-y-1.5 pt-1">
+              <Label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
+                <span>Data da inspeção *</span>
                 {dataInspecao && dataInspecao < hojeISO && (
-                  <span className="text-amber-400 font-semibold">· RETROATIVA</span>
+                  <Badge variant="outline" className="text-[9px] bg-amber-500/10 text-amber-400 border-amber-500/20 font-black">RETROATIVA</Badge>
                 )}
               </Label>
               <Input
@@ -378,23 +386,26 @@ export function InspecaoManualDialog({
                 max={hojeISO}
                 value={dataInspecao}
                 onChange={(e) => setDataInspecao(e.target.value)}
+                className="h-9 bg-background/50 border-white/10 focus:border-emerald-500/50 transition-colors"
               />
-              <p className="text-[10px] text-muted-foreground mt-1">
-                Use para lançar inspeções de meses anteriores (ex.: maio, junho). Não é possível registrar data futura.
+              <p className="text-[10px] text-muted-foreground italic font-medium">
+                * Para lançamentos retroativos (ex.: meses anteriores). Data futura bloqueada.
               </p>
             </div>
           </div>
 
           {/* Checklist */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Checklist mensal (8 itens)
+            <div className="flex items-center justify-between border-b border-white/5 pb-1">
+              <div className="text-[12px] font-bold uppercase tracking-tight text-muted-foreground/80">
+                CHECKLIST MENSAL (8 ITENS)
               </div>
-              <div className="text-[11px] text-muted-foreground">
+              <div className="text-[11px] text-muted-foreground font-medium">
                 {CHECKLIST.filter((c) => itens[c.id] !== null).length}/8 respondidos
                 {ncIds.length > 0 && (
-                  <> · <span className="text-red-400 font-semibold">{ncIds.length} NC</span></>
+                  <span className="ml-1.5 px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/20 font-bold uppercase tracking-wider text-[9px]">
+                    {ncIds.length} NC
+                  </span>
                 )}
               </div>
             </div>
@@ -404,48 +415,48 @@ export function InspecaoManualDialog({
               return (
                 <div
                   key={item.id}
-                  className={`rounded-md border px-3 py-2 transition ${
+                  className={`rounded-lg border-2 px-4 py-3 transition-all duration-200 ${
                     status === "nc"
-                      ? "border-red-500/60 bg-red-500/5"
+                      ? "border-red-500/50 bg-red-500/5 shadow-[0_0_15px_-5px_rgba(239,68,68,0.2)]"
                       : status === "ok"
-                        ? "border-emerald-500/40 bg-emerald-500/5"
+                        ? "border-emerald-500/30 bg-emerald-500/5 shadow-[0_0_15px_-5px_rgba(16,185,129,0.1)]"
                         : status === "na"
-                          ? "border-slate-700 bg-muted/20"
-                          : "border-slate-700 bg-muted/10"
+                          ? "border-slate-800 bg-muted/20"
+                          : "border-slate-800 bg-slate-900/40"
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-semibold">{item.titulo}</span>
-                        <Badge variant="outline" className={`text-[9px] ${SEV_COLOR[item.severidade]}`}>
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <span className="text-[15px] font-bold tracking-tight">{item.titulo}</span>
+                        <Badge variant="outline" className={`text-[10px] font-bold px-2 py-0 h-4 uppercase tracking-wider ${SEV_COLOR[item.severidade]}`}>
                           {SEV_LABEL[item.severidade]}
                         </Badge>
-                        <span className="text-[10px] text-muted-foreground">· {item.norma}</span>
+                        <span className="text-[10px] font-medium text-muted-foreground/60 uppercase">· {item.norma}</span>
                       </div>
-                      <div className="text-[11px] text-muted-foreground mt-0.5">{item.desc}</div>
+                      <div className="text-[12px] leading-relaxed text-muted-foreground/90 font-medium italic">{item.desc}</div>
                     </div>
-                    <div className="flex gap-1 shrink-0">
+                    <div className="flex gap-1.5 shrink-0 pt-0.5">
                       {(["ok", "nc", "na"] as const).map((s) => {
                         const sel = status === s;
                         const cls =
                           s === "ok"
                             ? sel
-                              ? "border-emerald-500 bg-emerald-500/20 text-emerald-200"
-                              : "border-slate-700 text-slate-400 hover:border-emerald-500/50"
+                              ? "border-emerald-500 bg-emerald-500 text-emerald-950 ring-2 ring-emerald-500/20"
+                              : "border-slate-700 bg-slate-800/50 text-slate-400 hover:border-emerald-500/50 hover:bg-emerald-500/5"
                             : s === "nc"
                               ? sel
-                                ? "border-red-500 bg-red-500/20 text-red-200"
-                                : "border-slate-700 text-slate-400 hover:border-red-500/50"
+                                ? "border-red-500 bg-red-500 text-red-950 ring-2 ring-red-500/20"
+                                : "border-slate-700 bg-slate-800/50 text-slate-400 hover:border-red-500/50 hover:bg-red-500/5"
                               : sel
-                                ? "border-slate-400 bg-slate-500/20 text-slate-100"
-                                : "border-slate-700 text-slate-400 hover:border-slate-400";
+                                ? "border-slate-400 bg-slate-400 text-slate-950 ring-2 ring-slate-400/20"
+                                : "border-slate-700 bg-slate-800/50 text-slate-400 hover:border-slate-400 hover:bg-slate-400/5";
                         return (
                           <button
                             key={s}
                             type="button"
                             onClick={() => setItens((p) => ({ ...p, [item.id]: s }))}
-                            className={`px-2.5 py-1 rounded border text-[10px] font-bold uppercase tracking-wider transition ${cls}`}
+                            className={`w-11 h-8 rounded-md border text-[11px] font-black uppercase tracking-widest transition-all duration-200 active:scale-95 ${cls}`}
                           >
                             {s === "ok" ? "OK" : s === "nc" ? "NC" : "N/A"}
                           </button>

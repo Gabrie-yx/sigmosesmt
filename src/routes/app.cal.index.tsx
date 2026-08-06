@@ -22,7 +22,7 @@ import { PainelDinamicoRequisitos, PainelDinamicoPlanos } from "@/components/cal
 export const Route = createFileRoute("/app/cal/")({
   component: CalDashboardPage,
   head: () => ({ meta: [{ title: "Requisitos Legais (CAL) · SIGMO" }, { name: "description", content: "Gestão de Requisitos Legais — CALs, aplicabilidade, planos de ação e evidências." }] }),
-  validateSearch: (s: { import?: unknown }) => ({ import: s.import === "1" || s.import === 1 ? "1" : undefined }),
+  validateSearch: (s: Record<string, unknown>): { import?: string } => ({ import: s.import === "1" || s.import === 1 ? "1" : undefined }),
 });
 
 type PlanoAcaoResumo = {
