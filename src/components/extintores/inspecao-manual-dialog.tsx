@@ -159,6 +159,14 @@ export function InspecaoManualDialog({
   const hojeISO = new Date().toISOString().slice(0, 10);
   const [dataInspecao, setDataInspecao] = useState<string>(hojeISO);
 
+  // Campos técnicos editáveis (caso o inspetor identifique divergência no campo)
+  const [agente, setAgente] = useState("");
+  const [cargaNominal, setCargaNominal] = useState("");
+  const [capacidadeExt, setCapacidadeExt] = useState("");
+  const [vencimentoN2, setVencimentoN2] = useState("");
+  const [vencimentoN3, setVencimentoN3] = useState("");
+  const [seloInmetro, setSeloInmetro] = useState("");
+
   useEffect(() => {
     setRespNome((prev) => prev || userNome || "");
   }, [userNome]);
@@ -172,9 +180,18 @@ export function InspecaoManualDialog({
       setRespNome(userNome ?? "");
       setRespRegistro("");
       setDataInspecao(new Date().toISOString().slice(0, 10));
+
+      if (extintor) {
+        setAgente((extintor as any).tipo_agente || "");
+        setCargaNominal(`${(extintor as any).carga_nominal || ""} ${(extintor as any).carga_unidade || ""}`.trim());
+        setCapacidadeExt((extintor as any).capacidade_extintora || "");
+        setVencimentoN2((extintor as any).proxima_manutencao_n2 || "");
+        setVencimentoN3((extintor as any).proxima_manutencao_n3 || "");
+        setSeloInmetro((extintor as any).numero_selo_inmetro || "");
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, userNome]);
+  }, [open, userNome, extintor]);
 
   // métricas em tempo real
   const ncIds = useMemo(
@@ -299,6 +316,16 @@ export function InspecaoManualDialog({
         created_by: userId ?? null,
       });
       if (error) throw error;
+
+      // Atualiza os dados técnicos do extintor caso tenham sido alterados
+      await supabase.from("extintores").update({
+        tipo_agente: agente || (extintor as any).tipo_agente,
+        capacidade_extintora: capacidadeExt || (extintor as any).capacidade_extintora,
+        proxima_manutencao_n2: vencimentoN2 || (extintor as any).proxima_manutencao_n2,
+        proxima_manutencao_n3: vencimentoN3 || (extintor as any).proxima_manutencao_n3,
+        numero_selo_inmetro: seloInmetro || (extintor as any).numero_selo_inmetro,
+      }).eq("id", extintor.id);
+
       onResultado?.(resultado);
       return resultado;
     },
@@ -344,19 +371,29 @@ export function InspecaoManualDialog({
                   <span className="text-[10px] uppercase font-bold text-muted-foreground block">Extintor</span>
                   <span className="text-sm font-mono font-bold text-red-500">{extintor.numero}</span>
                 </div>
-                <div className="space-y-0.5">
+                <div className="space-y-1">
                   <span className="text-[10px] uppercase font-bold text-muted-foreground block">Tipo de Agente</span>
-                  <span className="text-sm font-semibold">{(extintor as any).tipo_agente || "-"}</span>
+                  <Input 
+                    value={agente} 
+                    onChange={(e) => setAgente(e.target.value)} 
+                    className="h-7 text-[11px] bg-background/50 border-white/5 py-0 px-2"
+                  />
                 </div>
-                <div className="space-y-0.5">
+                <div className="space-y-1">
                   <span className="text-[10px] uppercase font-bold text-muted-foreground block">Carga Nominal</span>
-                  <span className="text-sm font-semibold">
-                    {(extintor as any).carga_nominal} {(extintor as any).carga_unidade}
-                  </span>
+                  <Input 
+                    value={cargaNominal} 
+                    onChange={(e) => setCargaNominal(e.target.value)} 
+                    className="h-7 text-[11px] bg-background/50 border-white/5 py-0 px-2"
+                  />
                 </div>
-                <div className="space-y-0.5">
+                <div className="space-y-1">
                   <span className="text-[10px] uppercase font-bold text-muted-foreground block">Capacidade</span>
-                  <span className="text-sm font-semibold">{(extintor as any).capacidade_extintora || "-"}</span>
+                  <Input 
+                    value={capacidadeExt} 
+                    onChange={(e) => setCapacidadeExt(e.target.value)} 
+                    className="h-7 text-[11px] bg-background/50 border-white/5 py-0 px-2"
+                  />
                 </div>
                 <div className="space-y-0.5">
                   <span className="text-[10px] uppercase font-bold text-muted-foreground block">Última Manutenção</span>
@@ -364,21 +401,31 @@ export function InspecaoManualDialog({
                     {(extintor as any).data_ultima_recarga ? new Date((extintor as any).data_ultima_recarga).toLocaleDateString("pt-BR") : "-"}
                   </span>
                 </div>
-                <div className="space-y-0.5">
-                  <span className="text-[10px] uppercase font-bold text-muted-foreground block">Vencimento (N2)</span>
-                  <span className="text-sm font-semibold">
-                    {(extintor as any).proxima_manutencao_n2 ? new Date((extintor as any).proxima_manutencao_n2).toLocaleDateString("pt-BR") : "-"}
-                  </span>
+                <div className="space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-muted-foreground block text-amber-400">Vencimento (N2) *</span>
+                  <Input 
+                    type="date"
+                    value={vencimentoN2} 
+                    onChange={(e) => setVencimentoN2(e.target.value)} 
+                    className="h-7 text-[11px] bg-background/50 border-amber-500/20 py-0 px-2 focus:border-amber-500/50"
+                  />
                 </div>
-                <div className="space-y-0.5">
-                  <span className="text-[10px] uppercase font-bold text-muted-foreground block">Teste Hidro (N3)</span>
-                  <span className="text-sm font-semibold">
-                    {(extintor as any).proxima_manutencao_n3 ? new Date((extintor as any).proxima_manutencao_n3).toLocaleDateString("pt-BR") : "-"}
-                  </span>
+                <div className="space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-muted-foreground block text-red-400">Teste Hidro (N3) *</span>
+                  <Input 
+                    type="date"
+                    value={vencimentoN3} 
+                    onChange={(e) => setVencimentoN3(e.target.value)} 
+                    className="h-7 text-[11px] bg-background/50 border-red-500/20 py-0 px-2 focus:border-red-500/50"
+                  />
                 </div>
-                <div className="space-y-0.5">
+                <div className="space-y-1">
                   <span className="text-[10px] uppercase font-bold text-muted-foreground block">Selo Inmetro</span>
-                  <span className="text-sm font-semibold">{(extintor as any).numero_selo_inmetro || "-"}</span>
+                  <Input 
+                    value={seloInmetro} 
+                    onChange={(e) => setSeloInmetro(e.target.value)} 
+                    className="h-7 text-[11px] bg-background/50 border-white/5 py-0 px-2"
+                  />
                 </div>
               </div>
               <div className="mt-2 pt-2 border-t border-accent/10 flex items-center gap-1.5">
