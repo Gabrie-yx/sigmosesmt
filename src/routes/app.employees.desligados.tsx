@@ -76,7 +76,7 @@ function DesligadosPage() {
     <div className="p-6 md:p-8 animate-fadeIn">
       <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
         <div className="flex items-center gap-3">
-          <Link to="/app/employees" search={{}} as any className="inline-flex items-center gap-1 text-[11px] font-black uppercase tracking-widest text-muted-foreground hover:text-[var(--brand-text)]">
+          <Link to="/app/employees" search={{}} className="inline-flex items-center gap-1 text-[11px] font-black uppercase tracking-widest text-muted-foreground hover:text-[var(--brand-text)]">
             <ArrowLeft className="h-3.5 w-3.5" /> Funcionários
           </Link>
         </div>
