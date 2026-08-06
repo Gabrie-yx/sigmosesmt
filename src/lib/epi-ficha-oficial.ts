@@ -173,7 +173,7 @@ export async function buildFichaOficialBytes(blocks: FichaOficialBlock[]): Promi
         cell(COL.qt, r.qtd != null ? String(r.qtd) : "");
         cell(COL.und, r.und ?? "UN");
         drawText(p2, [r.item, r.tamanho ? `(${r.tamanho})` : ""].filter(Boolean).join(" "), {
-          x: COL.espec[0] + 3, top, maxW: COL.espec[1] - COL.espec[0] - 6, size: 7.5, font,
+          x: COL.espec[0] + 2, top, maxW: COL.espec[1] - COL.espec[0] - 4, size: 6.5, font,
         });
         cell(COL.ca, r.ca ?? "");
         cell(COL.dataEntrega, brDate(r.data_entrega));
