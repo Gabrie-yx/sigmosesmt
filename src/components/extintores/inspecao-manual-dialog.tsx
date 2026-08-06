@@ -180,9 +180,18 @@ export function InspecaoManualDialog({
       setRespNome(userNome ?? "");
       setRespRegistro("");
       setDataInspecao(new Date().toISOString().slice(0, 10));
+
+      if (extintor) {
+        setAgente((extintor as any).tipo_agente || "");
+        setCargaNominal(`${(extintor as any).carga_nominal || ""} ${(extintor as any).carga_unidade || ""}`.trim());
+        setCapacidadeExt((extintor as any).capacidade_extintora || "");
+        setVencimentoN2((extintor as any).proxima_manutencao_n2 || "");
+        setVencimentoN3((extintor as any).proxima_manutencao_n3 || "");
+        setSeloInmetro((extintor as any).numero_selo_inmetro || "");
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, userNome]);
+  }, [open, userNome, extintor]);
 
   // métricas em tempo real
   const ncIds = useMemo(
