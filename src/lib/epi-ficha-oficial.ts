@@ -48,15 +48,15 @@ const ROW_H = 21.0;
 
 /** Colunas da grade (x0, x1) medidas no PDF oficial. */
 const COL = {
-  qt: [3.8, 39.2],
-  und: [39.4, 69.4],
-  espec: [69.6, 256.0],
-  ca: [256.0, 328.6],
-  assEmp: [328.6, 504.8],
-  dataEntrega: [504.8, 575.2],
-  motivo: [575.2, 659.8],
-  dataDevol: [659.8, 727.4],
-  assReceb: [727.4, 814.4],
+  qt: [10, 36],
+  und: [36, 62],
+  espec: [62, 222],
+  ca: [222, 280],
+  assEmp: [280, 420],
+  dataEntrega: [420, 475],
+  motivo: [475, 540],
+  dataDevol: [540, 595],
+  assReceb: [595, 665],
 } as const;
 
 const MOTIVO_CODE: Record<string, string> = {
