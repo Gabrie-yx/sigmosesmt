@@ -316,6 +316,16 @@ export function InspecaoManualDialog({
         created_by: userId ?? null,
       });
       if (error) throw error;
+
+      // Atualiza os dados técnicos do extintor caso tenham sido alterados
+      await supabase.from("extintores").update({
+        tipo_agente: agente || (extintor as any).tipo_agente,
+        capacidade_extintora: capacidadeExt || (extintor as any).capacidade_extintora,
+        proxima_manutencao_n2: vencimentoN2 || (extintor as any).proxima_manutencao_n2,
+        proxima_manutencao_n3: vencimentoN3 || (extintor as any).proxima_manutencao_n3,
+        numero_selo_inmetro: seloInmetro || (extintor as any).numero_selo_inmetro,
+      }).eq("id", extintor.id);
+
       onResultado?.(resultado);
       return resultado;
     },
