@@ -52,8 +52,8 @@ const COL = {
   und: [36, 62],
   espec: [62, 222],
   ca: [222, 280],
-  assEmp: [280, 415], // Ajustado de 420 para 415 para dar espaço à coluna Entrega
-  dataEntrega: [415, 470], // Ajustado de 420 para 415
+  assEmp: [280, 415],
+  dataEntrega: [415, 470],
   motivo: [470, 530],
   dataDevol: [530, 595],
   assReceb: [595, 665],
@@ -81,17 +81,10 @@ function brDate(s?: string | null) {
 function motivoCurto(e: FichaOficialEntrega): string {
   const raw = (e.motivo ?? e.observacoes ?? "").trim();
   if (!raw) return "";
+  // Se for "Motivo: X" ou apenas "X", tenta mapear para o código numérico
   const m = raw.match(/motivo\s*:\s*([^—\-\n]+)/i);
   const key = (m ? m[1] : raw).trim().toLowerCase();
   return MOTIVO_CODE[key] ?? (m ? m[1].trim() : raw);
-}
-
-function fit(text: string, font: PDFFont, size: number, maxW: number) {
-  if (!text) return "";
-  if (font.widthOfTextAtSize(text, size) <= maxW) return text;
-  let out = text;
-  while (out.length > 1 && font.widthOfTextAtSize(out + "…", size) > maxW) out = out.slice(0, -1);
-  return out + "…";
 }
 
 /** Remove caracteres fora do WinAnsi que quebram o embed das fontes padrão. */
@@ -110,10 +103,44 @@ function drawText(
   const t = safe(String(text ?? "")).trim();
   if (!t) return;
   const size = opts.size ?? 9;
-  const shown = fit(t, opts.font, size, opts.maxW);
-  const w = opts.font.widthOfTextAtSize(shown, size);
-  const x = opts.center ? opts.x + (opts.maxW - w) / 2 : opts.x;
-  page.drawText(shown, { x, y: PAGE_H - opts.top, size, font: opts.font, color: rgb(0, 0, 0) });
+
+  // BUG CRÍTICO 2 - Suporte a quebra de linha (white-space: normal)
+  const words = t.split(" ");
+  const lines: string[] = [];
+  let currentLine = words[0];
+
+  for (let i = 1; i < words.length; i++) {
+    const w = words[i];
+    const width = opts.font.widthOfTextAtSize(currentLine + " " + w, size);
+    if (width < opts.maxW) {
+      currentLine += " " + w;
+    } else {
+      lines.push(currentLine);
+      currentLine = w;
+    }
+  }
+  lines.push(currentLine);
+
+  // Se houver apenas uma linha, desenha centralizado se pedido
+  if (lines.length === 1) {
+    const w = opts.font.widthOfTextAtSize(lines[0], size);
+    const x = opts.center ? opts.x + (opts.maxW - w) / 2 : opts.x;
+    page.drawText(lines[0], { x, y: PAGE_H - opts.top, size, font: opts.font, color: rgb(0, 0, 0) });
+  } else {
+    // BUG CRÍTICO 2 - Multiline alinhado verticalmente (height: auto simulado)
+    // Se tiver 2 linhas, ajustamos o y para que fiquem centradas na altura da célula
+    const lineHeight = size * 1.1;
+    const totalH = lines.length * lineHeight;
+    // O top original é o centro da linha. Ajustamos o início da primeira linha.
+    let currentY = (PAGE_H - opts.top) + (totalH / 2) - size;
+
+    for (const line of lines.slice(0, 2)) { // Limita a 2 linhas para não invadir próxima célula
+      const w = opts.font.widthOfTextAtSize(line, size);
+      const x = opts.center ? opts.x + (opts.maxW - w) / 2 : opts.x;
+      page.drawText(line, { x, y: currentY, size, font: opts.font, color: rgb(0, 0, 0) });
+      currentY -= lineHeight;
+    }
+  }
 }
 
 async function embedSignature(pdf: PDFDocument, dataUrl: string) {
@@ -153,9 +180,14 @@ export async function buildFichaOficialBytes(blocks: FichaOficialBlock[]): Promi
       // 1. Campo "Empresa": "Estaleiro DMN" (estava vazio)
       drawText(p1, e.empresa, { x: 52, top: 101, maxW: 465, size: 9, font: bold });
       drawText(p1, brDate(e.admissao), { x: 546, top: 101, maxW: 170, size: 9, font });
+      
+      // BUG CRÍTICO 1 - Corrigindo inversão de Nome e Função
+      // Nome do funcionário no campo "Nome:"
       drawText(p1, e.nome, { x: 38, top: 123, maxW: 480, size: 9, font: bold });
-      if (e.demissao) drawText(p1, brDate(e.demissao), { x: 546, top: 123, maxW: 74, size: 9, font });
+      // Função do funcionário no campo "Função:"
       drawText(p1, e.funcao, { x: 43, top: 148, maxW: 200, size: 9, font });
+      
+      if (e.demissao) drawText(p1, brDate(e.demissao), { x: 546, top: 123, maxW: 74, size: 9, font });
       drawText(p1, e.matricula, { x: 309, top: 148, maxW: 180, size: 9, font });
       // 3. Numeração da página: movida para o campo PÁG (superior direito, removendo a solta do título)
       drawText(p1, `${c + 1}/${chunks.length}`, { x: 550, top: 38, maxW: 40, size: 8, font, center: true });
