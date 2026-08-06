@@ -43,8 +43,8 @@ export type FichaOficialBlock = {
 
 const PAGE_H = 595.2;
 const ROWS_PER_PAGE = 17;
-const ROW_TOP0 = 104.0;
-const ROW_H = 26.6;
+const ROW_TOP0 = 55.0;
+const ROW_H = 21.0;
 
 /** Colunas da grade (x0, x1) medidas no PDF oficial. */
 const COL = {
