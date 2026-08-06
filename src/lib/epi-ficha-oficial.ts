@@ -46,14 +46,14 @@ const ROWS_PER_PAGE = 17;
 const ROW_TOP0 = 55.0;
 const ROW_H = 21.0;
 
-/** Colunas da grade (x0, x1) medidas no PDF oficial. */
+/** Colunas da grade (x0, x1) medidas no PDF oficial (Rev. 06/08/2026). */
 const COL = {
   qt: [10, 36],
   und: [36, 62],
   espec: [62, 222],
   ca: [222, 280],
-  assEmp: [280, 420],
-  dataEntrega: [420, 470],
+  assEmp: [280, 415], // Ajustado de 420 para 415 para dar espaço à coluna Entrega
+  dataEntrega: [415, 470], // Ajustado de 420 para 415
   motivo: [470, 530],
   dataDevol: [530, 595],
   assReceb: [595, 665],
@@ -148,16 +148,18 @@ export async function buildFichaOficialBytes(blocks: FichaOficialBlock[]): Promi
       out.addPage(p1);
       out.addPage(p2);
 
-      const e = block.emp;
+      const e = { ...block.emp, empresa: "Estaleiro DMN" };
       // Cabeçalho (página 1) - Reajustado conforme Rev. 06/08/2026 e orientações visuais
+      // 1. Campo "Empresa": "Estaleiro DMN" (estava vazio)
       drawText(p1, e.empresa, { x: 52, top: 101, maxW: 465, size: 9, font: bold });
       drawText(p1, brDate(e.admissao), { x: 546, top: 101, maxW: 170, size: 9, font });
       drawText(p1, e.nome, { x: 38, top: 123, maxW: 480, size: 9, font: bold });
       if (e.demissao) drawText(p1, brDate(e.demissao), { x: 546, top: 123, maxW: 74, size: 9, font });
       drawText(p1, e.funcao, { x: 43, top: 148, maxW: 200, size: 9, font });
       drawText(p1, e.matricula, { x: 309, top: 148, maxW: 180, size: 9, font });
-      drawText(p1, `${c + 1}/${chunks.length}`, { x: 536, top: 148, maxW: 60, size: 9, font });
-      // Nome da empresa dentro do termo de responsabilidade
+      // 3. Numeração da página: movida para o campo PÁG (superior direito, removendo a solta do título)
+      drawText(p1, `${c + 1}/${chunks.length}`, { x: 550, top: 38, maxW: 40, size: 8, font, center: true });
+      // 2. Lacuna no corpo do texto preenchida dinamicamente
       drawText(p1, e.empresa, { x: 236, top: 191.5, maxW: 168, size: 7.5, font, center: true });
       // Local e data
       drawText(p1, block.localData, { x: 84, top: 624, maxW: 200, size: 9, font });
@@ -166,19 +168,19 @@ export async function buildFichaOficialBytes(blocks: FichaOficialBlock[]): Promi
       const rows = chunks[c];
       for (let i = 0; i < rows.length; i++) {
         const r = rows[i];
-        const top = ROW_TOP0 + ROW_H * i + 13.0; // Ajuste fino vertical
-        const cell = (col: readonly [number, number] | number[], text: string, size = 6.5, center = true) =>
+        const top = ROW_TOP0 + ROW_H * i + 14.5; // Centralização vertical absoluta na linha
+        const cell = (col: readonly [number, number] | number[], text: string, size = 7, center = true) =>
           drawText(p2, text, { x: col[0] + 1, top, maxW: col[1] - col[0] - 2, size, font, center });
 
         cell(COL.qt, r.qtd != null ? String(r.qtd) : "");
         cell(COL.und, r.und ?? "UN");
         drawText(p2, [r.item, r.tamanho ? `(${r.tamanho})` : ""].filter(Boolean).join(" "), {
-          x: COL.espec[0] + 2, top, maxW: COL.espec[1] - COL.espec[0] - 4, size: 6.5, font,
+          x: COL.espec[0] + 2, top, maxW: COL.espec[1] - COL.espec[0] - 4, size: 7, font,
         });
         cell(COL.ca, r.ca ?? "");
-        cell(COL.dataEntrega, brDate(r.data_entrega));
+        cell(COL.dataEntrega, brDate(r.data_entrega), 7);
         cell(COL.motivo, motivoCurto(r), 7);
-        cell(COL.dataDevol, brDate(r.data_devolucao));
+        cell(COL.dataDevol, brDate(r.data_devolucao), 7);
 
         if (r.assinatura_snapshot) {
           const img = await embedSignature(out, r.assinatura_snapshot);

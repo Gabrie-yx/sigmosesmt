@@ -107,7 +107,7 @@ function TiposProdutoPage() {
         </div>
         <div className="flex gap-2">
           <Button asChild variant="outline" size="sm">
-            <Link to="/app/producao/criar-ordem">Voltar</Link>
+            <Link to="/app/producao/criar-ordem" search={{} as any}>Voltar</Link>
           </Button>
           <Button size="sm" onClick={novo}>
             <Plus className="h-4 w-4 mr-1" /> Novo Tipo
