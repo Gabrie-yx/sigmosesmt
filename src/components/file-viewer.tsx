@@ -43,6 +43,30 @@ export async function openStorageFile(bucket: string, path: string, name?: strin
   openFileViewer({ url: data.signedUrl, name: fname, mime, downloadUrl: data.signedUrl });
 }
 
+/** Baixa um arquivo do Storage sem abrir nova aba. */
+export async function downloadStorageFile(bucket: string, path: string, name?: string) {
+  const fname = name ?? path.split("/").pop() ?? "arquivo";
+  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, 600);
+  if (error || !data) {
+    toast.error(error?.message ?? "Não foi possível baixar o arquivo");
+    return;
+  }
+  try {
+    const res = await fetch(data.signedUrl);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const blob = await res.blob();
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = fname;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  } catch {
+    toast.error("Este anexo não está mais disponível no servidor.");
+  }
+}
+
 export function FileViewerHost() {
   const [payload, setPayload] = useState<ViewerPayload | null>(null);
   const [pdfPages, setPdfPages] = useState<string[]>([]);
