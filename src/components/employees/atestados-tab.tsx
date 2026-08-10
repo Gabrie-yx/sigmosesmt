@@ -171,16 +171,11 @@ export function AtestadosTab({ empId, canEdit, canDelete, qc }: Props) {
   }
 
   async function baixar(path: string) {
-    const { data, error } = await supabase.storage.from("employee-docs").createSignedUrl(path, 60);
-    if (error || !data?.signedUrl) return toast.error("Falha ao gerar link");
-    window.open(data.signedUrl, "_blank");
+    await downloadStorageFile("employee-docs", path);
   }
 
   async function visualizar(path: string) {
-    const { data, error } = await supabase.storage.from("employee-docs").createSignedUrl(path, 300);
-    if (error || !data?.signedUrl) return toast.error("Falha ao gerar link");
-    const isPdf = path.toLowerCase().endsWith(".pdf");
-    setViewing({ url: data.signedUrl, name: path.split("/").pop() || "Arquivo", isPdf });
+    await openStorageFile("employee-docs", path);
   }
 
   async function anexarArquivo(at: any, file: File) {
