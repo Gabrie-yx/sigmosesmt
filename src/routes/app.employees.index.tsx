@@ -38,7 +38,7 @@ function EmployeesPage() {
       if (openCompany) {
         setCompanyFilter(openCompany);
       }
-      navigate({ to: "/app/employees", search: {}, replace: true });
+      navigate({ to: "/app/employees", search: {} as any, replace: true });
     }
   }, [openNew, openCompany, isEditor, navigate]);
   const FILTERS_KEY = "employees:filters";
@@ -57,7 +57,7 @@ function EmployeesPage() {
     if (filterSearch === "aso_vencido" || filterSearch === "aso_vencendo" || filterSearch === "sem_docs") {
       setComplianceFilter(filterSearch as ComplianceFilter);
       setStatusFilter("ATIVO");
-      navigate({ to: "/app/employees", search: {}, replace: true });
+      navigate({ to: "/app/employees", search: {} as any, replace: true });
     }
   }, [filterSearch, navigate]);
   const [visibleCount, setVisibleCount] = useState<number>(initialFilters?.visibleCount ?? 48);

@@ -98,7 +98,7 @@ function EmployeeDetail() {
           </Button>
         ) : (
           <Button asChild variant="ghost" size="sm" className="text-[11px] font-black uppercase tracking-widest text-slate-600 hover:text-brand">
-            <Link to="/app/employees"><ArrowLeft className="h-4 w-4 mr-1" />Voltar</Link>
+            <Link to="/app/employees" search={{} as any}><ArrowLeft className="h-4 w-4 mr-1" />Voltar</Link>
           </Button>
         )}
       </div>
@@ -4088,7 +4088,7 @@ function OssTab({ empId, empNome }: { empId: string; empNome: string }) {
             <span className="text-sm font-bold">Histórico de OS</span>
           </div>
           <Button asChild variant="outline" size="sm">
-            <Link to="/app/oss">Ir para módulo OSS</Link>
+            <Link to="/app/oss" search={{} as any}>Ir para módulo OSS</Link>
           </Button>
         </div>
         {isLoading && <div className="p-6 text-sm text-slate-500">Carregando...</div>}
@@ -4096,7 +4096,7 @@ function OssTab({ empId, empNome }: { empId: string; empNome: string }) {
           <div className="p-8 text-center text-sm text-slate-500">
             Nenhuma OS emitida para este funcionário ainda.
             <div className="text-xs mt-2">
-              Acesse <Link to="/app/oss" className="text-rose-600 underline">SESMT → OSS</Link> para emitir.
+              Acesse <Link to="/app/oss" search={{} as any} className="text-rose-600 underline">SESMT → OSS</Link> para emitir.
             </div>
           </div>
         )}
