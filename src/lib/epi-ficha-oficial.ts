@@ -43,20 +43,21 @@ export type FichaOficialBlock = {
 
 const PAGE_H = 595.2;
 const ROWS_PER_PAGE = 17;
-const ROW_TOP0 = 55.0;
-const ROW_H = 21.0;
+/** Grade medida no PDF-mãe: 1ª linha começa em y(top)=78 e cada linha tem 26,6pt. */
+const ROW_TOP0 = 78.0;
+const ROW_H = 26.6;
 
-/** Colunas da grade (x0, x1) medidas no PDF oficial (Rev. 06/08/2026). */
+/** Colunas da grade (x0, x1) medidas nas réguas verticais do PDF oficial. */
 const COL = {
-  qt: [10, 36],
-  und: [36, 62],
-  espec: [62, 222],
-  ca: [222, 280],
-  assEmp: [280, 415],
-  dataEntrega: [415, 470],
-  motivo: [470, 530],
-  dataDevol: [530, 595],
-  assReceb: [595, 665],
+  qt: [4.8, 40.4],
+  und: [40.4, 70.6],
+  espec: [70.6, 256.6],
+  ca: [256.6, 329.2],
+  assEmp: [329.2, 505.2],
+  dataEntrega: [505.2, 575.8],
+  motivo: [575.8, 660.2],
+  dataDevol: [660.2, 728.4],
+  assReceb: [728.4, 815.0],
 } as const;
 
 const MOTIVO_CODE: Record<string, string> = {
