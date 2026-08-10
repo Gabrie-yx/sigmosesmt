@@ -164,9 +164,11 @@ export function FileViewerHost() {
         return;
       }
     }
-    const w = window.open(payload.url, "_blank");
-    if (!w) { toast.error("Permita pop-ups para imprimir"); return; }
-    w.addEventListener("load", () => { try { w.focus(); w.print(); } catch {} });
+    try {
+      await printImagePages([payload.url], payload.name);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Falha ao imprimir");
+    }
   }
 
   async function handleDownload() {
