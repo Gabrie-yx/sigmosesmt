@@ -192,7 +192,7 @@ function PtesPage() {
       }));
       toast.info(`Vinculando nova PTE à APR ${apr.numero}`);
       // limpa o search para não repetir ao voltar
-      navigate({ to: "/app/ptes", search: {}, replace: true });
+      navigate({ to: "/app/ptes", search: {} as any, replace: true });
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search.apr_id, aprsAll]);

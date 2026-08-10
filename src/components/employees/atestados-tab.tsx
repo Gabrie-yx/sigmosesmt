@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery, type QueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { logRead } from "@/lib/audit-read";
+import { openStorageFile, downloadStorageFile, FileViewerHost } from "@/components/file-viewer";
 import { HelpHint } from "@/components/help-hint";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -78,7 +79,6 @@ export function AtestadosTab({ empId, canEdit, canDelete, qc }: Props) {
   }, [empId]);
   const [openNew, setOpenNew] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
-  const [viewing, setViewing] = useState<{ url: string; name: string; isPdf: boolean } | null>(null);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
   const [homologTarget, setHomologTarget] = useState<any | null>(null);
@@ -171,16 +171,11 @@ export function AtestadosTab({ empId, canEdit, canDelete, qc }: Props) {
   }
 
   async function baixar(path: string) {
-    const { data, error } = await supabase.storage.from("employee-docs").createSignedUrl(path, 60);
-    if (error || !data?.signedUrl) return toast.error("Falha ao gerar link");
-    window.open(data.signedUrl, "_blank");
+    await downloadStorageFile("employee-docs", path);
   }
 
   async function visualizar(path: string) {
-    const { data, error } = await supabase.storage.from("employee-docs").createSignedUrl(path, 300);
-    if (error || !data?.signedUrl) return toast.error("Falha ao gerar link");
-    const isPdf = path.toLowerCase().endsWith(".pdf");
-    setViewing({ url: data.signedUrl, name: path.split("/").pop() || "Arquivo", isPdf });
+    await openStorageFile("employee-docs", path);
   }
 
   async function anexarArquivo(at: any, file: File) {
@@ -374,31 +369,7 @@ export function AtestadosTab({ empId, canEdit, canDelete, qc }: Props) {
         </Table>
       </div>
 
-      <Dialog open={!!viewing} onOpenChange={(o) => !o && setViewing(null)}>
-        <DialogContent className="max-w-5xl w-[95vw] h-[90vh] flex flex-col p-0 gap-0">
-          <DialogHeader className="px-4 py-3 border-b">
-            <DialogTitle className="text-sm flex items-center justify-between gap-3">
-              <span className="truncate">{viewing?.name}</span>
-              {viewing && (
-                <a href={viewing.url} target="_blank" rel="noreferrer" className="text-xs text-primary underline shrink-0">
-                  Abrir em nova aba
-                </a>
-              )}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 overflow-auto bg-muted/30">
-            {viewing && (
-              viewing.isPdf ? (
-                <iframe src={viewing.url} title={viewing.name} className="w-full h-full border-0" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center p-4">
-                  <img src={viewing.url} alt={viewing.name} className="max-w-full max-h-full object-contain" />
-                </div>
-              )
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <FileViewerHost />
 
       <HomologarAlert
         atestado={homologTarget}
