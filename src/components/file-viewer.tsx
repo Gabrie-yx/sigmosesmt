@@ -67,7 +67,13 @@ export async function downloadStorageFile(bucket: string, path: string, name?: s
   }
 }
 
+// Garante um único visualizador ativo mesmo se várias telas montarem o host.
+let activeHostId = 0;
+let hostSeq = 0;
+
 export function FileViewerHost() {
+  const [hostId] = useState(() => ++hostSeq);
+  const [isPrimary, setIsPrimary] = useState(false);
   const [payload, setPayload] = useState<ViewerPayload | null>(null);
   const [pdfPages, setPdfPages] = useState<string[]>([]);
   const [pdfLoading, setPdfLoading] = useState(false);
@@ -76,9 +82,20 @@ export function FileViewerHost() {
   const [rotation, setRotation] = useState(0);
 
   useEffect(() => {
+    if (!activeHostId) {
+      activeHostId = hostId;
+      setIsPrimary(true);
+    }
+    return () => {
+      if (activeHostId === hostId) activeHostId = 0;
+    };
+  }, [hostId]);
+
+  useEffect(() => {
+    if (!isPrimary) return;
     listeners.add(setPayload);
     return () => { listeners.delete(setPayload); };
-  }, []);
+  }, [isPrimary]);
 
   useEffect(() => {
     setZoom(1);
@@ -187,6 +204,8 @@ export function FileViewerHost() {
       toast.error(e.message ?? "Falha no download");
     }
   }
+
+  if (!isPrimary) return null;
 
   return (
     <DialogPrimitive.Root open={!!payload} onOpenChange={(o) => { if (!o) setPayload(null); }}>
