@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery, type QueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { logRead } from "@/lib/audit-read";
+import { openStorageFile, downloadStorageFile, FileViewerHost } from "@/components/file-viewer";
 import { HelpHint } from "@/components/help-hint";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
