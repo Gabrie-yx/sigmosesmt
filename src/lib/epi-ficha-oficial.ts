@@ -43,20 +43,21 @@ export type FichaOficialBlock = {
 
 const PAGE_H = 595.2;
 const ROWS_PER_PAGE = 17;
-const ROW_TOP0 = 55.0;
-const ROW_H = 21.0;
+/** Grade medida no PDF-mãe: 1ª linha começa em y(top)=78 e cada linha tem 26,6pt. */
+const ROW_TOP0 = 78.0;
+const ROW_H = 26.6;
 
-/** Colunas da grade (x0, x1) medidas no PDF oficial (Rev. 06/08/2026). */
+/** Colunas da grade (x0, x1) medidas nas réguas verticais do PDF oficial. */
 const COL = {
-  qt: [10, 36],
-  und: [36, 62],
-  espec: [62, 222],
-  ca: [222, 280],
-  assEmp: [280, 415],
-  dataEntrega: [415, 470],
-  motivo: [470, 530],
-  dataDevol: [530, 595],
-  assReceb: [595, 665],
+  qt: [4.8, 40.4],
+  und: [40.4, 70.6],
+  espec: [70.6, 256.6],
+  ca: [256.6, 329.2],
+  assEmp: [329.2, 505.2],
+  dataEntrega: [505.2, 575.8],
+  motivo: [575.8, 660.2],
+  dataDevol: [660.2, 728.4],
+  assReceb: [728.4, 815.0],
 } as const;
 
 const MOTIVO_CODE: Record<string, string> = {
@@ -176,31 +177,28 @@ export async function buildFichaOficialBytes(blocks: FichaOficialBlock[]): Promi
       out.addPage(p2);
 
       const e = { ...block.emp, empresa: "Estaleiro DMN" };
-      // Cabeçalho (página 1) - Reajustado conforme Rev. 06/08/2026 e orientações visuais
-      // 1. Campo "Empresa": "Estaleiro DMN" (estava vazio)
-      drawText(p1, e.empresa, { x: 49, top: 98, maxW: 465, size: 9, font: bold });
-      drawText(p1, brDate(e.admissao), { x: 546, top: 101, maxW: 170, size: 9, font });
-      
-      // BUG CRÍTICO 1 - Corrigindo inversão de Nome e Função
-      // Nome do funcionário no campo "Nome:"
-      drawText(p1, e.nome, { x: 38, top: 123, maxW: 480, size: 9, font: bold });
-      // Função do funcionário no campo "Função:"
-      drawText(p1, e.funcao, { x: 43, top: 148, maxW: 200, size: 9, font });
-      
-      if (e.demissao) drawText(p1, brDate(e.demissao), { x: 546, top: 123, maxW: 74, size: 9, font });
-      drawText(p1, e.matricula, { x: 309, top: 148, maxW: 180, size: 9, font });
-      // 3. Numeração da página: movida para o campo PÁG (superior direito, removendo a solta do título)
-      drawText(p1, `${c + 1}/${chunks.length}`, { x: 550, top: 38, maxW: 40, size: 8, font, center: true });
-      // 2. Lacuna no corpo do texto preenchida dinamicamente
-      drawText(p1, e.empresa, { x: 236, top: 191.5, maxW: 168, size: 7.5, font, center: true });
-      // Local e data
-      drawText(p1, block.localData, { x: 84, top: 624, maxW: 200, size: 9, font });
+      // Cabeçalho (página 1) — coordenadas medidas nos rótulos do PDF-mãe.
+      // Rótulos: Empresa: (x1 55,8 / base 99) · Nome: (x1 39,8 / base 121)
+      //          Função: (x1 48,2 / base 143) · Matrícula: (x1 314,2) · Folha: (x1 540,6)
+      //          Data de Admissão: (x1 629,4 / base 99) · Data de Demissão: (linha 662–747)
+      drawText(p1, e.empresa, { x: 59, top: 99, maxW: 460, size: 9, font: bold });
+      drawText(p1, brDate(e.admissao), { x: 634, top: 99, maxW: 100, size: 9, font });
+      drawText(p1, e.nome, { x: 43, top: 121, maxW: 480, size: 9, font: bold });
+      drawText(p1, e.funcao, { x: 52, top: 143, maxW: 200, size: 9, font });
+      if (e.demissao) drawText(p1, brDate(e.demissao), { x: 667, top: 122.8, maxW: 78, size: 9, font });
+      drawText(p1, e.matricula, { x: 318, top: 143.4, maxW: 180, size: 9, font });
+      // "Folha:" recebe a paginação da ficha (o campo PÁG. é fixo do template).
+      drawText(p1, `${c + 1}/${chunks.length}`, { x: 544, top: 143.4, maxW: 60, size: 9, font });
+      // Lacuna "recebi da empresa ____" (underscores de x 249,6 a 408,2 / base 189)
+      drawText(p1, e.empresa, { x: 250, top: 189, maxW: 158, size: 8, font, center: true });
+      // "Local e Data:" (linha de x 78,8 a 290 / base 562,5)
+      drawText(p1, block.localData, { x: 82, top: 562.5, maxW: 205, size: 9, font });
 
       // Grade de entregas (página 2)
       const rows = chunks[c];
       for (let i = 0; i < rows.length; i++) {
         const r = rows[i];
-        const top = ROW_TOP0 + ROW_H * i + 14.5; // Centralização vertical absoluta na linha
+        const top = ROW_TOP0 + ROW_H * i + ROW_H / 2 + 3; // baseline centralizada na célula
         const cell = (col: readonly [number, number] | number[], text: string, size = 7, center = true) =>
           drawText(p2, text, { x: col[0] + 1, top, maxW: col[1] - col[0] - 2, size, font, center });
 
