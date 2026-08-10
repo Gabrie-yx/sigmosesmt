@@ -79,7 +79,6 @@ export function AtestadosTab({ empId, canEdit, canDelete, qc }: Props) {
   }, [empId]);
   const [openNew, setOpenNew] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
-  const [viewing, setViewing] = useState<{ url: string; name: string; isPdf: boolean } | null>(null);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
   const [homologTarget, setHomologTarget] = useState<any | null>(null);
@@ -370,31 +369,7 @@ export function AtestadosTab({ empId, canEdit, canDelete, qc }: Props) {
         </Table>
       </div>
 
-      <Dialog open={!!viewing} onOpenChange={(o) => !o && setViewing(null)}>
-        <DialogContent className="max-w-5xl w-[95vw] h-[90vh] flex flex-col p-0 gap-0">
-          <DialogHeader className="px-4 py-3 border-b">
-            <DialogTitle className="text-sm flex items-center justify-between gap-3">
-              <span className="truncate">{viewing?.name}</span>
-              {viewing && (
-                <a href={viewing.url} target="_blank" rel="noreferrer" className="text-xs text-primary underline shrink-0">
-                  Abrir em nova aba
-                </a>
-              )}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 overflow-auto bg-muted/30">
-            {viewing && (
-              viewing.isPdf ? (
-                <iframe src={viewing.url} title={viewing.name} className="w-full h-full border-0" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center p-4">
-                  <img src={viewing.url} alt={viewing.name} className="max-w-full max-h-full object-contain" />
-                </div>
-              )
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <FileViewerHost />
 
       <HomologarAlert
         atestado={homologTarget}
