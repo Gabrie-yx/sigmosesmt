@@ -70,6 +70,14 @@ export async function downloadStorageFile(bucket: string, path: string, name?: s
 // Garante um único visualizador ativo mesmo se várias telas montarem o host.
 let activeHostId = 0;
 let hostSeq = 0;
+const hostClaims = new Map<number, (v: boolean) => void>();
+
+function electHost() {
+  if (activeHostId && hostClaims.has(activeHostId)) return;
+  const next = hostClaims.keys().next();
+  activeHostId = next.done ? 0 : next.value;
+  hostClaims.forEach((set, id) => set(id === activeHostId));
+}
 
 export function FileViewerHost() {
   const [hostId] = useState(() => ++hostSeq);
@@ -82,12 +90,14 @@ export function FileViewerHost() {
   const [rotation, setRotation] = useState(0);
 
   useEffect(() => {
-    if (!activeHostId) {
-      activeHostId = hostId;
-      setIsPrimary(true);
-    }
+    hostClaims.set(hostId, setIsPrimary);
+    electHost();
     return () => {
-      if (activeHostId === hostId) activeHostId = 0;
+      hostClaims.delete(hostId);
+      if (activeHostId === hostId) {
+        activeHostId = 0;
+        electHost();
+      }
     };
   }, [hostId]);
 
