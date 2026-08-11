@@ -566,8 +566,9 @@ function AcidentesPage() {
                         {acidentesAno.filter(a => a.tipo === "SEM_AFASTAMENTO").length}
                       </TableCell>
                       <TableCell className="text-center">
-                        {(empMedio => empMedio > 0 ? (acidentesAno.length / empMedio).toFixed(2) : "—")(Math.round(hhtRows.filter(h => h.ano === anoFiltro).reduce((s, h) => s + Number(h.empregados_medio || 0), 0) / 12))}
+                        {kpis.empMedioAno > 0 ? (acidentesAno.length / kpis.empMedioAno).toFixed(2) : "—"}
                       </TableCell>
+
                       <TableCell className="text-center">
                         {acidentesAno.reduce((s, a) => s + (a.dias_perdidos || 0) + (a.dias_debitados || 0), 0)}
                       </TableCell>
