@@ -215,18 +215,40 @@ export async function buildFichaOficialBytes(blocks: FichaOficialBlock[]): Promi
         const r = rows[i];
         const rowTop = ROW_TOP0 + ROW_H * i;
         
-        const cell = (col: readonly [number, number] | number[], text: string, size = 7, center = true, paddingX = 2) =>
-          drawText(p2, text, { 
+        const cell = (col: readonly [number, number] | number[], text: string, size = 7, center = true, paddingX = 2, isHeader = false) => {
+          if (isHeader) {
+            // Desenha o fundo cinza para o cabeçalho
+            p2.drawRectangle({
+              x: col[0],
+              y: PAGE_H - rowTop - ROW_H,
+              width: col[1] - col[0],
+              height: ROW_H,
+              color: GRAY_HEADER,
+            });
+            // Desenha as bordas
+            p2.drawRectangle({
+              x: col[0],
+              y: PAGE_H - rowTop - ROW_H,
+              width: col[1] - col[0],
+              height: ROW_H,
+              borderColor: GRAY_BORDER,
+              borderWidth: 0.5,
+            });
+          }
+          
+          return drawText(p2, text, { 
             x: col[0], 
             top: rowTop, 
             maxW: col[1] - col[0], 
             size, 
-            font, 
+            font: isHeader ? bold : font, 
             center, 
             vCenterInRow: true, 
             rowH: ROW_H,
             paddingX 
           });
+        };
+
 
         cell(COL.qt, r.qtd != null ? String(r.qtd) : "");
         cell(COL.und, r.und ?? "UN");
