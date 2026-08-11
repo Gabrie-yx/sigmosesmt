@@ -115,10 +115,10 @@ export function gerarForSeg09(opts: {
   
   // Moldura das informações da empresa
   doc.setLineWidth(0.2);
-  doc.rect(10, 40, pageWidth - 20, 26);
-  doc.line(10, 46.5, pageWidth - 10, 46.5);
-  doc.line(10, 53, pageWidth - 10, 53);
-  doc.line(10, 59.5, pageWidth - 10, 59.5);
+  doc.rect(10, 42, pageWidth - 20, 26);
+  doc.line(10, 48.5, pageWidth - 10, 48.5);
+  doc.line(10, 55, pageWidth - 10, 55);
+  doc.line(10, 61.5, pageWidth - 10, 61.5);
 
   // Colunas internas
   doc.line(115, 46.5, 115, 53); // Entre Endereço e Bairro
