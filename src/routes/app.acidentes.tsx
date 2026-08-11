@@ -1712,7 +1712,6 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved, initial }: 
           .upsert(payload, { onConflict: "company_id,ano,mes" });
         if (error) throw error;
       }
-      if (error) throw error;
     },
     onSuccess: () => {
       toast.success("HHT lançado.");
