@@ -122,8 +122,9 @@ export function gerarForSeg09(opts: {
 
   // Colunas internas
   doc.line(115, 48.5, 115, 55); // Entre Endereço e Bairro
-  doc.line(pageWidth - 65, 48.5, pageWidth - 65, 61.5); // Coluna do CEP e DATA
+  doc.line(pageWidth - 65, 48.5, pageWidth - 65, 55); // Apenas entre Bairro e CEP (removemos as linhas de baixo do CNPJ)
   doc.line(65, 55, 65, 61.5); // Entre CNAE e Grau de Risco
+  doc.line(pageWidth - 65, 55, pageWidth - 65, 61.5); // Entre Grau de Risco e DATA
 
   // Linha 1: Empresa
   doc.setFont("helvetica", "bold");
