@@ -775,7 +775,9 @@ function CompanyForm({
             const content = await page.getTextContent();
             fullText += " " + content.items.map((it: any) => it.str ?? "").join(" ");
           }
+          
           let digits = extrairCNPJdeTexto(fullText);
+          const offlineData = extrairDadosCompletosDeTexto(fullText);
 
           if (!digits) {
             setOcrStep("OCR (imagem detectada)...");
@@ -790,16 +792,22 @@ function CompanyForm({
               const { createWorker } = await import("tesseract.js");
               const worker = await createWorker("por");
               const { data } = await worker.recognize(canvas);
-              digits = extrairCNPJdeTexto(data.text ?? "");
+              const ocrText = data.text ?? "";
+              digits = extrairCNPJdeTexto(ocrText);
+              
+              if (digits) {
+                // Mescla dados do OCR se a extração nativa falhou
+                const ocrData = extrairDadosCompletosDeTexto(ocrText);
+                Object.assign(offlineData, ocrData);
+              }
               await worker.terminate();
             } catch (ocrErr) {
               console.warn("[cartao-cnpj] OCR falhou:", ocrErr);
             }
           }
 
-          if (digits || fullText.length > 20) {
+          if (digits || Object.keys(offlineData).length > 0) {
             setOcrStep("Processando dados...");
-            const offlineData = extrairDadosCompletosDeTexto(fullText);
             
             if (digits) {
               const cnpjMasked = `${digits.slice(0,2)}.${digits.slice(2,5)}.${digits.slice(5,8)}/${digits.slice(8,12)}-${digits.slice(12,14)}`;
@@ -811,7 +819,8 @@ function CompanyForm({
             }
 
             try {
-              if (!digits) throw new Error("CNPJ não encontrado");
+              // Sempre tentamos a API se tivermos o CNPJ
+              if (!digits) throw new Error("CNPJ não encontrado para consulta");
               const d = await consultarCNPJ(digits);
               next = {
                 ...next,
@@ -821,7 +830,7 @@ function CompanyForm({
               };
               toast.success("Dados preenchidos via Receita Federal.");
             } catch (apiErr: any) {
-              console.warn("[cartao-cnpj] Falha na API, usando extração local:", apiErr);
+              console.warn("[cartao-cnpj] Falha na API ou CNPJ ausente, usando extração local:", apiErr);
               next = {
                 ...next,
                 ...offlineData,
