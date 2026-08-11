@@ -1824,7 +1824,7 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved, initial }: 
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-white/60 hover:text-white hover:bg-white/10">Cancelar</Button>
-          <Button onClick={() => mut.mutate()} disabled={mut.isPending}>
+          <Button onClick={() => mut.mutate()} disabled={mut.isPending} className="bg-red-600 hover:bg-red-700 text-white border-none shadow-[0_0_20px_rgba(220,38,38,0.3)]">
             {mut.isPending ? "Salvando..." : "Salvar HHT"}
           </Button>
         </DialogFooter>
