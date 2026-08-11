@@ -549,11 +549,12 @@ function AcidentesPage() {
                     <TableRow className="bg-slate-900 text-white hover:bg-slate-800 transition-colors font-bold">
                       <TableCell className="rounded-bl-md">TOTAL ANUAL</TableCell>
                       <TableCell className="text-center font-mono">
-                        {Math.round(hhtRows.filter(h => h.ano === anoFiltro).reduce((s, h) => s + Number(h.empregados_medio || 0), 0) / 12) || "—"}
+                        {kpis.empMedioAno || "—"}
                       </TableCell>
                       <TableCell className="text-center font-mono">
                         {hhtRows.filter(h => h.ano === anoFiltro).reduce((s, h) => s + Number(h.hht || 0), 0).toLocaleString("pt-BR")}
                       </TableCell>
+
                       <TableCell className="text-center">{acidentesAno.length}</TableCell>
                       <TableCell className="text-center text-red-200">
                         {acidentesAno.filter(a => (a.tipo === "COM_AFASTAMENTO" || a.tipo === "FATAL") && (Number(a.dias_perdidos || 0) + Number(a.dias_debitados || 0)) <= 15).length}
