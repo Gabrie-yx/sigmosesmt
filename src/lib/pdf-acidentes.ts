@@ -121,9 +121,9 @@ export function gerarForSeg09(opts: {
   doc.line(10, 61.5, pageWidth - 10, 61.5);
 
   // Colunas internas
-  doc.line(115, 46.5, 115, 53); // Entre Endereço e Bairro
-  doc.line(pageWidth - 65, 46.5, pageWidth - 65, 59.5); // Coluna do CEP e DATA
-  doc.line(65, 53, 65, 59.5); // Entre CNAE e Grau de Risco
+  doc.line(115, 48.5, 115, 55); // Entre Endereço e Bairro
+  doc.line(pageWidth - 65, 48.5, pageWidth - 65, 61.5); // Coluna do CEP e DATA
+  doc.line(65, 55, 65, 61.5); // Entre CNAE e Grau de Risco
 
   // Linha 1: Empresa
   doc.setFont("helvetica", "bold");
