@@ -1694,7 +1694,7 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved, initial }: 
       const isAll = form.company_id === "ALL";
       const targetCompanies = isAll ? companies.map((c: any) => c.id) : [form.company_id];
 
-      const promises = targetCompanies.map(async (cid) => {
+      const promises = targetCompanies.map(async (cid: string) => {
         const payload = {
           company_id: cid,
           ano: Number(form.ano),
