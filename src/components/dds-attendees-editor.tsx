@@ -184,12 +184,16 @@ function AddAttendeesDialog({
     queryKey: ["dds-add-employees-all"],
     enabled: open,
     queryFn: async () => {
-      const { data, error } = await supabase
+      console.log("[DDS Search] Fetching employees...");
+      const { data, error, count } = await supabase
         .from("employees")
-        .select("id, nome, status, company_id, companies(name)")
+        .select("id, nome, status, company_id, companies(name)", { count: 'exact' })
         .order("nome", { ascending: true });
-      console.log("[DDS Search] Total employees fetched:", data?.length);
-      console.log("[DDS Search] Sample data:", data?.slice(0, 5));
+      
+      console.log("[DDS Search] Result count:", count);
+      console.log("[DDS Search] Error:", error);
+      console.log("[DDS Search] First 10:", data?.slice(0, 10).map(e => e.nome));
+      
       if (error) throw error;
       return (data ?? []) as any[];
     },
@@ -197,15 +201,22 @@ function AddAttendeesDialog({
 
   const disponiveis = useMemo(() => {
     const q = busca.toLowerCase().trim();
-    return employees
+    console.log("[DDS Search] Filtering for:", q || "(empty)");
+    const filtered = employees
       .filter((e) => !jaIncluidos.has(e.id))
       .filter((e) => {
-        const matches = !q || e.nome.toLowerCase().includes(q) || (e.companies?.name ?? "").toLowerCase().includes(q);
-        if (q && e.nome.toLowerCase().includes(q)) {
-           console.log("[DDS Search] Matching employee:", e.nome, "Status:", e.status);
+        const nameMatch = !q || e.nome.toLowerCase().includes(q);
+        const companyMatch = !q || (e.companies?.name ?? "").toLowerCase().includes(q);
+        const matches = nameMatch || companyMatch;
+        
+        // Debug específico para o Paulo Laurindo ou qualquer busca que contenha "paulo"
+        if (q.includes("paulo") && e.nome.toLowerCase().includes("paulo")) {
+           console.log("[DDS Search] Found Paulo in list:", e.nome, "Matches:", matches, "Included already?", jaIncluidos.has(e.id));
         }
         return matches;
       });
+    console.log("[DDS Search] Displaying:", filtered.length, "employees");
+    return filtered;
   }, [employees, busca, jaIncluidos]);
 
   function toggle(id: string) {
