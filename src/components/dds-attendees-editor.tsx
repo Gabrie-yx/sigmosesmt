@@ -129,7 +129,7 @@ export function DDSAttendeesEditor({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2">
-        <Input placeholder="Buscar participante..." value={busca} onChange={(e) => setBusca(e.target.value)} className="h-8" />
+        <Input placeholder="Buscar na lista de presentes/ausentes..." value={busca} onChange={(e) => setBusca(e.target.value)} className="h-8" />
         <Badge variant="outline">{totalPresentes}/{esperados || total} · {aderencia}%</Badge>
       </div>
       <div className="border rounded max-h-72 overflow-auto divide-y">
