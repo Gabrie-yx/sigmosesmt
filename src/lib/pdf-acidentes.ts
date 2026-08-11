@@ -191,17 +191,17 @@ export function gerarForSeg09(opts: {
     const indiceRel = empMedio > 0 ? (totalAbs / empMedio).toFixed(2) : "0,00";
 
     return [
-      { content: m, styles: { fontStyle: "bold", fontSize: 10 } },
-      empMedio || "",
-      hhtVal > 0 ? hhtVal.toLocaleString("pt-BR") : "",
-      totalAbs,
-      comAfastLeve,
-      comAfastGrave,
-      semAfast,
-      indiceRel,
-      dp,
-      tf,
-      obitos
+      { content: m, styles: { fontStyle: "bold" as const, fontSize: 10 } },
+      { content: String(empMedio || "") },
+      { content: hhtVal > 0 ? hhtVal.toLocaleString("pt-BR") : "" },
+      { content: String(totalAbs) },
+      { content: String(comAfastLeve) },
+      { content: String(comAfastGrave) },
+      { content: String(semAfast) },
+      { content: String(indiceRel) },
+      { content: String(dp) },
+      { content: String(tf) },
+      { content: String(obitos) }
     ];
   });
 
