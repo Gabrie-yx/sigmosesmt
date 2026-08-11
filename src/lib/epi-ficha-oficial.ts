@@ -104,13 +104,23 @@ function safe(text: string) {
 function drawText(
   page: PDFPage,
   text: string | null | undefined,
-  opts: { x: number; top: number; maxW: number; size?: number; font: PDFFont; center?: boolean },
+  opts: { 
+    x: number; 
+    top: number; 
+    maxW: number; 
+    size?: number; 
+    font: PDFFont; 
+    center?: boolean;
+    vCenterInRow?: boolean; // Se verdadeiro, 'top' é o topo da célula e centralizamos verticalmente
+    rowH?: number;
+    paddingX?: number;
+  },
 ) {
   const t = safe(String(text ?? "")).trim();
   if (!t) return;
   const size = opts.size ?? 9;
+  const paddingX = opts.paddingX ?? 2;
 
-  // BUG CRÍTICO 2 - Suporte a quebra de linha (white-space: normal)
   const words = t.split(" ");
   const lines: string[] = [];
   let currentLine = words[0];
@@ -118,7 +128,7 @@ function drawText(
   for (let i = 1; i < words.length; i++) {
     const w = words[i];
     const width = opts.font.widthOfTextAtSize(currentLine + " " + w, size);
-    if (width < opts.maxW) {
+    if (width < opts.maxW - (paddingX * 2)) {
       currentLine += " " + w;
     } else {
       lines.push(currentLine);
@@ -127,27 +137,26 @@ function drawText(
   }
   lines.push(currentLine);
 
-  // Se houver apenas uma linha, desenha centralizado se pedido
-  if (lines.length === 1) {
-    const w = opts.font.widthOfTextAtSize(lines[0], size);
-    const x = opts.center ? opts.x + (opts.maxW - w) / 2 : opts.x;
-    page.drawText(lines[0], { x, y: PAGE_H - opts.top, size, font: opts.font, color: rgb(0, 0, 0) });
+  const lineHeight = size * 1.1;
+  const totalH = lines.length * lineHeight;
+  
+  let startY: number;
+  if (opts.vCenterInRow && opts.rowH) {
+    // top é o topo da célula. Centraliza o bloco de texto na altura da linha.
+    startY = PAGE_H - opts.top - (opts.rowH - totalH) / 2 - size;
   } else {
-    // BUG CRÍTICO 2 - Multiline alinhado verticalmente (height: auto simulado)
-    // Se tiver 2 linhas, ajustamos o y para que fiquem centradas na altura da célula
-    const lineHeight = size * 1.1;
-    const totalH = lines.length * lineHeight;
-    // O top original é o centro da linha. Ajustamos o início da primeira linha.
-    let currentY = (PAGE_H - opts.top) + (totalH / 2) - size;
+    // fallback para o comportamento antigo (baseline centralizada)
+    startY = PAGE_H - opts.top + (totalH / 2) - size;
+  }
 
-    for (const line of lines.slice(0, 2)) { // Limita a 2 linhas para não invadir próxima célula
-      const w = opts.font.widthOfTextAtSize(line, size);
-      const x = opts.center ? opts.x + (opts.maxW - w) / 2 : opts.x;
-      page.drawText(line, { x, y: currentY, size, font: opts.font, color: rgb(0, 0, 0) });
-      currentY -= lineHeight;
-    }
+  for (const line of lines.slice(0, 3)) { // Permite até 3 linhas se couber
+    const w = opts.font.widthOfTextAtSize(line, size);
+    const x = opts.center ? opts.x + (opts.maxW - w) / 2 : opts.x + paddingX;
+    page.drawText(line, { x, y: startY, size, font: opts.font, color: rgb(0, 0, 0) });
+    startY -= lineHeight;
   }
 }
+
 
 async function embedSignature(pdf: PDFDocument, dataUrl: string) {
   try {
