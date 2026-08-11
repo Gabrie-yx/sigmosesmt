@@ -831,6 +831,42 @@ function AcidentesPage() {
         userId={user?.id}
         onSaved={() => qc.invalidateQueries({ queryKey: ["hht-mensal"] })}
       />
+      <HhtDialog
+        open={!!editingHht}
+        onOpenChange={(o: boolean) => { if (!o) setEditingHht(null); }}
+        companies={companies}
+        userId={user?.id}
+        initial={editingHht}
+        onSaved={() => {
+          setEditingHht(null);
+          qc.invalidateQueries({ queryKey: ["hht-mensal"] });
+        }}
+      />
+      <AlertDialog open={!!deletingHht} onOpenChange={(o) => { if (!o) setDeletingHht(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir HHT?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deletingHht && (
+                <>
+                  Esta ação é permanente. O lançamento de HHT de <strong>{MESES[deletingHht.mes-1]}/{deletingHht.ano}</strong> da empresa{" "}
+                  <strong>{companies.find(c => c.id === deletingHht.company_id)?.name || "—"}</strong> será removido.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={(e) => { e.preventDefault(); if (deletingHht) delHhtMut.mutate(deletingHht.id); }}
+              disabled={delHhtMut.isPending}
+            >
+              {delHhtMut.isPending ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
