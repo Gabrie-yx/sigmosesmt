@@ -775,31 +775,15 @@ function CompanyForm({
             const content = await page.getTextContent();
             fullText += " " + content.items.map((it: any) => it.str ?? "").join(" ");
           }
-          let digits = extrairCNPJdeTexto(fullText);
-
-          if (!digits) {
-            setOcrStep("OCR (imagem detectada)...");
-            try {
-              const page = await pdf.getPage(1);
-              const viewport = page.getViewport({ scale: 2 });
-              const canvas = document.createElement("canvas");
-              canvas.width = viewport.width;
-              canvas.height = viewport.height;
-              const ctx = canvas.getContext("2d")!;
-              await page.render({ canvasContext: ctx, viewport, canvas }).promise;
-              const { createWorker } = await import("tesseract.js");
-              const worker = await createWorker("por");
-              const { data } = await worker.recognize(canvas);
-              digits = extrairCNPJdeTexto(data.text ?? "");
-              await worker.terminate();
-            } catch (ocrErr) {
-              console.warn("[cartao-cnpj] OCR falhou:", ocrErr);
-            }
+          let fullText = "";
+          for (let i = 1; i <= Math.min(pdf.numPages, 5); i++) {
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            fullText += " " + content.items.map((it: any) => it.str ?? "").join(" ");
           }
-
-          // Tenta extrair dados do texto nativo primeiro
-          const offlineDataNative = extrairDadosCompletosDeTexto(fullText);
+          
           let digits = extrairCNPJdeTexto(fullText);
+          const offlineData = extrairDadosCompletosDeTexto(fullText);
 
           if (!digits) {
             setOcrStep("OCR (imagem detectada)...");
@@ -817,10 +801,11 @@ function CompanyForm({
               const ocrText = data.text ?? "";
               digits = extrairCNPJdeTexto(ocrText);
               
-              // Se o OCR funcionou, mescla com o que já temos
-              const offlineDataOCR = extrairDadosCompletosDeTexto(ocrText);
-              Object.assign(offlineDataNative, offlineDataOCR);
-              
+              if (digits) {
+                // Mescla dados do OCR se a extração nativa falhou
+                const ocrData = extrairDadosCompletosDeTexto(ocrText);
+                Object.assign(offlineData, ocrData);
+              }
               await worker.terminate();
             } catch (ocrErr) {
               console.warn("[cartao-cnpj] OCR falhou:", ocrErr);
