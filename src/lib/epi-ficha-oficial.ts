@@ -43,11 +43,11 @@ export type FichaOficialBlock = {
 
 const PAGE_H = 595.2;
 const ROWS_PER_PAGE = 17;
-/** Grade medida no PDF-mãe: 1ª linha começa em y(top)=78 e cada linha tem 26,6pt. */
+/** Grade medida no PDF-mãe (FOR-SEG 02): 1ª linha em y=78, cada linha 26.6pt. */
 const ROW_TOP0 = 78.0;
 const ROW_H = 26.6;
 
-/** Colunas da grade (x0, x1) medidas nas réguas verticais do PDF oficial. */
+/** Colunas da grade (x0, x1). */
 const COL = {
   qt: [4.8, 40.4],
   und: [40.4, 70.6],
@@ -59,6 +59,11 @@ const COL = {
   dataDevol: [660.2, 728.4],
   assReceb: [728.4, 815.0],
 } as const;
+
+// Tons de cinza para o layout
+const GRAY_HEADER = rgb(0.9, 0.9, 0.9);
+const GRAY_BORDER = rgb(0.8, 0.8, 0.8);
+
 
 const MOTIVO_CODE: Record<string, string> = {
   danificado: "1",
