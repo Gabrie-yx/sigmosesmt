@@ -775,12 +775,6 @@ function CompanyForm({
             const content = await page.getTextContent();
             fullText += " " + content.items.map((it: any) => it.str ?? "").join(" ");
           }
-          let fullText = "";
-          for (let i = 1; i <= Math.min(pdf.numPages, 5); i++) {
-            const page = await pdf.getPage(i);
-            const content = await page.getTextContent();
-            fullText += " " + content.items.map((it: any) => it.str ?? "").join(" ");
-          }
           
           let digits = extrairCNPJdeTexto(fullText);
           const offlineData = extrairDadosCompletosDeTexto(fullText);
@@ -812,7 +806,7 @@ function CompanyForm({
             }
           }
 
-          if (digits || Object.keys(offlineDataNative).length > 0) {
+          if (digits || Object.keys(offlineData).length > 0) {
             setOcrStep("Processando dados...");
             
             if (digits) {
@@ -839,8 +833,8 @@ function CompanyForm({
               console.warn("[cartao-cnpj] Falha na API ou CNPJ ausente, usando extração local:", apiErr);
               next = {
                 ...next,
-                ...offlineDataNative,
-                name: next.name && next.name.trim() ? next.name : (offlineDataNative.nome_fantasia || offlineDataNative.razao_social || next.name),
+                ...offlineData,
+                name: next.name && next.name.trim() ? next.name : (offlineData.nome_fantasia || offlineData.razao_social || next.name),
               };
               toast.info("Dados extraídos diretamente do documento.");
             }
