@@ -20,7 +20,7 @@ import { maskCNPJ } from "@/lib/masks";
 import { NewEmployeeDialog } from "@/components/employees/new-employee-dialog";
 import { CompanyDossieDialog } from "@/components/companies/company-dossie-dialog";
 import { FileViewerHost, openFileViewer } from "@/components/file-viewer";
-import { consultarCNPJ, extrairCNPJdeTexto, validarCNPJ, type ReceitaCNPJData } from "@/lib/brasilapi-cnpj";
+import { consultarCNPJ, extrairCNPJdeTexto, extrairDadosCompletosDeTexto, validarCNPJ, type ReceitaCNPJData } from "@/lib/brasilapi-cnpj";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
