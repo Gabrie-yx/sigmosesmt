@@ -1690,28 +1690,36 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved, initial }: 
     mutationFn: async () => {
       if (!form.company_id) throw new Error("Selecione a empresa.");
       if (!form.hht || Number(form.hht) <= 0) throw new Error("Informe o HHT.");
-      const payload = {
-        company_id: form.company_id,
-        ano: Number(form.ano),
-        mes: Number(form.mes),
-        hht: Number(form.hht),
-        empregados_medio: Number(form.empregados_medio || 0),
-        observacoes: form.observacoes || null,
-        created_by: userId,
-      };
+      
+      const isAll = form.company_id === "ALL";
+      const targetCompanies = isAll ? companies.map((c: any) => c.id) : [form.company_id];
 
-      if (initial?.id) {
-        const { error } = await supabase
-          .from("hht_mensal")
-          .update(payload)
-          .eq("id", initial.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("hht_mensal")
-          .upsert(payload, { onConflict: "company_id,ano,mes" });
-        if (error) throw error;
-      }
+      const promises = targetCompanies.map(async (cid: string) => {
+        const payload = {
+          company_id: cid,
+          ano: Number(form.ano),
+          mes: Number(form.mes),
+          hht: Number(form.hht),
+          empregados_medio: Number(form.empregados_medio || 0),
+          observacoes: form.observacoes || null,
+          created_by: userId,
+        };
+
+        if (initial?.id && !isAll) {
+          const { error } = await supabase
+            .from("hht_mensal")
+            .update(payload)
+            .eq("id", initial.id);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from("hht_mensal")
+            .upsert(payload, { onConflict: "company_id,ano,mes" });
+          if (error) throw error;
+        }
+      });
+
+      await Promise.all(promises);
     },
     onSuccess: () => {
       toast.success("HHT lançado.");
@@ -1797,6 +1805,7 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved, initial }: 
             <Select value={form.company_id || undefined} onValueChange={v => set("company_id", v)}>
               <SelectTrigger className="bg-white/5 border-white/10 text-white"><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent>
+                <SelectItem value="ALL" className="font-semibold text-red-400">TODAS AS EMPRESAS</SelectItem>
                 {companies.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
