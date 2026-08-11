@@ -1,96 +1,45 @@
-# SIGMO offline: arquitetura + piloto extintores
+# Plano: Quadro Estatístico de Acidentes de Trabalho (FOR-SEG 09)
 
-O SIGMO hoje é um PWA "instalável" (tem manifesto e ícones), mas não tem service worker nem cache de dados. Vamos transformá-lo em um app offline-first: a app shell continua carregando sem internet, os dados ficam guardados localmente, e uma fila de sincronização envia as mudanças quando o celular reconectar.
+Implementação de um painel estatístico dinâmico e exportação em PDF, baseado no formulário **FOR-SEG 09**, atendendo às exigências da **NR-04 (Quadro IV)** e **ISO 45001**.
 
-## Escopo
+## Pesquisa e Levantamento Técnico
 
-- **Arquitetura geral** pronta para todos os módulos do SIGMO.
-- **Piloto funcional** no módulo de extintores (listagem, inspeção, fotos e sincronização).
-- **Outros módulos** entram depois, módulo a módulo, reaproveitando a mesma camada offline.
+O quadro apresentado na imagem (FOR-SEG 09) é a representação prática do **Quadro IV da NR-04**, que estabelece a obrigatoriedade do registro de acidentes com e sem vítima.
 
-## Fase 1 — PWA com cache offline da app shell
+### Principais Indicadores Requeridos:
+1.  **HHT (Horas Homens Trabalhadas):** Somatório das horas de exposição ao risco de todos os empregados.
+2.  **Taxa de Frequência (TF):** `(Nº de acidentes * 1.000.000) / HHT`. Representa quantos acidentes ocorrem para cada 1 milhão de horas trabalhadas.
+3.  **Taxa de Gravidade (TG):** `(Dias Perdidos + Dias Debitados) * 1.000.000 / HHT`. Representa a severidade das lesões.
+4.  **Índice Relativo Total de Empregados:** Proporção de acidentados em relação ao efetivo.
+5.  **Óbitos:** Registro de fatalidades.
 
-Objetivo: o SIGMO abre mesmo sem internet.
+### Legislações Aplicáveis:
+-   **NR-04 (SESMT):** Define os quadros estatísticos anuais.
+-   **NBR 14280:** Cadastro de acidentes do trabalho - Procedimentos e estatísticas.
+-   **ISO 45001 (item 9.1):** Monitoramento, medição e análise de desempenho.
 
-- Adicionar `vite-plugin-pwa` com `generateSW` (não escrever SW manualmente).
-- Configurar Workbox para:
-  - Navegações HTML: `NetworkFirst` (nunca cache-first em páginas).
-  - Assets com hash (JS/CSS/imagens): `CacheFirst`.
-  - Ícones e manifest: `CacheFirst`.
-- Criar wrapper de registro do service worker (`src/lib/pwa-register.ts`) que **nunca** registra em:
-  - dev/preview do Lovable,
-  - iframes,
-  - hostnames de preview (`id-preview--`, `lovableproject.com`, etc.),
-  - URL com `?sw=off`.
-- O wrapper também desregistra SWs antigos se estiver em ambiente de preview.
-- Garantir que o SW gerado seja `/sw.js` e use `registerType: "autoUpdate"`.
+## Implementação no SIGMO
 
-## Fase 2 — Camada offline-first de dados
+O módulo será implementado no menu **SESMT / Painel**, com uma nova rota dedicada para visualização e geração do documento oficial.
 
-Objetivo: dados do SIGMO disponíveis localmente quando o dispositivo perde sinal.
+### 1. Estrutura de Dados
+O sistema já possui as tabelas `acidentes_trabalho` e `hht_mensal`. O motor de cálculo consolidará:
+-   `Nº Absoluto`: Contagem total de acidentes no mês.
+-   `Com Afastamento <= 15 dias`: Acidentes com dias perdidos entre 1 e 15.
+-   `Com Afastamento > 15 dias`: Acidentes com dias perdidos > 15 (foco previdenciário).
+-   `Sem Afastamento`: Acidentes típicos onde o colaborador retorna no mesmo dia ou dia seguinte sem perda de jornada.
 
-- Adicionar `idb` como dependência (IndexedDB com API moderna).
-- Criar `src/lib/offline-db.ts` com um schema IndexedDB genérico:
-  - `store`: tabelas de cache (ex: `extintores`, `extintor_inspecoes`).
-  - `sync_queue`: fila de mutações pendentes.
-  - `files`: cache de fotos/arquivos offline.
-- Integrar `persistQueryClient` (TanStack Query) para manter o cache de queries no IndexedDB automaticamente.
-- Criar hook `useIsOnline()` usando `navigator.onLine` + eventos `online`/`offline`.
-- Criar helper `offlineQueryOptions` que, quando offline, lê do cache local e nunca dispara requisição que falharia.
+### 2. Componentes e Rotas
+-   **Rota:** `/app/sesmt/quadro-estatistico`
+-   **Componente:** `QuadroEstatisticoPage` - Uma interface que imita o layout do Excel/Papel para conferência antes da exportação.
+-   **PDF Engine:** `src/lib/quadro-estatistico-pdf.ts` - Gerador nativo em jsPDF seguindo o layout exato do FOR-SEG 09 (cabeçalho DMN, grid 12 meses, campos de CNAE e Grau de Risco).
 
-## Fase 3 — Fila de sincronização em background
+### 3. Visualização e UX
+-   Integração no **Sidebar** sob o grupo "Relatórios / SESMT".
+-   Utilização do `PDFPreviewDialog` para visualização in-app (sem novas abas), garantindo a conformidade com a regra de design do SIGMO.
+-   Auto-preenchimento dos dados da empresa (CNPJ, CNAE, Endereço) a partir da tabela `companies`.
 
-Objetivo: quando o sinal voltar, o SIGMO envia automaticamente o que foi feito offline.
-
-- Criar `src/lib/sync-queue.ts` para registrar mutações pendentes:
-  - `INSERT`, `UPDATE`, `DELETE`.
-  - Dados da entidade + timestamp + id local temporário.
-- Criar server function `syncOfflineQueue()` que roda quando o app volta a ficar online e envia a fila para o Supabase.
-- Lidar com fotos: salvar em cache local (`files` do IndexedDB) e enviar depois para o bucket `extintores-inspecoes`.
-- Implementar retry com backoff e notificação de conflitos ao usuário quando a sync falhar.
-- Usar `navigator.serviceWorker.ready` + `Background Sync` API quando disponível; fallback para sync manual ao detectar `online`.
-
-## Fase 4 — Piloto em extintores
-
-Objetivo: o fiscal pode inspecionar extintores no pátio sem sinal e tudo sincroniza depois.
-
-- Refatorar `src/routes/app.extintores.tsx` para usar a camada offline:
-  - Cachear lista de `extintores` e `extintor_inspecoes`.
-  - Permitir leitura da lista sem internet.
-- Adicionar inspeção offline:
-  - Form salva inspeção no IndexedDB quando offline.
-  - Fotos da inspeção armazenadas localmente e enviadas depois.
-- Sincronização automática:
-  - Quando online, enviar inspeções pendentes.
-  - Atualizar lista local após sync bem-sucedido.
-- UX:
-  - Badge "offline" no header.
-  - Toast/alerta quando há dados pendentes para sincronizar.
-  - Botão manual "Sincronizar agora".
-
-## Fase 5 — Testes e expansão
-
-- Testar em mobile (devTools network offline + celular real se possível).
-- Verificar que o preview do Lovable não quebra (SW não registra em preview).
-- Documentar padrão para aplicar nos próximos módulos (PGR, APR, compras, etc.).
-- Expansão módulo a módulo após aprovação do piloto.
-
-## Tecnologias
-
-- `vite-plugin-pwa` (Workbox `generateSW`).
-- `idb` (IndexedDB).
-- `persistQueryClient` do TanStack Query.
-- TanStack `createServerFn` para sync com Supabase.
-- Service Worker + Background Sync API.
-
-## Restrições e cuidados
-
-- Nunca registrar o SW no preview do Lovable para evitar cache stale.
-- Nunca usar cache-first para navegação HTML.
-- Service-role key continua server-only; sync acontece via `requireSupabaseAuth` (usuário autenticado).
-- Fotos grandes: armazenar localmente e enviar em chunks/por fila, nunca na requisição principal.
-- Conflitos de sync: mostrar ao usuário e permitir resolver manualmente.
-
-## Resultado esperado
-
-O SIGMO vira um app PWA offline-first: a app abre sem internet, dados críticos ficam disponíveis, e o que foi alterado no campo sincroniza automaticamente quando o celular reconectar. O piloto de extintores valida a arquitetura antes de escalar para todo o sistema.
+## Detalhes Técnicos (para o time)
+-   **Backend:** SQL Functions ou Server Functions para agregar acidentes por mês/tipo e cruzar com HHT mensal.
+-   **Frontend:** Shadcn UI Tables para a visualização web.
+-   **PDF:** Posicionamento absoluto via jsPDF para bater com o formulário físico enviado pelo usuário.
