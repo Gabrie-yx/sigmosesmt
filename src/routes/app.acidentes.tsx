@@ -1732,7 +1732,7 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved, initial }: 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg bg-slate-900 border-white/10 text-white shadow-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Calculator className="h-5 w-5" /> {initial?.id ? "Editar HHT mensal" : "Lançar HHT mensal"}
@@ -1741,49 +1741,49 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved, initial }: 
         <p className="text-xs text-muted-foreground -mt-2">
           Horas Homem Trabalhadas (HHT) — base da Taxa de Frequência (NBR 14280). Vem da folha do RH.
         </p>
-        <div className="flex gap-1 p-1 bg-slate-100 rounded-md text-xs">
+        <div className="flex gap-1 p-1 bg-white/5 border border-white/10 rounded-md text-xs">
           <button
             type="button"
             onClick={() => setModo("manual")}
-            className={`flex-1 py-1.5 rounded ${modo === "manual" ? "bg-white shadow-sm font-semibold" : "text-slate-600"}`}
+            className={`flex-1 py-1.5 rounded transition-all ${modo === "manual" ? "bg-white/10 text-white shadow-sm font-semibold" : "text-white/40 hover:text-white/60"}`}
           >
             Já tenho o número
           </button>
           <button
             type="button"
             onClick={() => setModo("calc")}
-            className={`flex-1 py-1.5 rounded ${modo === "calc" ? "bg-white shadow-sm font-semibold" : "text-slate-600"}`}
+            className={`flex-1 py-1.5 rounded transition-all ${modo === "calc" ? "bg-white/10 text-white shadow-sm font-semibold" : "text-white/40 hover:text-white/60"}`}
           >
             🧮 Calcular HHT
           </button>
         </div>
         {modo === "calc" && (
-          <div className="space-y-3 p-3 rounded-md border bg-slate-50/60">
+          <div className="space-y-3 p-3 rounded-md border border-white/10 bg-white/5">
             <div className="grid grid-cols-3 gap-2">
               <Field label="Funcionários">
-                <Input type="number" value={calc.funcionarios} onChange={(e) => setC("funcionarios", e.target.value)} placeholder="50" />
+                <Input type="number" value={calc.funcionarios} onChange={(e) => setC("funcionarios", e.target.value)} placeholder="50" className="bg-white/5 border-white/10 text-white placeholder:text-white/20" />
               </Field>
               <Field label="Jornada (h/dia)">
-                <Input type="number" step="0.5" value={calc.jornada} onChange={(e) => setC("jornada", e.target.value)} />
+                <Input type="number" step="0.5" value={calc.jornada} onChange={(e) => setC("jornada", e.target.value)} className="bg-white/5 border-white/10 text-white" />
               </Field>
               <Field label="Dias úteis">
-                <Input type="number" value={calc.diasUteis} onChange={(e) => setC("diasUteis", e.target.value)} />
+                <Input type="number" value={calc.diasUteis} onChange={(e) => setC("diasUteis", e.target.value)} className="bg-white/5 border-white/10 text-white" />
               </Field>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <Field label="+ Horas extras">
-                <Input type="number" value={calc.horasExtras} onChange={(e) => setC("horasExtras", e.target.value)} />
+                <Input type="number" value={calc.horasExtras} onChange={(e) => setC("horasExtras", e.target.value)} className="bg-white/5 border-white/10 text-white" />
               </Field>
               <Field label="− Horas faltas/afast.">
-                <Input type="number" value={calc.horasFaltas} onChange={(e) => setC("horasFaltas", e.target.value)} />
+                <Input type="number" value={calc.horasFaltas} onChange={(e) => setC("horasFaltas", e.target.value)} className="bg-white/5 border-white/10 text-white" />
               </Field>
             </div>
-            <div className="flex items-center justify-between bg-white border rounded-md p-3">
+            <div className="flex items-center justify-between bg-white/10 border border-white/20 rounded-md p-3">
               <div>
                 <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">HHT calculado</div>
                 <div className="text-2xl font-bold tabular-nums">{hhtCalculado.toLocaleString("pt-BR")} h</div>
               </div>
-              <Button size="sm" onClick={aplicarCalculo} disabled={hhtCalculado <= 0}>
+              <Button size="sm" onClick={aplicarCalculo} disabled={hhtCalculado <= 0} className="bg-red-600 hover:bg-red-700 text-white border-none">
                 Usar este valor
               </Button>
             </div>
@@ -1795,7 +1795,7 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved, initial }: 
         <div className="space-y-3">
           <Field label="Empresa *">
             <Select value={form.company_id || undefined} onValueChange={v => set("company_id", v)}>
-              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectTrigger className="bg-white/5 border-white/10 text-white"><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent>
                 {companies.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
               </SelectContent>
@@ -1804,22 +1804,22 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved, initial }: 
           <div className="grid grid-cols-2 gap-3">
             <Field label="Mês *">
               <Select value={String(form.mes)} onValueChange={v => set("mes", Number(v))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger className="bg-white/5 border-white/10 text-white"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {MESES.map((m, i) => <SelectItem key={i} value={String(i+1)}>{m}</SelectItem>)}
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Ano *"><Input type="number" value={form.ano} onChange={e => set("ano", e.target.value)} /></Field>
+            <Field label="Ano *"><Input type="number" value={form.ano} onChange={e => set("ano", e.target.value)} className="bg-white/5 border-white/10 text-white" /></Field>
           </div>
           <Field label="HHT (horas) *">
-            <Input type="number" step="0.01" value={form.hht} onChange={e => set("hht", e.target.value)} placeholder="Ex.: 35200" />
+            <Input type="number" step="0.01" value={form.hht} onChange={e => set("hht", e.target.value)} placeholder="Ex.: 35200" className="bg-white/5 border-white/10 text-white" />
           </Field>
           <Field label="Nº médio de empregados">
-            <Input type="number" value={form.empregados_medio} onChange={e => set("empregados_medio", e.target.value)} />
+            <Input type="number" value={form.empregados_medio} onChange={e => set("empregados_medio", e.target.value)} className="bg-white/5 border-white/10 text-white" />
           </Field>
           <Field label="Observações">
-            <Textarea rows={2} value={form.observacoes} onChange={e => set("observacoes", e.target.value)} />
+            <Textarea rows={2} value={form.observacoes} onChange={e => set("observacoes", e.target.value)} className="bg-white/5 border-white/10 text-white" />
           </Field>
         </div>
         <DialogFooter>
