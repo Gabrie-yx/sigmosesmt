@@ -814,6 +814,13 @@ function CompanyForm({
           if (hasData) {
             setOcrStep("Processando dados...");
             
+            // Garantir que os dados offline sejam aplicados primeiro como base
+            next = { 
+              ...next, 
+              ...offlineData,
+              name: next.name && next.name.trim() ? next.name : (offlineData.nome_fantasia || offlineData.razao_social || next.name)
+            };
+
             if (digits) {
               const cnpjMasked = `${digits.slice(0,2)}.${digits.slice(2,5)}.${digits.slice(5,8)}/${digits.slice(8,12)}-${digits.slice(12,14)}`;
               const currentDigits = (editing.cnpj ?? "").replace(/\D/g, "");
@@ -821,27 +828,23 @@ function CompanyForm({
                 toast.info(`CNPJ do cartão (${cnpjMasked}) detectado. Atualizando...`);
               }
               next = { ...next, cnpj: cnpjMasked };
-            }
 
-            try {
-              // Sempre tentamos a API se tivermos o CNPJ
-              if (!digits) throw new Error("CNPJ não encontrado para consulta");
-              const d = await consultarCNPJ(digits);
-              next = {
-                ...next,
-                ...d,
-                name: next.name && next.name.trim() ? next.name : (d.nome_fantasia || d.razao_social),
-                receita_consultada_em: new Date().toISOString(),
-              };
-              toast.success("Dados preenchidos via Receita Federal.");
-            } catch (apiErr: any) {
-              console.warn("[cartao-cnpj] Falha na API ou CNPJ ausente, usando extração local:", apiErr);
-              next = {
-                ...next,
-                ...offlineData,
-                name: next.name && next.name.trim() ? next.name : (offlineData.nome_fantasia || offlineData.razao_social || next.name),
-              };
-              toast.info("Dados extraídos diretamente do documento.");
+              try {
+                // Tenta a API se tivermos o CNPJ
+                const d = await consultarCNPJ(digits);
+                next = {
+                  ...next,
+                  ...d,
+                  name: (next.name && next.name.trim() && !next.name.includes("...") ? next.name : (d.nome_fantasia || d.razao_social)),
+                  receita_consultada_em: new Date().toISOString(),
+                };
+                toast.success("Dados preenchidos via Receita Federal.");
+              } catch (apiErr: any) {
+                console.warn("[cartao-cnpj] Falha na API, mantendo dados da extração local:", apiErr);
+                toast.info("Dados extraídos diretamente do documento.");
+              }
+            } else {
+              toast.info("Dados extraídos do documento (CNPJ não localizado para consulta API).");
             }
           } else {
             toast.info("Cartão anexado, mas não foi possível ler os dados.");
