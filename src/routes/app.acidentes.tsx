@@ -83,14 +83,16 @@ const TIPO_COLOR: Record<string, string> = {
 };
 
 function AcidentesPage() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const qc = useQueryClient();
   const [tab, setTab] = useState("painel");
   const [novoOpen, setNovoOpen] = useState(false);
   const [hhtOpen, setHhtOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
+  const [editingHht, setEditingHht] = useState<any>(null);
   const [viewing, setViewing] = useState<any>(null);
   const [deleting, setDeleting] = useState<any>(null);
+  const [deletingHht, setDeletingHht] = useState<any>(null);
   const [anoFiltro, setAnoFiltro] = useState<number>(new Date().getFullYear());
 
   const delMut = useMutation({
