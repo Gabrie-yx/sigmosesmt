@@ -795,10 +795,12 @@ function CompanyForm({
               const ocrText = data.text ?? "";
               digits = extrairCNPJdeTexto(ocrText);
               
-              if (digits) {
-                // Mescla dados do OCR se a extração nativa falhou
+              if (ocrText.length > 10) {
+                // Mescla dados do OCR sempre que houver texto legível
                 const ocrData = extrairDadosCompletosDeTexto(ocrText);
                 Object.assign(offlineData, ocrData);
+                // Tenta extrair o CNPJ novamente do texto OCR
+                if (!digits) digits = extrairCNPJdeTexto(ocrText);
               }
               await worker.terminate();
             } catch (ocrErr) {
@@ -806,7 +808,10 @@ function CompanyForm({
             }
           }
 
-          if (digits || Object.keys(offlineData).length > 0) {
+          // Verificação final de sanidade dos dados extraídos
+          const hasData = digits || Object.values(offlineData).some(v => v && String(v).length > 2);
+
+          if (hasData) {
             setOcrStep("Processando dados...");
             
             if (digits) {
