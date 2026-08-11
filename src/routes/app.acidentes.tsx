@@ -490,48 +490,52 @@ function AcidentesPage() {
                   <TableHeader className="bg-slate-50">
                     <TableRow>
                       <TableHead className="w-24 font-bold">Mês</TableHead>
+                      <TableHead className="text-center font-bold">Nº Empregados</TableHead>
                       <TableHead className="text-center font-bold">HHT</TableHead>
-                      <TableHead className="text-center font-bold text-red-600 bg-red-50/30">C/ Afast.</TableHead>
+                      <TableHead className="text-center font-bold">Nº Absoluto</TableHead>
+                      <TableHead className="text-center font-bold text-red-600 bg-red-50/30">C/ Afast. &lt;= 15d</TableHead>
+                      <TableHead className="text-center font-bold text-red-700 bg-red-100/30">C/ Afast. &gt; 15d</TableHead>
                       <TableHead className="text-center font-bold text-amber-600 bg-amber-50/30">S/ Afast.</TableHead>
-                      <TableHead className="text-center font-bold text-blue-600 bg-blue-50/30">Trajeto</TableHead>
-                      <TableHead className="text-center font-bold text-slate-900 bg-slate-100/50">Fatal</TableHead>
-                      <TableHead className="text-center font-bold">Total</TableHead>
+                      <TableHead className="text-center font-bold">Índice Relativo</TableHead>
                       <TableHead className="text-center font-bold">Dias Perd.</TableHead>
                       <TableHead className="text-center font-bold text-indigo-700">TF</TableHead>
-                      <TableHead className="text-center font-bold text-purple-700">TG</TableHead>
+                      <TableHead className="text-center font-bold">Óbitos</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {serieMensal.map((row, idx) => {
-                      const hhtMes = hhtRows
-                        .filter(h => h.ano === anoFiltro && h.mes === idx + 1)
-                        .reduce((s, h) => s + Number(h.hht || 0), 0);
+                      const hhtData = hhtRows.find(h => h.ano === anoFiltro && h.mes === idx + 1);
+                      const hhtMes = Number(hhtData?.hht || 0);
+                      const empMedio = Number(hhtData?.empregados_medio || 0);
                       
                       const acidsMes = acidentes.filter(a => {
                         const d = new Date(a.data_acidente);
                         return d.getFullYear() === anoFiltro && d.getMonth() === idx;
                       });
 
-                      const comAfast = acidsMes.filter(a => a.tipo === "COM_AFASTAMENTO" || a.tipo === "FATAL").length;
+                      const comAfast = acidsMes.filter(a => a.tipo === "COM_AFASTAMENTO" || a.tipo === "FATAL");
+                      const comAfastLeve = comAfast.filter(a => (Number(a.dias_perdidos || 0) + Number(a.dias_debitados || 0)) <= 15).length;
+                      const comAfastGrave = comAfast.filter(a => (Number(a.dias_perdidos || 0) + Number(a.dias_debitados || 0)) > 15).length;
                       const semAfast = acidsMes.filter(a => a.tipo === "SEM_AFASTAMENTO").length;
-                      const trajeto = acidsMes.filter(a => a.tipo === "TRAJETO").length;
                       const fatal = acidsMes.filter(a => a.tipo === "FATAL").length;
                       const diasPerdidos = acidsMes.reduce((s, a) => s + (a.dias_perdidos || 0) + (a.dias_debitados || 0), 0);
-                      const tf = hhtMes > 0 ? ((comAfast * 1_000_000) / hhtMes).toFixed(2) : "—";
-                      const tg = hhtMes > 0 ? ((diasPerdidos * 1_000_000) / hhtMes).toFixed(2) : "—";
+                      
+                      const tf = hhtMes > 0 ? ((comAfast.length * 1_000_000) / hhtMes).toFixed(2) : "—";
+                      const indiceRel = empMedio > 0 ? (acidsMes.length / empMedio).toFixed(2) : "—";
 
                       return (
                         <TableRow key={row.mes} className="hover:bg-slate-50/50">
                           <TableCell className="font-semibold">{row.mes}</TableCell>
+                          <TableCell className="text-center font-mono">{empMedio || "—"}</TableCell>
                           <TableCell className="text-center font-mono">{hhtMes.toLocaleString("pt-BR")}</TableCell>
-                          <TableCell className="text-center font-bold text-red-600 bg-red-50/10">{comAfast || "—"}</TableCell>
-                          <TableCell className="text-center font-bold text-amber-600 bg-amber-50/10">{semAfast || "—"}</TableCell>
-                          <TableCell className="text-center font-bold text-blue-600 bg-blue-50/10">{trajeto || "—"}</TableCell>
-                          <TableCell className="text-center font-bold text-slate-900 bg-slate-100/30">{fatal || "—"}</TableCell>
                           <TableCell className="text-center font-semibold">{acidsMes.length || "—"}</TableCell>
+                          <TableCell className="text-center font-bold text-red-600 bg-red-50/10">{comAfastLeve || "—"}</TableCell>
+                          <TableCell className="text-center font-bold text-red-700 bg-red-100/10">{comAfastGrave || "—"}</TableCell>
+                          <TableCell className="text-center font-bold text-amber-600 bg-amber-50/10">{semAfast || "—"}</TableCell>
+                          <TableCell className="text-center">{indiceRel}</TableCell>
                           <TableCell className="text-center">{diasPerdidos || "—"}</TableCell>
                           <TableCell className="text-center font-mono font-bold text-indigo-700">{tf}</TableCell>
-                          <TableCell className="text-center font-mono font-bold text-purple-700">{tg}</TableCell>
+                          <TableCell className="text-center font-bold">{fatal || "—"}</TableCell>
                         </TableRow>
                       );
                     })}
@@ -539,30 +543,36 @@ function AcidentesPage() {
                     <TableRow className="bg-slate-900 text-white hover:bg-slate-800 transition-colors font-bold">
                       <TableCell className="rounded-bl-md">TOTAL ANUAL</TableCell>
                       <TableCell className="text-center font-mono">
+                        {Math.round(hhtRows.filter(h => h.ano === anoFiltro).reduce((s, h) => s + Number(h.empregados_medio || 0), 0) / 12) || "—"}
+                      </TableCell>
+                      <TableCell className="text-center font-mono">
                         {hhtRows.filter(h => h.ano === anoFiltro).reduce((s, h) => s + Number(h.hht || 0), 0).toLocaleString("pt-BR")}
                       </TableCell>
+                      <TableCell className="text-center">{acidentesAno.length}</TableCell>
                       <TableCell className="text-center text-red-200">
-                        {acidentesAno.filter(a => a.tipo === "COM_AFASTAMENTO" || a.tipo === "FATAL").length}
+                        {acidentesAno.filter(a => (a.tipo === "COM_AFASTAMENTO" || a.tipo === "FATAL") && (Number(a.dias_perdidos || 0) + Number(a.dias_debitados || 0)) <= 15).length}
+                      </TableCell>
+                      <TableCell className="text-center text-red-300">
+                        {acidentesAno.filter(a => (a.tipo === "COM_AFASTAMENTO" || a.tipo === "FATAL") && (Number(a.dias_perdidos || 0) + Number(a.dias_debitados || 0)) > 15).length}
                       </TableCell>
                       <TableCell className="text-center text-amber-200">
                         {acidentesAno.filter(a => a.tipo === "SEM_AFASTAMENTO").length}
                       </TableCell>
-                      <TableCell className="text-center text-blue-200">
-                        {acidentesAno.filter(a => a.tipo === "TRAJETO").length}
+                      <TableCell className="text-center">
+                        {(empMedio => empMedio > 0 ? (acidentesAno.length / empMedio).toFixed(2) : "—")(Math.round(hhtRows.filter(h => h.ano === anoFiltro).reduce((s, h) => s + Number(h.empregados_medio || 0), 0) / 12))}
                       </TableCell>
-                      <TableCell className="text-center text-slate-300">
-                        {acidentesAno.filter(a => a.tipo === "FATAL").length}
-                      </TableCell>
-                      <TableCell className="text-center">{acidentesAno.length}</TableCell>
                       <TableCell className="text-center">
                         {acidentesAno.reduce((s, a) => s + (a.dias_perdidos || 0) + (a.dias_debitados || 0), 0)}
                       </TableCell>
                       <TableCell className="text-center font-mono text-indigo-200">{kpis.tf}</TableCell>
-                      <TableCell className="text-center font-mono text-purple-200 rounded-br-md">{kpis.tg}</TableCell>
+                      <TableCell className="text-center rounded-br-md">
+                        {acidentesAno.filter(a => a.tipo === "FATAL").length}
+                      </TableCell>
                     </TableRow>
                   </TableBody>
                 </Table>
               </div>
+
 
               <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-4 rounded-lg bg-indigo-50 border border-indigo-100">
