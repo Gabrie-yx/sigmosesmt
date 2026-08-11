@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import dmnLogoAsset from "@/assets/dmn-logo-acidentes-v2.png.asset.json";
+import { EMPRESA_INFO } from "./empresa-info";
 
 const MESES = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
@@ -127,29 +128,32 @@ export function gerarForSeg09(opts: {
   doc.setFont("helvetica", "bold");
   doc.text("Empresa:", 12, 46);
   doc.setFont("helvetica", "normal");
-  doc.text(opts.empresa || "DMN ESTALEIRO DA AMAZONIA LTDA", 30, 46);
+  doc.text(opts.empresa || EMPRESA_INFO.razao_social, 30, 46);
   
   // Linha 2: CNPJ
   doc.setFont("helvetica", "bold");
   doc.text("CNPJ:", 12, 52.5);
   doc.setFont("helvetica", "normal");
-  doc.text(opts.cnpj || "13.378.697/0001-80", 30, 52.5);
+  doc.text(opts.cnpj || EMPRESA_INFO.cnpj, 30, 52.5);
   
   // Linha 3: Endereço / Bairro / CEP
   doc.setFont("helvetica", "bold");
   doc.text("Endereço:", 12, 59);
   doc.setFont("helvetica", "normal");
-  doc.text(opts.endereco || "ESTRADA DO ALEIXO, 2000", 30, 59);
+  doc.text(opts.endereco || EMPRESA_INFO.endereco, 30, 59);
   
   doc.setFont("helvetica", "bold");
   doc.text("Bairro:", 117, 59);
   doc.setFont("helvetica", "normal");
-  doc.text(opts.bairro || "COLÔNIA OLIVEIRA MACHADO", 130, 59);
+  // Extrai o bairro do endereço se possível, ou usa o padrão
+  const bairroMatch = EMPRESA_INFO.endereco.match(/—\s*(.*)$/);
+  doc.text(opts.bairro || (bairroMatch ? bairroMatch[1] : "DISTRITO INDUSTRIAL II"), 130, 59);
   
   doc.setFont("helvetica", "bold");
   doc.text("CEP:", pageWidth - 63, 59);
   doc.setFont("helvetica", "normal");
-  doc.text(opts.cep || "69070-610", pageWidth - 48, 59);
+  const cepMatch = EMPRESA_INFO.cidade_uf_cep.match(/CEP\s*([\d.-]+)/);
+  doc.text(opts.cep || (cepMatch ? cepMatch[1] : "69.082-200"), pageWidth - 48, 59);
   
   // Linha 4: CNAE / Grau de Risco / Data
   doc.setFont("helvetica", "bold");
