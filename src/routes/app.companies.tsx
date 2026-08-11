@@ -827,7 +827,7 @@ function CompanyForm({
                 ...offlineData,
                 name: next.name && next.name.trim() ? next.name : (offlineData.nome_fantasia || offlineData.razao_social || next.name),
               };
-              toast.info("Sem conexão ou erro na API. Dados extraídos diretamente do documento.");
+              toast.info("Dados extraídos diretamente do documento.");
             }
           } else {
             toast.info("Cartão anexado, mas não foi possível ler os dados.");

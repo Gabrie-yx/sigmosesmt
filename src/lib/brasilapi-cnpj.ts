@@ -171,13 +171,14 @@ export function extrairDadosCompletosDeTexto(txt: string): Partial<ReceitaCNPJDa
 
   // Razão Social
   const razaoMatch = txt.match(/NOME EMPRESARIAL\s+([^\n\r]+)/i) || 
-                     norm.match(/NOME EMPRESARIAL\s+([^0-9]+)/i) ||
+                     norm.match(/NOME EMPRESARIAL\s+([^0-9]{5,})/i) ||
                      txt.match(/REPÚBLICA FEDERATIVA DO BRASIL\s+([^\n\r]+)/i);
   if (razaoMatch) res.razao_social = clean(razaoMatch[1]);
 
   // Nome Fantasia
   const fantasiaMatch = txt.match(/TÍTULO DO ESTABELECIMENTO \(NOME DE FANTASIA\)\s+([^\n\r]+)/i) ||
-                        norm.match(/NOME DE FANTASIA\s+([^\n\r]+?)(?=\s+CÓDIGO|$)/i);
+                        norm.match(/NOME DE FANTASIA\s+([^\n\r]{2,})(?=\s+CÓDIGO|$)/i) ||
+                        norm.match(/TÍTULO DO ESTABELECIMENTO\s+([^\n\r]+)/i);
   if (fantasiaMatch) res.nome_fantasia = clean(fantasiaMatch[1]);
 
   // CNAE
@@ -210,6 +211,12 @@ export function extrairDadosCompletosDeTexto(txt: string): Partial<ReceitaCNPJDa
     const d = onlyDigits(cepMatch[1]);
     res.cep = d.length === 8 ? `${d.slice(0, 5)}-${d.slice(5, 8)}` : cepMatch[1];
   }
+
+  const telefoneMatch = txt.match(/TELEFONE\s+([^\n\r]+)/i) || norm.match(/TELEFONE\s+([^\s]+)/i);
+  if (telefoneMatch) res.telefone = clean(telefoneMatch[1]);
+
+  const situacaoMatch = txt.match(/SITUAÇÃO CADASTRAL\s+([^\n\r]+)/i) || norm.match(/SITUAÇÃO CADASTRAL\s+([^\s]+)/i);
+  if (situacaoMatch) res.situacao_cadastral = clean(situacaoMatch[1]);
 
   return res;
 }
