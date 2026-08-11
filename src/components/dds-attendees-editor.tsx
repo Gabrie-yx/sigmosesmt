@@ -199,7 +199,13 @@ function AddAttendeesDialog({
     const q = busca.toLowerCase().trim();
     return employees
       .filter((e) => !jaIncluidos.has(e.id))
-      .filter((e) => !q || e.nome.toLowerCase().includes(q) || (e.companies?.name ?? "").toLowerCase().includes(q));
+      .filter((e) => {
+        const matches = !q || e.nome.toLowerCase().includes(q) || (e.companies?.name ?? "").toLowerCase().includes(q);
+        if (q && e.nome.toLowerCase().includes(q)) {
+           console.log("[DDS Search] Matching employee:", e.nome, "Status:", e.status);
+        }
+        return matches;
+      });
   }, [employees, busca, jaIncluidos]);
 
   function toggle(id: string) {
