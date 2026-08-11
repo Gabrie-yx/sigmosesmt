@@ -188,8 +188,7 @@ function AddAttendeesDialog({
         .from("employees")
         .select("id, nome, company_id, companies(name)")
         .eq("status", "ATIVO")
-        .order("nome", { ascending: true })
-        .limit(2000);
+        .order("nome", { ascending: true });
       if (error) throw error;
       return (data ?? []) as { id: string; nome: string; company_id: string | null; companies: { name: string } | null }[];
     },
