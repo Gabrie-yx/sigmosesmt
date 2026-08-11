@@ -59,8 +59,12 @@ export function DDSAttendeesEditor({
 
   const filtrados = useMemo(() => {
     const q = busca.toLowerCase().trim();
+    console.log("[DDS Search - List] Search query:", q || "(empty)");
+    console.log("[DDS Search - List] Total attendees in state:", attendees.length);
     if (!q) return attendees;
-    return attendees.filter((a) => (a.employees?.nome ?? "").toLowerCase().includes(q));
+    const filtered = attendees.filter((a) => (a.employees?.nome ?? "").toLowerCase().includes(q));
+    console.log("[DDS Search - List] Result count:", filtered.length);
+    return filtered;
   }, [attendees, busca]);
 
   const total = attendees.length;
@@ -125,7 +129,7 @@ export function DDSAttendeesEditor({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2">
-        <Input placeholder="Buscar participante..." value={busca} onChange={(e) => setBusca(e.target.value)} className="h-8" />
+        <Input placeholder="Buscar na lista de presentes/ausentes..." value={busca} onChange={(e) => setBusca(e.target.value)} className="h-8" />
         <Badge variant="outline">{totalPresentes}/{esperados || total} · {aderencia}%</Badge>
       </div>
       <div className="border rounded max-h-72 overflow-auto divide-y">
