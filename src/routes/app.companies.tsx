@@ -1031,7 +1031,7 @@ function CompanyForm({
                 variant="outline"
                 size="sm"
                 className="text-[10px] font-black uppercase h-8"
-                onClick={() => openFileViewer(editing.cnpj_card_url!, "Cartão CNPJ")}
+                onClick={() => openFileViewer({ url: editing.cnpj_card_url!, name: "Cartão CNPJ" })}
               >
                 <FileText className="h-3.5 w-3.5 mr-1" /> Visualizar
               </Button>
