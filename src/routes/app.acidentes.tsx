@@ -1823,7 +1823,7 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved, initial }: 
           </Field>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+          <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-white/60 hover:text-white hover:bg-white/10">Cancelar</Button>
           <Button onClick={() => mut.mutate()} disabled={mut.isPending}>
             {mut.isPending ? "Salvando..." : "Salvar HHT"}
           </Button>
