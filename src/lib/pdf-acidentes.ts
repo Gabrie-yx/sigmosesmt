@@ -1,6 +1,6 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import dmnLogoAsset from "@/assets/dmn-logo-acidentes.png.asset.json";
+import dmnLogoAsset from "@/assets/dmn-logo-acidentes-v2.png.asset.json";
 
 const MESES = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
