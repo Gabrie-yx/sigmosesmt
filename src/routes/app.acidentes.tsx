@@ -717,6 +717,7 @@ function AcidentesPage() {
                     <TableHead className="text-right">HHT</TableHead>
                     <TableHead className="text-right">Empregados</TableHead>
                     <TableHead>Observações</TableHead>
+                    {isAdmin && <TableHead className="w-[80px] text-right">Ações</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
