@@ -20,7 +20,7 @@ import { maskCNPJ } from "@/lib/masks";
 import { NewEmployeeDialog } from "@/components/employees/new-employee-dialog";
 import { CompanyDossieDialog } from "@/components/companies/company-dossie-dialog";
 import { FileViewerHost, openFileViewer } from "@/components/file-viewer";
-import { consultarCNPJ, extrairCNPJdeTexto, type ReceitaCNPJData } from "@/lib/brasilapi-cnpj";
+import { consultarCNPJ, extrairCNPJdeTexto, validarCNPJ, type ReceitaCNPJData } from "@/lib/brasilapi-cnpj";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -701,6 +701,7 @@ function CompanyForm({
 }) {
   const [consultando, setConsultando] = useState(false);
   const [uploadingCard, setUploadingCard] = useState(false);
+  const [ocrStep, setOcrStep] = useState<string | null>(null);
 
   async function handleConsultar() {
     const digits = (editing.cnpj ?? "").replace(/\D/g, "");
@@ -746,17 +747,20 @@ function CompanyForm({
 
   async function handleUploadCard(file: File) {
     setUploadingCard(true);
+    setOcrStep("Enviando arquivo...");
     try {
       const ext = (file.name.split(".").pop() || "pdf").toLowerCase();
       const key = `companies/${editing.id ?? "novo"}/cartao-cnpj-${Date.now()}.${ext}`;
       const { error } = await supabase.storage.from("sesmt-docs").upload(key, file, { upsert: true, contentType: file.type });
       if (error) throw error;
+      
       const { data: signed } = await supabase.storage.from("sesmt-docs").createSignedUrl(key, 60 * 60 * 24 * 365);
       const cardUrl = signed?.signedUrl ?? key;
       let next: any = { ...editing, cnpj_card_url: cardUrl };
 
       // Se for PDF, extrai o texto, procura o CNPJ e preenche via BrasilAPI.
       if (file.type === "application/pdf" || ext === "pdf") {
+        setOcrStep("Lendo PDF...");
         try {
           const buf = new Uint8Array(await file.arrayBuffer());
           const pdfjs: any = await import("pdfjs-dist");
@@ -771,11 +775,9 @@ function CompanyForm({
           }
           let digits = extrairCNPJdeTexto(fullText);
 
-          // Fallback OCR: cartão CNPJ escaneado/gerado como imagem (comum em cópias
-          // vindas de scanner ou "Imprimir como PDF" de PDFs achatados).
           if (!digits) {
+            setOcrStep("OCR (imagem detectada)...");
             try {
-              toast.info("PDF sem texto — tentando OCR (pode levar alguns segundos)…");
               const page = await pdf.getPage(1);
               const viewport = page.getViewport({ scale: 2 });
               const canvas = document.createElement("canvas");
@@ -783,65 +785,70 @@ function CompanyForm({
               canvas.height = viewport.height;
               const ctx = canvas.getContext("2d")!;
               await page.render({ canvasContext: ctx, viewport, canvas }).promise;
-              const { recognize } = await import("tesseract.js");
-              const { data } = await recognize(canvas, "por");
+              const { createWorker } = await import("tesseract.js");
+              const worker = await createWorker("por");
+              const { data } = await worker.recognize(canvas);
               digits = extrairCNPJdeTexto(data.text ?? "");
+              await worker.terminate();
             } catch (ocrErr) {
               console.warn("[cartao-cnpj] OCR falhou:", ocrErr);
             }
           }
 
           if (digits) {
+            setOcrStep("Consultando Receita...");
             const cnpjMasked = `${digits.slice(0,2)}.${digits.slice(2,5)}.${digits.slice(5,8)}/${digits.slice(8,12)}-${digits.slice(12,14)}`;
-            // Pré-preenche o CNPJ já — mesmo que a Receita falhe, o usuário só clica em "Consultar Receita".
+            
+            // Se já tiver um CNPJ e for diferente do extraído, avisa
+            const currentDigits = (editing.cnpj ?? "").replace(/\D/g, "");
+            if (currentDigits && currentDigits !== digits) {
+              toast.info(`CNPJ do cartão (${cnpjMasked}) difere do digitado. Atualizando...`);
+            }
+
             next = { ...next, cnpj: cnpjMasked };
             let d;
             try {
               d = await consultarCNPJ(digits);
+              next = {
+                ...next,
+                cnpj: d.cnpj,
+                razao_social: d.razao_social,
+                nome_fantasia: next.nome_fantasia || d.nome_fantasia || "",
+                name: next.name && next.name.trim() ? next.name : (d.nome_fantasia || d.razao_social),
+                cnae_principal: d.cnae_principal ?? "",
+                cnae_descricao: d.cnae_descricao ?? "",
+                grau_risco: d.grau_risco,
+                logradouro: d.logradouro ?? "",
+                numero: d.numero ?? "",
+                complemento: d.complemento ?? "",
+                bairro: d.bairro ?? "",
+                cidade: d.cidade ?? "",
+                uf: d.uf ?? "",
+                cep: d.cep ?? "",
+                telefone: d.telefone ?? "",
+                situacao_cadastral: d.situacao_cadastral ?? "",
+                data_situacao: d.data_situacao ?? "",
+                capital_social: d.capital_social,
+                natureza_juridica: d.natureza_juridica ?? "",
+                cnaes_secundarias: d.cnaes_secundarias ?? [],
+                receita_consultada_em: new Date().toISOString(),
+              };
+              toast.success("Cartão CNPJ anexado e campos preenchidos.");
             } catch (apiErr: any) {
-              // Retry once (rede/preflight)
-              try { d = await consultarCNPJ(digits); }
-              catch {
-                console.warn("[cartao-cnpj] BrasilAPI falhou:", apiErr);
-                setEditing(next);
-                toast.info(`CNPJ ${cnpjMasked} lido do cartão. Clique em "Consultar Receita" para preencher o resto.`);
-                return;
-              }
+              console.warn("[cartao-cnpj] BrasilAPI falhou:", apiErr);
+              setEditing(next);
+              toast.info(`CNPJ ${cnpjMasked} extraído. Clique em "Consultar Receita" para o restante.`);
+              return;
             }
-            next = {
-              ...next,
-              cnpj: d.cnpj,
-              razao_social: d.razao_social,
-              nome_fantasia: next.nome_fantasia || d.nome_fantasia || "",
-              name: next.name && next.name.trim() ? next.name : (d.nome_fantasia || d.razao_social),
-              cnae_principal: d.cnae_principal ?? "",
-              cnae_descricao: d.cnae_descricao ?? "",
-              grau_risco: d.grau_risco,
-              logradouro: d.logradouro ?? "",
-              numero: d.numero ?? "",
-              complemento: d.complemento ?? "",
-              bairro: d.bairro ?? "",
-              cidade: d.cidade ?? "",
-              uf: d.uf ?? "",
-              cep: d.cep ?? "",
-              telefone: d.telefone ?? "",
-              situacao_cadastral: d.situacao_cadastral ?? "",
-              data_situacao: d.data_situacao ?? "",
-              capital_social: d.capital_social,
-              natureza_juridica: d.natureza_juridica ?? "",
-              cnaes_secundarias: d.cnaes_secundarias ?? [],
-              receita_consultada_em: new Date().toISOString(),
-            };
-            toast.success("Cartão CNPJ anexado e campos preenchidos pela Receita.");
           } else {
-            toast.info("Cartão anexado, mas não achei o CNPJ no PDF. Use 'Consultar Receita'.");
+            toast.info("Cartão anexado, mas CNPJ não identificado no documento.");
           }
         } catch (parseErr: any) {
-          console.warn("[cartao-cnpj] parse falhou:", parseErr);
-          toast.info("Cartão anexado. Não consegui ler o PDF — digite/consulte o CNPJ manualmente.");
+          console.warn("[cartao-cnpj] falha no processamento:", parseErr);
+          toast.info("Cartão anexado, mas não foi possível extrair dados automaticamente.");
         }
       } else {
-        toast.success("Cartão anexado. Para imagem, use 'Consultar Receita' para preencher os campos.");
+        toast.success("Cartão anexado.");
       }
 
       setEditing(next);
@@ -849,6 +856,7 @@ function CompanyForm({
       toast.error(e.message ?? "Falha no upload");
     } finally {
       setUploadingCard(false);
+      setOcrStep(null);
     }
   }
 
@@ -1014,36 +1022,19 @@ function CompanyForm({
           <Label className="text-[10px] font-black text-slate-500 uppercase">Cartão CNPJ (PDF — evidência documental)</Label>
           <div className="flex items-center gap-2 mt-1">
             <label className="inline-flex items-center gap-1.5 cursor-pointer bg-slate-700 hover:bg-slate-800 text-white text-[10px] font-black uppercase tracking-widest px-3 py-2 rounded-lg">
-              {uploadingCard ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Enviando…</> : <><Upload className="h-3.5 w-3.5" /> Anexar PDF</>}
-              <input type="file" accept="application/pdf,image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUploadCard(f); e.target.value = ""; }} />
+              {uploadingCard ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> {ocrStep || "Enviando…"}</> : <><Upload className="h-3.5 w-3.5" /> Anexar PDF</>}
+              <input type="file" accept="application/pdf,image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUploadCard(f); e.target.value = ""; }} disabled={uploadingCard} />
             </label>
-            {editing?.cnpj_card_url && (
-              <button
+            {editing?.cnpj_card_url && !uploadingCard && (
+              <Button
                 type="button"
-                onClick={async () => {
-                  const url: string = editing.cnpj_card_url as string;
-                  const pathPart = url.split("?")[0];
-                  const name = pathPart.split("/").pop() || "cartao-cnpj";
-                  const ext = name.split(".").pop()?.toLowerCase();
-                  const mime =
-                    ext === "pdf" ? "application/pdf" :
-                    ext === "png" ? "image/png" :
-                    ext === "jpg" || ext === "jpeg" ? "image/jpeg" :
-                    ext === "webp" ? "image/webp" : undefined;
-                  try {
-                    const res = await fetch(url);
-                    if (!res.ok) throw new Error("fetch");
-                    const blob = await res.blob();
-                    const objectUrl = URL.createObjectURL(blob);
-                    openFileViewer({ url: objectUrl, name, mime: blob.type || mime, downloadUrl: objectUrl, objectUrl });
-                  } catch {
-                    openFileViewer({ url, name, mime, downloadUrl: url });
-                  }
-                }}
-                className="inline-flex items-center gap-1 text-[11px] font-black uppercase tracking-widest text-emerald-700 hover:text-emerald-900"
+                variant="outline"
+                size="sm"
+                className="text-[10px] font-black uppercase h-8"
+                onClick={() => openFileViewer({ url: editing.cnpj_card_url!, name: "Cartão CNPJ" })}
               >
-                <FileText className="h-3.5 w-3.5" /> Ver anexo
-              </button>
+                <FileText className="h-3.5 w-3.5 mr-1" /> Visualizar
+              </Button>
             )}
           </div>
         </div>
