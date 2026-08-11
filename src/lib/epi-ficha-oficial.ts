@@ -43,11 +43,11 @@ export type FichaOficialBlock = {
 
 const PAGE_H = 595.2;
 const ROWS_PER_PAGE = 17;
-/** Grade medida no PDF-mãe: 1ª linha começa em y(top)=78 e cada linha tem 26,6pt. */
+/** Grade medida no PDF-mãe (FOR-SEG 02): 1ª linha em y=78, cada linha 26.6pt. */
 const ROW_TOP0 = 78.0;
 const ROW_H = 26.6;
 
-/** Colunas da grade (x0, x1) medidas nas réguas verticais do PDF oficial. */
+/** Colunas da grade (x0, x1). */
 const COL = {
   qt: [4.8, 40.4],
   und: [40.4, 70.6],
@@ -59,6 +59,11 @@ const COL = {
   dataDevol: [660.2, 728.4],
   assReceb: [728.4, 815.0],
 } as const;
+
+// Tons de cinza para o layout
+const GRAY_HEADER = rgb(0.9, 0.9, 0.9);
+const GRAY_BORDER = rgb(0.8, 0.8, 0.8);
+
 
 const MOTIVO_CODE: Record<string, string> = {
   danificado: "1",
@@ -99,13 +104,23 @@ function safe(text: string) {
 function drawText(
   page: PDFPage,
   text: string | null | undefined,
-  opts: { x: number; top: number; maxW: number; size?: number; font: PDFFont; center?: boolean },
+  opts: { 
+    x: number; 
+    top: number; 
+    maxW: number; 
+    size?: number; 
+    font: PDFFont; 
+    center?: boolean;
+    vCenterInRow?: boolean; // Se verdadeiro, 'top' é o topo da célula e centralizamos verticalmente
+    rowH?: number;
+    paddingX?: number;
+  },
 ) {
   const t = safe(String(text ?? "")).trim();
   if (!t) return;
   const size = opts.size ?? 9;
+  const paddingX = opts.paddingX ?? 2;
 
-  // BUG CRÍTICO 2 - Suporte a quebra de linha (white-space: normal)
   const words = t.split(" ");
   const lines: string[] = [];
   let currentLine = words[0];
@@ -113,7 +128,7 @@ function drawText(
   for (let i = 1; i < words.length; i++) {
     const w = words[i];
     const width = opts.font.widthOfTextAtSize(currentLine + " " + w, size);
-    if (width < opts.maxW) {
+    if (width < opts.maxW - (paddingX * 2)) {
       currentLine += " " + w;
     } else {
       lines.push(currentLine);
@@ -122,27 +137,26 @@ function drawText(
   }
   lines.push(currentLine);
 
-  // Se houver apenas uma linha, desenha centralizado se pedido
-  if (lines.length === 1) {
-    const w = opts.font.widthOfTextAtSize(lines[0], size);
-    const x = opts.center ? opts.x + (opts.maxW - w) / 2 : opts.x;
-    page.drawText(lines[0], { x, y: PAGE_H - opts.top, size, font: opts.font, color: rgb(0, 0, 0) });
+  const lineHeight = size * 1.1;
+  const totalH = lines.length * lineHeight;
+  
+  let startY: number;
+  if (opts.vCenterInRow && opts.rowH) {
+    // top é o topo da célula. Centraliza o bloco de texto na altura da linha.
+    startY = PAGE_H - opts.top - (opts.rowH - totalH) / 2 - size;
   } else {
-    // BUG CRÍTICO 2 - Multiline alinhado verticalmente (height: auto simulado)
-    // Se tiver 2 linhas, ajustamos o y para que fiquem centradas na altura da célula
-    const lineHeight = size * 1.1;
-    const totalH = lines.length * lineHeight;
-    // O top original é o centro da linha. Ajustamos o início da primeira linha.
-    let currentY = (PAGE_H - opts.top) + (totalH / 2) - size;
+    // fallback para o comportamento antigo (baseline centralizada)
+    startY = PAGE_H - opts.top + (totalH / 2) - size;
+  }
 
-    for (const line of lines.slice(0, 2)) { // Limita a 2 linhas para não invadir próxima célula
-      const w = opts.font.widthOfTextAtSize(line, size);
-      const x = opts.center ? opts.x + (opts.maxW - w) / 2 : opts.x;
-      page.drawText(line, { x, y: currentY, size, font: opts.font, color: rgb(0, 0, 0) });
-      currentY -= lineHeight;
-    }
+  for (const line of lines.slice(0, 3)) { // Permite até 3 linhas se couber
+    const w = opts.font.widthOfTextAtSize(line, size);
+    const x = opts.center ? opts.x + (opts.maxW - w) / 2 : opts.x + paddingX;
+    page.drawText(line, { x, y: startY, size, font: opts.font, color: rgb(0, 0, 0) });
+    startY -= lineHeight;
   }
 }
+
 
 async function embedSignature(pdf: PDFDocument, dataUrl: string) {
   try {
@@ -181,36 +195,112 @@ export async function buildFichaOficialBytes(blocks: FichaOficialBlock[]): Promi
       // Rótulos: Empresa: (x1 55,8 / base 99) · Nome: (x1 39,8 / base 121)
       //          Função: (x1 48,2 / base 143) · Matrícula: (x1 314,2) · Folha: (x1 540,6)
       //          Data de Admissão: (x1 629,4 / base 99) · Data de Demissão: (linha 662–747)
-      drawText(p1, e.empresa, { x: 59, top: 99, maxW: 460, size: 9, font: bold });
-      drawText(p1, brDate(e.admissao), { x: 634, top: 99, maxW: 100, size: 9, font });
-      drawText(p1, e.nome, { x: 43, top: 121, maxW: 480, size: 9, font: bold });
-      drawText(p1, e.funcao, { x: 52, top: 143, maxW: 200, size: 9, font });
-      if (e.demissao) drawText(p1, brDate(e.demissao), { x: 667, top: 122.8, maxW: 78, size: 9, font });
-      drawText(p1, e.matricula, { x: 318, top: 143.4, maxW: 180, size: 9, font });
+      drawText(p1, e.empresa, { x: 59, top: 99, maxW: 460, size: 9, font: bold, vCenterInRow: true, rowH: 15 });
+      drawText(p1, brDate(e.admissao), { x: 634, top: 99, maxW: 100, size: 9, font, vCenterInRow: true, rowH: 15 });
+      drawText(p1, e.nome, { x: 43, top: 121, maxW: 480, size: 9, font: bold, vCenterInRow: true, rowH: 15 });
+      drawText(p1, e.funcao, { x: 52, top: 143, maxW: 200, size: 9, font, vCenterInRow: true, rowH: 15 });
+      if (e.demissao) drawText(p1, brDate(e.demissao), { x: 667, top: 122.8, maxW: 78, size: 9, font, vCenterInRow: true, rowH: 15 });
+      drawText(p1, e.matricula, { x: 318, top: 143.4, maxW: 180, size: 9, font, vCenterInRow: true, rowH: 15 });
       // "Folha:" recebe a paginação da ficha (o campo PÁG. é fixo do template).
-      drawText(p1, `${c + 1}/${chunks.length}`, { x: 544, top: 143.4, maxW: 60, size: 9, font });
+      drawText(p1, `${c + 1}/${chunks.length}`, { x: 544, top: 143.4, maxW: 60, size: 9, font, vCenterInRow: true, rowH: 15 });
       // Lacuna "recebi da empresa ____" (underscores de x 249,6 a 408,2 / base 189)
-      drawText(p1, e.empresa, { x: 250, top: 189, maxW: 158, size: 8, font, center: true });
+      drawText(p1, e.empresa, { x: 250, top: 189, maxW: 158, size: 8, font, center: true, vCenterInRow: true, rowH: 12 });
       // "Local e Data:" (linha de x 78,8 a 290 / base 562,5)
-      drawText(p1, block.localData, { x: 82, top: 562.5, maxW: 205, size: 9, font });
+      drawText(p1, block.localData, { x: 82, top: 562.5, maxW: 205, size: 9, font, vCenterInRow: true, rowH: 15 });
+
+
+      // Adiciona cabeçalho cinza se for a primeira vez na página (grade de entregas)
+      const headerTop = ROW_TOP0 - ROW_H;
+      const drawHeader = (col: readonly [number, number] | number[], text: string) => {
+        p2.drawRectangle({
+          x: col[0],
+          y: PAGE_H - headerTop - ROW_H,
+          width: col[1] - col[0],
+          height: ROW_H,
+          color: GRAY_HEADER,
+        });
+        p2.drawRectangle({
+          x: col[0],
+          y: PAGE_H - headerTop - ROW_H,
+          width: col[1] - col[0],
+          height: ROW_H,
+          borderColor: GRAY_BORDER,
+          borderWidth: 0.5,
+        });
+        drawText(p2, text, { 
+          x: col[0], 
+          top: headerTop, 
+          maxW: col[1] - col[0], 
+          size: 7, 
+          font: bold, 
+          center: true, 
+          vCenterInRow: true, 
+          rowH: ROW_H 
+        });
+      };
+
+      drawHeader(COL.qt, "QT");
+      drawHeader(COL.und, "UND");
+      drawHeader(COL.espec, "Especificação");
+      drawHeader(COL.ca, "CA");
+      drawHeader(COL.assEmp, "Assinatura");
+      drawHeader(COL.dataEntrega, "Entrega");
+      drawHeader(COL.motivo, "Mot.");
+      drawHeader(COL.dataDevol, "Devolução");
+      drawHeader(COL.assReceb, "Ass. Receb.");
 
       // Grade de entregas (página 2)
       const rows = chunks[c];
+
       for (let i = 0; i < rows.length; i++) {
         const r = rows[i];
-        const top = ROW_TOP0 + ROW_H * i + ROW_H / 2 + 3; // baseline centralizada na célula
-        const cell = (col: readonly [number, number] | number[], text: string, size = 7, center = true) =>
-          drawText(p2, text, { x: col[0] + 1, top, maxW: col[1] - col[0] - 2, size, font, center });
+        const rowTop = ROW_TOP0 + ROW_H * i;
+        
+        const cell = (col: readonly [number, number] | number[], text: string, size = 7, center = true, paddingX = 2, isHeader = false) => {
+          if (isHeader) {
+            // Desenha o fundo cinza para o cabeçalho
+            p2.drawRectangle({
+              x: col[0],
+              y: PAGE_H - rowTop - ROW_H,
+              width: col[1] - col[0],
+              height: ROW_H,
+              color: GRAY_HEADER,
+            });
+            // Desenha as bordas
+            p2.drawRectangle({
+              x: col[0],
+              y: PAGE_H - rowTop - ROW_H,
+              width: col[1] - col[0],
+              height: ROW_H,
+              borderColor: GRAY_BORDER,
+              borderWidth: 0.5,
+            });
+          }
+          
+          return drawText(p2, text, { 
+            x: col[0], 
+            top: rowTop, 
+            maxW: col[1] - col[0], 
+            size, 
+            font: isHeader ? bold : font, 
+            center, 
+            vCenterInRow: true, 
+            rowH: ROW_H,
+            paddingX 
+          });
+        };
+
 
         cell(COL.qt, r.qtd != null ? String(r.qtd) : "");
         cell(COL.und, r.und ?? "UN");
-        drawText(p2, [r.item, r.tamanho ? `(${r.tamanho})` : ""].filter(Boolean).join(" "), {
-          x: COL.espec[0] + 2, top, maxW: COL.espec[1] - COL.espec[0] - 4, size: 7, font,
-        });
+        
+        // Especificação com padding lateral de 10px e alinhamento à esquerda
+        cell(COL.espec, [r.item, r.tamanho ? `(${r.tamanho})` : ""].filter(Boolean).join(" "), 7, false, 10);
+        
         cell(COL.ca, r.ca ?? "");
-        cell(COL.dataEntrega, brDate(r.data_entrega), 7);
-        cell(COL.motivo, motivoCurto(r), 7);
-        cell(COL.dataDevol, brDate(r.data_devolucao), 7);
+        cell(COL.dataEntrega, brDate(r.data_entrega));
+        cell(COL.motivo, motivoCurto(r));
+        cell(COL.dataDevol, brDate(r.data_devolucao));
 
         if (r.assinatura_snapshot) {
           const img = await embedSignature(out, r.assinatura_snapshot);
@@ -222,13 +312,14 @@ export async function buildFichaOficialBytes(blocks: FichaOficialBlock[]): Promi
             const h = img.height * scale;
             p2.drawImage(img, {
               x: COL.assEmp[0] + (COL.assEmp[1] - COL.assEmp[0] - w) / 2,
-              y: PAGE_H - (ROW_TOP0 + ROW_H * (i + 1)) + (ROW_H - h) / 2,
+              y: PAGE_H - rowTop - (ROW_H + h) / 2,
               width: w,
               height: h,
             });
           }
         }
       }
+
     }
   }
 
