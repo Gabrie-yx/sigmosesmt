@@ -121,7 +121,6 @@ export function gerarForSeg09(opts: {
   doc.line(10, 61.5, pageWidth - 10, 61.5);
 
   // Colunas internas
-  doc.line(115, 48.5, 115, 55); // Entre Endereço e Bairro
   doc.line(65, 55, 65, 61.5); // Entre CNAE e Grau de Risco
   doc.line(pageWidth - 65, 55, pageWidth - 65, 61.5); // Entre Grau de Risco e DATA
 
