@@ -103,7 +103,7 @@ export function gerarForSeg09(opts: {
   header();
 
   // 3 - Logo abaixo do cabeçalho entra a faixa cinza com o título em arial e negrito "ACIDENTES COM VÍTIMA"
-  doc.setFillColor(230, 230, 230);
+  doc.setFillColor(180, 180, 180);
   doc.rect(10, 35, pageWidth - 20, 5, "F");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
@@ -120,8 +120,7 @@ export function gerarForSeg09(opts: {
   doc.line(10, 55, pageWidth - 10, 55);
   doc.line(10, 61.5, pageWidth - 10, 61.5);
 
-  // Colunas internas
-  doc.line(65, 55, 65, 61.5); // Entre CNAE e Grau de Risco
+  // Colunas internas (removidas as verticais de Endereço e CEP)
   doc.line(pageWidth - 65, 55, pageWidth - 65, 61.5); // Entre Grau de Risco e DATA
 
   // Linha 1: Empresa
@@ -240,21 +239,21 @@ export function gerarForSeg09(opts: {
     body: [
       ...tableRows,
       [
-        { content: "Total", styles: { fontStyle: "bold", fillColor: [200, 200, 200] } },
-        { content: totEmp || "", styles: { fontStyle: "bold", fillColor: [200, 200, 200] } },
-        { content: totHHT > 0 ? totHHT.toLocaleString("pt-BR") : "", styles: { fontStyle: "bold", fillColor: [200, 200, 200] } },
-        { content: totAbs, styles: { fontStyle: "bold", fillColor: [200, 200, 200] } },
-        { content: totCLeve, styles: { fontStyle: "bold", fillColor: [200, 200, 200] } },
-        { content: totCGrave, styles: { fontStyle: "bold", fillColor: [200, 200, 200] } },
-        { content: totS, styles: { fontStyle: "bold", fillColor: [200, 200, 200] } },
-        { content: totIndice, styles: { fontStyle: "bold", fillColor: [200, 200, 200] } },
-        { content: totDP, styles: { fontStyle: "bold", fillColor: [200, 200, 200] } },
-        { content: totTF, styles: { fontStyle: "bold", fillColor: [200, 200, 200] } },
-        { content: totObitos, styles: { fontStyle: "bold", fillColor: [200, 200, 200] } },
+        { content: "Total", styles: { fontStyle: "bold", fillColor: [160, 160, 160] } },
+        { content: totEmp || "", styles: { fontStyle: "bold", fillColor: [160, 160, 160] } },
+        { content: totHHT > 0 ? totHHT.toLocaleString("pt-BR") : "", styles: { fontStyle: "bold", fillColor: [160, 160, 160] } },
+        { content: totAbs, styles: { fontStyle: "bold", fillColor: [160, 160, 160] } },
+        { content: totCLeve, styles: { fontStyle: "bold", fillColor: [160, 160, 160] } },
+        { content: totCGrave, styles: { fontStyle: "bold", fillColor: [160, 160, 160] } },
+        { content: totS, styles: { fontStyle: "bold", fillColor: [160, 160, 160] } },
+        { content: totIndice, styles: { fontStyle: "bold", fillColor: [160, 160, 160] } },
+        { content: totDP, styles: { fontStyle: "bold", fillColor: [160, 160, 160] } },
+        { content: totTF, styles: { fontStyle: "bold", fillColor: [160, 160, 160] } },
+        { content: totObitos, styles: { fontStyle: "bold", fillColor: [160, 160, 160] } },
       ]
     ],
     headStyles: { 
-      fillColor: [230, 230, 230], 
+      fillColor: [180, 180, 180], 
       textColor: 0, 
       fontSize: 7, 
       halign: "center", 
