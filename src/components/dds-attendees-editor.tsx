@@ -59,8 +59,12 @@ export function DDSAttendeesEditor({
 
   const filtrados = useMemo(() => {
     const q = busca.toLowerCase().trim();
+    console.log("[DDS Search - List] Search query:", q || "(empty)");
+    console.log("[DDS Search - List] Total attendees in state:", attendees.length);
     if (!q) return attendees;
-    return attendees.filter((a) => (a.employees?.nome ?? "").toLowerCase().includes(q));
+    const filtered = attendees.filter((a) => (a.employees?.nome ?? "").toLowerCase().includes(q));
+    console.log("[DDS Search - List] Result count:", filtered.length);
+    return filtered;
   }, [attendees, busca]);
 
   const total = attendees.length;
