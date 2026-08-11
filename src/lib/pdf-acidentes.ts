@@ -191,17 +191,17 @@ export function gerarForSeg09(opts: {
     const indiceRel = empMedio > 0 ? (totalAbs / empMedio).toFixed(2) : "0,00";
 
     return [
-      m,
-      empMedio || "",
-      hhtVal > 0 ? hhtVal.toLocaleString("pt-BR") : "",
-      totalAbs,
-      comAfastLeve,
-      comAfastGrave,
-      semAfast,
-      indiceRel,
-      dp,
-      tf,
-      obitos
+      { content: m, styles: { fontStyle: "bold" as const, fontSize: 10 } },
+      { content: String(empMedio || "") },
+      { content: hhtVal > 0 ? hhtVal.toLocaleString("pt-BR") : "" },
+      { content: String(totalAbs) },
+      { content: String(comAfastLeve) },
+      { content: String(comAfastGrave) },
+      { content: String(semAfast) },
+      { content: String(indiceRel) },
+      { content: String(dp) },
+      { content: String(tf) },
+      { content: String(obitos) }
     ];
   });
 
@@ -239,17 +239,17 @@ export function gerarForSeg09(opts: {
     body: [
       ...tableRows,
       [
-        { content: "Total", styles: { fontStyle: "bold", fillColor: [160, 160, 160] } },
-        { content: totEmp || "", styles: { fontStyle: "bold", fillColor: [160, 160, 160] } },
-        { content: totHHT > 0 ? totHHT.toLocaleString("pt-BR") : "", styles: { fontStyle: "bold", fillColor: [160, 160, 160] } },
-        { content: totAbs, styles: { fontStyle: "bold", fillColor: [160, 160, 160] } },
-        { content: totCLeve, styles: { fontStyle: "bold", fillColor: [160, 160, 160] } },
-        { content: totCGrave, styles: { fontStyle: "bold", fillColor: [160, 160, 160] } },
-        { content: totS, styles: { fontStyle: "bold", fillColor: [160, 160, 160] } },
-        { content: totIndice, styles: { fontStyle: "bold", fillColor: [160, 160, 160] } },
-        { content: totDP, styles: { fontStyle: "bold", fillColor: [160, 160, 160] } },
-        { content: totTF, styles: { fontStyle: "bold", fillColor: [160, 160, 160] } },
-        { content: totObitos, styles: { fontStyle: "bold", fillColor: [160, 160, 160] } },
+        { content: "Total", styles: { fontStyle: "bold" as const, fillColor: [160, 160, 160] } },
+        { content: String(totEmp || ""), styles: { fontStyle: "bold" as const, fillColor: [160, 160, 160] } },
+        { content: totHHT > 0 ? totHHT.toLocaleString("pt-BR") : "", styles: { fontStyle: "bold" as const, fillColor: [160, 160, 160] } },
+        { content: String(totAbs), styles: { fontStyle: "bold" as const, fillColor: [160, 160, 160] } },
+        { content: String(totCLeve), styles: { fontStyle: "bold" as const, fillColor: [160, 160, 160] } },
+        { content: String(totCGrave), styles: { fontStyle: "bold" as const, fillColor: [160, 160, 160] } },
+        { content: String(totS), styles: { fontStyle: "bold" as const, fillColor: [160, 160, 160] } },
+        { content: String(totIndice), styles: { fontStyle: "bold" as const, fillColor: [160, 160, 160] } },
+        { content: String(totDP), styles: { fontStyle: "bold" as const, fillColor: [160, 160, 160] } },
+        { content: String(totTF), styles: { fontStyle: "bold" as const, fillColor: [160, 160, 160] } },
+        { content: String(totObitos), styles: { fontStyle: "bold" as const, fillColor: [160, 160, 160] } },
       ]
     ],
     headStyles: { 
