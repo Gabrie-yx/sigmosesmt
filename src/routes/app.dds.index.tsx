@@ -286,7 +286,7 @@ function DDSDetail({ dds, temaMap, gestorMap }: { dds: DDS; temaMap: any; gestor
 
   const { data: attendees = [] } = useQuery({
     queryKey: ["dds-att", dds.id],
-    queryFn: async () => (await supabase.from("dds_attendees").select("*, employees(nome)").eq("dds_id", dds.id)).data ?? [],
+    queryFn: async () => (await supabase.from("dds_attendees").select("*, employees(nome, status)").eq("dds_id", dds.id)).data ?? [],
   });
 
   const { data: ddsFull } = useQuery({
@@ -436,12 +436,18 @@ function DDSDetail({ dds, temaMap, gestorMap }: { dds: DDS; temaMap: any; gestor
           Participantes ({attendees.filter((a:any)=>a.status==="PRESENTE").length} presentes / {attendees.length} registrados)
         </div>
         <div className="border rounded max-h-48 overflow-auto divide-y">
-          {attendees.map((a: any) => (
-            <div key={a.id} className="px-3 py-1.5 text-sm flex justify-between">
-              <span>{a.employees?.nome ?? "—"}</span>
-              <Badge variant="outline" className={`text-[10px] ${a.status==="PRESENTE" ? "border-emerald-300 text-emerald-700" : "border-red-300 text-red-700"}`}>{a.status}</Badge>
-            </div>
-          ))}
+          {attendees.map((a: any) => {
+            const isDesligado = a.employees?.status === "DESLIGADO";
+            return (
+              <div key={a.id} className={`px-3 py-1.5 text-sm flex justify-between ${isDesligado ? "bg-red-50/50" : ""}`}>
+                <div className="flex items-center gap-2">
+                  <span>{a.employees?.nome ?? "—"}</span>
+                  {isDesligado && <Badge variant="destructive" className="text-[9px] h-4 px-1 uppercase">Desligado</Badge>}
+                </div>
+                <Badge variant="outline" className={`text-[10px] ${a.status==="PRESENTE" ? "border-emerald-300 text-emerald-700" : "border-red-300 text-red-700"}`}>{a.status}</Badge>
+              </div>
+            );
+          })}
           {attendees.length === 0 && <div className="p-3 text-xs text-muted-foreground text-center">Sem registro</div>}
         </div>
         <div className="text-[11px] text-muted-foreground mt-1">

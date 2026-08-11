@@ -187,6 +187,7 @@ function AddAttendeesDialog({
       const { data, error } = await supabase
         .from("employees")
         .select("id, nome, company_id, companies(name)")
+        .eq("status", "ATIVO")
         .order("nome", { ascending: true })
         .limit(2000);
       if (error) throw error;
