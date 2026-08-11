@@ -78,20 +78,15 @@ export function gerarForSeg09(opts: {
     }
     
     // Título Central
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(14);
-    doc.text("Quadro Estatístico de Acidentes de Trabalho", (pageWidth / 2) - 2, 21, { align: "center" });
+    doc.setFont("times", "bold");
+    doc.setFontSize(18); // Aumentado conforme solicitado
+    doc.text("Quadro Estatístico de Acidentes de Trabalho", (pageWidth / 2) - 2, 25, { align: "center" });
     
-    // Faixa cinza ACIDENTES COM VÍTIMA
-    doc.setFillColor(230, 230, 230);
-    doc.rect(60.1, 26, pageWidth - 125, 8.9, "F");
-    doc.setFontSize(11);
-    doc.setTextColor(0);
-    doc.text("ACIDENTES COM VÍTIMA", (pageWidth / 2) - 2, 32, { align: "center" });
+    // Removida a barra cinza e o texto de dentro do cabeçalho
     
     // Bloco Direita (Código/Revisão)
+    doc.setFont("helvetica", "bold"); // Volta para helvetica para o restante
     doc.setFontSize(8);
-    doc.setFont("helvetica", "bold");
     const rightX = pageWidth - 63;
     doc.text("CÓG.:", rightX, 16);
     doc.text("REVISÃO:", rightX, 21);
@@ -107,64 +102,72 @@ export function gerarForSeg09(opts: {
 
   header();
 
+  // 3 - Logo abaixo do cabeçalho entra a faixa cinza com o título em arial e negrito "ACIDENTES COM VÍTIMA"
+  doc.setFillColor(230, 230, 230);
+  doc.rect(10, 35, pageWidth - 20, 5, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.setTextColor(0);
+  doc.text("ACIDENTES COM VÍTIMA", pageWidth / 2, 38.5, { align: "center" });
+
   // Seção de Informações da Empresa (Grid Compacto com Moldura sutil)
   doc.setFontSize(9);
   
   // Moldura das informações da empresa
   doc.setLineWidth(0.2);
-  doc.rect(10, 40, pageWidth - 20, 26);
-  doc.line(10, 46.5, pageWidth - 10, 46.5);
-  doc.line(10, 53, pageWidth - 10, 53);
-  doc.line(10, 59.5, pageWidth - 10, 59.5);
+  doc.rect(10, 42, pageWidth - 20, 26);
+  doc.line(10, 48.5, pageWidth - 10, 48.5);
+  doc.line(10, 55, pageWidth - 10, 55);
+  doc.line(10, 61.5, pageWidth - 10, 61.5);
 
   // Colunas internas
-  doc.line(115, 46.5, 115, 53); // Entre Endereço e Bairro
-  doc.line(pageWidth - 65, 46.5, pageWidth - 65, 59.5); // Coluna do CEP e DATA
-  doc.line(65, 53, 65, 59.5); // Entre CNAE e Grau de Risco
+  doc.line(115, 48.5, 115, 55); // Entre Endereço e Bairro
+  doc.line(pageWidth - 65, 48.5, pageWidth - 65, 61.5); // Coluna do CEP e DATA
+  doc.line(65, 55, 65, 61.5); // Entre CNAE e Grau de Risco
 
   // Linha 1: Empresa
   doc.setFont("helvetica", "bold");
-  doc.text("Empresa:", 12, 44);
+  doc.text("Empresa:", 12, 46);
   doc.setFont("helvetica", "normal");
-  doc.text(opts.empresa || "DMN ESTALEIRO DA AMAZONIA LTDA", 30, 44);
+  doc.text(opts.empresa || "DMN ESTALEIRO DA AMAZONIA LTDA", 30, 46);
   
   // Linha 2: CNPJ
   doc.setFont("helvetica", "bold");
-  doc.text("CNPJ:", 12, 50.5);
+  doc.text("CNPJ:", 12, 52.5);
   doc.setFont("helvetica", "normal");
-  doc.text(opts.cnpj || "13.378.697/0001-80", 30, 50.5);
-
+  doc.text(opts.cnpj || "13.378.697/0001-80", 30, 52.5);
+  
   // Linha 3: Endereço / Bairro / CEP
   doc.setFont("helvetica", "bold");
-  doc.text("Endereço:", 12, 57);
+  doc.text("Endereço:", 12, 59);
   doc.setFont("helvetica", "normal");
-  doc.text(opts.endereco || "ESTRADA DO ALEIXO, 2000", 30, 57);
+  doc.text(opts.endereco || "ESTRADA DO ALEIXO, 2000", 30, 59);
   
   doc.setFont("helvetica", "bold");
-  doc.text("Bairro:", 117, 57);
+  doc.text("Bairro:", 117, 59);
   doc.setFont("helvetica", "normal");
-  doc.text(opts.bairro || "COLÔNIA OLIVEIRA MACHADO", 130, 57);
+  doc.text(opts.bairro || "COLÔNIA OLIVEIRA MACHADO", 130, 59);
   
   doc.setFont("helvetica", "bold");
-  doc.text("CEP:", pageWidth - 63, 57);
+  doc.text("CEP:", pageWidth - 63, 59);
   doc.setFont("helvetica", "normal");
-  doc.text(opts.cep || "69070-610", pageWidth - 48, 57);
-
+  doc.text(opts.cep || "69070-610", pageWidth - 48, 59);
+  
   // Linha 4: CNAE / Grau de Risco / Data
   doc.setFont("helvetica", "bold");
-  doc.text("CNAE:", 12, 63.5);
+  doc.text("CNAE:", 12, 65.5);
   doc.setFont("helvetica", "normal");
-  doc.text(opts.cnae || "30.11-3-01", 30, 63.5);
+  doc.text(opts.cnae || "30.11-3-01", 30, 65.5);
   
   doc.setFont("helvetica", "bold");
-  doc.text("Grau de risco:", 67, 63.5);
+  doc.text("Grau de risco:", 67, 65.5);
   doc.setFont("helvetica", "normal");
-  doc.text(opts.grau_risco || "03", 92, 63.5);
+  doc.text(opts.grau_risco || "03", 92, 65.5);
   
   doc.setFont("helvetica", "bold");
-  doc.text("DATA:", pageWidth - 63, 63.5);
+  doc.text("DATA:", pageWidth - 63, 65.5);
   doc.setFont("helvetica", "normal");
-  doc.text(new Date().toLocaleDateString("pt-BR"), pageWidth - 48, 63.5);
+  doc.text(new Date().toLocaleDateString("pt-BR"), pageWidth - 48, 65.5);
 
   // Tabela de Dados
   const tableRows = MESES.map((m, i) => {
@@ -220,7 +223,7 @@ export function gerarForSeg09(opts: {
   const totIndice = totEmp > 0 ? (totAbs / totEmp).toFixed(2) : "0,00";
 
   autoTable(doc, {
-    startY: 70,
+    startY: 72,
     margin: { left: 10, right: 10 },
     head: [[
       "Mês",
