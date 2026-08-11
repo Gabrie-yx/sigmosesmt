@@ -120,7 +120,9 @@ export function gerarForSeg09(opts: {
   doc.line(10, 55, pageWidth - 10, 55);
   doc.line(10, 61.5, pageWidth - 10, 61.5);
 
-  // Colunas internas (removidas as verticais de Endereço e CEP)
+  // Colunas internas (movendo a divisória do CEP para o lado do DATA)
+  doc.line(pageWidth - 65, 61.5, pageWidth - 65, 68); 
+
   doc.line(pageWidth - 65, 55, pageWidth - 65, 61.5); // Entre Grau de Risco e DATA
 
   // Linha 1: Empresa
