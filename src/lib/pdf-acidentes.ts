@@ -1,6 +1,6 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import dmnLogoAsset from "@/assets/dmn-logo-acidentes.png.asset.json";
+import dmnLogoAsset from "@/assets/dmn-logo-acidentes-v2.png.asset.json";
 
 const MESES = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
@@ -79,10 +79,10 @@ export function gerarForSeg09(opts: {
     
     // Título Central
     doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.text("Quadro Estatístico de Acidentes de Trabalho", (pageWidth / 2) - 2, 20, { align: "center" });
     doc.setFontSize(11);
-    doc.text("Quadro Estatístico de Acidentes de Trabalho", (pageWidth / 2) - 2, 18, { align: "center" });
-    doc.setFontSize(10);
-    doc.text("ACIDENTES COM VÍTIMA", (pageWidth / 2) - 2, 26, { align: "center" });
+    doc.text("ACIDENTES COM VÍTIMA", (pageWidth / 2) - 2, 28, { align: "center" });
     
     // Bloco Direita (Código/Revisão)
     doc.setFontSize(8);
@@ -94,60 +94,72 @@ export function gerarForSeg09(opts: {
     doc.text("PÁG.:", rightX, 31);
     
     doc.setFont("helvetica", "normal");
-    doc.text("FOR-SEG 09", rightX + 15, 16);
-    doc.text("00", rightX + 15, 21);
-    doc.text("30/08/2025", rightX + 15, 26);
-    doc.text("01/01", rightX + 15, 31);
+    doc.text("FOR-SEG 09", rightX + 16, 16);
+    doc.text("00", rightX + 16, 21);
+    doc.text("30/08/2025", rightX + 16, 26);
+    doc.text("01/01", rightX + 16, 31);
   };
 
   header();
 
-  // Seção de Informações da Empresa (Grid Compacto)
+  // Seção de Informações da Empresa (Grid Compacto com Moldura sutil)
   doc.setFontSize(9);
-  doc.setFont("helvetica", "bold");
   
+  // Moldura das informações da empresa
+  doc.setLineWidth(0.2);
+  doc.rect(10, 40, pageWidth - 20, 26);
+  doc.line(10, 46.5, pageWidth - 10, 46.5);
+  doc.line(10, 53, pageWidth - 10, 53);
+  doc.line(10, 59.5, pageWidth - 10, 59.5);
+
+  // Colunas internas
+  doc.line(115, 46.5, 115, 53); // Entre Endereço e Bairro
+  doc.line(pageWidth - 65, 46.5, pageWidth - 65, 59.5); // Coluna do CEP e DATA
+  doc.line(65, 53, 65, 59.5); // Entre CNAE e Grau de Risco
+
   // Linha 1: Empresa
-  doc.text("Empresa:", 10, 42);
+  doc.setFont("helvetica", "bold");
+  doc.text("Empresa:", 12, 44);
   doc.setFont("helvetica", "normal");
-  doc.text(opts.empresa || "DMN ESTALEIRO DA AMAZONIA LTDA", 28, 42);
+  doc.text(opts.empresa || "DMN ESTALEIRO DA AMAZONIA LTDA", 30, 44);
   
   // Linha 2: CNPJ
   doc.setFont("helvetica", "bold");
-  doc.text("CNPJ:", 10, 48);
+  doc.text("CNPJ:", 12, 50.5);
   doc.setFont("helvetica", "normal");
-  doc.text(opts.cnpj || "13.378.697/0001-80", 28, 48);
+  doc.text(opts.cnpj || "13.378.697/0001-80", 30, 50.5);
 
   // Linha 3: Endereço / Bairro / CEP
   doc.setFont("helvetica", "bold");
-  doc.text("Endereço:", 10, 54);
+  doc.text("Endereço:", 12, 57);
   doc.setFont("helvetica", "normal");
-  doc.text(opts.endereco || "ESTRADA DO ALEIXO, 2000", 28, 54);
+  doc.text(opts.endereco || "ESTRADA DO ALEIXO, 2000", 30, 57);
   
   doc.setFont("helvetica", "bold");
-  doc.text("Bairro:", 120, 54);
+  doc.text("Bairro:", 117, 57);
   doc.setFont("helvetica", "normal");
-  doc.text(opts.bairro || "COLÔNIA OLIVEIRA MACHADO", 133, 54);
+  doc.text(opts.bairro || "COLÔNIA OLIVEIRA MACHADO", 130, 57);
   
   doc.setFont("helvetica", "bold");
-  doc.text("CEP:", pageWidth - 55, 54);
+  doc.text("CEP:", pageWidth - 63, 57);
   doc.setFont("helvetica", "normal");
-  doc.text(opts.cep || "69070-610", pageWidth - 45, 54);
+  doc.text(opts.cep || "69070-610", pageWidth - 48, 57);
 
   // Linha 4: CNAE / Grau de Risco / Data
   doc.setFont("helvetica", "bold");
-  doc.text("CNAE:", 10, 60);
+  doc.text("CNAE:", 12, 63.5);
   doc.setFont("helvetica", "normal");
-  doc.text(opts.cnae || "30.11-3-01", 28, 60);
+  doc.text(opts.cnae || "30.11-3-01", 30, 63.5);
   
   doc.setFont("helvetica", "bold");
-  doc.text("Grau de risco:", 70, 60);
+  doc.text("Grau de risco:", 67, 63.5);
   doc.setFont("helvetica", "normal");
-  doc.text(opts.grau_risco || "03", 95, 60);
+  doc.text(opts.grau_risco || "03", 92, 63.5);
   
   doc.setFont("helvetica", "bold");
-  doc.text("DATA:", pageWidth - 55, 60);
+  doc.text("DATA:", pageWidth - 63, 63.5);
   doc.setFont("helvetica", "normal");
-  doc.text(new Date().toLocaleDateString("pt-BR"), pageWidth - 45, 60);
+  doc.text(new Date().toLocaleDateString("pt-BR"), pageWidth - 48, 63.5);
 
   // Tabela de Dados
   const tableRows = MESES.map((m, i) => {
@@ -203,7 +215,7 @@ export function gerarForSeg09(opts: {
   const totIndice = totEmp > 0 ? (totAbs / totEmp).toFixed(2) : "0,00";
 
   autoTable(doc, {
-    startY: 65,
+    startY: 70,
     margin: { left: 10, right: 10 },
     head: [[
       "Mês",
@@ -255,13 +267,16 @@ export function gerarForSeg09(opts: {
     styles: { overflow: 'linebreak', cellPadding: 1.5 }
   });
 
-  // Assinatura
+  // Assinatura e Data
   // @ts-expect-error lastAutoTable injected by plugin
-  const finalY = doc.lastAutoTable.finalY + 15;
+  const finalY = doc.lastAutoTable.finalY + 12;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
   doc.text("RESPONSÁVEL:", 10, finalY);
-  doc.line(40, finalY, 130, finalY);
+  doc.line(38, finalY, 130, finalY);
+  
+  doc.text("DATA:", 150, finalY);
+  doc.line(162, finalY, 200, finalY);
 
   doc.save(`FOR-SEG-09_Quadro-Estatistico_${opts.ano}.pdf`);
 }
