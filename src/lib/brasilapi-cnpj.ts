@@ -25,6 +25,37 @@ export type ReceitaCNPJData = {
 
 function onlyDigits(s: string) { return (s || "").replace(/\D/g, ""); }
 
+/** Valida CNPJ via algoritmo de verificação (Módulo 11). */
+export function validarCNPJ(cnpj: string): boolean {
+  const d = onlyDigits(cnpj);
+  if (d.length !== 14) return false;
+  
+  // Rejeita strings de dígitos repetidos
+  if (/^(\d)\1+$/.test(d)) return false;
+
+  const t = d.length - 2;
+  const numbers = d.substring(0, t);
+  const digits = d.substring(t);
+  
+  const calc = (n: string) => {
+    let size = n.length - 7;
+    let numbersArr = n.split("");
+    let sum = 0;
+    let pos = size + 7;
+    for (let i = size + 7; i >= 1; i--) {
+      sum += Number(numbersArr[size + 7 - i]) * pos--;
+      if (pos < 2) pos = 9;
+    }
+    const result = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+    return result;
+  };
+
+  const digit1 = calc(numbers);
+  const digit2 = calc(numbers + digit1);
+
+  return digit1 === Number(digits[0]) && digit2 === Number(digits[1]);
+}
+
 function fmtCnaeCode(code: number | string | null): string | null {
   if (code == null) return null;
   const d = onlyDigits(String(code)).padStart(7, "0");
@@ -67,6 +98,7 @@ export function grauRiscoDoCnae(cnaeCodigo: string | null | undefined): number |
 export async function consultarCNPJ(cnpj: string): Promise<ReceitaCNPJData> {
   const digits = onlyDigits(cnpj);
   if (digits.length !== 14) throw new Error("CNPJ deve ter 14 dígitos");
+  if (!validarCNPJ(digits)) throw new Error("CNPJ inválido (dígito verificador incorreto)");
 
   const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${digits}`);
   if (!res.ok) {
@@ -81,10 +113,11 @@ export async function consultarCNPJ(cnpj: string): Promise<ReceitaCNPJData> {
         .map((c: any) => ({ codigo: fmtCnaeCode(c.codigo) ?? "", descricao: c.descricao ?? "" }))
         .filter((c: any) => c.codigo)
     : [];
+
   return {
     cnpj: `${digits.slice(0,2)}.${digits.slice(2,5)}.${digits.slice(5,8)}/${digits.slice(8,12)}-${digits.slice(12,14)}`,
-    razao_social: j.razao_social ?? "",
-    nome_fantasia: j.nome_fantasia || null,
+    razao_social: (j.razao_social ?? "").toUpperCase(),
+    nome_fantasia: j.nome_fantasia ? j.nome_fantasia.toUpperCase() : null,
     cnae_principal: cnaeCode,
     cnae_descricao: j.cnae_fiscal_descricao || null,
     grau_risco: grauRiscoDoCnae(cnaeCode),
@@ -93,7 +126,7 @@ export async function consultarCNPJ(cnpj: string): Promise<ReceitaCNPJData> {
     complemento: j.complemento || null,
     bairro: j.bairro || null,
     cidade: j.municipio || null,
-    uf: j.uf || null,
+    uf: (j.uf || null)?.toUpperCase(),
     cep: j.cep ? String(j.cep).replace(/(\d{5})(\d{3})/, "$1-$2") : null,
     telefone: j.ddd_telefone_1 || null,
     situacao_cadastral: j.descricao_situacao_cadastral || null,
@@ -107,24 +140,31 @@ export async function consultarCNPJ(cnpj: string): Promise<ReceitaCNPJData> {
 /** Extrai o primeiro CNPJ (14 dígitos, com ou sem máscara) de um texto livre. */
 export function extrairCNPJdeTexto(txt: string): string | null {
   if (!txt) return null;
-  // 1) Regex tolerante a espaços entre grupos (pdfjs pode quebrar em spans).
-  const flex = txt.match(/\d{2}[.\s]{0,3}\d{3}[.\s]{0,3}\d{3}[\s/]{0,3}\d{4}[\s-]{0,3}\d{2}/);
-  if (flex) {
-    const d = onlyDigits(flex[0]);
-    if (d.length === 14) return d;
+  
+  // 1) Regex melhorada: suporta quebras de linha/espaços em qualquer parte.
+  // Procura padrões de 14 dígitos com ou sem separadores comuns.
+  const regexes = [
+    /\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}/, // Padrão clássico
+    /\d{14}/,                                // Apenas dígitos
+    /\d{2}\s\d{3}\s\d{3}\s\d{4}\s\d{2}/      // Dígitos com espaços
+  ];
+
+  for (const re of regexes) {
+    const matches = txt.match(re);
+    if (matches) {
+      for (const m of matches) {
+        const d = onlyDigits(m);
+        if (d.length === 14 && validarCNPJ(d)) return d;
+      }
+    }
   }
-  // 2) Fallback: colapsa TODOS os espaços e tenta de novo.
-  const collapsed = txt.replace(/\s+/g, "");
-  const m2 = collapsed.match(/\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}/);
-  if (m2) {
-    const d = onlyDigits(m2[0]);
-    if (d.length === 14) return d;
+
+  // 2) Fallback: colapsa todos os espaços e caracteres não numéricos e tenta extrair janelas de 14
+  const allDigits = onlyDigits(txt);
+  for (let i = 0; i <= allDigits.length - 14; i++) {
+    const window = allDigits.slice(i, i + 14);
+    if (validarCNPJ(window)) return window;
   }
-  // 3) Último recurso: procura ancorado em "INSCRIÇÃO" (cartão CNPJ tem esse rótulo).
-  const idx = txt.toUpperCase().indexOf("INSCRI");
-  if (idx >= 0) {
-    const janela = onlyDigits(txt.slice(idx, idx + 200));
-    if (janela.length >= 14) return janela.slice(0, 14);
-  }
+
   return null;
 }
