@@ -269,11 +269,11 @@ export function gerarForSeg09(opts: {
 
   // Assinatura
   // @ts-expect-error lastAutoTable injected by plugin
-  const finalY = doc.lastAutoTable.finalY + 15;
+  const finalY = doc.lastAutoTable.finalY + 10;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
   doc.text("RESPONSÁVEL:", 10, finalY);
-  doc.line(40, finalY, 130, finalY);
+  doc.line(38, finalY, 130, finalY);
 
   doc.save(`FOR-SEG-09_Quadro-Estatistico_${opts.ano}.pdf`);
 }
