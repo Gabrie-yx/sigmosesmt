@@ -195,18 +195,19 @@ export async function buildFichaOficialBytes(blocks: FichaOficialBlock[]): Promi
       // Rótulos: Empresa: (x1 55,8 / base 99) · Nome: (x1 39,8 / base 121)
       //          Função: (x1 48,2 / base 143) · Matrícula: (x1 314,2) · Folha: (x1 540,6)
       //          Data de Admissão: (x1 629,4 / base 99) · Data de Demissão: (linha 662–747)
-      drawText(p1, e.empresa, { x: 59, top: 99, maxW: 460, size: 9, font: bold });
-      drawText(p1, brDate(e.admissao), { x: 634, top: 99, maxW: 100, size: 9, font });
-      drawText(p1, e.nome, { x: 43, top: 121, maxW: 480, size: 9, font: bold });
-      drawText(p1, e.funcao, { x: 52, top: 143, maxW: 200, size: 9, font });
-      if (e.demissao) drawText(p1, brDate(e.demissao), { x: 667, top: 122.8, maxW: 78, size: 9, font });
-      drawText(p1, e.matricula, { x: 318, top: 143.4, maxW: 180, size: 9, font });
+      drawText(p1, e.empresa, { x: 59, top: 99, maxW: 460, size: 9, font: bold, vCenterInRow: true, rowH: 15 });
+      drawText(p1, brDate(e.admissao), { x: 634, top: 99, maxW: 100, size: 9, font, vCenterInRow: true, rowH: 15 });
+      drawText(p1, e.nome, { x: 43, top: 121, maxW: 480, size: 9, font: bold, vCenterInRow: true, rowH: 15 });
+      drawText(p1, e.funcao, { x: 52, top: 143, maxW: 200, size: 9, font, vCenterInRow: true, rowH: 15 });
+      if (e.demissao) drawText(p1, brDate(e.demissao), { x: 667, top: 122.8, maxW: 78, size: 9, font, vCenterInRow: true, rowH: 15 });
+      drawText(p1, e.matricula, { x: 318, top: 143.4, maxW: 180, size: 9, font, vCenterInRow: true, rowH: 15 });
       // "Folha:" recebe a paginação da ficha (o campo PÁG. é fixo do template).
-      drawText(p1, `${c + 1}/${chunks.length}`, { x: 544, top: 143.4, maxW: 60, size: 9, font });
+      drawText(p1, `${c + 1}/${chunks.length}`, { x: 544, top: 143.4, maxW: 60, size: 9, font, vCenterInRow: true, rowH: 15 });
       // Lacuna "recebi da empresa ____" (underscores de x 249,6 a 408,2 / base 189)
-      drawText(p1, e.empresa, { x: 250, top: 189, maxW: 158, size: 8, font, center: true });
+      drawText(p1, e.empresa, { x: 250, top: 189, maxW: 158, size: 8, font, center: true, vCenterInRow: true, rowH: 12 });
       // "Local e Data:" (linha de x 78,8 a 290 / base 562,5)
-      drawText(p1, block.localData, { x: 82, top: 562.5, maxW: 205, size: 9, font });
+      drawText(p1, block.localData, { x: 82, top: 562.5, maxW: 205, size: 9, font, vCenterInRow: true, rowH: 15 });
+
 
       // Grade de entregas (página 2)
       const rows = chunks[c];
