@@ -763,7 +763,7 @@ function CompanyForm({
         setOcrStep("Lendo PDF...");
         try {
           const buf = new Uint8Array(await file.arrayBuffer());
-          const pdfjs: any = await import("pdfjs-dist");
+          const pdfjs = await import("pdfjs-dist/build/pdf.mjs");
           const workerUrl = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
           pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
           const pdf = await pdfjs.getDocument({ data: buf }).promise;
