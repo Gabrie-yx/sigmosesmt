@@ -120,8 +120,8 @@ export function gerarForSeg09(opts: {
   doc.line(10, 55, pageWidth - 10, 55);
   doc.line(10, 61.5, pageWidth - 10, 61.5);
 
-  // Colunas internas (removida a divisória do CEP)
-  doc.line(pageWidth - 65, 61.5, pageWidth - 68, 68); // Entre Grau de Risco e DATA (ajustado conforme solicitado)
+  // Colunas internas
+  doc.line(pageWidth - 65, 61.5, pageWidth - 65, 68); // Entre Grau de Risco e DATA (alinhada verticalmente)
 
   // Linha 1: Empresa
   doc.setFont("helvetica", "bold");
