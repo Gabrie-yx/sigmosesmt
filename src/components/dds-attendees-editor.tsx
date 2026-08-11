@@ -186,11 +186,12 @@ function AddAttendeesDialog({
     queryFn: async () => {
       const { data, error } = await supabase
         .from("employees")
-        .select("id, nome, company_id, companies(name)")
-        .eq("status", "ATIVO")
+        .select("id, nome, status, company_id, companies(name)")
         .order("nome", { ascending: true });
+      console.log("[DDS Search] Total employees fetched:", data?.length);
+      console.log("[DDS Search] Sample data:", data?.slice(0, 5));
       if (error) throw error;
-      return (data ?? []) as { id: string; nome: string; company_id: string | null; companies: { name: string } | null }[];
+      return (data ?? []) as any[];
     },
   });
 
@@ -198,7 +199,13 @@ function AddAttendeesDialog({
     const q = busca.toLowerCase().trim();
     return employees
       .filter((e) => !jaIncluidos.has(e.id))
-      .filter((e) => !q || e.nome.toLowerCase().includes(q) || (e.companies?.name ?? "").toLowerCase().includes(q));
+      .filter((e) => {
+        const matches = !q || e.nome.toLowerCase().includes(q) || (e.companies?.name ?? "").toLowerCase().includes(q);
+        if (q && e.nome.toLowerCase().includes(q)) {
+           console.log("[DDS Search] Matching employee:", e.nome, "Status:", e.status);
+        }
+        return matches;
+      });
   }, [employees, busca, jaIncluidos]);
 
   function toggle(id: string) {
