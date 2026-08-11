@@ -215,7 +215,7 @@ export function gerarForSeg09(opts: {
   const totIndice = totEmp > 0 ? (totAbs / totEmp).toFixed(2) : "0,00";
 
   autoTable(doc, {
-    startY: 65,
+    startY: 70,
     margin: { left: 10, right: 10 },
     head: [[
       "Mês",
