@@ -267,13 +267,16 @@ export function gerarForSeg09(opts: {
     styles: { overflow: 'linebreak', cellPadding: 1.5 }
   });
 
-  // Assinatura
+  // Assinatura e Data
   // @ts-expect-error lastAutoTable injected by plugin
-  const finalY = doc.lastAutoTable.finalY + 10;
+  const finalY = doc.lastAutoTable.finalY + 12;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
   doc.text("RESPONSÁVEL:", 10, finalY);
   doc.line(38, finalY, 130, finalY);
+  
+  doc.text("DATA:", 150, finalY);
+  doc.line(162, finalY, 200, finalY);
 
   doc.save(`FOR-SEG-09_Quadro-Estatistico_${opts.ano}.pdf`);
 }
