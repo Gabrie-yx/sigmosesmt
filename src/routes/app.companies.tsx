@@ -795,53 +795,40 @@ function CompanyForm({
             }
           }
 
-          if (digits) {
-            setOcrStep("Consultando Receita...");
-            const cnpjMasked = `${digits.slice(0,2)}.${digits.slice(2,5)}.${digits.slice(5,8)}/${digits.slice(8,12)}-${digits.slice(12,14)}`;
+          if (digits || fullText.length > 20) {
+            setOcrStep("Processando dados...");
+            const offlineData = extrairDadosCompletosDeTexto(fullText);
             
-            // Se já tiver um CNPJ e for diferente do extraído, avisa
-            const currentDigits = (editing.cnpj ?? "").replace(/\D/g, "");
-            if (currentDigits && currentDigits !== digits) {
-              toast.info(`CNPJ do cartão (${cnpjMasked}) difere do digitado. Atualizando...`);
+            if (digits) {
+              const cnpjMasked = `${digits.slice(0,2)}.${digits.slice(2,5)}.${digits.slice(5,8)}/${digits.slice(8,12)}-${digits.slice(12,14)}`;
+              const currentDigits = (editing.cnpj ?? "").replace(/\D/g, "");
+              if (currentDigits && currentDigits !== digits) {
+                toast.info(`CNPJ do cartão (${cnpjMasked}) detectado. Atualizando...`);
+              }
+              next = { ...next, cnpj: cnpjMasked };
             }
 
-            next = { ...next, cnpj: cnpjMasked };
-            let d;
             try {
-              d = await consultarCNPJ(digits);
+              if (!digits) throw new Error("CNPJ não encontrado");
+              const d = await consultarCNPJ(digits);
               next = {
                 ...next,
-                cnpj: d.cnpj,
-                razao_social: d.razao_social,
-                nome_fantasia: next.nome_fantasia || d.nome_fantasia || "",
+                ...d,
                 name: next.name && next.name.trim() ? next.name : (d.nome_fantasia || d.razao_social),
-                cnae_principal: d.cnae_principal ?? "",
-                cnae_descricao: d.cnae_descricao ?? "",
-                grau_risco: d.grau_risco,
-                logradouro: d.logradouro ?? "",
-                numero: d.numero ?? "",
-                complemento: d.complemento ?? "",
-                bairro: d.bairro ?? "",
-                cidade: d.cidade ?? "",
-                uf: d.uf ?? "",
-                cep: d.cep ?? "",
-                telefone: d.telefone ?? "",
-                situacao_cadastral: d.situacao_cadastral ?? "",
-                data_situacao: d.data_situacao ?? "",
-                capital_social: d.capital_social,
-                natureza_juridica: d.natureza_juridica ?? "",
-                cnaes_secundarias: d.cnaes_secundarias ?? [],
                 receita_consultada_em: new Date().toISOString(),
               };
-              toast.success("Cartão CNPJ anexado e campos preenchidos.");
+              toast.success("Dados preenchidos via Receita Federal.");
             } catch (apiErr: any) {
-              console.warn("[cartao-cnpj] BrasilAPI falhou:", apiErr);
-              setEditing(next);
-              toast.info(`CNPJ ${cnpjMasked} extraído. Clique em "Consultar Receita" para o restante.`);
-              return;
+              console.warn("[cartao-cnpj] Falha na API, usando extração local:", apiErr);
+              next = {
+                ...next,
+                ...offlineData,
+                name: next.name && next.name.trim() ? next.name : (offlineData.nome_fantasia || offlineData.razao_social || next.name),
+              };
+              toast.info("Sem conexão ou erro na API. Dados extraídos diretamente do documento.");
             }
           } else {
-            toast.info("Cartão anexado, mas CNPJ não identificado no documento.");
+            toast.info("Cartão anexado, mas não foi possível ler os dados.");
           }
         } catch (parseErr: any) {
           console.warn("[cartao-cnpj] falha no processamento:", parseErr);
