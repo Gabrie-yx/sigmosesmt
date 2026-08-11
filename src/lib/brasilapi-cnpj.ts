@@ -1,5 +1,5 @@
-// Consulta CNPJ na BrasilAPI (grátis, CORS liberado) e traduz para o formato do SIGMO.
-// Fallback: se BrasilAPI cair, tenta ReceitaWS (via corsproxy? não — deixamos só BrasilAPI por confiabilidade).
+// Utilitários para extração e consulta de dados de CNPJ.
+// Prioriza consulta via BrasilAPI para dados atualizados e usa OCR/Regex como fallback ou complemento offline.
 
 export type ReceitaCNPJData = {
   cnpj: string;
@@ -137,18 +137,10 @@ export async function consultarCNPJ(cnpj: string): Promise<ReceitaCNPJData> {
   };
 }
 
-/** Extrai o primeiro CNPJ (14 dígitos, com ou sem máscara) de um texto livre. */
+/** Extrai o primeiro CNPJ (14 dígitos) de um texto livre. */
 export function extrairCNPJdeTexto(txt: string): string | null {
   if (!txt) return null;
-  
-  // 1) Regex melhorada: suporta quebras de linha/espaços em qualquer parte.
-  // Procura padrões de 14 dígitos com ou sem separadores comuns.
-  const regexes = [
-    /\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}/, // Padrão clássico
-    /\d{14}/,                                // Apenas dígitos
-    /\d{2}\s\d{3}\s\d{3}\s\d{4}\s\d{2}/      // Dígitos com espaços
-  ];
-
+  const regexes = [/\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}/, /\d{14}/, /\d{2}\s\d{3}\s\d{3}\s\d{4}\s\d{2}/];
   for (const re of regexes) {
     const matches = txt.match(re);
     if (matches) {
@@ -158,13 +150,53 @@ export function extrairCNPJdeTexto(txt: string): string | null {
       }
     }
   }
-
-  // 2) Fallback: colapsa todos os espaços e caracteres não numéricos e tenta extrair janelas de 14
   const allDigits = onlyDigits(txt);
   for (let i = 0; i <= allDigits.length - 14; i++) {
     const window = allDigits.slice(i, i + 14);
     if (validarCNPJ(window)) return window;
   }
-
   return null;
+}
+
+/** Tenta extrair todos os campos possíveis diretamente do texto (sem API). */
+export function extrairDadosCompletosDeTexto(txt: string): Partial<ReceitaCNPJData> {
+  const clean = (s: string) => s.replace(/\s+/g, " ").trim().toUpperCase();
+  const res: Partial<ReceitaCNPJData> = {};
+  
+  const cnpj = extrairCNPJdeTexto(txt);
+  if (cnpj) res.cnpj = `${cnpj.slice(0,2)}.${cnpj.slice(2,5)}.${cnpj.slice(5,8)}/${cnpj.slice(8,12)}-${cnpj.slice(12,14)}`;
+
+  // Regex para Razão Social: geralmente vem após "NOME EMPRESARIAL" ou no topo
+  const razaoMatch = txt.match(/NOME EMPRESARIAL\s+([^\n\r]+)/i) || txt.match(/REPÚBLICA FEDERATIVA DO BRASIL\s+([^\n\r]+)/i);
+  if (razaoMatch) res.razao_social = clean(razaoMatch[1]);
+
+  const fantasiaMatch = txt.match(/TÍTULO DO ESTABELECIMENTO \(NOME DE FANTASIA\)\s+([^\n\r]+)/i);
+  if (fantasiaMatch) res.nome_fantasia = clean(fantasiaMatch[1]);
+
+  const cnaeMatch = txt.match(/CÓDIGO E DESCRIÇÃO DA ATIVIDADE ECONÔMICA PRINCIPAL\s+(\d{2}\.\d{2}-\d-\d{2})\s+-\s+([^\n\r]+)/i);
+  if (cnaeMatch) {
+    res.cnae_principal = cnaeMatch[1];
+    res.cnae_descricao = clean(cnaeMatch[2]);
+    res.grau_risco = grauRiscoDoCnae(cnaeMatch[1]);
+  }
+
+  const logradouroMatch = txt.match(/LOGRADOURO\s+([^\n\r]+)/i);
+  if (logradouroMatch) res.logradouro = clean(logradouroMatch[1]);
+
+  const numeroMatch = txt.match(/NÚMERO\s+([^\n\r]+)/i);
+  if (numeroMatch) res.numero = clean(numeroMatch[1]);
+
+  const bairroMatch = txt.match(/BAIRRO\/DISTRITO\s+([^\n\r]+)/i);
+  if (bairroMatch) res.bairro = clean(bairroMatch[1]);
+
+  const cidadeMatch = txt.match(/MUNICÍPIO\s+([^\n\r]+)/i);
+  if (cidadeMatch) res.cidade = clean(cidadeMatch[1]);
+
+  const ufMatch = txt.match(/UF\s+([A-Z]{2})/i);
+  if (ufMatch) res.uf = ufMatch[1].toUpperCase();
+
+  const cepMatch = txt.match(/CEP\s+(\d{2}\.\d{3}-\d{3})/i);
+  if (cepMatch) res.cep = cepMatch[1];
+
+  return res;
 }
