@@ -78,20 +78,15 @@ export function gerarForSeg09(opts: {
     }
     
     // Título Central
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(14);
-    doc.text("Quadro Estatístico de Acidentes de Trabalho", (pageWidth / 2) - 2, 21, { align: "center" });
+    doc.setFont("times", "bold");
+    doc.setFontSize(18); // Aumentado conforme solicitado
+    doc.text("Quadro Estatístico de Acidentes de Trabalho", (pageWidth / 2) - 2, 25, { align: "center" });
     
-    // Faixa cinza ACIDENTES COM VÍTIMA
-    doc.setFillColor(230, 230, 230);
-    doc.rect(60.1, 26, pageWidth - 125, 8.9, "F");
-    doc.setFontSize(11);
-    doc.setTextColor(0);
-    doc.text("ACIDENTES COM VÍTIMA", (pageWidth / 2) - 2, 32, { align: "center" });
+    // Removida a barra cinza e o texto de dentro do cabeçalho
     
     // Bloco Direita (Código/Revisão)
+    doc.setFont("helvetica", "bold"); // Volta para helvetica para o restante
     doc.setFontSize(8);
-    doc.setFont("helvetica", "bold");
     const rightX = pageWidth - 63;
     doc.text("CÓG.:", rightX, 16);
     doc.text("REVISÃO:", rightX, 21);
