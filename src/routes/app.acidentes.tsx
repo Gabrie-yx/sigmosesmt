@@ -83,14 +83,16 @@ const TIPO_COLOR: Record<string, string> = {
 };
 
 function AcidentesPage() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const qc = useQueryClient();
   const [tab, setTab] = useState("painel");
   const [novoOpen, setNovoOpen] = useState(false);
   const [hhtOpen, setHhtOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
+  const [editingHht, setEditingHht] = useState<any>(null);
   const [viewing, setViewing] = useState<any>(null);
   const [deleting, setDeleting] = useState<any>(null);
+  const [deletingHht, setDeletingHht] = useState<any>(null);
   const [anoFiltro, setAnoFiltro] = useState<number>(new Date().getFullYear());
 
   const delMut = useMutation({
@@ -105,6 +107,19 @@ function AcidentesPage() {
       qc.invalidateQueries({ queryKey: ["dias-sem-acidente"] });
     },
     onError: (e: any) => toast.error(e.message || "Erro ao excluir."),
+  });
+
+  const delHhtMut = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("hht_mensal").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("HHT excluído.");
+      setDeletingHht(null);
+      qc.invalidateQueries({ queryKey: ["hht-mensal"] });
+    },
+    onError: (e: any) => toast.error(e.message || "Erro ao excluir HHT."),
   });
 
   const { data: companies = [] } = useQuery({
@@ -702,6 +717,7 @@ function AcidentesPage() {
                     <TableHead className="text-right">HHT</TableHead>
                     <TableHead className="text-right">Empregados</TableHead>
                     <TableHead>Observações</TableHead>
+                    {isAdmin && <TableHead className="w-[80px] text-right">Ações</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -716,6 +732,30 @@ function AcidentesPage() {
                         <TableCell className="text-right tabular-nums">{Number(h.hht).toLocaleString("pt-BR")}</TableCell>
                         <TableCell className="text-right tabular-nums">{h.empregados_medio}</TableCell>
                         <TableCell className="text-sm text-muted-foreground">{h.observacoes || "—"}</TableCell>
+                        {isAdmin && (
+                          <TableCell className="text-right">
+                            <div className="flex gap-1 justify-end">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-7 w-7"
+                                onClick={() => setEditingHht(h)}
+                                title="Editar"
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-7 w-7 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                onClick={() => setDeletingHht(h)}
+                                title="Excluir"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        )}
                       </TableRow>
                     );
                   })}
@@ -791,6 +831,42 @@ function AcidentesPage() {
         userId={user?.id}
         onSaved={() => qc.invalidateQueries({ queryKey: ["hht-mensal"] })}
       />
+      <HhtDialog
+        open={!!editingHht}
+        onOpenChange={(o: boolean) => { if (!o) setEditingHht(null); }}
+        companies={companies}
+        userId={user?.id}
+        initial={editingHht}
+        onSaved={() => {
+          setEditingHht(null);
+          qc.invalidateQueries({ queryKey: ["hht-mensal"] });
+        }}
+      />
+      <AlertDialog open={!!deletingHht} onOpenChange={(o) => { if (!o) setDeletingHht(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir HHT?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deletingHht && (
+                <>
+                  Esta ação é permanente. O lançamento de HHT de <strong>{MESES[deletingHht.mes-1]}/{deletingHht.ano}</strong> da empresa{" "}
+                  <strong>{companies.find(c => c.id === deletingHht.company_id)?.name || "—"}</strong> será removido.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={(e) => { e.preventDefault(); if (deletingHht) delHhtMut.mutate(deletingHht.id); }}
+              disabled={delHhtMut.isPending}
+            >
+              {delHhtMut.isPending ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -1564,7 +1640,7 @@ function VerAcidenteDialog({ acidente, companies, onOpenChange, onEdit }: any) {
 // ============================================================
 // HHT Dialog
 // ============================================================
-function HhtDialog({ open, onOpenChange, companies, userId, onSaved }: any) {
+function HhtDialog({ open, onOpenChange, companies, userId, onSaved, initial }: any) {
   const now = new Date();
   const [form, setForm] = useState<any>({
     company_id: "",
@@ -1574,6 +1650,25 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved }: any) {
     empregados_medio: "",
     observacoes: "",
   });
+
+  useEffect(() => {
+    if (initial) {
+      setForm({
+        ...initial,
+        hht: String(initial.hht),
+        empregados_medio: String(initial.empregados_medio || ""),
+      });
+    } else {
+      setForm({
+        company_id: "",
+        ano: now.getFullYear(),
+        mes: now.getMonth() + 1,
+        hht: "",
+        empregados_medio: "",
+        observacoes: "",
+      });
+    }
+  }, [initial, open]);
   const [modo, setModo] = useState<"manual" | "calc">("manual");
   const [calc, setCalc] = useState({
     funcionarios: "",
@@ -1604,10 +1699,19 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved }: any) {
         observacoes: form.observacoes || null,
         created_by: userId,
       };
-      const { error } = await supabase
-        .from("hht_mensal")
-        .upsert(payload, { onConflict: "company_id,ano,mes" });
-      if (error) throw error;
+
+      if (initial?.id) {
+        const { error } = await supabase
+          .from("hht_mensal")
+          .update(payload)
+          .eq("id", initial.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("hht_mensal")
+          .upsert(payload, { onConflict: "company_id,ano,mes" });
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       toast.success("HHT lançado.");
@@ -1631,7 +1735,7 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved }: any) {
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Calculator className="h-5 w-5" /> Lançar HHT mensal
+            <Calculator className="h-5 w-5" /> {initial?.id ? "Editar HHT mensal" : "Lançar HHT mensal"}
           </DialogTitle>
         </DialogHeader>
         <p className="text-xs text-muted-foreground -mt-2">
