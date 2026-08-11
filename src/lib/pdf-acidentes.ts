@@ -127,47 +127,47 @@ export function gerarForSeg09(opts: {
 
   // Linha 1: Empresa
   doc.setFont("helvetica", "bold");
-  doc.text("Empresa:", 12, 44);
+  doc.text("Empresa:", 12, 46);
   doc.setFont("helvetica", "normal");
-  doc.text(opts.empresa || "DMN ESTALEIRO DA AMAZONIA LTDA", 30, 44);
+  doc.text(opts.empresa || "DMN ESTALEIRO DA AMAZONIA LTDA", 30, 46);
   
   // Linha 2: CNPJ
   doc.setFont("helvetica", "bold");
-  doc.text("CNPJ:", 12, 50.5);
+  doc.text("CNPJ:", 12, 52.5);
   doc.setFont("helvetica", "normal");
-  doc.text(opts.cnpj || "13.378.697/0001-80", 30, 50.5);
-
+  doc.text(opts.cnpj || "13.378.697/0001-80", 30, 52.5);
+  
   // Linha 3: Endereço / Bairro / CEP
   doc.setFont("helvetica", "bold");
-  doc.text("Endereço:", 12, 57);
+  doc.text("Endereço:", 12, 59);
   doc.setFont("helvetica", "normal");
-  doc.text(opts.endereco || "ESTRADA DO ALEIXO, 2000", 30, 57);
+  doc.text(opts.endereco || "ESTRADA DO ALEIXO, 2000", 30, 59);
   
   doc.setFont("helvetica", "bold");
-  doc.text("Bairro:", 117, 57);
+  doc.text("Bairro:", 117, 59);
   doc.setFont("helvetica", "normal");
-  doc.text(opts.bairro || "COLÔNIA OLIVEIRA MACHADO", 130, 57);
+  doc.text(opts.bairro || "COLÔNIA OLIVEIRA MACHADO", 130, 59);
   
   doc.setFont("helvetica", "bold");
-  doc.text("CEP:", pageWidth - 63, 57);
+  doc.text("CEP:", pageWidth - 63, 59);
   doc.setFont("helvetica", "normal");
-  doc.text(opts.cep || "69070-610", pageWidth - 48, 57);
-
+  doc.text(opts.cep || "69070-610", pageWidth - 48, 59);
+  
   // Linha 4: CNAE / Grau de Risco / Data
   doc.setFont("helvetica", "bold");
-  doc.text("CNAE:", 12, 63.5);
+  doc.text("CNAE:", 12, 65.5);
   doc.setFont("helvetica", "normal");
-  doc.text(opts.cnae || "30.11-3-01", 30, 63.5);
+  doc.text(opts.cnae || "30.11-3-01", 30, 65.5);
   
   doc.setFont("helvetica", "bold");
-  doc.text("Grau de risco:", 67, 63.5);
+  doc.text("Grau de risco:", 67, 65.5);
   doc.setFont("helvetica", "normal");
-  doc.text(opts.grau_risco || "03", 92, 63.5);
+  doc.text(opts.grau_risco || "03", 92, 65.5);
   
   doc.setFont("helvetica", "bold");
-  doc.text("DATA:", pageWidth - 63, 63.5);
+  doc.text("DATA:", pageWidth - 63, 65.5);
   doc.setFont("helvetica", "normal");
-  doc.text(new Date().toLocaleDateString("pt-BR"), pageWidth - 48, 63.5);
+  doc.text(new Date().toLocaleDateString("pt-BR"), pageWidth - 48, 65.5);
 
   // Tabela de Dados
   const tableRows = MESES.map((m, i) => {
