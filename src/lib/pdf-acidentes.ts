@@ -238,41 +238,44 @@ export function gerarForSeg09(opts: {
     body: [
       ...tableRows,
       [
-        { content: "Total", styles: { fontStyle: "bold", fillColor: [240, 240, 240] } },
-        { content: totEmp || "", styles: { fontStyle: "bold", fillColor: [240, 240, 240] } },
-        { content: totHHT > 0 ? totHHT.toLocaleString("pt-BR") : "", styles: { fontStyle: "bold", fillColor: [240, 240, 240] } },
-        { content: totAbs, styles: { fontStyle: "bold", fillColor: [240, 240, 240] } },
-        { content: totCLeve, styles: { fontStyle: "bold", fillColor: [240, 240, 240] } },
-        { content: totCGrave, styles: { fontStyle: "bold", fillColor: [240, 240, 240] } },
-        { content: totS, styles: { fontStyle: "bold", fillColor: [240, 240, 240] } },
-        { content: totIndice, styles: { fontStyle: "bold", fillColor: [240, 240, 240] } },
-        { content: totDP, styles: { fontStyle: "bold", fillColor: [240, 240, 240] } },
-        { content: totTF, styles: { fontStyle: "bold", fillColor: [240, 240, 240] } },
-        { content: totObitos, styles: { fontStyle: "bold", fillColor: [240, 240, 240] } },
+        { content: "Total", styles: { fontStyle: "bold", fillColor: [200, 200, 200] } },
+        { content: totEmp || "", styles: { fontStyle: "bold", fillColor: [200, 200, 200] } },
+        { content: totHHT > 0 ? totHHT.toLocaleString("pt-BR") : "", styles: { fontStyle: "bold", fillColor: [200, 200, 200] } },
+        { content: totAbs, styles: { fontStyle: "bold", fillColor: [200, 200, 200] } },
+        { content: totCLeve, styles: { fontStyle: "bold", fillColor: [200, 200, 200] } },
+        { content: totCGrave, styles: { fontStyle: "bold", fillColor: [200, 200, 200] } },
+        { content: totS, styles: { fontStyle: "bold", fillColor: [200, 200, 200] } },
+        { content: totIndice, styles: { fontStyle: "bold", fillColor: [200, 200, 200] } },
+        { content: totDP, styles: { fontStyle: "bold", fillColor: [200, 200, 200] } },
+        { content: totTF, styles: { fontStyle: "bold", fillColor: [200, 200, 200] } },
+        { content: totObitos, styles: { fontStyle: "bold", fillColor: [200, 200, 200] } },
       ]
     ],
     headStyles: { 
-      fillColor: [255, 255, 255], 
+      fillColor: [230, 230, 230], 
       textColor: 0, 
       fontSize: 7, 
       halign: "center", 
       valign: "middle",
-      lineWidth: 0.1, 
+      lineWidth: 0.2, 
       lineColor: 0,
-      fontStyle: "bold"
+      fontStyle: "bold",
+      minCellHeight: 12
     },
     bodyStyles: { 
       fontSize: 8, 
       halign: "center", 
       valign: "middle",
-      lineWidth: 0.1, 
-      lineColor: 0 
+      lineWidth: 0.2, 
+      lineColor: 0,
+      minCellHeight: 8
     },
     theme: "grid",
-    styles: { overflow: 'linebreak', cellPadding: 1.5 }
+    styles: { overflow: 'linebreak', cellPadding: 1, minCellWidth: 10 }
   });
 
-  // Assinatura e Data
+  // Assinatura
+
   // @ts-expect-error lastAutoTable injected by plugin
   const finalY = doc.lastAutoTable.finalY + 12;
   doc.setFont("helvetica", "bold");
