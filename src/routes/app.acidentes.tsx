@@ -160,16 +160,22 @@ function AcidentesPage() {
     const hhtAno = hhtRows
       .filter(h => h.ano === anoAtual)
       .reduce((s, h) => s + Number(h.hht || 0), 0);
+    const empMedioAno = hhtRows
+      .filter(h => h.ano === anoAtual)
+      .reduce((s, h) => s + Number(h.empregados_medio || 0), 0) / (hhtRows.filter(h => h.ano === anoAtual).length || 1);
+    
     const tf = hhtAno > 0 ? (comAfastAno.length * 1_000_000) / hhtAno : 0;
     const tg = hhtAno > 0 ? (diasPerdidosAno * 1_000_000) / hhtAno : 0;
     return {
       totalAno: noAno.length,
       totalMes: noMes.length,
       comAfastAno: comAfastAno.length,
+      empMedioAno: Math.round(empMedioAno),
       diasPerdidosAno,
       tf: tf.toFixed(2),
       tg: tg.toFixed(2),
     };
+
   }, [acidentes, hhtRows, anoFiltro]);
 
   const placarPrincipal = useMemo(() => {
