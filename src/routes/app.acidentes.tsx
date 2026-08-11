@@ -1640,7 +1640,7 @@ function VerAcidenteDialog({ acidente, companies, onOpenChange, onEdit }: any) {
 // ============================================================
 // HHT Dialog
 // ============================================================
-function HhtDialog({ open, onOpenChange, companies, userId, onSaved }: any) {
+function HhtDialog({ open, onOpenChange, companies, userId, onSaved, initial }: any) {
   const now = new Date();
   const [form, setForm] = useState<any>({
     company_id: "",
@@ -1650,6 +1650,25 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved }: any) {
     empregados_medio: "",
     observacoes: "",
   });
+
+  useEffect(() => {
+    if (initial) {
+      setForm({
+        ...initial,
+        hht: String(initial.hht),
+        empregados_medio: String(initial.empregados_medio || ""),
+      });
+    } else {
+      setForm({
+        company_id: "",
+        ano: now.getFullYear(),
+        mes: now.getMonth() + 1,
+        hht: "",
+        empregados_medio: "",
+        observacoes: "",
+      });
+    }
+  }, [initial, open]);
   const [modo, setModo] = useState<"manual" | "calc">("manual");
   const [calc, setCalc] = useState({
     funcionarios: "",
