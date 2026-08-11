@@ -209,8 +209,49 @@ export async function buildFichaOficialBytes(blocks: FichaOficialBlock[]): Promi
       drawText(p1, block.localData, { x: 82, top: 562.5, maxW: 205, size: 9, font, vCenterInRow: true, rowH: 15 });
 
 
+      // Adiciona cabeçalho cinza se for a primeira vez na página (grade de entregas)
+      const headerTop = ROW_TOP0 - ROW_H;
+      const drawHeader = (col: readonly [number, number] | number[], text: string) => {
+        p2.drawRectangle({
+          x: col[0],
+          y: PAGE_H - headerTop - ROW_H,
+          width: col[1] - col[0],
+          height: ROW_H,
+          color: GRAY_HEADER,
+        });
+        p2.drawRectangle({
+          x: col[0],
+          y: PAGE_H - headerTop - ROW_H,
+          width: col[1] - col[0],
+          height: ROW_H,
+          borderColor: GRAY_BORDER,
+          borderWidth: 0.5,
+        });
+        drawText(p2, text, { 
+          x: col[0], 
+          top: headerTop, 
+          maxW: col[1] - col[0], 
+          size: 7, 
+          font: bold, 
+          center: true, 
+          vCenterInRow: true, 
+          rowH: ROW_H 
+        });
+      };
+
+      drawHeader(COL.qt, "QT");
+      drawHeader(COL.und, "UND");
+      drawHeader(COL.espec, "Especificação");
+      drawHeader(COL.ca, "CA");
+      drawHeader(COL.assEmp, "Assinatura");
+      drawHeader(COL.dataEntrega, "Entrega");
+      drawHeader(COL.motivo, "Mot.");
+      drawHeader(COL.dataDevol, "Devolução");
+      drawHeader(COL.assReceb, "Ass. Receb.");
+
       // Grade de entregas (página 2)
       const rows = chunks[c];
+
       for (let i = 0; i < rows.length; i++) {
         const r = rows[i];
         const rowTop = ROW_TOP0 + ROW_H * i;
