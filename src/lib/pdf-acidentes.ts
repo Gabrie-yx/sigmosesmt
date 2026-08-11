@@ -191,7 +191,7 @@ export function gerarForSeg09(opts: {
     const indiceRel = empMedio > 0 ? (totalAbs / empMedio).toFixed(2) : "0,00";
 
     return [
-      m,
+      { content: m, styles: { fontStyle: "bold", fontSize: 10 } },
       empMedio || "",
       hhtVal > 0 ? hhtVal.toLocaleString("pt-BR") : "",
       totalAbs,
