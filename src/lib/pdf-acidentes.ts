@@ -63,121 +63,158 @@ function footer(doc: jsPDF) {
 export function gerarForSeg09(opts: {
   ano: number;
   acidentes: Acidente[];
-  hht: Hht[];
+  hht: (Hht & { empregados_medio?: number })[];
   empresa?: string;
 }) {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
-  header(doc, `Quadro Estatístico Anual de Acidentes — ${opts.ano}`, "FOR-SEG 09");
+  const pageWidth = doc.internal.pageSize.getWidth();
 
-  doc.setFontSize(9);
-  doc.text(`Empresa: ${opts.empresa || "Todas as empresas"}`, 14, 30);
+  // Cabeçalho Estilo Print
+  const header = () => {
+    doc.setDrawColor(0);
+    doc.setLineWidth(0.5);
+    
+    // Moldura principal do cabeçalho
+    doc.rect(10, 10, pageWidth - 20, 25);
+    
+    // Divisórias verticais
+    doc.line(55, 10, 55, 35);
+    doc.line(pageWidth - 65, 10, pageWidth - 65, 35);
+    
+    // Conteúdo Logo (Placeholder/Texto se não houver asset fácil)
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.text("DMN", 32.5, 20, { align: "center" });
+    doc.setFontSize(8);
+    doc.text("ESTALEIRO", 32.5, 25, { align: "center" });
+    
+    // Título Central
+    doc.setFontSize(12);
+    doc.text("ACIDENTES COM VÍTIMA", (pageWidth / 2) - 5, 25, { align: "center" });
+    
+    // Bloco Direita (Código/Revisão)
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    const rightX = pageWidth - 63;
+    doc.text("CÓG. FOR-SEG 09", rightX, 16);
+    doc.text("REVISÃO: 00", rightX, 22);
+    doc.text(`DATA: 30/08/2025`, rightX, 28);
+    doc.text(`PÁG.: 01/01`, rightX, 34);
+  };
 
-  // === Tabela mensal ===
-  const rowsMes = MESES.map((m, i) => {
+  header();
+
+  // Dados da Empresa
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.text("Empresa:", 10, 42);
+  doc.setFont("helvetica", "normal");
+  doc.text(opts.empresa || "DMN ESTALEIRO DA AMAZONIA LTDA", 30, 42);
+  
+  doc.setFont("helvetica", "bold");
+  doc.text("CNPJ:", 10, 48);
+  doc.setFont("helvetica", "normal");
+  doc.text("13.378.697/0001-80", 30, 48);
+
+  // Tabela
+  const rows = MESES.map((m, i) => {
     const acidsMes = opts.acidentes.filter(a => {
       const d = new Date(a.data_acidente);
       return d.getFullYear() === opts.ano && d.getMonth() === i;
     });
-    const com = acidsMes.filter(a => a.tipo === "COM_AFASTAMENTO" || a.tipo === "FATAL").length;
-    const sem = acidsMes.filter(a => a.tipo === "SEM_AFASTAMENTO").length;
-    const traj = acidsMes.filter(a => a.tipo === "TRAJETO").length;
-    const fat = acidsMes.filter(a => a.tipo === "FATAL").length;
+    
+    const hhtData = opts.hht.find(h => h.ano === opts.ano && h.mes === i + 1);
+    const hhtVal = Number(hhtData?.hht || 0);
+    const empMedio = Number(hhtData?.empregados_medio || 0);
+    
+    const comAfast = acidsMes.filter(a => a.tipo === "COM_AFASTAMENTO" || a.tipo === "FATAL");
+    const comAfastLeve = comAfast.filter(a => (Number(a.dias_perdidos || 0) + Number(a.dias_debitados || 0)) <= 15).length;
+    const comAfastGrave = comAfast.filter(a => (Number(a.dias_perdidos || 0) + Number(a.dias_debitados || 0)) > 15).length;
+    const semAfast = acidsMes.filter(a => a.tipo === "SEM_AFASTAMENTO").length;
+    const obitos = acidsMes.filter(a => a.tipo === "FATAL").length;
+    const totalAbs = acidsMes.length;
+    
     const dp = acidsMes.reduce((s, a) => s + (a.dias_perdidos || 0) + (a.dias_debitados || 0), 0);
-    const hhtMes = opts.hht.filter(h => h.ano === opts.ano && h.mes === i + 1)
-      .reduce((s, h) => s + Number(h.hht || 0), 0);
-    const tf = hhtMes > 0 ? ((com * 1_000_000) / hhtMes).toFixed(2) : "—";
-    const tg = hhtMes > 0 ? ((dp * 1_000_000) / hhtMes).toFixed(2) : "—";
-    return [m, hhtMes.toLocaleString("pt-BR"), com, sem, traj, fat, acidsMes.length, dp, tf, tg];
+    
+    const tf = hhtVal > 0 ? ((comAfast.length * 1_000_000) / hhtVal).toFixed(2) : "0,00";
+    const indiceRel = empMedio > 0 ? (totalAbs / empMedio).toFixed(2) : "0,00";
+
+    return [
+      m,
+      empMedio || "",
+      hhtVal.toLocaleString("pt-BR"),
+      totalAbs,
+      comAfastLeve,
+      comAfastGrave,
+      semAfast,
+      indiceRel,
+      dp,
+      tf,
+      obitos
+    ];
   });
 
   // Totais
-  const totC = rowsMes.reduce((s, r) => s + (r[3] as number), 0);
-  const totS = rowsMes.reduce((s, r) => s + (r[4] as number), 0);
-  const totT = rowsMes.reduce((s, r) => s + (r[5] as number), 0);
-  const totF = rowsMes.reduce((s, r) => s + (r[6] as number), 0);
-  const totGeral = rowsMes.reduce((s, r) => s + (r[7] as number), 0);
-  const totDP = rowsMes.reduce((s, r) => s + (r[8] as number), 0);
+  const totEmp = Math.round(opts.hht.filter(h => h.ano === opts.ano).reduce((s, h) => s + Number(h.empregados_medio || 0), 0) / 12);
   const totHHT = opts.hht.filter(h => h.ano === opts.ano).reduce((s, h) => s + Number(h.hht || 0), 0);
-  const tfAno = totHHT > 0 ? ((totC * 1_000_000) / totHHT).toFixed(2) : "—";
-  const tgAno = totHHT > 0 ? ((totDP * 1_000_000) / totHHT).toFixed(2) : "—";
+  const acidsAno = opts.acidentes.filter(a => new Date(a.data_acidente).getFullYear() === opts.ano);
+  const totAbs = acidsAno.length;
+  const totCLeve = acidsAno.filter(a => (a.tipo === "COM_AFASTAMENTO" || a.tipo === "FATAL") && (Number(a.dias_perdidos || 0) + Number(a.dias_debitados || 0)) <= 15).length;
+  const totCGrave = acidsAno.filter(a => (a.tipo === "COM_AFASTAMENTO" || a.tipo === "FATAL") && (Number(a.dias_perdidos || 0) + Number(a.dias_debitados || 0)) > 15).length;
+  const totS = acidsAno.filter(a => a.tipo === "SEM_AFASTAMENTO").length;
+  const totDP = acidsAno.reduce((s, a) => s + (a.dias_perdidos || 0) + (a.dias_debitados || 0), 0);
+  const totObitos = acidsAno.filter(a => a.tipo === "FATAL").length;
+  
+  const totTF = totHHT > 0 ? ((acidsAno.filter(a => a.tipo === "COM_AFASTAMENTO" || a.tipo === "FATAL").length * 1_000_000) / totHHT).toFixed(2) : "0,00";
+  const totIndice = totEmp > 0 ? (totAbs / totEmp).toFixed(2) : "0,00";
 
   autoTable(doc, {
-    startY: 34,
-    head: [["Mês","HHT","C/ Afast.","S/ Afast.","Trajeto","Fatal","Total","Dias Perd.","TF","TG"]],
+    startY: 55,
+    margin: { left: 10, right: 10 },
+    head: [[
+      "Mês",
+      "Número de empregados",
+      "HHT",
+      "Nº Absoluto",
+      "Nº Abs c/ afast <= 15d",
+      "Nº Abs c/ afast > 15d",
+      "Nº Abs sem Afast",
+      "Índice Relativo total",
+      "Dias Perdidos",
+      "Taxa freq",
+      "Óbitos"
+    ]],
     body: [
-      ...rowsMes,
+      ...rows,
       [
-        { content: "TOTAL", styles: { fontStyle: "bold" } },
-        { content: totHHT.toLocaleString("pt-BR"), styles: { fontStyle: "bold" } },
-        { content: totC, styles: { fontStyle: "bold" } },
-        { content: totS, styles: { fontStyle: "bold" } },
-        { content: totT, styles: { fontStyle: "bold" } },
-        { content: totF, styles: { fontStyle: "bold" } },
-        { content: totGeral, styles: { fontStyle: "bold" } },
-        { content: totDP, styles: { fontStyle: "bold" } },
-        { content: tfAno, styles: { fontStyle: "bold", textColor: [220, 38, 38] } },
-        { content: tgAno, styles: { fontStyle: "bold", textColor: [220, 38, 38] } },
-      ],
+        { content: "Total", styles: { fontStyle: "bold", fillColor: [220, 220, 220] } },
+        { content: totEmp || "", styles: { fontStyle: "bold", fillColor: [220, 220, 220] } },
+        { content: totHHT.toLocaleString("pt-BR"), styles: { fontStyle: "bold", fillColor: [220, 220, 220] } },
+        { content: totAbs, styles: { fontStyle: "bold", fillColor: [220, 220, 220] } },
+        { content: totCLeve, styles: { fontStyle: "bold", fillColor: [220, 220, 220] } },
+        { content: totCGrave, styles: { fontStyle: "bold", fillColor: [220, 220, 220] } },
+        { content: totS, styles: { fontStyle: "bold", fillColor: [220, 220, 220] } },
+        { content: totIndice, styles: { fontStyle: "bold", fillColor: [220, 220, 220] } },
+        { content: totDP, styles: { fontStyle: "bold", fillColor: [220, 220, 220] } },
+        { content: totTF, styles: { fontStyle: "bold", fillColor: [220, 220, 220] } },
+        { content: totObitos, styles: { fontStyle: "bold", fillColor: [220, 220, 220] } },
+      ]
     ],
-    headStyles: { fillColor: [15, 23, 42], textColor: 255, fontSize: 9 },
-    bodyStyles: { fontSize: 8 },
-    styles: { halign: "center" },
-    columnStyles: { 0: { halign: "left", fontStyle: "bold" } },
+    headStyles: { fillColor: [200, 200, 200], textColor: 0, fontSize: 7, halign: "center", lineWidth: 0.1, lineColor: 0 },
+    bodyStyles: { fontSize: 8, halign: "center", lineWidth: 0.1, lineColor: 0 },
     theme: "grid",
   });
 
-  // Legenda fórmulas
-  // @ts-expect-error lastAutoTable injected by plugin
-  const yAfterTable = (doc.lastAutoTable?.finalY ?? 80) + 6;
-  doc.setFontSize(8);
-  doc.setTextColor(80);
-  doc.text("TF = (Acidentes c/ afastamento × 1.000.000) ÷ HHT    |    TG = (Dias perdidos+debitados × 1.000.000) ÷ HHT", 14, yAfterTable);
-  doc.setTextColor(0);
-
-  // === Lista detalhada (acidentes do ano) ===
-  const listaAno = opts.acidentes
-    .filter(a => new Date(a.data_acidente).getFullYear() === opts.ano)
-    .sort((a, b) => a.data_acidente.localeCompare(b.data_acidente));
-
-  if (listaAno.length) {
-    doc.addPage();
-    header(doc, `Detalhamento dos acidentes — ${opts.ano}`, "FOR-SEG 09");
-    autoTable(doc, {
-      startY: 28,
-      head: [["Data","CAT","Tipo","Vítima","Setor","Parte do corpo","Natureza","Dias"]],
-      body: listaAno.map(a => [
-        new Date(a.data_acidente).toLocaleDateString("pt-BR"),
-        a.numero_cat || "—",
-        a.tipo.replace("_"," "),
-        a.vitima_nome || "—",
-        a.vitima_setor || "—",
-        a.parte_corpo_atingida || "—",
-        a.natureza_lesao || "—",
-        String((a.dias_perdidos || 0) + (a.dias_debitados || 0)),
-      ]),
-      headStyles: { fillColor: [15, 23, 42], textColor: 255, fontSize: 9 },
-      bodyStyles: { fontSize: 8 },
-      styles: { cellPadding: 1.5 },
-      theme: "grid",
-    });
-  }
-
   // Assinatura
-  doc.addPage();
-  header(doc, "Aprovação e Assinatura", "FOR-SEG 09");
-  doc.setFontSize(10);
-  doc.text("Elaborado pelo SESMT — Serviço Especializado em Segurança e Medicina do Trabalho", 14, 50);
-  doc.text(`Período de referência: Janeiro a Dezembro de ${opts.ano}`, 14, 60);
+  // @ts-expect-error lastAutoTable injected by plugin
+  const finalY = doc.lastAutoTable.finalY + 15;
+  doc.setFont("helvetica", "bold");
+  doc.text("RESPONSÁVEL:", 10, finalY);
+  doc.line(40, finalY, 120, finalY);
 
-  doc.line(30, 130, 130, 130);
-  doc.text("Técnico de Segurança do Trabalho", 80, 136, { align: "center" });
-
-  doc.line(170, 130, 270, 130);
-  doc.text("Arteniza — Responsável SESMT", 220, 136, { align: "center" });
-
-  footer(doc);
   doc.save(`FOR-SEG-09_Quadro-Estatistico_${opts.ano}.pdf`);
 }
+
 
 /** FOR-SEG 10 — Dias sem Acidente */
 export function gerarForSeg10(opts: {
