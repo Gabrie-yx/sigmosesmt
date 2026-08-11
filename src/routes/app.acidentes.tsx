@@ -1735,7 +1735,7 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved, initial }: 
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Calculator className="h-5 w-5" /> Lançar HHT mensal
+            <Calculator className="h-5 w-5" /> {initial?.id ? "Editar HHT mensal" : "Lançar HHT mensal"}
           </DialogTitle>
         </DialogHeader>
         <p className="text-xs text-muted-foreground -mt-2">
