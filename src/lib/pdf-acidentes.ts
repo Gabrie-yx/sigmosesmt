@@ -79,10 +79,15 @@ export function gerarForSeg09(opts: {
     
     // Título Central
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(13);
-    doc.text("Quadro Estatístico de Acidentes de Trabalho", (pageWidth / 2) - 2, 20, { align: "center" });
+    doc.setFontSize(14);
+    doc.text("Quadro Estatístico de Acidentes de Trabalho", (pageWidth / 2) - 2, 21, { align: "center" });
+    
+    // Faixa cinza ACIDENTES COM VÍTIMA
+    doc.setFillColor(230, 230, 230);
+    doc.rect(60.1, 26, pageWidth - 125, 8.9, "F");
     doc.setFontSize(11);
-    doc.text("ACIDENTES COM VÍTIMA", (pageWidth / 2) - 2, 28, { align: "center" });
+    doc.setTextColor(0);
+    doc.text("ACIDENTES COM VÍTIMA", (pageWidth / 2) - 2, 32, { align: "center" });
     
     // Bloco Direita (Código/Revisão)
     doc.setFontSize(8);
