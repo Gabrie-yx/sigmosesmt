@@ -109,6 +109,19 @@ function AcidentesPage() {
     onError: (e: any) => toast.error(e.message || "Erro ao excluir."),
   });
 
+  const delHhtMut = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("hht_mensal").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("HHT excluído.");
+      setDeletingHht(null);
+      qc.invalidateQueries({ queryKey: ["hht-mensal"] });
+    },
+    onError: (e: any) => toast.error(e.message || "Erro ao excluir HHT."),
+  });
+
   const { data: companies = [] } = useQuery({
     queryKey: ["companies-acidentes"],
     queryFn: async () => {
