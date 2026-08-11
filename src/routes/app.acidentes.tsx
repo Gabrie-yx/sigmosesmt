@@ -1699,9 +1699,19 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved, initial }: 
         observacoes: form.observacoes || null,
         created_by: userId,
       };
-      const { error } = await supabase
-        .from("hht_mensal")
-        .upsert(payload, { onConflict: "company_id,ano,mes" });
+
+      if (initial?.id) {
+        const { error } = await supabase
+          .from("hht_mensal")
+          .update(payload)
+          .eq("id", initial.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("hht_mensal")
+          .upsert(payload, { onConflict: "company_id,ano,mes" });
+        if (error) throw error;
+      }
       if (error) throw error;
     },
     onSuccess: () => {
