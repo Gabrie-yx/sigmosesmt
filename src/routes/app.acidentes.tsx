@@ -283,9 +283,10 @@ function AcidentesPage() {
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
-          <TabsTrigger value="painel">Painel</TabsTrigger>
-          <TabsTrigger value="historico">Histórico ({acidentes.length})</TabsTrigger>
-          <TabsTrigger value="hht">HHT mensal ({hhtRows.length})</TabsTrigger>
+          <TabsTrigger value="painel">Painel de Controle</TabsTrigger>
+          <TabsTrigger value="estatistica">Quadro Estatístico</TabsTrigger>
+          <TabsTrigger value="historico">Histórico de Acidentes ({acidentes.length})</TabsTrigger>
+          <TabsTrigger value="hht">HHT Mensal ({hhtRows.length})</TabsTrigger>
         </TabsList>
 
         {/* ============ PAINEL ============ */}
@@ -449,6 +450,149 @@ function AcidentesPage() {
               limit={8}
             />
           </div>
+        </TabsContent>
+
+        {/* ============ QUADRO ESTATÍSTICO ============ */}
+        <TabsContent value="estatistica" className="space-y-4 mt-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <div>
+                <CardTitle className="text-lg">Quadro Estatístico de Acidentes de Trabalho</CardTitle>
+                <p className="text-xs text-muted-foreground uppercase tracking-widest mt-1">FOR-SEG 09 · NBR 14280</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Select value={String(anoFiltro)} onValueChange={(v) => setAnoFiltro(Number(v))}>
+                  <SelectTrigger className="w-[110px] h-8">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {anosDisponiveis.map((y) => (
+                      <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 gap-2"
+                  onClick={() => {
+                    gerarForSeg09({ ano: anoFiltro, acidentes: acidentes as any, hht: hhtRows as any });
+                    toast.success("PDF do Quadro Estatístico gerado!");
+                  }}
+                >
+                  <FileDown className="h-4 w-4" /> Exportar PDF
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md border overflow-hidden">
+                <Table>
+                  <TableHeader className="bg-slate-50">
+                    <TableRow>
+                      <TableHead className="w-24 font-bold">Mês</TableHead>
+                      <TableHead className="text-center font-bold">HHT</TableHead>
+                      <TableHead className="text-center font-bold text-red-600 bg-red-50/30">C/ Afast.</TableHead>
+                      <TableHead className="text-center font-bold text-amber-600 bg-amber-50/30">S/ Afast.</TableHead>
+                      <TableHead className="text-center font-bold text-blue-600 bg-blue-50/30">Trajeto</TableHead>
+                      <TableHead className="text-center font-bold text-slate-900 bg-slate-100/50">Fatal</TableHead>
+                      <TableHead className="text-center font-bold">Total</TableHead>
+                      <TableHead className="text-center font-bold">Dias Perd.</TableHead>
+                      <TableHead className="text-center font-bold text-indigo-700">TF</TableHead>
+                      <TableHead className="text-center font-bold text-purple-700">TG</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {serieMensal.map((row, idx) => {
+                      const hhtMes = hhtRows
+                        .filter(h => h.ano === anoFiltro && h.mes === idx + 1)
+                        .reduce((s, h) => s + Number(h.hht || 0), 0);
+                      
+                      const acidsMes = acidentes.filter(a => {
+                        const d = new Date(a.data_acidente);
+                        return d.getFullYear() === anoFiltro && d.getMonth() === idx;
+                      });
+
+                      const comAfast = acidsMes.filter(a => a.tipo === "COM_AFASTAMENTO" || a.tipo === "FATAL").length;
+                      const semAfast = acidsMes.filter(a => a.tipo === "SEM_AFASTAMENTO").length;
+                      const trajeto = acidsMes.filter(a => a.tipo === "TRAJETO").length;
+                      const fatal = acidsMes.filter(a => a.tipo === "FATAL").length;
+                      const diasPerdidos = acidsMes.reduce((s, a) => s + (a.dias_perdidos || 0) + (a.dias_debitados || 0), 0);
+                      const tf = hhtMes > 0 ? ((comAfast * 1_000_000) / hhtMes).toFixed(2) : "—";
+                      const tg = hhtMes > 0 ? ((diasPerdidos * 1_000_000) / hhtMes).toFixed(2) : "—";
+
+                      return (
+                        <TableRow key={row.mes} className="hover:bg-slate-50/50">
+                          <TableCell className="font-semibold">{row.mes}</TableCell>
+                          <TableCell className="text-center font-mono">{hhtMes.toLocaleString("pt-BR")}</TableCell>
+                          <TableCell className="text-center font-bold text-red-600 bg-red-50/10">{comAfast || "—"}</TableCell>
+                          <TableCell className="text-center font-bold text-amber-600 bg-amber-50/10">{semAfast || "—"}</TableCell>
+                          <TableCell className="text-center font-bold text-blue-600 bg-blue-50/10">{trajeto || "—"}</TableCell>
+                          <TableCell className="text-center font-bold text-slate-900 bg-slate-100/30">{fatal || "—"}</TableCell>
+                          <TableCell className="text-center font-semibold">{acidsMes.length || "—"}</TableCell>
+                          <TableCell className="text-center">{diasPerdidos || "—"}</TableCell>
+                          <TableCell className="text-center font-mono font-bold text-indigo-700">{tf}</TableCell>
+                          <TableCell className="text-center font-mono font-bold text-purple-700">{tg}</TableCell>
+                        </TableRow>
+                      );
+                    })}
+                    {/* Linha de Total Anual */}
+                    <TableRow className="bg-slate-900 text-white hover:bg-slate-800 transition-colors font-bold">
+                      <TableCell className="rounded-bl-md">TOTAL ANUAL</TableCell>
+                      <TableCell className="text-center font-mono">
+                        {hhtRows.filter(h => h.ano === anoFiltro).reduce((s, h) => s + Number(h.hht || 0), 0).toLocaleString("pt-BR")}
+                      </TableCell>
+                      <TableCell className="text-center text-red-200">
+                        {acidentesAno.filter(a => a.tipo === "COM_AFASTAMENTO" || a.tipo === "FATAL").length}
+                      </TableCell>
+                      <TableCell className="text-center text-amber-200">
+                        {acidentesAno.filter(a => a.tipo === "SEM_AFASTAMENTO").length}
+                      </TableCell>
+                      <TableCell className="text-center text-blue-200">
+                        {acidentesAno.filter(a => a.tipo === "TRAJETO").length}
+                      </TableCell>
+                      <TableCell className="text-center text-slate-300">
+                        {acidentesAno.filter(a => a.tipo === "FATAL").length}
+                      </TableCell>
+                      <TableCell className="text-center">{acidentesAno.length}</TableCell>
+                      <TableCell className="text-center">
+                        {acidentesAno.reduce((s, a) => s + (a.dias_perdidos || 0) + (a.dias_debitados || 0), 0)}
+                      </TableCell>
+                      <TableCell className="text-center font-mono text-indigo-200">{kpis.tf}</TableCell>
+                      <TableCell className="text-center font-mono text-purple-200 rounded-br-md">{kpis.tg}</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
+
+              <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 rounded-lg bg-indigo-50 border border-indigo-100">
+                  <h4 className="text-sm font-bold text-indigo-900 flex items-center gap-2 mb-2">
+                    <Activity className="h-4 w-4" /> Taxa de Frequência (TF)
+                  </h4>
+                  <p className="text-xs text-indigo-800 leading-relaxed">
+                    Representa o número de acidentes com afastamento por milhão de horas de exposição ao risco. 
+                    Calculado conforme NBR 14280.
+                  </p>
+                  <div className="mt-2 text-lg font-black text-indigo-950">
+                    {kpis.tf}
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-lg bg-purple-50 border border-purple-100">
+                  <h4 className="text-sm font-bold text-purple-900 flex items-center gap-2 mb-2">
+                    <TrendingUp className="h-4 w-4" /> Taxa de Gravidade (TG)
+                  </h4>
+                  <p className="text-xs text-purple-800 leading-relaxed">
+                    Representa o tempo computado por milhão de horas de exposição ao risco (dias perdidos + debitados). 
+                    Calculado conforme NBR 14280.
+                  </p>
+                  <div className="mt-2 text-lg font-black text-purple-950">
+                    {kpis.tg}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* ============ HISTÓRICO ============ */}
