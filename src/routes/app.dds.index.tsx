@@ -79,7 +79,7 @@ function DDSPage() {
 
   const { data: employees = [] } = useQuery({
     queryKey: ["employees-dds"],
-    queryFn: async () => (await supabase.from("employees").select("id,nome,cpf").eq("status", "ATIVO").order("nome")).data ?? [],
+    queryFn: async () => (await supabase.from("employees").select("id,nome,cpf").eq("status", "ATIVO").order("nome").limit(5000)).data ?? [],
   });
 
   const temaMap = useMemo(() => Object.fromEntries(temas.map((t: any) => [t.id, t])), [temas]);
