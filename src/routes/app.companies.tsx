@@ -1036,34 +1036,6 @@ function CompanyForm({
                 <FileText className="h-3.5 w-3.5 mr-1" /> Visualizar
               </Button>
             )}
-            {editing?.cnpj_card_url && (
-              <button
-                type="button"
-                onClick={async () => {
-                  const url: string = editing.cnpj_card_url as string;
-                  const pathPart = url.split("?")[0];
-                  const name = pathPart.split("/").pop() || "cartao-cnpj";
-                  const ext = name.split(".").pop()?.toLowerCase();
-                  const mime =
-                    ext === "pdf" ? "application/pdf" :
-                    ext === "png" ? "image/png" :
-                    ext === "jpg" || ext === "jpeg" ? "image/jpeg" :
-                    ext === "webp" ? "image/webp" : undefined;
-                  try {
-                    const res = await fetch(url);
-                    if (!res.ok) throw new Error("fetch");
-                    const blob = await res.blob();
-                    const objectUrl = URL.createObjectURL(blob);
-                    openFileViewer({ url: objectUrl, name, mime: blob.type || mime, downloadUrl: objectUrl, objectUrl });
-                  } catch {
-                    openFileViewer({ url, name, mime, downloadUrl: url });
-                  }
-                }}
-                className="inline-flex items-center gap-1 text-[11px] font-black uppercase tracking-widest text-emerald-700 hover:text-emerald-900"
-              >
-                <FileText className="h-3.5 w-3.5" /> Ver anexo
-              </button>
-            )}
           </div>
         </div>
 
