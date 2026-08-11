@@ -137,24 +137,35 @@ export async function consultarCNPJ(cnpj: string): Promise<ReceitaCNPJData> {
   };
 }
 
-/** Extrai o primeiro CNPJ (14 dígitos) de um texto livre. */
+/** Extrai o primeiro CNPJ (14 dígitos) de um texto livre, sendo resiliente a ruídos de OCR. */
 export function extrairCNPJdeTexto(txt: string): string | null {
   if (!txt) return null;
-  const regexes = [/\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}/, /\d{14}/, /\d{2}\s\d{3}\s\d{3}\s\d{4}\s\d{2}/];
+  
+  // 1. Tenta encontrar padrões formatados comuns
+  const regexes = [
+    /\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}/, 
+    /\d{14}/, 
+    /\d{2}\s\d{3}\s\d{3}\s\d{4}\s\d{2}/
+  ];
+  
   for (const re of regexes) {
     const matches = txt.match(re);
     if (matches) {
-      for (const m of matches) {
-        const d = onlyDigits(m);
-        if (d.length === 14 && validarCNPJ(d)) return d;
-      }
+      const d = onlyDigits(matches[0]);
+      if (d.length === 14 && validarCNPJ(d)) return d;
     }
   }
+
+  // 2. Fallback: Limpa tudo que não é dígito e tenta encontrar uma janela de 14 dígitos válidos
+  // Isso é vital para OCR onde os pontos/barras viram ruído ou espaços
   const allDigits = onlyDigits(txt);
+  if (allDigits.length < 14) return null;
+
   for (let i = 0; i <= allDigits.length - 14; i++) {
     const window = allDigits.slice(i, i + 14);
     if (validarCNPJ(window)) return window;
   }
+  
   return null;
 }
 
