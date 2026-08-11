@@ -166,37 +166,50 @@ export function extrairDadosCompletosDeTexto(txt: string): Partial<ReceitaCNPJDa
   const cnpj = extrairCNPJdeTexto(txt);
   if (cnpj) res.cnpj = `${cnpj.slice(0,2)}.${cnpj.slice(2,5)}.${cnpj.slice(5,8)}/${cnpj.slice(8,12)}-${cnpj.slice(12,14)}`;
 
-  // Regex para Razão Social: geralmente vem após "NOME EMPRESARIAL" ou no topo
-  const razaoMatch = txt.match(/NOME EMPRESARIAL\s+([^\n\r]+)/i) || txt.match(/REPÚBLICA FEDERATIVA DO BRASIL\s+([^\n\r]+)/i);
+  // Normalizar texto para facilitar regex (remover quebras de linha e excesso de espaços)
+  const norm = txt.replace(/[\r\n]+/g, " ").replace(/\s\s+/g, " ");
+
+  // Razão Social
+  const razaoMatch = txt.match(/NOME EMPRESARIAL\s+([^\n\r]+)/i) || 
+                     norm.match(/NOME EMPRESARIAL\s+([^0-9]+)/i) ||
+                     txt.match(/REPÚBLICA FEDERATIVA DO BRASIL\s+([^\n\r]+)/i);
   if (razaoMatch) res.razao_social = clean(razaoMatch[1]);
 
-  const fantasiaMatch = txt.match(/TÍTULO DO ESTABELECIMENTO \(NOME DE FANTASIA\)\s+([^\n\r]+)/i);
+  // Nome Fantasia
+  const fantasiaMatch = txt.match(/TÍTULO DO ESTABELECIMENTO \(NOME DE FANTASIA\)\s+([^\n\r]+)/i) ||
+                        norm.match(/NOME DE FANTASIA\s+([^\n\r]+?)(?=\s+CÓDIGO|$)/i);
   if (fantasiaMatch) res.nome_fantasia = clean(fantasiaMatch[1]);
 
-  const cnaeMatch = txt.match(/CÓDIGO E DESCRIÇÃO DA ATIVIDADE ECONÔMICA PRINCIPAL\s+(\d{2}\.\d{2}-\d-\d{2})\s+-\s+([^\n\r]+)/i);
+  // CNAE
+  const cnaeMatch = txt.match(/CÓDIGO E DESCRIÇÃO DA ATIVIDADE ECONÔMICA PRINCIPAL\s+(\d{2}\.\d{2}-\d-\d{2})\s+-\s+([^\n\r]+)/i) ||
+                    norm.match(/(\d{2}\.\d{2}-\d-\d{2})\s+-\s+([^\d]+?)(?=\s+CÓDIGO|$)/i);
   if (cnaeMatch) {
     res.cnae_principal = cnaeMatch[1];
     res.cnae_descricao = clean(cnaeMatch[2]);
     res.grau_risco = grauRiscoDoCnae(cnaeMatch[1]);
   }
 
-  const logradouroMatch = txt.match(/LOGRADOURO\s+([^\n\r]+)/i);
+  // Endereço (Logradouro + Número)
+  const logradouroMatch = txt.match(/LOGRADOURO\s+([^\n\r]+)/i) || norm.match(/LOGRADOURO\s+([^\d]+?)(?=\s+NÚMERO|$)/i);
   if (logradouroMatch) res.logradouro = clean(logradouroMatch[1]);
 
-  const numeroMatch = txt.match(/NÚMERO\s+([^\n\r]+)/i);
+  const numeroMatch = txt.match(/NÚMERO\s+([^\n\r]+)/i) || norm.match(/NÚMERO\s+([^\s]+)/i);
   if (numeroMatch) res.numero = clean(numeroMatch[1]);
 
-  const bairroMatch = txt.match(/BAIRRO\/DISTRITO\s+([^\n\r]+)/i);
+  const bairroMatch = txt.match(/BAIRRO\/DISTRITO\s+([^\n\r]+)/i) || norm.match(/BAIRRO\/DISTRITO\s+([^\s]+)/i);
   if (bairroMatch) res.bairro = clean(bairroMatch[1]);
 
-  const cidadeMatch = txt.match(/MUNICÍPIO\s+([^\n\r]+)/i);
+  const cidadeMatch = txt.match(/MUNICÍPIO\s+([^\n\r]+)/i) || norm.match(/MUNICÍPIO\s+([^\s]+)/i);
   if (cidadeMatch) res.cidade = clean(cidadeMatch[1]);
 
-  const ufMatch = txt.match(/UF\s+([A-Z]{2})/i);
+  const ufMatch = txt.match(/UF\s+([A-Z]{2})/i) || norm.match(/\s([A-Z]{2})\s+(?=CEP|$)/i);
   if (ufMatch) res.uf = ufMatch[1].toUpperCase();
 
-  const cepMatch = txt.match(/CEP\s+(\d{2}\.\d{3}-\d{3})/i);
-  if (cepMatch) res.cep = cepMatch[1];
+  const cepMatch = txt.match(/CEP\s+(\d{2}\.\d{3}-\d{3})/i) || txt.match(/CEP\s+(\d{8})/i) || norm.match(/CEP\s+([\d.-]+)/i);
+  if (cepMatch) {
+    const d = onlyDigits(cepMatch[1]);
+    res.cep = d.length === 8 ? `${d.slice(0, 5)}-${d.slice(5, 8)}` : cepMatch[1];
+  }
 
   return res;
 }
