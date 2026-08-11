@@ -212,19 +212,31 @@ export async function buildFichaOficialBytes(blocks: FichaOficialBlock[]): Promi
       const rows = chunks[c];
       for (let i = 0; i < rows.length; i++) {
         const r = rows[i];
-        const top = ROW_TOP0 + ROW_H * i + ROW_H / 2 + 3; // baseline centralizada na célula
-        const cell = (col: readonly [number, number] | number[], text: string, size = 7, center = true) =>
-          drawText(p2, text, { x: col[0] + 1, top, maxW: col[1] - col[0] - 2, size, font, center });
+        const rowTop = ROW_TOP0 + ROW_H * i;
+        
+        const cell = (col: readonly [number, number] | number[], text: string, size = 7, center = true, paddingX = 2) =>
+          drawText(p2, text, { 
+            x: col[0], 
+            top: rowTop, 
+            maxW: col[1] - col[0], 
+            size, 
+            font, 
+            center, 
+            vCenterInRow: true, 
+            rowH: ROW_H,
+            paddingX 
+          });
 
         cell(COL.qt, r.qtd != null ? String(r.qtd) : "");
         cell(COL.und, r.und ?? "UN");
-        drawText(p2, [r.item, r.tamanho ? `(${r.tamanho})` : ""].filter(Boolean).join(" "), {
-          x: COL.espec[0] + 2, top, maxW: COL.espec[1] - COL.espec[0] - 4, size: 7, font,
-        });
+        
+        // Especificação com padding lateral de 10px e alinhamento à esquerda
+        cell(COL.espec, [r.item, r.tamanho ? `(${r.tamanho})` : ""].filter(Boolean).join(" "), 7, false, 10);
+        
         cell(COL.ca, r.ca ?? "");
-        cell(COL.dataEntrega, brDate(r.data_entrega), 7);
-        cell(COL.motivo, motivoCurto(r), 7);
-        cell(COL.dataDevol, brDate(r.data_devolucao), 7);
+        cell(COL.dataEntrega, brDate(r.data_entrega));
+        cell(COL.motivo, motivoCurto(r));
+        cell(COL.dataDevol, brDate(r.data_devolucao));
 
         if (r.assinatura_snapshot) {
           const img = await embedSignature(out, r.assinatura_snapshot);
@@ -236,13 +248,14 @@ export async function buildFichaOficialBytes(blocks: FichaOficialBlock[]): Promi
             const h = img.height * scale;
             p2.drawImage(img, {
               x: COL.assEmp[0] + (COL.assEmp[1] - COL.assEmp[0] - w) / 2,
-              y: PAGE_H - (ROW_TOP0 + ROW_H * (i + 1)) + (ROW_H - h) / 2,
+              y: PAGE_H - rowTop - (ROW_H + h) / 2,
               width: w,
               height: h,
             });
           }
         }
       }
+
     }
   }
 
