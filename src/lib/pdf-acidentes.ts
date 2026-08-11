@@ -79,10 +79,10 @@ export function gerarForSeg09(opts: {
     
     // Título Central
     doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.text("Quadro Estatístico de Acidentes de Trabalho", (pageWidth / 2) - 2, 20, { align: "center" });
     doc.setFontSize(11);
-    doc.text("Quadro Estatístico de Acidentes de Trabalho", (pageWidth / 2) - 2, 18, { align: "center" });
-    doc.setFontSize(10);
-    doc.text("ACIDENTES COM VÍTIMA", (pageWidth / 2) - 2, 26, { align: "center" });
+    doc.text("ACIDENTES COM VÍTIMA", (pageWidth / 2) - 2, 28, { align: "center" });
     
     // Bloco Direita (Código/Revisão)
     doc.setFontSize(8);
@@ -94,10 +94,10 @@ export function gerarForSeg09(opts: {
     doc.text("PÁG.:", rightX, 31);
     
     doc.setFont("helvetica", "normal");
-    doc.text("FOR-SEG 09", rightX + 15, 16);
-    doc.text("00", rightX + 15, 21);
-    doc.text("30/08/2025", rightX + 15, 26);
-    doc.text("01/01", rightX + 15, 31);
+    doc.text("FOR-SEG 09", rightX + 16, 16);
+    doc.text("00", rightX + 16, 21);
+    doc.text("30/08/2025", rightX + 16, 26);
+    doc.text("01/01", rightX + 16, 31);
   };
 
   header();
