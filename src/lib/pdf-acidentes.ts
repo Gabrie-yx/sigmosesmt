@@ -102,6 +102,14 @@ export function gerarForSeg09(opts: {
 
   header();
 
+  // 3 - Logo abaixo do cabeçalho entra a faixa cinza com o título em arial e negrito "ACIDENTES COM VÍTIMA"
+  doc.setFillColor(230, 230, 230);
+  doc.rect(10, 35, pageWidth - 20, 5, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.setTextColor(0);
+  doc.text("ACIDENTES COM VÍTIMA", pageWidth / 2, 38.5, { align: "center" });
+
   // Seção de Informações da Empresa (Grid Compacto com Moldura sutil)
   doc.setFontSize(9);
   
