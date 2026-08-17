@@ -167,7 +167,7 @@ export function useAuth() {
   const user: User | null = session?.user ?? null;
   const uid = user?.id ?? null;
 
-  const { data: payload, isLoading: payloadLoading } = useQuery({
+  const { data: payload, isLoading: payloadLoading, isError: payloadError, refetch: refetchPayload } = useQuery({
     queryKey: ["auth-payload", uid],
     queryFn: () => fetchAuthPayload(uid!),
     enabled: !!uid,
@@ -175,11 +175,19 @@ export function useAuth() {
     gcTime: 30 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
-    retry: 1, // falha rápido — não trava a UI em "loading" por minutos se o Supabase estiver fora.
+    refetchOnReconnect: true,
+    // Troca de rede é comum no estaleiro: tenta algumas vezes antes de desistir.
+    retry: 3,
+    retryDelay: (a) => Math.min(1000 * 2 ** a, 8000),
   });
 
-  const { roles, modules, menuKeys, modulesWithMenuConfig, aal, mfaActive, mfaGraceUntil } =
-    payload ?? EMPTY_PAYLOAD;
+  if (payload && uid) lastGoodPayload.set(uid, payload);
+  const fallback = (uid ? lastGoodPayload.get(uid) : undefined) ?? EMPTY_PAYLOAD;
+  const effective = payload ?? fallback;
+  // true quando não conseguimos ler os papéis e não há cache local dessa sessão.
+  const authUnavailable = !!uid && !payload && !!payloadError && !lastGoodPayload.has(uid);
+
+  const { roles, modules, menuKeys, modulesWithMenuConfig, aal, mfaActive, mfaGraceUntil } = effective;
 
   const loading = !sessionReady || (!!uid && payloadLoading && !payload);
 
@@ -212,7 +220,7 @@ export function useAuth() {
   // Satisfeito se não exige, ou já autenticou 2FA, ou ainda está dentro do grace de 7 dias.
   const mfaSatisfied = !requiresMfa || aal === "aal2" || graceActive;
   // Bloqueio duro: conta corporativa sem 2FA verificado nesta sessão.
-  const mfaHardBlock = isCorporate && aal !== "aal2";
+  const mfaHardBlock = isCorporate && aal !== "aal2" && !authUnavailable;
 
   function hasModule(m: AppModule): boolean {
     if (isAdmin) return true;
@@ -250,6 +258,6 @@ export function useAuth() {
     hasModule, hasMenu,
     menuKeys, modulesWithMenuConfig,
     mfaGraceUntil, graceActive, graceDaysLeft,
-    refreshAuth,
+    refreshAuth, authUnavailable, refetchPayload,
   };
 }
