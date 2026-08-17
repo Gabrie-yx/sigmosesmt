@@ -37,6 +37,10 @@ async function fetchAuthPayload(uid: string): Promise<AuthPayload> {
     supabase.auth.mfa.listFactors(),
     (supabase as any).from("profiles").select("mfa_grace_until").eq("id", uid).maybeSingle(),
   ]);
+  // Falha de rede (troca de Wi-Fi/4G) NÃO pode virar "usuário sem papel".
+  // Sem isso o app mostrava "Sem acesso ao SIGMO" e forçava novo login.
+  if (rolesRes.error) throw rolesRes.error;
+  if (aalRes.error) throw aalRes.error;
   const rows = (menusRes?.data ?? []) as { menu_key: string; enabled: boolean }[];
   const enabledKeys = new Set(rows.filter((r) => r.enabled).map((r) => r.menu_key));
   const configuredModules = new Set<AppModule>();
@@ -60,6 +64,8 @@ async function fetchAuthPayload(uid: string): Promise<AuthPayload> {
 // Sessão fica em módulo (singleton) — evita cada componente escutar
 // onAuthStateChange separadamente e refazer o loadAll.
 let cachedSession: Session | null | undefined = undefined;
+// Último payload bom por usuário: sobrevive a quedas de rede.
+const lastGoodPayload = new Map<string, AuthPayload>();
 const sessionListeners = new Set<(s: Session | null, event: string) => void>();
 let sessionSubStarted = false;
 
@@ -161,7 +167,7 @@ export function useAuth() {
   const user: User | null = session?.user ?? null;
   const uid = user?.id ?? null;
 
-  const { data: payload, isLoading: payloadLoading } = useQuery({
+  const { data: payload, isLoading: payloadLoading, isError: payloadError, refetch: refetchPayload } = useQuery({
     queryKey: ["auth-payload", uid],
     queryFn: () => fetchAuthPayload(uid!),
     enabled: !!uid,
@@ -169,11 +175,19 @@ export function useAuth() {
     gcTime: 30 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
-    retry: 1, // falha rápido — não trava a UI em "loading" por minutos se o Supabase estiver fora.
+    refetchOnReconnect: true,
+    // Troca de rede é comum no estaleiro: tenta algumas vezes antes de desistir.
+    retry: 3,
+    retryDelay: (a) => Math.min(1000 * 2 ** a, 8000),
   });
 
-  const { roles, modules, menuKeys, modulesWithMenuConfig, aal, mfaActive, mfaGraceUntil } =
-    payload ?? EMPTY_PAYLOAD;
+  if (payload && uid) lastGoodPayload.set(uid, payload);
+  const fallback = (uid ? lastGoodPayload.get(uid) : undefined) ?? EMPTY_PAYLOAD;
+  const effective = payload ?? fallback;
+  // true quando não conseguimos ler os papéis e não há cache local dessa sessão.
+  const authUnavailable = !!uid && !payload && !!payloadError && !lastGoodPayload.has(uid);
+
+  const { roles, modules, menuKeys, modulesWithMenuConfig, aal, mfaActive, mfaGraceUntil } = effective;
 
   const loading = !sessionReady || (!!uid && payloadLoading && !payload);
 
@@ -206,7 +220,7 @@ export function useAuth() {
   // Satisfeito se não exige, ou já autenticou 2FA, ou ainda está dentro do grace de 7 dias.
   const mfaSatisfied = !requiresMfa || aal === "aal2" || graceActive;
   // Bloqueio duro: conta corporativa sem 2FA verificado nesta sessão.
-  const mfaHardBlock = isCorporate && aal !== "aal2";
+  const mfaHardBlock = isCorporate && aal !== "aal2" && !authUnavailable;
 
   function hasModule(m: AppModule): boolean {
     if (isAdmin) return true;
@@ -244,6 +258,6 @@ export function useAuth() {
     hasModule, hasMenu,
     menuKeys, modulesWithMenuConfig,
     mfaGraceUntil, graceActive, graceDaysLeft,
-    refreshAuth,
+    refreshAuth, authUnavailable, refetchPayload,
   };
 }
