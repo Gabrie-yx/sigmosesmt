@@ -64,6 +64,8 @@ async function fetchAuthPayload(uid: string): Promise<AuthPayload> {
 // Sessão fica em módulo (singleton) — evita cada componente escutar
 // onAuthStateChange separadamente e refazer o loadAll.
 let cachedSession: Session | null | undefined = undefined;
+// Último payload bom por usuário: sobrevive a quedas de rede.
+const lastGoodPayload = new Map<string, AuthPayload>();
 const sessionListeners = new Set<(s: Session | null, event: string) => void>();
 let sessionSubStarted = false;
 
