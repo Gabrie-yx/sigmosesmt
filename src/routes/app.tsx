@@ -19,7 +19,7 @@ export const Route = createFileRoute("/app")({
 });
 
 function AppLayout() {
-  const { session, loading, requiresMfa, mfaSatisfied, graceActive, graceDaysLeft, aal, isMarcadorPuro, isPorteiroPuro, roles, user, mfaHardBlock } = useAuth();
+  const { session, loading, requiresMfa, mfaSatisfied, graceActive, graceDaysLeft, aal, isMarcadorPuro, isPorteiroPuro, roles, user, mfaHardBlock, authUnavailable, refetchPayload } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -61,6 +61,26 @@ function AppLayout() {
         }}
       >
         Carregando…
+      </div>
+    );
+  }
+
+  // Rede caiu / trocou de Wi-Fi: não é falta de permissão, é falha de leitura.
+  if (authUnavailable) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center px-6 text-slate-100"
+        style={{ background: "linear-gradient(180deg, #5a0f22 0%, #3a0a18 45%, #1f0610 100%)" }}
+      >
+        <div className="max-w-sm text-center space-y-4">
+          <ShieldAlert className="h-12 w-12 text-amber-400 mx-auto" />
+          <h1 className="text-xl font-black">Reconectando…</h1>
+          <p className="text-sm text-rose-100/80">
+            Não foi possível falar com o servidor para carregar suas permissões.
+            Sua sessão continua ativa — assim que a rede voltar, é só tentar de novo.
+          </p>
+          <Button onClick={() => refetchPayload()}>Tentar novamente</Button>
+        </div>
       </div>
     );
   }
