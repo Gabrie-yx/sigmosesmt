@@ -51,3 +51,4 @@ Aline Farias saiu; TST atual é Francisco Bandeira Almeida. Todo import (CAL/PGR
 - [Multi-tenant SIGMO (futuro)](mem://features/multi-tenant-futuro.md) — Grupo Atem cogita usar SIGMO em outras empresas do grupo; opção A (multi-tenant real) escolhida, mas só implementar quando 1º cliente do grupo fechar acesso oficial.
 - [Um comando por vez](mem://preferences/um-comando-por-vez.md) — No terminal/servidor: 1 comando por mensagem, esperar a saída, e sempre dizer de onde tirar senhas/chaves.
 - [Projeto ESO concorrente](mem://features/projeto-eso-concorrente.md) — Ideia de SaaS SST multiempresa (PGR/PCMSO/LTCAT/LIP) + créditos pré-pagos; riscos: multi-tenant, ART, eSocial, LGPD saúde. Só discussão.
+- [Projeto ESO clone — arquitetura](mem://features/projeto-eso-clone-arquitetura.md) — Entendimento correto: ESO = fábrica de documentos SST multiempresa para consultorias. Núcleo Ambiente→Cargo(CBO)→Risco→Exame→Documento versionado + faturamento. SIGMO não faz isso.
