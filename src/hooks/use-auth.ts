@@ -37,6 +37,10 @@ async function fetchAuthPayload(uid: string): Promise<AuthPayload> {
     supabase.auth.mfa.listFactors(),
     (supabase as any).from("profiles").select("mfa_grace_until").eq("id", uid).maybeSingle(),
   ]);
+  // Falha de rede (troca de Wi-Fi/4G) NÃO pode virar "usuário sem papel".
+  // Sem isso o app mostrava "Sem acesso ao SIGMO" e forçava novo login.
+  if (rolesRes.error) throw rolesRes.error;
+  if (aalRes.error) throw aalRes.error;
   const rows = (menusRes?.data ?? []) as { menu_key: string; enabled: boolean }[];
   const enabledKeys = new Set(rows.filter((r) => r.enabled).map((r) => r.menu_key));
   const configuredModules = new Set<AppModule>();
