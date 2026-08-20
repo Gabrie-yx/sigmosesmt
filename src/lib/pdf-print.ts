@@ -187,7 +187,13 @@ export async function printImagePages(pages: string[], fileName = "documento.pdf
         border: 0 !important;
         box-shadow: none !important;
         background: #fff !important;
+        opacity: 1 !important;
+        filter: contrast(1.18) saturate(1.05) brightness(0.97) !important;
+        image-rendering: -webkit-optimize-contrast;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
       }
+
     }
   `;
 

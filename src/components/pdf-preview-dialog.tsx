@@ -131,15 +131,15 @@ export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable
   async function print() {
     if (!doc) return;
     try {
-      // Imprime as páginas renderizadas no próprio documento. O iframe nativo
-      // pode mandar a página do SIGMO (em branco) para a impressora em alguns
-      // navegadores, especialmente quando o sistema está servido por HTTP.
-      const printablePages = pages.length ? pages : await renderPdfToImagePages(await blobComAnexos());
+      // Sempre re-renderiza em alta resolução (PNG, scale 3, intent "print").
+      // As imagens do preview são JPEG comprimido e saem "lavadas" no papel.
+      const printablePages = await renderPdfToImagePages(await blobComAnexos(), 3);
       await printImagePages(printablePages, fileName);
     } catch (e: any) {
       toast.error(e?.message ?? "Não foi possível preparar o documento para impressão.");
     }
   }
+
 
   async function share() {
     if (!doc) return;
