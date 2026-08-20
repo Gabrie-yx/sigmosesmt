@@ -406,8 +406,9 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
                 </div>
 
                 {!asoDispensado && (
-                  <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-3 space-y-2">
-                    <div className="text-xs font-black uppercase tracking-widest text-emerald-900">Anexar ASO demissional agora</div>
+                  <div className="rounded-lg border border-border bg-card/60 p-3 space-y-2">
+                    <div className="text-xs font-black uppercase tracking-widest text-foreground">Anexar ASO demissional agora</div>
+
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       <div className="space-y-1">
                         <Label className="text-[10px] uppercase">Data de realização *</Label>
