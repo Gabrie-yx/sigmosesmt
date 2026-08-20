@@ -328,6 +328,17 @@ function SesmtDocsPage() {
                     >
                       <History className="h-4 w-4" />
                     </Button>
+                    {["PGR", "LTCAT", "PCMSO", "PPRA", "Laudo de Insalubridade"].includes(d.tipo) && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-blue-700 hover:bg-blue-50"
+                        title="Ler documento e alimentar o sistema"
+                        onClick={() => setLeitorDoc(d)}
+                      >
+                        <ScanText className="h-4 w-4" />
+                      </Button>
+                    )}
                     {isAdmin && (
                       <Button
                         size="sm"
