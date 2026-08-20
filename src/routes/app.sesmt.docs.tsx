@@ -37,8 +37,10 @@ import {
   Pencil,
   X,
   Check,
+  ScanText,
 } from "lucide-react";
 import { toast } from "sonner";
+import { LeitorDocSSTDialog } from "@/components/sesmt/leitor-doc-sst-dialog";
 
 export const Route = createFileRoute("/app/sesmt/docs")({
   component: SesmtDocsPage,
