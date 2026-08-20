@@ -3414,10 +3414,39 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <Dialog open={localDialog !== null} onOpenChange={(o) => !o && setLocalDialog(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Local de emissão</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500">
+              Sugerido pela cidade da empresa. Ajuste se a entrega ocorreu em outra obra/unidade.
+            </p>
+            <Input
+              value={localDialog ?? ""}
+              onChange={(e) => setLocalDialog(e.target.value)}
+              placeholder="Ex.: Curitiba - PR"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setLocalDialog(null)}>Cancelar</Button>
+            <Button
+              onClick={() => {
+                const loc = (localDialog ?? "").trim();
+                setLocalOverride(loc);
+                setLocalDialog(null);
+                void gerarFicha(loc || "Belém");
+              }}
+            >
+              Gerar ficha
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {signerSrc && (
         <Suspense fallback={null}>
           <PdfSignerDialog
-*** noop
             open={!!signerSrc}
             onClose={() => setSignerSrc(null)}
             source={signerSrc?.bytes ?? null}
