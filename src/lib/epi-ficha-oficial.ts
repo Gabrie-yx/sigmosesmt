@@ -228,8 +228,8 @@ export async function buildFichaOficialBytes(
       const R = 14.7;
       const fit = { shrinkToFit: true, vCenterInRow: true, rowH: R } as const;
       drawText(p1, e.empresa, { x: 69, top: 85, maxW: 395, size: 9, font: bold, ...fit });
-      drawText(p1, brDate(e.admissao), { x: 579, top: 85, maxW: 92, size: 9, font, ...fit });
-      drawText(p1, e.nome, { x: 59, top: 104.4, maxW: 402, size: 9, font: bold, ...fit });
+      drawText(p1, brDate(e.admissao), { x: 582, top: 85, maxW: 92, size: 9, font, ...fit });
+      drawText(p1, e.nome, { x: 62, top: 104.4, maxW: 402, size: 9, font: bold, ...fit });
       if (e.demissao) drawText(p1, brDate(e.demissao), { x: 576, top: 104.4, maxW: 95, size: 9, font, ...fit });
       drawText(p1, e.funcao, { x: 66, top: 123.8, maxW: 155, size: 8, font, ...fit });
       drawText(p1, e.matricula, { x: 297, top: 124, maxW: 140, size: 9, font, ...fit });
