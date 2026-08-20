@@ -218,15 +218,15 @@ export async function buildFichaOficialBytes(
       const R = 14.7;
       const fit = { shrinkToFit: true, vCenterInRow: true, rowH: R } as const;
       drawText(p1, e.empresa, { x: 69, top: 85, maxW: 395, size: 9, font: bold, ...fit });
-      drawText(p1, brDate(e.admissao), { x: 576, top: 85, maxW: 95, size: 9, font, ...fit });
-      drawText(p1, e.nome, { x: 56, top: 104.4, maxW: 405, size: 9, font: bold, ...fit });
+      drawText(p1, brDate(e.admissao), { x: 579, top: 85, maxW: 92, size: 9, font, ...fit });
+      drawText(p1, e.nome, { x: 59, top: 104.4, maxW: 402, size: 9, font: bold, ...fit });
       if (e.demissao) drawText(p1, brDate(e.demissao), { x: 576, top: 104.4, maxW: 95, size: 9, font, ...fit });
-      drawText(p1, e.funcao, { x: 63, top: 123.8, maxW: 158, size: 8, font, ...fit });
+      drawText(p1, e.funcao, { x: 66, top: 123.8, maxW: 155, size: 8, font, ...fit });
       drawText(p1, e.matricula, { x: 297, top: 124, maxW: 140, size: 9, font, ...fit });
       // "Folha:" recebe a paginação da ficha (o campo PÁG. é fixo do template).
       drawText(p1, `${c + 1}/${chunks.length}`, { x: 487, top: 124, maxW: 60, size: 9, font, ...fit });
       // Lacuna "recebi da empresa ______," (x 221,4 → 359,6 / linha y 162,8)
-      drawText(p1, e.empresa, { x: 221.4, top: 162.8, maxW: 138, size: 8, minSize: 5, font, center: true, shrinkToFit: true, vCenterInRow: true, rowH: 12.1 });
+      drawText(p1, "Estaleiro DMN", { x: 221.4, top: 162.8, maxW: 138, size: 8, minSize: 5, font, center: true, shrinkToFit: true, vCenterInRow: true, rowH: 12.1 });
       // "Local e Data:" (linha de x 75,6 a 261,2 / y 491,3)
       drawText(p1, block.localData, { x: 78, top: 491.3, maxW: 180, size: 9, font, vCenterInRow: true, rowH: 15.4 });
 
