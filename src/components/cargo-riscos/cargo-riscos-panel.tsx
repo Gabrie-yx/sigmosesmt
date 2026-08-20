@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { AlertTriangle, ShieldCheck, Activity, FlaskConical, Search, Pencil } from "lucide-react";
+import { AlertTriangle, ShieldCheck, Activity, FlaskConical, Search, Pencil, Plus } from "lucide-react";
 import { EditarCargoRiscoDialog } from "./editar-cargo-risco-dialog";
+import { AdicionarCargoRiscoDialog } from "./adicionar-cargo-risco-dialog";
 
 type CargoRisco = {
   id: string;
@@ -51,6 +52,7 @@ export function CargoRiscosPanel({ roleId, lockRole = false }: { roleId?: string
   const [selectedRole, setSelectedRole] = useState<string | "all">(roleId ?? "all");
   const [q, setQ] = useState("");
   const [editing, setEditing] = useState<CargoRisco | null>(null);
+  const [adding, setAdding] = useState(false);
 
   const { data: roles = [] } = useQuery({
     queryKey: ["roles-ativos-min"],
@@ -114,7 +116,16 @@ export function CargoRiscosPanel({ roleId, lockRole = false }: { roleId?: string
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar por risco, cargo ou fonte geradora..." className="pl-9 h-10 bg-white" />
         </div>
+        {effectiveRole !== "all" && (
+          <Button onClick={() => setAdding(true)} className="h-10 gap-1.5 bg-rose-600 hover:bg-rose-700">
+            <Plus className="h-4 w-4" /> Adicionar risco
+          </Button>
+        )}
       </div>
+
+      <p className="text-xs text-slate-500 -mt-1">
+        Intensidade + unidade alimentam o campo <b>15.4</b> do PPP · Técnica de medição alimenta o <b>15.5</b> (NHO-01, NHO-06, NR-15 Anexo…).
+      </p>
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
@@ -132,7 +143,7 @@ export function CargoRiscosPanel({ roleId, lockRole = false }: { roleId?: string
         <Card className="p-10 text-center text-slate-500">
           <ShieldCheck className="h-10 w-10 mx-auto mb-3 text-slate-300" />
           <p className="font-semibold">Nenhum risco cadastrado ainda</p>
-          <p className="text-sm mt-1">Apenas o cargo <b>Soldador</b> foi pré-populado como piloto a partir do LTCAT.</p>
+          <p className="text-sm mt-1">Use <b>Adicionar risco</b> para vincular agentes do catálogo e lançar intensidade/técnica de medição.</p>
         </Card>
       ) : (
         <div className="space-y-2">
@@ -193,6 +204,9 @@ export function CargoRiscosPanel({ roleId, lockRole = false }: { roleId?: string
             </Card>
           ))}
         </div>
+      )}
+      {effectiveRole !== "all" && (
+        <AdicionarCargoRiscoDialog roleId={effectiveRole} open={adding} onOpenChange={setAdding} />
       )}
       <EditarCargoRiscoDialog
         row={editing}
