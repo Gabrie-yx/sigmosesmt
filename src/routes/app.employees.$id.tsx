@@ -2808,6 +2808,8 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
     setSignerSrc({ bytes, name: fname, modulo: "ficha-epi", referenciaId: empId });
   }
 
+  const [localDialog, setLocalDialog] = useState<string | null>(null);
+
   const [signerSrc, setSignerSrc] = useState<{
     bytes: Uint8Array | string;
     name: string;
