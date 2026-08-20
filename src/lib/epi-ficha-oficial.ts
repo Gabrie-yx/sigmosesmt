@@ -42,28 +42,24 @@ export type FichaOficialBlock = {
 };
 
 const PAGE_H = 595.2;
-const ROWS_PER_PAGE = 17;
-/** Grade medida no PDF-mãe (FOR-SEG 02): 1ª linha em y=78, cada linha 26.6pt. */
-const ROW_TOP0 = 78.0;
-const ROW_H = 26.6;
+const ROWS_PER_PAGE = 15;
+/** Grade medida no PDF-mãe (FOR-SEG 02 rev. 04/08/2026):
+ *  cabeçalho da tabela termina em y=78,9 (do topo) e há 15 linhas de 23,37pt. */
+const ROW_TOP0 = 78.9;
+const ROW_H = 23.37;
 
-/** Colunas da grade (x0, x1). */
+/** Colunas da grade (x0, x1) — medidas nas linhas verticais do template. */
 const COL = {
-  qt: [4.8, 40.4],
-  und: [40.4, 70.6],
-  espec: [70.6, 256.6],
-  ca: [256.6, 329.2],
-  assEmp: [329.2, 505.2],
-  dataEntrega: [505.2, 575.8],
-  motivo: [575.8, 660.2],
-  dataDevol: [660.2, 728.4],
-  assReceb: [728.4, 815.0],
+  qt: [10.1, 41.3],
+  und: [41.3, 67.9],
+  espec: [67.9, 232.0],
+  ca: [232.0, 296.1],
+  assEmp: [296.1, 451.4],
+  dataEntrega: [451.4, 513.3],
+  motivo: [513.3, 587.9],
+  dataDevol: [587.9, 647.2],
+  assReceb: [647.2, 769.1],
 } as const;
-
-// Tons de cinza para o layout
-const GRAY_HEADER = rgb(0.9, 0.9, 0.9);
-const GRAY_BORDER = rgb(0.8, 0.8, 0.8);
-
 
 const MOTIVO_CODE: Record<string, string> = {
   danificado: "1",
