@@ -207,7 +207,7 @@ export function FichasMensaisPanel({ embedded = false }: { embedded?: boolean })
             admissao: r.admissao,
           },
           entregas: epis as any[],
-          localData: `${r.empresa ?? ""} ${new Date().toLocaleDateString("pt-BR")}`.trim(),
+          localData: `Belém, ${new Date().toLocaleDateString("pt-BR")}`,
         },
       ]);
     } catch (e: any) {
