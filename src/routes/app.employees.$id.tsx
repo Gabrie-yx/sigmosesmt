@@ -2792,6 +2792,7 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
           },
           entregas: episAtuais as any[],
           localData: `Belém, ${new Date().toLocaleDateString("pt-BR")}`,
+          assinaturaEmpregado: (emp as any)?.assinatura_url ?? null,
         },
       ]);
     } catch {
