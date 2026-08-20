@@ -110,12 +110,23 @@ function drawText(
     vCenterInRow?: boolean; // Se verdadeiro, 'top' é o topo da célula e centralizamos verticalmente
     rowH?: number;
     paddingX?: number;
+    /** Reduz a fonte até o texto caber em UMA linha dentro de maxW. */
+    shrinkToFit?: boolean;
+    minSize?: number;
   },
 ) {
   const t = safe(String(text ?? "")).trim();
   if (!t) return;
-  const size = opts.size ?? 9;
+  let size = opts.size ?? 9;
   const paddingX = opts.paddingX ?? 2;
+  const avail = opts.maxW - paddingX * 2;
+
+  if (opts.shrinkToFit) {
+    const min = opts.minSize ?? 5.5;
+    while (size > min && opts.font.widthOfTextAtSize(t, size) > avail) {
+      size -= 0.25;
+    }
+  }
 
   const words = t.split(" ");
   const lines: string[] = [];
@@ -124,7 +135,7 @@ function drawText(
   for (let i = 1; i < words.length; i++) {
     const w = words[i];
     const width = opts.font.widthOfTextAtSize(currentLine + " " + w, size);
-    if (width < opts.maxW - (paddingX * 2)) {
+    if (width < avail) {
       currentLine += " " + w;
     } else {
       lines.push(currentLine);
@@ -132,6 +143,10 @@ function drawText(
     }
   }
   lines.push(currentLine);
+
+  // Campos de linha única (cabeçalho/lacunas) não podem transbordar para a
+  // linha de baixo e sobrepor o termo de responsabilidade.
+  const maxLines = opts.shrinkToFit ? 1 : 3;
 
   const lineHeight = size * 1.1;
   const totalH = lines.length * lineHeight;
