@@ -714,7 +714,7 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
             qc.invalidateQueries({ queryKey: ["desl-ppp", emp?.id] });
           }
         }}
-        employee={emp}
+        employee={emp ? { ...emp, data_desligamento: emp.data_desligamento ?? data } : emp}
         company={company}
         role={role}
       />
