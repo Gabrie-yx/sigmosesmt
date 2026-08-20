@@ -108,6 +108,40 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
     },
   });
 
+  // Registra um ASO demissional na hora (com upload opcional do documento)
+  const registrarAso = useMutation({
+    mutationFn: async () => {
+      if (!emp?.id) throw new Error("Funcionário inválido");
+      if (!novoAsoData) throw new Error("Informe a data de realização");
+      let anexo_path: string | null = null;
+      if (novoAsoFile) {
+        const path = `${emp.id}/exames/${Date.now()}_${novoAsoFile.name.replace(/[^\w.\-]+/g, "_")}`;
+        const { error: upErr } = await supabase.storage.from("employee-docs").upload(path, novoAsoFile, { upsert: false });
+        if (upErr) throw upErr;
+        anexo_path = path;
+      }
+      const { data: inserted, error } = await supabase.from("employee_exams").insert({
+        employee_id: emp.id,
+        tipo_exame: "ASO Demissional",
+        natureza: "DEMISSIONAL",
+        data_realizacao: novoAsoData,
+        aptidao: novoAsoAptidao,
+        anexo_path,
+      } as any).select("id").single();
+      if (error) throw error;
+      return inserted?.id as string;
+    },
+    onSuccess: async (id) => {
+      toast.success("ASO demissional registrado");
+      setNovoAsoFile(null);
+      await qc.invalidateQueries({ queryKey: ["desl-asos", emp?.id] });
+      if (id) { setAsoExamId(id); setAsoDispensado(false); }
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Falha ao registrar ASO"),
+  });
+
+
+
   // EPIs em posse
   const { data: epis } = useQuery({
     queryKey: ["desl-epis", emp?.id],
