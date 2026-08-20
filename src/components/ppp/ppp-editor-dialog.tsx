@@ -57,6 +57,25 @@ export function PPPEditorDialog({
   const [saving, setSaving] = useState(false);
   const [previewDoc, setPreviewDoc] = useState<jsPDF | null>(null);
 
+  // Auto-ajuste: a folha A4 (190mm) encolhe pra caber na largura do modal
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [zoom, setZoom] = useState(1);
+  useEffect(() => {
+    if (!open) return;
+    const el = scrollRef.current;
+    if (!el) return;
+    const SHEET_PX = 190 * (96 / 25.4); // 190mm em px
+    const fit = () => {
+      const avail = el.clientWidth - 32;
+      setZoom(Math.min(1, Math.max(0.55, avail / SHEET_PX)));
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [open]);
+
+
   const isFinal = status === "EMITIDO";
 
   useQuery({
