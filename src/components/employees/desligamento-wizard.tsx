@@ -442,13 +442,14 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
                   </div>
                 )}
 
-                <label className="flex items-start gap-2 p-3 rounded-lg border border-amber-200 bg-amber-50 cursor-pointer">
+                <label className="flex items-start gap-2 p-3 rounded-lg border border-amber-500/40 bg-amber-500/10 cursor-pointer">
                   <Checkbox checked={asoDispensado} onCheckedChange={(v) => { setAsoDispensado(!!v); if (v) setAsoExamId(null); }} />
                   <div className="text-xs">
-                    <div className="font-black text-amber-900">Dispensar ASO demissional</div>
-                    <div className="text-amber-800">Marque somente quando o último ASO estiver dentro do prazo NR-07.</div>
+                    <div className="font-black text-amber-200">Dispensar ASO demissional</div>
+                    <div className="text-amber-100/80">Marque somente quando o último ASO estiver dentro do prazo NR-07.</div>
                   </div>
                 </label>
+
                 {asoDispensado && (
                   <div className="space-y-1.5">
                     <Label>Justificativa da dispensa *</Label>
