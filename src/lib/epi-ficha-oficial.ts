@@ -42,28 +42,24 @@ export type FichaOficialBlock = {
 };
 
 const PAGE_H = 595.2;
-const ROWS_PER_PAGE = 17;
-/** Grade medida no PDF-mãe (FOR-SEG 02): 1ª linha em y=78, cada linha 26.6pt. */
-const ROW_TOP0 = 78.0;
-const ROW_H = 26.6;
+const ROWS_PER_PAGE = 15;
+/** Grade medida no PDF-mãe (FOR-SEG 02 rev. 04/08/2026):
+ *  cabeçalho da tabela termina em y=78,9 (do topo) e há 15 linhas de 23,37pt. */
+const ROW_TOP0 = 78.9;
+const ROW_H = 23.37;
 
-/** Colunas da grade (x0, x1). */
+/** Colunas da grade (x0, x1) — medidas nas linhas verticais do template. */
 const COL = {
-  qt: [4.8, 40.4],
-  und: [40.4, 70.6],
-  espec: [70.6, 256.6],
-  ca: [256.6, 329.2],
-  assEmp: [329.2, 505.2],
-  dataEntrega: [505.2, 575.8],
-  motivo: [575.8, 660.2],
-  dataDevol: [660.2, 728.4],
-  assReceb: [728.4, 815.0],
+  qt: [10.1, 41.3],
+  und: [41.3, 67.9],
+  espec: [67.9, 232.0],
+  ca: [232.0, 296.1],
+  assEmp: [296.1, 451.4],
+  dataEntrega: [451.4, 513.3],
+  motivo: [513.3, 587.9],
+  dataDevol: [587.9, 647.2],
+  assReceb: [647.2, 769.1],
 } as const;
-
-// Tons de cinza para o layout
-const GRAY_HEADER = rgb(0.9, 0.9, 0.9);
-const GRAY_BORDER = rgb(0.8, 0.8, 0.8);
-
 
 const MOTIVO_CODE: Record<string, string> = {
   danificado: "1",
@@ -139,19 +135,25 @@ function drawText(
 
   const lineHeight = size * 1.1;
   const totalH = lines.length * lineHeight;
-  
+
+  // O template tem MediaBox deslocado (origem != 0,0). Todas as coordenadas
+  // deste arquivo são medidas a partir do canto superior esquerdo VISÍVEL.
+  const box = page.getMediaBox();
+  const topY = box.y + box.height;
+  const ox = box.x;
+
   let startY: number;
   if (opts.vCenterInRow && opts.rowH) {
     // top é o topo da célula. Centraliza o bloco de texto na altura da linha.
-    startY = PAGE_H - opts.top - (opts.rowH - totalH) / 2 - size;
+    startY = topY - opts.top - (opts.rowH - totalH) / 2 - size;
   } else {
     // fallback para o comportamento antigo (baseline centralizada)
-    startY = PAGE_H - opts.top + (totalH / 2) - size;
+    startY = topY - opts.top + (totalH / 2) - size;
   }
 
   for (const line of lines.slice(0, 3)) { // Permite até 3 linhas se couber
     const w = opts.font.widthOfTextAtSize(line, size);
-    const x = opts.center ? opts.x + (opts.maxW - w) / 2 : opts.x + paddingX;
+    const x = ox + (opts.center ? opts.x + (opts.maxW - w) / 2 : opts.x + paddingX);
     page.drawText(line, { x, y: startY, size, font: opts.font, color: rgb(0, 0, 0) });
     startY -= lineHeight;
   }
@@ -171,9 +173,12 @@ async function embedSignature(pdf: PDFDocument, dataUrl: string) {
   }
 }
 
-export async function buildFichaOficialBytes(blocks: FichaOficialBlock[]): Promise<Uint8Array> {
+export async function buildFichaOficialBytes(
+  blocks: FichaOficialBlock[],
+  templateOverride?: ArrayBuffer | Uint8Array,
+): Promise<Uint8Array> {
   if (!blocks.length) throw new Error("Nenhuma ficha para gerar.");
-  const templateBytes = await loadTemplateBytes("FOR-SEG-02");
+  const templateBytes = templateOverride ?? (await loadTemplateBytes("FOR-SEG-02"));
   const template = await PDFDocument.load(templateBytes);
   const out = await PDFDocument.create();
   const font = await out.embedFont(StandardFonts.Helvetica);
@@ -191,112 +196,48 @@ export async function buildFichaOficialBytes(blocks: FichaOficialBlock[]): Promi
       out.addPage(p2);
 
       const e = { ...block.emp, empresa: "Estaleiro DMN" };
-      // Cabeçalho (página 1) — coordenadas medidas nos rótulos do PDF-mãe.
-      // Rótulos: Empresa: (x1 55,8 / base 99) · Nome: (x1 39,8 / base 121)
-      //          Função: (x1 48,2 / base 143) · Matrícula: (x1 314,2) · Folha: (x1 540,6)
-      //          Data de Admissão: (x1 629,4 / base 99) · Data de Demissão: (linha 662–747)
-      drawText(p1, e.empresa, { x: 59, top: 99, maxW: 460, size: 9, font: bold, vCenterInRow: true, rowH: 15 });
-      drawText(p1, brDate(e.admissao), { x: 634, top: 99, maxW: 100, size: 9, font, vCenterInRow: true, rowH: 15 });
-      drawText(p1, e.nome, { x: 43, top: 121, maxW: 480, size: 9, font: bold, vCenterInRow: true, rowH: 15 });
-      drawText(p1, e.funcao, { x: 52, top: 143, maxW: 200, size: 9, font, vCenterInRow: true, rowH: 15 });
-      if (e.demissao) drawText(p1, brDate(e.demissao), { x: 667, top: 122.8, maxW: 78, size: 9, font, vCenterInRow: true, rowH: 15 });
-      drawText(p1, e.matricula, { x: 318, top: 143.4, maxW: 180, size: 9, font, vCenterInRow: true, rowH: 15 });
+      // Cabeçalho (página 1) — coordenadas medidas nos rótulos do PDF-mãe
+      // (rev. 04/08/2026): Empresa/Data de Admissão em y 85 · Nome/Data de
+      // Demissão em y 104,4 · Função/Matrícula/Folha em y 124.
+      const R = 14.7;
+      drawText(p1, e.empresa, { x: 59, top: 85, maxW: 410, size: 9, font: bold, vCenterInRow: true, rowH: R });
+      drawText(p1, brDate(e.admissao), { x: 566, top: 85, maxW: 100, size: 9, font, vCenterInRow: true, rowH: R });
+      drawText(p1, e.nome, { x: 45, top: 104.4, maxW: 425, size: 9, font: bold, vCenterInRow: true, rowH: R });
+      if (e.demissao) drawText(p1, brDate(e.demissao), { x: 566, top: 104.4, maxW: 100, size: 9, font, vCenterInRow: true, rowH: R });
+      drawText(p1, e.funcao, { x: 52, top: 123.8, maxW: 178, size: 7.5, font, vCenterInRow: true, rowH: R });
+      drawText(p1, e.matricula, { x: 287, top: 124, maxW: 160, size: 9, font, vCenterInRow: true, rowH: R });
       // "Folha:" recebe a paginação da ficha (o campo PÁG. é fixo do template).
-      drawText(p1, `${c + 1}/${chunks.length}`, { x: 544, top: 143.4, maxW: 60, size: 9, font, vCenterInRow: true, rowH: 15 });
-      // Lacuna "recebi da empresa ____" (underscores de x 249,6 a 408,2 / base 189)
-      drawText(p1, e.empresa, { x: 250, top: 189, maxW: 158, size: 8, font, center: true, vCenterInRow: true, rowH: 12 });
-      // "Local e Data:" (linha de x 78,8 a 290 / base 562,5)
-      drawText(p1, block.localData, { x: 82, top: 562.5, maxW: 205, size: 9, font, vCenterInRow: true, rowH: 15 });
+      drawText(p1, `${c + 1}/${chunks.length}`, { x: 487, top: 124, maxW: 60, size: 9, font, vCenterInRow: true, rowH: R });
+      // Lacuna "recebi da empresa ______," (x 221,4 → 359,6 / linha y 162,8)
+      drawText(p1, e.empresa, { x: 221.4, top: 162.8, maxW: 138, size: 8, font, center: true, vCenterInRow: true, rowH: 12.1 });
+      // "Local e Data:" (linha de x 75,6 a 261,2 / y 491,3)
+      drawText(p1, block.localData, { x: 78, top: 491.3, maxW: 180, size: 9, font, vCenterInRow: true, rowH: 15.4 });
 
 
-      // Adiciona cabeçalho cinza se for a primeira vez na página (grade de entregas)
-      const headerTop = ROW_TOP0 - ROW_H;
-      const drawHeader = (col: readonly [number, number] | number[], text: string) => {
-        p2.drawRectangle({
-          x: col[0],
-          y: PAGE_H - headerTop - ROW_H,
-          width: col[1] - col[0],
-          height: ROW_H,
-          color: GRAY_HEADER,
-        });
-        p2.drawRectangle({
-          x: col[0],
-          y: PAGE_H - headerTop - ROW_H,
-          width: col[1] - col[0],
-          height: ROW_H,
-          borderColor: GRAY_BORDER,
-          borderWidth: 0.5,
-        });
-        drawText(p2, text, { 
-          x: col[0], 
-          top: headerTop, 
-          maxW: col[1] - col[0], 
-          size: 7, 
-          font: bold, 
-          center: true, 
-          vCenterInRow: true, 
-          rowH: ROW_H 
-        });
-      };
-
-      drawHeader(COL.qt, "QT");
-      drawHeader(COL.und, "UND");
-      drawHeader(COL.espec, "Especificação");
-      drawHeader(COL.ca, "CA");
-      drawHeader(COL.assEmp, "Assinatura");
-      drawHeader(COL.dataEntrega, "Entrega");
-      drawHeader(COL.motivo, "Mot.");
-      drawHeader(COL.dataDevol, "Devolução");
-      drawHeader(COL.assReceb, "Ass. Receb.");
-
+      // O cabeçalho da tabela já existe no template — nunca redesenhar.
       // Grade de entregas (página 2)
       const rows = chunks[c];
 
       for (let i = 0; i < rows.length; i++) {
         const r = rows[i];
         const rowTop = ROW_TOP0 + ROW_H * i;
-        
-        const cell = (col: readonly [number, number] | number[], text: string, size = 7, center = true, paddingX = 2, isHeader = false) => {
-          if (isHeader) {
-            // Desenha o fundo cinza para o cabeçalho
-            p2.drawRectangle({
-              x: col[0],
-              y: PAGE_H - rowTop - ROW_H,
-              width: col[1] - col[0],
-              height: ROW_H,
-              color: GRAY_HEADER,
-            });
-            // Desenha as bordas
-            p2.drawRectangle({
-              x: col[0],
-              y: PAGE_H - rowTop - ROW_H,
-              width: col[1] - col[0],
-              height: ROW_H,
-              borderColor: GRAY_BORDER,
-              borderWidth: 0.5,
-            });
-          }
-          
-          return drawText(p2, text, { 
-            x: col[0], 
-            top: rowTop, 
-            maxW: col[1] - col[0], 
-            size, 
-            font: isHeader ? bold : font, 
-            center, 
-            vCenterInRow: true, 
-            rowH: ROW_H,
-            paddingX 
-          });
-        };
 
+        const cell = (col: readonly [number, number] | number[], text: string, size = 7.5, center = true, paddingX = 3) =>
+          drawText(p2, text, {
+            x: col[0],
+            top: rowTop,
+            maxW: col[1] - col[0],
+            size,
+            font,
+            center,
+            vCenterInRow: true,
+            rowH: ROW_H,
+            paddingX,
+          });
 
         cell(COL.qt, r.qtd != null ? String(r.qtd) : "");
         cell(COL.und, r.und ?? "UN");
-        
-        // Especificação com padding lateral de 10px e alinhamento à esquerda
-        cell(COL.espec, [r.item, r.tamanho ? `(${r.tamanho})` : ""].filter(Boolean).join(" "), 7, false, 10);
-        
+        cell(COL.espec, [r.item, r.tamanho ? `(${r.tamanho})` : ""].filter(Boolean).join(" "), 7, false, 4);
         cell(COL.ca, r.ca ?? "");
         cell(COL.dataEntrega, brDate(r.data_entrega));
         cell(COL.motivo, motivoCurto(r));
@@ -305,14 +246,15 @@ export async function buildFichaOficialBytes(blocks: FichaOficialBlock[]): Promi
         if (r.assinatura_snapshot) {
           const img = await embedSignature(out, r.assinatura_snapshot);
           if (img) {
+            const box2 = p2.getMediaBox();
             const boxW = COL.assEmp[1] - COL.assEmp[0] - 8;
             const boxH = ROW_H - 6;
             const scale = Math.min(boxW / img.width, boxH / img.height);
             const w = img.width * scale;
             const h = img.height * scale;
             p2.drawImage(img, {
-              x: COL.assEmp[0] + (COL.assEmp[1] - COL.assEmp[0] - w) / 2,
-              y: PAGE_H - rowTop - (ROW_H + h) / 2,
+              x: box2.x + COL.assEmp[0] + (COL.assEmp[1] - COL.assEmp[0] - w) / 2,
+              y: box2.y + box2.height - rowTop - (ROW_H + h) / 2,
               width: w,
               height: h,
             });
