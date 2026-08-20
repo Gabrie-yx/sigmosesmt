@@ -69,6 +69,7 @@ import { TransferirEmpresaDialog } from "@/components/employees/transferir-empre
 import { logRead } from "@/lib/audit-read";
 import { SaidaExpedienteDialog } from "@/components/saida-expediente-dialog";
 import { Search } from "lucide-react";
+import { resolveLocal, setLocalOverride, formatLocalData } from "@/lib/local-documento";
 
 export const Route = createFileRoute("/app/employees/$id")({
   component: EmployeeDetail,
@@ -936,7 +937,7 @@ function EmployeeContextSidebar({ id }: { id: string }) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("companies")
-        .select("id, name, type, cnpj, encarregado1, encarregado2, email, data_entrada")
+        .select("id, name, type, cnpj, encarregado1, encarregado2, email, data_entrada, cidade, uf")
         .eq("id", companyId!)
         .single();
       if (error) throw error;
@@ -2731,9 +2732,13 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
     onError: (e: any) => toast.error(e.message),
   });
 
-  async function gerarFicha() {
+  async function gerarFicha(localEmissao?: string) {
     if (!epis?.length) {
       toast.error("Sem entregas registradas — nada a assinar.");
+      return;
+    }
+    if (!localEmissao) {
+      setLocalDialog(resolveLocal(company as any));
       return;
     }
     const episAtuais = [...(epis ?? [])].sort((a: any, b: any) => {
@@ -2791,7 +2796,7 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
             admissao: emp?.admissao,
           },
           entregas: episAtuais as any[],
-          localData: `Belém, ${new Date().toLocaleDateString("pt-BR")}`,
+          localData: formatLocalData(localEmissao),
           assinaturaEmpregado: (emp as any)?.assinatura_url ?? null,
         },
       ]);
