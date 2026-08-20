@@ -166,7 +166,7 @@ function drawText(
     startY = topY - opts.top + (totalH / 2) - size;
   }
 
-  for (const line of lines.slice(0, 3)) { // Permite até 3 linhas se couber
+  for (const line of lines.slice(0, maxLines)) {
     const w = opts.font.widthOfTextAtSize(line, size);
     const x = ox + (opts.center ? opts.x + (opts.maxW - w) / 2 : opts.x + paddingX);
     page.drawText(line, { x, y: startY, size, font: opts.font, color: rgb(0, 0, 0) });
