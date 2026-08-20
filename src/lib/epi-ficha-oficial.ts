@@ -110,12 +110,23 @@ function drawText(
     vCenterInRow?: boolean; // Se verdadeiro, 'top' é o topo da célula e centralizamos verticalmente
     rowH?: number;
     paddingX?: number;
+    /** Reduz a fonte até o texto caber em UMA linha dentro de maxW. */
+    shrinkToFit?: boolean;
+    minSize?: number;
   },
 ) {
   const t = safe(String(text ?? "")).trim();
   if (!t) return;
-  const size = opts.size ?? 9;
+  let size = opts.size ?? 9;
   const paddingX = opts.paddingX ?? 2;
+  const avail = opts.maxW - paddingX * 2;
+
+  if (opts.shrinkToFit) {
+    const min = opts.minSize ?? 5.5;
+    while (size > min && opts.font.widthOfTextAtSize(t, size) > avail) {
+      size -= 0.25;
+    }
+  }
 
   const words = t.split(" ");
   const lines: string[] = [];
@@ -124,7 +135,7 @@ function drawText(
   for (let i = 1; i < words.length; i++) {
     const w = words[i];
     const width = opts.font.widthOfTextAtSize(currentLine + " " + w, size);
-    if (width < opts.maxW - (paddingX * 2)) {
+    if (width < avail) {
       currentLine += " " + w;
     } else {
       lines.push(currentLine);
@@ -133,8 +144,12 @@ function drawText(
   }
   lines.push(currentLine);
 
+  // Campos de linha única (cabeçalho/lacunas) não podem transbordar para a
+  // linha de baixo e sobrepor o termo de responsabilidade.
+  const maxLines = opts.shrinkToFit ? 1 : 3;
+
   const lineHeight = size * 1.1;
-  const totalH = lines.length * lineHeight;
+  const totalH = Math.min(lines.length, maxLines) * lineHeight;
 
   // O template tem MediaBox deslocado (origem != 0,0). Todas as coordenadas
   // deste arquivo são medidas a partir do canto superior esquerdo VISÍVEL.
@@ -151,7 +166,7 @@ function drawText(
     startY = topY - opts.top + (totalH / 2) - size;
   }
 
-  for (const line of lines.slice(0, 3)) { // Permite até 3 linhas se couber
+  for (const line of lines.slice(0, maxLines)) {
     const w = opts.font.widthOfTextAtSize(line, size);
     const x = ox + (opts.center ? opts.x + (opts.maxW - w) / 2 : opts.x + paddingX);
     page.drawText(line, { x, y: startY, size, font: opts.font, color: rgb(0, 0, 0) });
@@ -201,16 +216,17 @@ export async function buildFichaOficialBytes(
       // (rev. 04/08/2026): Empresa/Data de Admissão em y 85 · Nome/Data de
       // Demissão em y 104,4 · Função/Matrícula/Folha em y 124.
       const R = 14.7;
-      drawText(p1, e.empresa, { x: 69, top: 85, maxW: 395, size: 9, font: bold, vCenterInRow: true, rowH: R });
-      drawText(p1, brDate(e.admissao), { x: 576, top: 85, maxW: 95, size: 9, font, vCenterInRow: true, rowH: R });
-      drawText(p1, e.nome, { x: 56, top: 104.4, maxW: 410, size: 9, font: bold, vCenterInRow: true, rowH: R });
-      if (e.demissao) drawText(p1, brDate(e.demissao), { x: 576, top: 104.4, maxW: 95, size: 9, font, vCenterInRow: true, rowH: R });
-      drawText(p1, e.funcao, { x: 63, top: 123.8, maxW: 165, size: 7.5, font, vCenterInRow: true, rowH: R });
-      drawText(p1, e.matricula, { x: 297, top: 124, maxW: 148, size: 9, font, vCenterInRow: true, rowH: R });
+      const fit = { shrinkToFit: true, vCenterInRow: true, rowH: R } as const;
+      drawText(p1, e.empresa, { x: 69, top: 85, maxW: 395, size: 9, font: bold, ...fit });
+      drawText(p1, brDate(e.admissao), { x: 576, top: 85, maxW: 95, size: 9, font, ...fit });
+      drawText(p1, e.nome, { x: 56, top: 104.4, maxW: 405, size: 9, font: bold, ...fit });
+      if (e.demissao) drawText(p1, brDate(e.demissao), { x: 576, top: 104.4, maxW: 95, size: 9, font, ...fit });
+      drawText(p1, e.funcao, { x: 63, top: 123.8, maxW: 158, size: 8, font, ...fit });
+      drawText(p1, e.matricula, { x: 297, top: 124, maxW: 140, size: 9, font, ...fit });
       // "Folha:" recebe a paginação da ficha (o campo PÁG. é fixo do template).
-      drawText(p1, `${c + 1}/${chunks.length}`, { x: 487, top: 124, maxW: 60, size: 9, font, vCenterInRow: true, rowH: R });
+      drawText(p1, `${c + 1}/${chunks.length}`, { x: 487, top: 124, maxW: 60, size: 9, font, ...fit });
       // Lacuna "recebi da empresa ______," (x 221,4 → 359,6 / linha y 162,8)
-      drawText(p1, e.empresa, { x: 221.4, top: 162.8, maxW: 138, size: 8, font, center: true, vCenterInRow: true, rowH: 12.1 });
+      drawText(p1, e.empresa, { x: 221.4, top: 162.8, maxW: 138, size: 8, minSize: 5, font, center: true, shrinkToFit: true, vCenterInRow: true, rowH: 12.1 });
       // "Local e Data:" (linha de x 75,6 a 261,2 / y 491,3)
       drawText(p1, block.localData, { x: 78, top: 491.3, maxW: 180, size: 9, font, vCenterInRow: true, rowH: 15.4 });
 
