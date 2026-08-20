@@ -361,6 +361,43 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
                     ))}
                   </div>
                 </div>
+
+                {!asoDispensado && (
+                  <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-3 space-y-2">
+                    <div className="text-xs font-black uppercase tracking-widest text-emerald-900">Anexar ASO demissional agora</div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <div className="space-y-1">
+                        <Label className="text-[10px] uppercase">Data de realização *</Label>
+                        <Input type="date" value={novoAsoData} onChange={(e) => setNovoAsoData(e.target.value)} />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[10px] uppercase">Aptidão</Label>
+                        <Select value={novoAsoAptidao} onValueChange={setNovoAsoAptidao}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="APTO">APTO</SelectItem>
+                            <SelectItem value="INAPTO">INAPTO</SelectItem>
+                            <SelectItem value="APTO COM RESTRIÇÕES">APTO COM RESTRIÇÕES</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[10px] uppercase">Arquivo (PDF/imagem)</Label>
+                        <Input type="file" accept="application/pdf,image/*" onChange={(e) => setNovoAsoFile(e.target.files?.[0] ?? null)} />
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => registrarAso.mutate()}
+                      disabled={registrarAso.isPending || !novoAsoData}
+                      className="text-[11px] font-black uppercase tracking-widest"
+                    >
+                      {registrarAso.isPending ? "Enviando…" : "Registrar ASO demissional"}
+                    </Button>
+                  </div>
+                )}
+
                 <label className="flex items-start gap-2 p-3 rounded-lg border border-amber-200 bg-amber-50 cursor-pointer">
                   <Checkbox checked={asoDispensado} onCheckedChange={(v) => { setAsoDispensado(!!v); if (v) setAsoExamId(null); }} />
                   <div className="text-xs">
