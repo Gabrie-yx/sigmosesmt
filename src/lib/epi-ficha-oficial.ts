@@ -246,14 +246,15 @@ export async function buildFichaOficialBytes(
         if (r.assinatura_snapshot) {
           const img = await embedSignature(out, r.assinatura_snapshot);
           if (img) {
+            const box2 = p2.getMediaBox();
             const boxW = COL.assEmp[1] - COL.assEmp[0] - 8;
             const boxH = ROW_H - 6;
             const scale = Math.min(boxW / img.width, boxH / img.height);
             const w = img.width * scale;
             const h = img.height * scale;
             p2.drawImage(img, {
-              x: COL.assEmp[0] + (COL.assEmp[1] - COL.assEmp[0] - w) / 2,
-              y: PAGE_H - rowTop - (ROW_H + h) / 2,
+              x: box2.x + COL.assEmp[0] + (COL.assEmp[1] - COL.assEmp[0] - w) / 2,
+              y: box2.y + box2.height - rowTop - (ROW_H + h) / 2,
               width: w,
               height: h,
             });
