@@ -51,6 +51,7 @@ export function CargoRiscosPanel({ roleId, lockRole = false }: { roleId?: string
   const [selectedRole, setSelectedRole] = useState<string | "all">(roleId ?? "all");
   const [q, setQ] = useState("");
   const [editing, setEditing] = useState<CargoRisco | null>(null);
+  const [adding, setAdding] = useState(false);
 
   const { data: roles = [] } = useQuery({
     queryKey: ["roles-ativos-min"],
