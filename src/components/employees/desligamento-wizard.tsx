@@ -182,7 +182,7 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
     enabled: !!emp?.id && open,
     queryFn: async () => {
       const { data, error } = await supabase.from("oss_emissoes")
-        .select("id, template_id, cargo_snapshot, status, emitido_em, pdf_path")
+        .select("id, template_id, cargo_snapshot, status, emitido_em, pdf_path, pdf_assinado_path")
         .eq("employee_id", emp.id)
         .order("emitido_em", { ascending: false });
       if (error) { console.error("[desligamento] falha ao buscar OSs", error); throw error; }
