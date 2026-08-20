@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { AlertTriangle, ShieldCheck, Activity, FlaskConical, Search, Pencil } from "lucide-react";
+import { AlertTriangle, ShieldCheck, Activity, FlaskConical, Search, Pencil, Plus } from "lucide-react";
 import { EditarCargoRiscoDialog } from "./editar-cargo-risco-dialog";
+import { AdicionarCargoRiscoDialog } from "./adicionar-cargo-risco-dialog";
 
 type CargoRisco = {
   id: string;
@@ -142,7 +143,7 @@ export function CargoRiscosPanel({ roleId, lockRole = false }: { roleId?: string
         <Card className="p-10 text-center text-slate-500">
           <ShieldCheck className="h-10 w-10 mx-auto mb-3 text-slate-300" />
           <p className="font-semibold">Nenhum risco cadastrado ainda</p>
-          <p className="text-sm mt-1">Apenas o cargo <b>Soldador</b> foi pré-populado como piloto a partir do LTCAT.</p>
+          <p className="text-sm mt-1">Use <b>Adicionar risco</b> para vincular agentes do catálogo e lançar intensidade/técnica de medição.</p>
         </Card>
       ) : (
         <div className="space-y-2">
@@ -203,6 +204,9 @@ export function CargoRiscosPanel({ roleId, lockRole = false }: { roleId?: string
             </Card>
           ))}
         </div>
+      )}
+      {effectiveRole !== "all" && (
+        <AdicionarCargoRiscoDialog roleId={effectiveRole} open={adding} onOpenChange={setAdding} />
       )}
       <EditarCargoRiscoDialog
         row={editing}
