@@ -135,19 +135,25 @@ function drawText(
 
   const lineHeight = size * 1.1;
   const totalH = lines.length * lineHeight;
-  
+
+  // O template tem MediaBox deslocado (origem != 0,0). Todas as coordenadas
+  // deste arquivo são medidas a partir do canto superior esquerdo VISÍVEL.
+  const box = page.getMediaBox();
+  const topY = box.y + box.height;
+  const ox = box.x;
+
   let startY: number;
   if (opts.vCenterInRow && opts.rowH) {
     // top é o topo da célula. Centraliza o bloco de texto na altura da linha.
-    startY = PAGE_H - opts.top - (opts.rowH - totalH) / 2 - size;
+    startY = topY - opts.top - (opts.rowH - totalH) / 2 - size;
   } else {
     // fallback para o comportamento antigo (baseline centralizada)
-    startY = PAGE_H - opts.top + (totalH / 2) - size;
+    startY = topY - opts.top + (totalH / 2) - size;
   }
 
   for (const line of lines.slice(0, 3)) { // Permite até 3 linhas se couber
     const w = opts.font.widthOfTextAtSize(line, size);
-    const x = opts.center ? opts.x + (opts.maxW - w) / 2 : opts.x + paddingX;
+    const x = ox + (opts.center ? opts.x + (opts.maxW - w) / 2 : opts.x + paddingX);
     page.drawText(line, { x, y: startY, size, font: opts.font, color: rgb(0, 0, 0) });
     startY -= lineHeight;
   }
