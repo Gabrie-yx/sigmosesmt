@@ -167,9 +167,12 @@ async function embedSignature(pdf: PDFDocument, dataUrl: string) {
   }
 }
 
-export async function buildFichaOficialBytes(blocks: FichaOficialBlock[]): Promise<Uint8Array> {
+export async function buildFichaOficialBytes(
+  blocks: FichaOficialBlock[],
+  templateOverride?: ArrayBuffer | Uint8Array,
+): Promise<Uint8Array> {
   if (!blocks.length) throw new Error("Nenhuma ficha para gerar.");
-  const templateBytes = await loadTemplateBytes("FOR-SEG-02");
+  const templateBytes = templateOverride ?? (await loadTemplateBytes("FOR-SEG-02"));
   const template = await PDFDocument.load(templateBytes);
   const out = await PDFDocument.create();
   const font = await out.embedFont(StandardFonts.Helvetica);
