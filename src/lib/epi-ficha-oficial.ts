@@ -39,6 +39,8 @@ export type FichaOficialBlock = {
   entregas: FichaOficialEntrega[];
   /** Texto do campo "Local e Data" (ex.: "Belém, 30/07/2026"). */
   localData?: string | null;
+  /** Assinatura do empregado (data URL ou URL pública) — campo da página 1. */
+  assinaturaEmpregado?: string | null;
 };
 
 const PAGE_H = 595.2;
@@ -177,6 +179,14 @@ function drawText(
 
 async function embedSignature(pdf: PDFDocument, dataUrl: string) {
   try {
+    if (!dataUrl.startsWith("data:")) {
+      const res = await fetch(dataUrl);
+      if (!res.ok) return null;
+      const buf = new Uint8Array(await res.arrayBuffer());
+      const type = res.headers.get("content-type") ?? "";
+      const png = type.includes("png") || (buf[0] === 0x89 && buf[1] === 0x50);
+      return png ? await pdf.embedPng(buf) : await pdf.embedJpg(buf);
+    }
     const isPng = dataUrl.includes("image/png");
     const b64 = dataUrl.split(",")[1] ?? "";
     const bin = atob(b64);
@@ -229,6 +239,23 @@ export async function buildFichaOficialBytes(
       drawText(p1, "Estaleiro DMN", { x: 221.4, top: 162.8, maxW: 138, size: 8, minSize: 5, font, center: true, shrinkToFit: true, vCenterInRow: true, rowH: 12.1 });
       // "Local e Data:" (linha de x 75,6 a 261,2 / y 491,3)
       drawText(p1, block.localData, { x: 78, top: 491.3, maxW: 180, size: 9, font, vCenterInRow: true, rowH: 15.4 });
+
+      // "Assinatura do Empregado: ____" (linha de x 392 a 616 / baseline y 100,4)
+      if (block.assinaturaEmpregado) {
+        const sig = await embedSignature(out, block.assinaturaEmpregado);
+        if (sig) {
+          const zoneX = 392, zoneW = 222, maxH = 34;
+          const scale = Math.min(zoneW / sig.width, maxH / sig.height);
+          const w = sig.width * scale;
+          const h = sig.height * scale;
+          p1.drawImage(sig, {
+            x: zoneX + (zoneW - w) / 2,
+            y: 102,
+            width: w,
+            height: h,
+          });
+        }
+      }
 
 
       // O cabeçalho da tabela já existe no template — nunca redesenhar.
