@@ -73,6 +73,10 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
   const [asoExamId, setAsoExamId] = useState<string | null>(null);
   const [asoDispensado, setAsoDispensado] = useState(false);
   const [asoJustif, setAsoJustif] = useState("");
+  const [novoAsoData, setNovoAsoData] = useState<string>(() => new Date().toISOString().slice(0, 10));
+  const [novoAsoAptidao, setNovoAsoAptidao] = useState<string>("APTO");
+  const [novoAsoFile, setNovoAsoFile] = useState<File | null>(null);
+
 
   // Passo 3
   const [episDevolvidos, setEpisDevolvidos] = useState<Record<string, boolean>>({});
