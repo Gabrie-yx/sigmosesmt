@@ -68,7 +68,7 @@ export function FichasMensaisPanel({ embedded = false }: { embedded?: boolean })
     queryFn: async () => {
       const [entregasRes, empsRes, fichasRes, compsRes, rolesRes, docsRes] = await Promise.all([
         supabase.from("epi_deliveries").select("employee_id, data_entrega").limit(20000),
-        supabase.from("employees").select("id, nome, matricula, cpf, funcao, role_id, company_id, admissao"),
+        supabase.from("employees").select("id, nome, matricula, cpf, funcao, role_id, company_id, admissao, assinatura_url"),
         supabase.from("epi_fichas_mensais").select("*"),
         supabase.from("companies").select("id, name"),
         supabase.from("roles").select("id, name"),
@@ -208,6 +208,7 @@ export function FichasMensaisPanel({ embedded = false }: { embedded?: boolean })
           },
           entregas: epis as any[],
           localData: `Belém, ${new Date().toLocaleDateString("pt-BR")}`,
+          assinaturaEmpregado: (r.emp as any)?.assinatura_url ?? null,
         },
       ]);
     } catch (e: any) {
