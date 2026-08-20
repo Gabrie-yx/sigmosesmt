@@ -195,17 +195,18 @@ export async function buildFichaOficialBytes(
       out.addPage(p1);
       out.addPage(p2);
 
-      const e = { ...block.emp, empresa: "Estaleiro DMN" };
+      // Empresa do cabeçalho = empregadora do funcionário (contratada).
+      const e = { ...block.emp, empresa: block.emp.empresa || "Estaleiro DMN" };
       // Cabeçalho (página 1) — coordenadas medidas nos rótulos do PDF-mãe
       // (rev. 04/08/2026): Empresa/Data de Admissão em y 85 · Nome/Data de
       // Demissão em y 104,4 · Função/Matrícula/Folha em y 124.
       const R = 14.7;
-      drawText(p1, e.empresa, { x: 59, top: 85, maxW: 410, size: 9, font: bold, vCenterInRow: true, rowH: R });
-      drawText(p1, brDate(e.admissao), { x: 566, top: 85, maxW: 100, size: 9, font, vCenterInRow: true, rowH: R });
-      drawText(p1, e.nome, { x: 45, top: 104.4, maxW: 425, size: 9, font: bold, vCenterInRow: true, rowH: R });
-      if (e.demissao) drawText(p1, brDate(e.demissao), { x: 566, top: 104.4, maxW: 100, size: 9, font, vCenterInRow: true, rowH: R });
-      drawText(p1, e.funcao, { x: 52, top: 123.8, maxW: 178, size: 7.5, font, vCenterInRow: true, rowH: R });
-      drawText(p1, e.matricula, { x: 287, top: 124, maxW: 160, size: 9, font, vCenterInRow: true, rowH: R });
+      drawText(p1, e.empresa, { x: 69, top: 85, maxW: 395, size: 9, font: bold, vCenterInRow: true, rowH: R });
+      drawText(p1, brDate(e.admissao), { x: 576, top: 85, maxW: 95, size: 9, font, vCenterInRow: true, rowH: R });
+      drawText(p1, e.nome, { x: 56, top: 104.4, maxW: 410, size: 9, font: bold, vCenterInRow: true, rowH: R });
+      if (e.demissao) drawText(p1, brDate(e.demissao), { x: 576, top: 104.4, maxW: 95, size: 9, font, vCenterInRow: true, rowH: R });
+      drawText(p1, e.funcao, { x: 63, top: 123.8, maxW: 165, size: 7.5, font, vCenterInRow: true, rowH: R });
+      drawText(p1, e.matricula, { x: 297, top: 124, maxW: 148, size: 9, font, vCenterInRow: true, rowH: R });
       // "Folha:" recebe a paginação da ficha (o campo PÁG. é fixo do template).
       drawText(p1, `${c + 1}/${chunks.length}`, { x: 487, top: 124, maxW: 60, size: 9, font, vCenterInRow: true, rowH: R });
       // Lacuna "recebi da empresa ______," (x 221,4 → 359,6 / linha y 162,8)
