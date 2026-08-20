@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Download, Printer, X, PenLine, ImagePlus, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import type jsPDF from "jspdf";
-import { printPdf, renderPdfToImagePagesProgressive } from "@/lib/pdf-print";
+import { printImagePages, renderPdfToImagePages, renderPdfToImagePagesProgressive } from "@/lib/pdf-print";
 import { SignaturePadDialog } from "@/components/signature-pad-dialog";
 import { AnexosSelector } from "@/components/pdf-anexos/anexos-selector";
 import { mergeAnexos } from "@/lib/pdf-anexos-merge";
@@ -130,10 +130,15 @@ export function PDFPreviewDialog({ open, onClose, doc, fileName, title, signable
   }
   async function print() {
     if (!doc) return;
-    // Impressão nativa do PDF (vetor) — preserva o texto preto sólido.
-    // Fallback automático para raster está dentro de printPdf().
-    const blob = await blobComAnexos();
-    await printPdf(blob, fileName);
+    try {
+      // Imprime as páginas renderizadas no próprio documento. O iframe nativo
+      // pode mandar a página do SIGMO (em branco) para a impressora em alguns
+      // navegadores, especialmente quando o sistema está servido por HTTP.
+      const printablePages = pages.length ? pages : await renderPdfToImagePages(await blobComAnexos());
+      await printImagePages(printablePages, fileName);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Não foi possível preparar o documento para impressão.");
+    }
   }
 
   async function share() {
