@@ -736,14 +736,14 @@ async function buildDefaults(emp: AnyRow, company: AnyRow | null, role: AnyRow |
 
   // Profissiografia (14.2) — cadeia de fallback para nunca sair em branco
   let descricao = atividadesToTexto(role?.atividades) || atividadesToTexto(role?.descricao_atividades);
-  if (!descricao && emp?.role_id) {
-    // 3º nível: descrição do GHE/PGR do cargo (inventário de riscos)
-    const { data: inv } = await supabase
-      .from("pgr_inventario_riscos")
-      .select("descricao_atividade")
-      .eq("role_id", emp.role_id)
-      .limit(5);
-    descricao = Array.from(new Set(((inv as any[]) ?? []).map((i) => i?.descricao_atividade).filter(Boolean))).join("; ");
+  if (!descricao && (emp?.ghe_id ?? role?.ghe_id)) {
+    // 3º nível: ambiente/atividade descritos no GHE do PGR
+    const { data: ghe } = await supabase
+      .from("pgr_ghe")
+      .select("descricao_ambiente, setor")
+      .eq("id", emp?.ghe_id ?? role?.ghe_id)
+      .maybeSingle();
+    descricao = String((ghe as any)?.descricao_ambiente ?? "").trim();
   }
   if (!descricao) {
     const cargo = role?.name ?? "—";
