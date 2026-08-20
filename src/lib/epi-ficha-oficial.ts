@@ -204,7 +204,7 @@ export async function buildFichaOficialBytes(
       drawText(p1, brDate(e.admissao), { x: 566, top: 85, maxW: 100, size: 9, font, vCenterInRow: true, rowH: R });
       drawText(p1, e.nome, { x: 45, top: 104.4, maxW: 425, size: 9, font: bold, vCenterInRow: true, rowH: R });
       if (e.demissao) drawText(p1, brDate(e.demissao), { x: 566, top: 104.4, maxW: 100, size: 9, font, vCenterInRow: true, rowH: R });
-      drawText(p1, e.funcao, { x: 52, top: 123.8, maxW: 178, size: 9, font, vCenterInRow: true, rowH: R });
+      drawText(p1, e.funcao, { x: 52, top: 123.8, maxW: 178, size: 7.5, font, vCenterInRow: true, rowH: R });
       drawText(p1, e.matricula, { x: 287, top: 124, maxW: 160, size: 9, font, vCenterInRow: true, rowH: R });
       // "Folha:" recebe a paginação da ficha (o campo PÁG. é fixo do template).
       drawText(p1, `${c + 1}/${chunks.length}`, { x: 487, top: 124, maxW: 60, size: 9, font, vCenterInRow: true, rowH: R });
