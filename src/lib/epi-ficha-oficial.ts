@@ -244,13 +244,12 @@ export async function buildFichaOficialBytes(
       if (block.assinaturaEmpregado) {
         const sig = await embedSignature(out, block.assinaturaEmpregado);
         if (sig) {
-          const b1 = p1.getMediaBox();
           const zoneX = 392, zoneW = 222, maxH = 34;
           const scale = Math.min(zoneW / sig.width, maxH / sig.height);
           const w = sig.width * scale;
           const h = sig.height * scale;
           p1.drawImage(sig, {
-            x: b1.x + zoneX + (zoneW - w) / 2 - b1.x * 0,
+            x: zoneX + (zoneW - w) / 2,
             y: 102,
             width: w,
             height: h,
