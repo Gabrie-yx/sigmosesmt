@@ -385,9 +385,10 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
 
             {step === 2 && (
               <div className="space-y-3">
-                <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-xs text-blue-900">
-                  <b>NR-07 item 7.5.15.4</b>: ASO demissional é obrigatório, exceto se o último ASO tiver sido realizado há menos de <b>135 dias</b> (grau de risco 1/2) ou <b>90 dias</b> (grau 3/4). Nesse caso registre a dispensa.
+                <div className="rounded-lg bg-muted/40 border border-border p-3 text-xs text-muted-foreground">
+                  <b className="text-foreground">NR-07 item 7.5.15.4</b>: ASO demissional é obrigatório, exceto se o último ASO tiver sido realizado há menos de <b className="text-foreground">135 dias</b> (grau de risco 1/2) ou <b className="text-foreground">90 dias</b> (grau 3/4). Nesse caso registre a dispensa.
                 </div>
+
                 <div className="space-y-1.5">
                   <Label>Selecione o ASO demissional *</Label>
                   <div className="rounded-lg border border-border divide-y divide-border max-h-56 overflow-y-auto">
