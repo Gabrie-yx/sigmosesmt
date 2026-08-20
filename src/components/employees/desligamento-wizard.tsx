@@ -182,7 +182,7 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
     enabled: !!emp?.id && open,
     queryFn: async () => {
       const { data, error } = await supabase.from("oss_emissoes")
-        .select("id, template_id, cargo_snapshot, status, emitido_em, pdf_path")
+        .select("id, template_id, cargo_snapshot, status, emitido_em, pdf_path, pdf_assinado_path")
         .eq("employee_id", emp.id)
         .order("emitido_em", { ascending: false });
       if (error) { console.error("[desligamento] falha ao buscar OSs", error); throw error; }
@@ -325,7 +325,40 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
           observacoes: obs,
           sha256: id,
         });
-        const blob = doc.output("blob") as Blob;
+        // Anexa as Ordens de Serviço existentes (evidência documental) ao final do pacote.
+        const anexosOs: { bucket: string; path: string; rotulo: string }[] = [
+          ...(oss ?? [])
+            .map((o: any) => {
+              const p = o.pdf_assinado_path || o.pdf_path;
+              if (!p) return null;
+              return {
+                bucket: "oss-pdfs",
+                path: p as string,
+                rotulo: `OS ${o.oss_templates?.codigo ?? ""} ${o.oss_templates?.procedimento ?? o.cargo_snapshot ?? ""}`.trim(),
+              };
+            })
+            .filter(Boolean) as any[],
+          ...(ossDocs ?? [])
+            .filter((d: any) => d.file_path && /\.pdf$/i.test(d.file_path))
+            .map((d: any) => ({
+              bucket: "employee-docs",
+              path: d.file_path as string,
+              rotulo: d.descricao || d.tipo || "Ordem de Serviço",
+            })),
+        ];
+
+        let finalBytes: ArrayBuffer | Uint8Array = doc.output("arraybuffer") as ArrayBuffer;
+        if (anexosOs.length > 0) {
+          const { anexarOsAoPacote } = await import("@/lib/anexar-os-pacote");
+          const res = await anexarOsAoPacote(finalBytes, anexosOs);
+          finalBytes = res.bytes;
+          if (res.anexadas.length) toast.success(`${res.anexadas.length} OS anexada(s) ao pacote`);
+          if (res.falhas.length) toast.warning(`Não foi possível anexar: ${res.falhas.join(", ")}`);
+        } else {
+          toast.warning("Nenhuma OS assinada localizada — lacuna registrada no pacote.");
+        }
+
+        const blob = new Blob([finalBytes as BlobPart], { type: "application/pdf" });
         const path = `${id}.pdf`;
         const up = await supabase.storage.from("desligamento-pacotes").upload(path, blob, {
           contentType: "application/pdf",
@@ -334,7 +367,12 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
         if (!up.error) {
           await supabase.from("desligamento_pacotes" as any).update({ pdf_url: path }).eq("id", id);
         }
-        doc.save(`pacote_rescisao_${emp.nome?.toLowerCase().replace(/\s+/g, "_")}.pdf`);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `pacote_rescisao_${emp.nome?.toLowerCase().replace(/\s+/g, "_")}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
       } catch (e) { console.error(e); }
       return id;
     },
