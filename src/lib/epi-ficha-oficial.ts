@@ -149,7 +149,7 @@ function drawText(
   const maxLines = opts.shrinkToFit ? 1 : 3;
 
   const lineHeight = size * 1.1;
-  const totalH = lines.length * lineHeight;
+  const totalH = Math.min(lines.length, maxLines) * lineHeight;
 
   // O template tem MediaBox deslocado (origem != 0,0). Todas as coordenadas
   // deste arquivo são medidas a partir do canto superior esquerdo VISÍVEL.
