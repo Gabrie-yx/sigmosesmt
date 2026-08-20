@@ -174,20 +174,69 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
     setEpisDevolvidos((cur) => ({ ...preset, ...cur }));
   }, [epis]);
 
-  // OSs — traz TODO o histórico (todos os status) para o pacote de rescisão,
-  // igual à lógica dos EPIs. Assim OSs já SUBSTITUIDAS, VENCIDAS ou antigas
-  // aparecem no PDF do desligamento (rastreabilidade NR-01 · 5 anos pós-contrato).
+  // OSs — traz TODO o histórico (todos os status) para o pacote de rescisão.
+  // Consulta em 2 etapas (sem join embutido) porque o embed oss_templates pode
+  // falhar por RLS/cache de schema e devolvia lista vazia silenciosamente.
   const { data: oss } = useQuery({
     queryKey: ["desl-oss", emp?.id],
     enabled: !!emp?.id && open,
     queryFn: async () => {
-      const { data } = await supabase.from("oss_emissoes")
-        .select("id, cargo_snapshot, status, emitido_em, oss_templates(codigo, procedimento)")
+      const { data, error } = await supabase.from("oss_emissoes")
+        .select("id, template_id, cargo_snapshot, status, emitido_em, pdf_path")
         .eq("employee_id", emp.id)
         .order("emitido_em", { ascending: false });
+      if (error) { console.error("[desligamento] falha ao buscar OSs", error); throw error; }
+      const rows = (data ?? []) as any[];
+      const ids = [...new Set(rows.map((r) => r.template_id).filter(Boolean))];
+      let tpls: Record<string, any> = {};
+      if (ids.length) {
+        const { data: t } = await supabase.from("oss_templates").select("id, codigo, procedimento").in("id", ids);
+        (t ?? []).forEach((x: any) => { tpls[x.id] = x; });
+      }
+      return rows.map((r) => ({ ...r, oss_templates: tpls[r.template_id] ?? null }));
+    },
+  });
+
+  // Documentos de OS anexados na ficha (upload manual / legado)
+  const { data: ossDocs } = useQuery({
+    queryKey: ["desl-oss-docs", emp?.id],
+    enabled: !!emp?.id && open,
+    queryFn: async () => {
+      const { data } = await supabase.from("employee_docs")
+        .select("id, tipo, descricao, file_path, uploaded_at")
+        .eq("employee_id", emp.id)
+        .or("tipo.ilike.%OS%,tipo.ilike.%ordem de servi%,descricao.ilike.%ordem de servi%")
+        .order("uploaded_at", { ascending: false });
       return data ?? [];
     },
   });
+
+  // Upload manual de OS assinada (quando não existe emissão no sistema)
+  const [ossFile, setOssFile] = useState<File | null>(null);
+  const uploadOs = useMutation({
+    mutationFn: async () => {
+      if (!emp?.id || !ossFile) throw new Error("Selecione o arquivo da OS");
+      const path = `${emp.id}/os/${Date.now()}_${ossFile.name.replace(/[^\w.\-]+/g, "_")}`;
+      const { error: upErr } = await supabase.storage.from("employee-docs").upload(path, ossFile, { upsert: false });
+      if (upErr) throw upErr;
+      const { error } = await supabase.from("employee_docs").insert({
+        employee_id: emp.id,
+        tipo: "Ordem de Serviço (OS)",
+        descricao: "OS anexada no processo de desligamento",
+        file_path: path,
+        sem_validade: true,
+      } as any);
+      if (error) throw error;
+    },
+    onSuccess: async () => {
+      toast.success("OS anexada ao histórico");
+      setOssFile(null);
+      await qc.invalidateQueries({ queryKey: ["desl-oss-docs", emp?.id] });
+      await qc.invalidateQueries({ queryKey: ["docs", emp?.id] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Falha ao anexar OS"),
+  });
+
 
   // PPP existente
   const { data: pppExistente } = useQuery({
