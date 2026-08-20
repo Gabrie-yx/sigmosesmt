@@ -154,6 +154,7 @@ function SesmtDocsPage() {
   const [filterTipo, setFilterTipo] = useState<string>("ALL");
   const [openDialog, setOpenDialog] = useState(false);
   const [historyDoc, setHistoryDoc] = useState<SesmtDoc | null>(null);
+  const [leitorDoc, setLeitorDoc] = useState<SesmtDoc | null>(null);
 
   const { data: docs = [], isLoading } = useQuery({
     queryKey: ["sesmt-docs"],
