@@ -115,7 +115,16 @@ export function CargoRiscosPanel({ roleId, lockRole = false }: { roleId?: string
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar por risco, cargo ou fonte geradora..." className="pl-9 h-10 bg-white" />
         </div>
+        {effectiveRole !== "all" && (
+          <Button onClick={() => setAdding(true)} className="h-10 gap-1.5 bg-rose-600 hover:bg-rose-700">
+            <Plus className="h-4 w-4" /> Adicionar risco
+          </Button>
+        )}
       </div>
+
+      <p className="text-xs text-slate-500 -mt-1">
+        Intensidade + unidade alimentam o campo <b>15.4</b> do PPP · Técnica de medição alimenta o <b>15.5</b> (NHO-01, NHO-06, NR-15 Anexo…).
+      </p>
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
