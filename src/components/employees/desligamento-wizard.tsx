@@ -394,7 +394,7 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
                   <div className="rounded-lg border border-border divide-y divide-border max-h-56 overflow-y-auto">
                     {(asos ?? []).length === 0 && <div className="text-xs text-muted-foreground p-3">Nenhum exame no histórico.</div>}
                     {(asos ?? []).map((a: any) => (
-                      <label key={a.id} className={`flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-muted/40 ${asoExamId === a.id ? "bg-emerald-50" : ""}`}>
+                      <label key={a.id} className={`flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-accent/40 ${asoExamId === a.id ? "bg-accent/60" : ""}`}>
                         <input type="radio" name="aso" checked={asoExamId === a.id} onChange={() => { setAsoExamId(a.id); setAsoDispensado(false); }} disabled={asoDispensado} />
                         <div className="flex-1 text-xs">
                           <div className="font-bold">{a.tipo_exame ?? "Exame"} — {a.data_realizacao ? new Date(a.data_realizacao + "T00:00:00").toLocaleDateString("pt-BR") : "sem data"}</div>
