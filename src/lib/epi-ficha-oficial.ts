@@ -240,6 +240,24 @@ export async function buildFichaOficialBytes(
       // "Local e Data:" (linha de x 75,6 a 261,2 / y 491,3)
       drawText(p1, block.localData, { x: 78, top: 491.3, maxW: 180, size: 9, font, vCenterInRow: true, rowH: 15.4 });
 
+      // "Assinatura do Empregado: ____" (linha de x 392 a 616 / baseline y 100,4)
+      if (block.assinaturaEmpregado) {
+        const sig = await embedSignature(out, block.assinaturaEmpregado);
+        if (sig) {
+          const b1 = p1.getMediaBox();
+          const zoneX = 392, zoneW = 222, maxH = 34;
+          const scale = Math.min(zoneW / sig.width, maxH / sig.height);
+          const w = sig.width * scale;
+          const h = sig.height * scale;
+          p1.drawImage(sig, {
+            x: b1.x + zoneX + (zoneW - w) / 2 - b1.x * 0,
+            y: 102,
+            width: w,
+            height: h,
+          });
+        }
+      }
+
 
       // O cabeçalho da tabela já existe no template — nunca redesenhar.
       // Grade de entregas (página 2)
