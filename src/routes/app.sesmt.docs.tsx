@@ -37,8 +37,10 @@ import {
   Pencil,
   X,
   Check,
+  ScanText,
 } from "lucide-react";
 import { toast } from "sonner";
+import { LeitorDocSSTDialog } from "@/components/sesmt/leitor-doc-sst-dialog";
 
 export const Route = createFileRoute("/app/sesmt/docs")({
   component: SesmtDocsPage,
@@ -152,6 +154,7 @@ function SesmtDocsPage() {
   const [filterTipo, setFilterTipo] = useState<string>("ALL");
   const [openDialog, setOpenDialog] = useState(false);
   const [historyDoc, setHistoryDoc] = useState<SesmtDoc | null>(null);
+  const [leitorDoc, setLeitorDoc] = useState<SesmtDoc | null>(null);
 
   const { data: docs = [], isLoading } = useQuery({
     queryKey: ["sesmt-docs"],
@@ -328,6 +331,17 @@ function SesmtDocsPage() {
                     >
                       <History className="h-4 w-4" />
                     </Button>
+                    {["PGR", "LTCAT", "PCMSO", "PPRA", "Laudo de Insalubridade"].includes(d.tipo) && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-blue-700 hover:bg-blue-50"
+                        title="Ler documento e alimentar o sistema"
+                        onClick={() => setLeitorDoc(d)}
+                      >
+                        <ScanText className="h-4 w-4" />
+                      </Button>
+                    )}
                     {isAdmin && (
                       <Button
                         size="sm"
@@ -353,6 +367,12 @@ function SesmtDocsPage() {
         onClose={() => setHistoryDoc(null)}
         canEdit={isEditor}
         canDelete={isAdmin}
+      />
+
+      <LeitorDocSSTDialog
+        doc={leitorDoc as any}
+        open={!!leitorDoc}
+        onOpenChange={(v) => !v && setLeitorDoc(null)}
       />
     </div>
   );
