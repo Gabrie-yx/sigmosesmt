@@ -73,6 +73,10 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
   const [asoExamId, setAsoExamId] = useState<string | null>(null);
   const [asoDispensado, setAsoDispensado] = useState(false);
   const [asoJustif, setAsoJustif] = useState("");
+  const [novoAsoData, setNovoAsoData] = useState<string>(() => new Date().toISOString().slice(0, 10));
+  const [novoAsoAptidao, setNovoAsoAptidao] = useState<string>("APTO");
+  const [novoAsoFile, setNovoAsoFile] = useState<File | null>(null);
+
 
   // Passo 3
   const [episDevolvidos, setEpisDevolvidos] = useState<Record<string, boolean>>({});
@@ -103,6 +107,40 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
       return data ?? [];
     },
   });
+
+  // Registra um ASO demissional na hora (com upload opcional do documento)
+  const registrarAso = useMutation({
+    mutationFn: async () => {
+      if (!emp?.id) throw new Error("Funcionário inválido");
+      if (!novoAsoData) throw new Error("Informe a data de realização");
+      let anexo_path: string | null = null;
+      if (novoAsoFile) {
+        const path = `${emp.id}/exames/${Date.now()}_${novoAsoFile.name.replace(/[^\w.\-]+/g, "_")}`;
+        const { error: upErr } = await supabase.storage.from("employee-docs").upload(path, novoAsoFile, { upsert: false });
+        if (upErr) throw upErr;
+        anexo_path = path;
+      }
+      const { data: inserted, error } = await supabase.from("employee_exams").insert({
+        employee_id: emp.id,
+        tipo_exame: "ASO Demissional",
+        natureza: "DEMISSIONAL",
+        data_realizacao: novoAsoData,
+        aptidao: novoAsoAptidao,
+        anexo_path,
+      } as any).select("id").single();
+      if (error) throw error;
+      return inserted?.id as string;
+    },
+    onSuccess: async (id) => {
+      toast.success("ASO demissional registrado");
+      setNovoAsoFile(null);
+      await qc.invalidateQueries({ queryKey: ["desl-asos", emp?.id] });
+      if (id) { setAsoExamId(id); setAsoDispensado(false); }
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Falha ao registrar ASO"),
+  });
+
+
 
   // EPIs em posse
   const { data: epis } = useQuery({
@@ -361,6 +399,43 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
                     ))}
                   </div>
                 </div>
+
+                {!asoDispensado && (
+                  <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-3 space-y-2">
+                    <div className="text-xs font-black uppercase tracking-widest text-emerald-900">Anexar ASO demissional agora</div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <div className="space-y-1">
+                        <Label className="text-[10px] uppercase">Data de realização *</Label>
+                        <Input type="date" value={novoAsoData} onChange={(e) => setNovoAsoData(e.target.value)} />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[10px] uppercase">Aptidão</Label>
+                        <Select value={novoAsoAptidao} onValueChange={setNovoAsoAptidao}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="APTO">APTO</SelectItem>
+                            <SelectItem value="INAPTO">INAPTO</SelectItem>
+                            <SelectItem value="APTO COM RESTRIÇÕES">APTO COM RESTRIÇÕES</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[10px] uppercase">Arquivo (PDF/imagem)</Label>
+                        <Input type="file" accept="application/pdf,image/*" onChange={(e) => setNovoAsoFile(e.target.files?.[0] ?? null)} />
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => registrarAso.mutate()}
+                      disabled={registrarAso.isPending || !novoAsoData}
+                      className="text-[11px] font-black uppercase tracking-widest"
+                    >
+                      {registrarAso.isPending ? "Enviando…" : "Registrar ASO demissional"}
+                    </Button>
+                  </div>
+                )}
+
                 <label className="flex items-start gap-2 p-3 rounded-lg border border-amber-200 bg-amber-50 cursor-pointer">
                   <Checkbox checked={asoDispensado} onCheckedChange={(v) => { setAsoDispensado(!!v); if (v) setAsoExamId(null); }} />
                   <div className="text-xs">
