@@ -3417,6 +3417,7 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
       {signerSrc && (
         <Suspense fallback={null}>
           <PdfSignerDialog
+*** noop
             open={!!signerSrc}
             onClose={() => setSignerSrc(null)}
             source={signerSrc?.bytes ?? null}
