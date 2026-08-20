@@ -39,6 +39,8 @@ export type FichaOficialBlock = {
   entregas: FichaOficialEntrega[];
   /** Texto do campo "Local e Data" (ex.: "Belém, 30/07/2026"). */
   localData?: string | null;
+  /** Assinatura do empregado (data URL ou URL pública) — campo da página 1. */
+  assinaturaEmpregado?: string | null;
 };
 
 const PAGE_H = 595.2;
@@ -177,6 +179,14 @@ function drawText(
 
 async function embedSignature(pdf: PDFDocument, dataUrl: string) {
   try {
+    if (!dataUrl.startsWith("data:")) {
+      const res = await fetch(dataUrl);
+      if (!res.ok) return null;
+      const buf = new Uint8Array(await res.arrayBuffer());
+      const type = res.headers.get("content-type") ?? "";
+      const png = type.includes("png") || (buf[0] === 0x89 && buf[1] === 0x50);
+      return png ? await pdf.embedPng(buf) : await pdf.embedJpg(buf);
+    }
     const isPng = dataUrl.includes("image/png");
     const b64 = dataUrl.split(",")[1] ?? "";
     const bin = atob(b64);
