@@ -211,7 +211,7 @@ export function LeitorDocSSTDialog({
           intensidade: Number.isFinite(valor) ? valor : null,
           unidade: l.unidade || null,
           tecnica_medicao: l.tecnica || null,
-          status_avaliacao: "QUANTITATIVA",
+          status_avaliacao: "AVALIADO",
           data_avaliacao: doc.data_emissao ?? new Date().toISOString().slice(0, 10),
           responsavel_avaliacao: `Importado de ${doc.tipo}${doc.titulo ? ` — ${doc.titulo}` : ""}`,
           ativo: true,
