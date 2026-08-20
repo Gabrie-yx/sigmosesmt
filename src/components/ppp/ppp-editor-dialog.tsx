@@ -662,6 +662,21 @@ function RmBtn({ onClick }: { onClick: () => void }) {
 
 /* ============================== Defaults ============================== */
 
+/** Normaliza `roles.atividades` (texto, array ou jsonb) em texto corrido. */
+function atividadesToTexto(v: any): string {
+  if (!v) return "";
+  if (typeof v === "string") return v.trim();
+  if (Array.isArray(v)) {
+    return v
+      .map((i) => (typeof i === "string" ? i : i?.descricao ?? i?.atividade ?? i?.nome ?? ""))
+      .filter(Boolean)
+      .join("; ")
+      .trim();
+  }
+  if (typeof v === "object") return String(v.descricao ?? v.texto ?? "").trim();
+  return "";
+}
+
 async function buildDefaults(emp: AnyRow, company: AnyRow | null, role: AnyRow | null): Promise<PPPDados> {
   const d = emptyPPPDados();
   // Empresa
@@ -676,7 +691,11 @@ async function buildDefaults(emp: AnyRow, company: AnyRow | null, role: AnyRow |
   d.trab_matricula_esocial = emp?.pis ?? emp?.matricula ?? "";
   d.trab_admissao = fmtBR(emp?.admissao);
 
-  const periodo = `${fmtBR(emp?.admissao) || "—"} a atual`;
+  // Período: fecha na data de desligamento quando houver (nunca "atual" para desligado)
+  const inicio = fmtBR(emp?.admissao) || "—";
+  const fimISO = emp?.data_desligamento ?? null;
+  const fim = fimISO ? fmtBR(fimISO) : String(emp?.status ?? "").toUpperCase() === "DESLIGADO" ? "" : "atual";
+  const periodo = `${inicio} a ${fim || "—"}`;
   // Lotação — CBO vem do CARGO (role), não do funcionário
   d.lotacoes = [{
     periodo,
@@ -687,13 +706,9 @@ async function buildDefaults(emp: AnyRow, company: AnyRow | null, role: AnyRow |
     cbo: role?.cbo ?? "",
     gfip_esocial: "00",
   }];
-  // Profissiografia — do cargo
-  d.profissiografias = [{
-    periodo,
-    descricao: role?.atividades ?? role?.descricao_atividades ?? "",
-  }];
 
   // Riscos do cargo
+  let nomesRiscos: string[] = [];
   if (emp?.role_id) {
     const { data: rs } = await supabase
       .from("cargo_riscos")
@@ -716,7 +731,29 @@ async function buildDefaults(emp: AnyRow, company: AnyRow | null, role: AnyRow |
         ca_epi: r.ca_epi ?? "",
       } as PPPRisco;
     });
+    nomesRiscos = Array.from(new Set(d.riscos.map((r) => r.fator_risco).filter((n) => n && n !== "—")));
   }
+
+  // Profissiografia (14.2) — cadeia de fallback para nunca sair em branco
+  let descricao = atividadesToTexto(role?.atividades) || atividadesToTexto(role?.descricao_atividades);
+  if (!descricao && emp?.role_id) {
+    // 3º nível: descrição do GHE/PGR do cargo (inventário de riscos)
+    const { data: inv } = await supabase
+      .from("pgr_inventario_riscos")
+      .select("descricao_atividade")
+      .eq("role_id", emp.role_id)
+      .limit(5);
+    descricao = Array.from(new Set(((inv as any[]) ?? []).map((i) => i?.descricao_atividade).filter(Boolean))).join("; ");
+  }
+  if (!descricao) {
+    const cargo = role?.name ?? "—";
+    const setor = emp?.setor ?? role?.setor ?? "";
+    const base = `Exerce as atribuições inerentes ao cargo de ${cargo}${setor ? `, lotado(a) no setor de ${setor}` : ""}, executando as tarefas próprias da função conforme procedimentos operacionais e normas de segurança da empresa`;
+    descricao = nomesRiscos.length
+      ? `${base}, com exposição aos agentes: ${nomesRiscos.join("; ")}.`
+      : `${base}.`;
+  }
+  d.profissiografias = [{ periodo, descricao }];
 
   d.data_emissao = new Date().toLocaleDateString("pt-BR");
   return d;
