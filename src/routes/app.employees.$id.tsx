@@ -69,6 +69,7 @@ import { TransferirEmpresaDialog } from "@/components/employees/transferir-empre
 import { logRead } from "@/lib/audit-read";
 import { SaidaExpedienteDialog } from "@/components/saida-expediente-dialog";
 import { Search } from "lucide-react";
+import { resolveLocal, setLocalOverride, formatLocalData } from "@/lib/local-documento";
 
 export const Route = createFileRoute("/app/employees/$id")({
   component: EmployeeDetail,
@@ -936,7 +937,7 @@ function EmployeeContextSidebar({ id }: { id: string }) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("companies")
-        .select("id, name, type, cnpj, encarregado1, encarregado2, email, data_entrada")
+        .select("id, name, type, cnpj, encarregado1, encarregado2, email, data_entrada, cidade, uf")
         .eq("id", companyId!)
         .single();
       if (error) throw error;
@@ -2731,9 +2732,13 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
     onError: (e: any) => toast.error(e.message),
   });
 
-  async function gerarFicha() {
+  async function gerarFicha(localEmissao?: string) {
     if (!epis?.length) {
       toast.error("Sem entregas registradas — nada a assinar.");
+      return;
+    }
+    if (!localEmissao) {
+      setLocalDialog(resolveLocal(company as any));
       return;
     }
     const episAtuais = [...(epis ?? [])].sort((a: any, b: any) => {
@@ -2791,7 +2796,7 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
             admissao: emp?.admissao,
           },
           entregas: episAtuais as any[],
-          localData: `Belém, ${new Date().toLocaleDateString("pt-BR")}`,
+          localData: formatLocalData(localEmissao),
           assinaturaEmpregado: (emp as any)?.assinatura_url ?? null,
         },
       ]);
@@ -2802,6 +2807,8 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
     }
     setSignerSrc({ bytes, name: fname, modulo: "ficha-epi", referenciaId: empId });
   }
+
+  const [localDialog, setLocalDialog] = useState<string | null>(null);
 
   const [signerSrc, setSignerSrc] = useState<{
     bytes: Uint8Array | string;
@@ -3403,6 +3410,36 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
             <Button variant="ghost" onClick={() => setNotReturning(null)}>Cancelar</Button>
             <Button onClick={() => notReturnMut.mutate()} disabled={notReturnMut.isPending} className="bg-rose-600 hover:bg-rose-700 text-white">
               <FileWarning className="h-4 w-4 mr-2" /> Confirmar e gerar termo
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={localDialog !== null} onOpenChange={(o) => !o && setLocalDialog(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Local de emissão</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500">
+              Sugerido pela cidade da empresa. Ajuste se a entrega ocorreu em outra obra/unidade.
+            </p>
+            <Input
+              value={localDialog ?? ""}
+              onChange={(e) => setLocalDialog(e.target.value)}
+              placeholder="Ex.: Curitiba - PR"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setLocalDialog(null)}>Cancelar</Button>
+            <Button
+              onClick={() => {
+                const loc = (localDialog ?? "").trim();
+                setLocalOverride(loc);
+                setLocalDialog(null);
+                void gerarFicha(loc || "Belém");
+              }}
+            >
+              Gerar ficha
             </Button>
           </DialogFooter>
         </DialogContent>

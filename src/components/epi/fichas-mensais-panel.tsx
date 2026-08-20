@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { resolveLocal, formatLocalData } from "@/lib/local-documento";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -70,7 +71,7 @@ export function FichasMensaisPanel({ embedded = false }: { embedded?: boolean })
         supabase.from("epi_deliveries").select("employee_id, data_entrega").limit(20000),
         supabase.from("employees").select("id, nome, matricula, cpf, funcao, role_id, company_id, admissao, assinatura_url"),
         supabase.from("epi_fichas_mensais").select("*"),
-        supabase.from("companies").select("id, name"),
+        supabase.from("companies").select("id, name, cidade, uf"),
         supabase.from("roles").select("id, name"),
         supabase
           .from("documentos_assinados")
@@ -207,7 +208,7 @@ export function FichasMensaisPanel({ embedded = false }: { embedded?: boolean })
             admissao: r.admissao,
           },
           entregas: epis as any[],
-          localData: `Belém, ${new Date().toLocaleDateString("pt-BR")}`,
+          localData: formatLocalData(resolveLocal(r.company)),
           assinaturaEmpregado: (r.emp as any)?.assinatura_url ?? null,
         },
       ]);
