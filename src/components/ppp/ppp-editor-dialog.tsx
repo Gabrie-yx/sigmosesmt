@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -56,6 +56,25 @@ export function PPPEditorDialog({
   const [dados, setDados] = useState<PPPDados>(() => emptyPPPDados());
   const [saving, setSaving] = useState(false);
   const [previewDoc, setPreviewDoc] = useState<jsPDF | null>(null);
+
+  // Auto-ajuste: a folha A4 (190mm) encolhe pra caber na largura do modal
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [zoom, setZoom] = useState(1);
+  useEffect(() => {
+    if (!open) return;
+    const el = scrollRef.current;
+    if (!el) return;
+    const SHEET_PX = 190 * (96 / 25.4); // 190mm em px
+    const fit = () => {
+      const avail = el.clientWidth - 32;
+      setZoom(Math.min(1, Math.max(0.55, avail / SHEET_PX)));
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [open]);
+
 
   const isFinal = status === "EMITIDO";
 
@@ -159,6 +178,7 @@ export function PPPEditorDialog({
             box-shadow: none !important; background: white !important;
           }
           .no-print, [data-no-print="true"] { display: none !important; }
+          .ppp-zoom { zoom: 1 !important; }
           .ppp-input { border: 0 !important; padding: 0 !important; box-shadow: none !important; background: transparent !important; }
         }
         .ppp-print-area { color: #000 !important; background: #fff !important; }
@@ -193,57 +213,64 @@ export function PPPEditorDialog({
       `}</style>
 
       <Dialog open={open} onOpenChange={(v) => { if (!saving) onOpenChange(v); }}>
-        <DialogContent className="max-w-[900px] max-h-[95vh] overflow-hidden flex flex-col p-0 gap-0">
+        <DialogContent className="w-[96vw] max-w-[1180px] h-[94vh] max-h-[94vh] overflow-hidden flex flex-col p-0 gap-0 [&>button]:hidden">
           {/* Toolbar (oculta na impressão) */}
-          <div data-no-print="true" className="no-print flex items-center justify-between gap-3 px-4 py-3 border-b bg-white sticky top-0 z-10">
-            <div className="flex items-center gap-3">
-              <FileSignature className="h-5 w-5 text-violet-700" />
-              <div>
-                <div className="text-sm font-bold flex items-center gap-1.5">
-                  PPP — Perfil Profissiográfico Previdenciário
+          <div
+            data-no-print="true"
+            className="no-print shrink-0 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 border-b bg-card"
+          >
+            <div className="flex min-w-0 items-center gap-3">
+              <FileSignature className="h-5 w-5 shrink-0 text-primary" />
+              <div className="min-w-0">
+                <div className="truncate text-sm font-bold flex items-center gap-1.5 text-foreground">
+                  <span className="truncate">PPP — Perfil Profissiográfico Previdenciário</span>
                   <HelpHint topic="ppp" />
                 </div>
-                <div className="text-[11px] text-slate-500">
+                <div className="mt-0.5 flex items-center gap-2 text-[11px] text-muted-foreground">
                   {isFinal && numero ? (
-                    <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200" variant="outline">
+                    <Badge variant="outline" className="bg-emerald-500/15 text-emerald-300 border-emerald-500/40">
                       <Lock className="h-3 w-3 mr-1" />{numero}
                     </Badge>
                   ) : (
-                    <Badge className="bg-amber-100 text-amber-700 border-amber-200" variant="outline">Rascunho</Badge>
+                    <Badge variant="outline" className="bg-amber-500/15 text-amber-300 border-amber-500/40">Rascunho</Badge>
                   )}
+                  <span className="truncate hidden sm:inline">{employee?.nome ?? ""}</span>
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center justify-end gap-2">
               {!isFinal && (
                 <Button size="sm" variant="secondary" onClick={() => handleSave("RASCUNHO")} disabled={saving} className="gap-1.5">
-                  <Save className="h-3.5 w-3.5" /> Rascunho
+                  <Save className="h-3.5 w-3.5" /> <span className="hidden md:inline">Rascunho</span>
                 </Button>
               )}
               <Button size="sm" variant="outline" onClick={handlePrint} disabled={saving} className="gap-1.5">
-                <Printer className="h-3.5 w-3.5" /> Imprimir
+                <Printer className="h-3.5 w-3.5" /> <span className="hidden md:inline">Imprimir</span>
               </Button>
               <Button size="sm" variant="outline" onClick={handleDownloadPdf} disabled={saving} className="gap-1.5">
-                <Download className="h-3.5 w-3.5" /> Baixar PDF
+                <Download className="h-3.5 w-3.5" /> <span className="hidden md:inline">Baixar PDF</span>
               </Button>
               {!isFinal && (
-                <Button size="sm" onClick={() => handleSave("EMITIDO")} disabled={saving} className="gap-1.5 bg-violet-700 hover:bg-violet-800">
-                  <Send className="h-3.5 w-3.5" /> Emitir final
+                <Button size="sm" onClick={() => handleSave("EMITIDO")} disabled={saving} className="gap-1.5">
+                  <Send className="h-3.5 w-3.5" /> <span className="hidden md:inline">Emitir final</span>
                 </Button>
               )}
-              <Button size="sm" variant="ghost" onClick={() => onOpenChange(false)} disabled={saving}>
+              <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => onOpenChange(false)} disabled={saving}>
                 <X className="h-4 w-4" />
               </Button>
             </div>
           </div>
 
           {/* Área imprimível */}
-          <div className="flex-1 overflow-y-auto bg-slate-100 p-4">
-            <div className="ppp-print-area mx-auto bg-white shadow-md" style={{ width: "190mm", padding: "8mm" }}>
-              <PPPForm dados={dados} isFinal={isFinal} numero={numero} set={set} upd={upd} setDados={setDados} employeeSig={employee?.assinatura_url ?? null} />
+          <div ref={scrollRef} className="flex-1 min-h-0 overflow-auto bg-muted/40 p-4 sm:p-6">
+            <div className="ppp-zoom mx-auto" style={{ zoom }}>
+              <div className="ppp-print-area mx-auto bg-white shadow-lg rounded-sm" style={{ width: "190mm", padding: "8mm" }}>
+                <PPPForm dados={dados} isFinal={isFinal} numero={numero} set={set} upd={upd} setDados={setDados} employeeSig={employee?.assinatura_url ?? null} />
+              </div>
             </div>
           </div>
         </DialogContent>
+
       </Dialog>
 
       <PDFPreviewDialog
