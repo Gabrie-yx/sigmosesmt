@@ -125,11 +125,15 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
         tipo_exame: "ASO Demissional",
         natureza: "DEMISSIONAL",
         data_realizacao: novoAsoData,
+        // demissional não gera periodicidade: vencimento = própria data
+        data_vencimento: novoAsoData,
+        periodicidade_meses: 0,
         aptidao: novoAsoAptidao,
         anexo_path,
       } as any).select("id").single();
       if (error) throw error;
       return inserted?.id as string;
+
     },
     onSuccess: async (id) => {
       toast.success("ASO demissional registrado");
