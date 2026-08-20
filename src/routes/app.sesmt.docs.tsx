@@ -367,6 +367,12 @@ function SesmtDocsPage() {
         canEdit={isEditor}
         canDelete={isAdmin}
       />
+
+      <LeitorDocSSTDialog
+        doc={leitorDoc as any}
+        open={!!leitorDoc}
+        onOpenChange={(v) => !v && setLeitorDoc(null)}
+      />
     </div>
   );
 }
