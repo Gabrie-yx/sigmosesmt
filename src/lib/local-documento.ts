@@ -7,7 +7,8 @@
  *  3. Fallback histórico: Belém.
  */
 const KEY = "sigmo:local-documento";
-export const LOCAL_FALLBACK = "Belém";
+/** Sede da contratante (Estaleiro DMN) — usado quando a empresa não tem cidade/UF cadastrada. */
+export const LOCAL_FALLBACK = "Manaus - AM";
 
 export type EmpresaLocal = { cidade?: string | null; uf?: string | null } | null | undefined;
 
