@@ -125,11 +125,15 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
         tipo_exame: "ASO Demissional",
         natureza: "DEMISSIONAL",
         data_realizacao: novoAsoData,
+        // demissional não gera periodicidade: vencimento = própria data
+        data_vencimento: novoAsoData,
+        periodicidade_meses: 0,
         aptidao: novoAsoAptidao,
         anexo_path,
       } as any).select("id").single();
       if (error) throw error;
       return inserted?.id as string;
+
     },
     onSuccess: async (id) => {
       toast.success("ASO demissional registrado");
@@ -315,7 +319,7 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
       <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-rose-700">
+            <DialogTitle className="flex items-center gap-2 text-[var(--brand-text)]">
               <UserMinus className="h-5 w-5" /> Pacote de Rescisão SST — {emp.nome}
             </DialogTitle>
           </DialogHeader>
@@ -328,14 +332,14 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
               const done = s.n < step;
               return (
                 <div key={s.n} className="flex-1 flex items-center gap-2">
-                  <div className={`h-8 w-8 rounded-full flex items-center justify-center text-[11px] font-black ${done ? "bg-emerald-600 text-white" : active ? "bg-rose-700 text-white" : "bg-slate-200 text-muted-foreground"}`}>
+                  <div className={`h-8 w-8 rounded-full flex items-center justify-center text-[11px] font-black ${done ? "bg-emerald-600 text-white" : active ? "bg-[var(--brand)] text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
                     {done ? <CheckCircle2 className="h-4 w-4" /> : <Ic className="h-4 w-4" />}
                   </div>
                   <div className="hidden md:block">
-                    <div className={`text-[10px] font-black uppercase tracking-widest ${active ? "text-rose-700" : "text-muted-foreground"}`}>Passo {s.n}</div>
+                    <div className={`text-[10px] font-black uppercase tracking-widest ${active ? "text-[var(--brand-text)]" : "text-muted-foreground"}`}>Passo {s.n}</div>
                     <div className="text-xs font-bold text-foreground">{s.label}</div>
                   </div>
-                  {i < STEPS.length - 1 && <div className={`flex-1 h-0.5 ${done ? "bg-emerald-500" : "bg-slate-200"}`} />}
+                  {i < STEPS.length - 1 && <div className={`flex-1 h-0.5 ${done ? "bg-emerald-500" : "bg-border"}`} />}
                 </div>
               );
             })}
@@ -345,7 +349,7 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
             {step === 1 && (
               <div className="space-y-4">
                 {modo === "regularizacao" && (
-                  <div className="rounded-lg border-2 border-amber-400 bg-amber-50 p-3 text-xs text-amber-900">
+                  <div className="rounded-lg border-2 border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-100">
                     <div className="font-black uppercase tracking-widest text-[10px] mb-1">📋 Modo Regularização Retroativa</div>
                     O funcionário já consta como <b>DESLIGADO</b> desde{" "}
                     <b>{emp?.data_desligamento ? new Date(emp.data_desligamento + "T00:00:00").toLocaleDateString("pt-BR") : "—"}</b>.
@@ -381,15 +385,16 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
 
             {step === 2 && (
               <div className="space-y-3">
-                <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-xs text-blue-900">
-                  <b>NR-07 item 7.5.15.4</b>: ASO demissional é obrigatório, exceto se o último ASO tiver sido realizado há menos de <b>135 dias</b> (grau de risco 1/2) ou <b>90 dias</b> (grau 3/4). Nesse caso registre a dispensa.
+                <div className="rounded-lg bg-muted/40 border border-border p-3 text-xs text-muted-foreground">
+                  <b className="text-foreground">NR-07 item 7.5.15.4</b>: ASO demissional é obrigatório, exceto se o último ASO tiver sido realizado há menos de <b className="text-foreground">135 dias</b> (grau de risco 1/2) ou <b className="text-foreground">90 dias</b> (grau 3/4). Nesse caso registre a dispensa.
                 </div>
+
                 <div className="space-y-1.5">
                   <Label>Selecione o ASO demissional *</Label>
                   <div className="rounded-lg border border-border divide-y divide-border max-h-56 overflow-y-auto">
                     {(asos ?? []).length === 0 && <div className="text-xs text-muted-foreground p-3">Nenhum exame no histórico.</div>}
                     {(asos ?? []).map((a: any) => (
-                      <label key={a.id} className={`flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-muted/40 ${asoExamId === a.id ? "bg-emerald-50" : ""}`}>
+                      <label key={a.id} className={`flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-accent/40 ${asoExamId === a.id ? "bg-accent/60" : ""}`}>
                         <input type="radio" name="aso" checked={asoExamId === a.id} onChange={() => { setAsoExamId(a.id); setAsoDispensado(false); }} disabled={asoDispensado} />
                         <div className="flex-1 text-xs">
                           <div className="font-bold">{a.tipo_exame ?? "Exame"} — {a.data_realizacao ? new Date(a.data_realizacao + "T00:00:00").toLocaleDateString("pt-BR") : "sem data"}</div>
@@ -401,8 +406,9 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
                 </div>
 
                 {!asoDispensado && (
-                  <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-3 space-y-2">
-                    <div className="text-xs font-black uppercase tracking-widest text-emerald-900">Anexar ASO demissional agora</div>
+                  <div className="rounded-lg border border-border bg-card/60 p-3 space-y-2">
+                    <div className="text-xs font-black uppercase tracking-widest text-foreground">Anexar ASO demissional agora</div>
+
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       <div className="space-y-1">
                         <Label className="text-[10px] uppercase">Data de realização *</Label>
@@ -436,13 +442,14 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
                   </div>
                 )}
 
-                <label className="flex items-start gap-2 p-3 rounded-lg border border-amber-200 bg-amber-50 cursor-pointer">
+                <label className="flex items-start gap-2 p-3 rounded-lg border border-amber-500/40 bg-amber-500/10 cursor-pointer">
                   <Checkbox checked={asoDispensado} onCheckedChange={(v) => { setAsoDispensado(!!v); if (v) setAsoExamId(null); }} />
                   <div className="text-xs">
-                    <div className="font-black text-amber-900">Dispensar ASO demissional</div>
-                    <div className="text-amber-800">Marque somente quando o último ASO estiver dentro do prazo NR-07.</div>
+                    <div className="font-black text-amber-200">Dispensar ASO demissional</div>
+                    <div className="text-amber-100/80">Marque somente quando o último ASO estiver dentro do prazo NR-07.</div>
                   </div>
                 </label>
+
                 {asoDispensado && (
                   <div className="space-y-1.5">
                     <Label>Justificativa da dispensa *</Label>
@@ -466,7 +473,7 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
                           <div className="font-bold">{e.item} <span className="text-muted-foreground">· qtd {e.qtd}</span></div>
                           <div className="text-muted-foreground">CA {e.ca ?? "—"} · entregue {e.data_entrega ? new Date(e.data_entrega + "T00:00:00").toLocaleDateString("pt-BR") : "—"}</div>
                         </div>
-                        {episDevolvidos[e.id] ? <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">devolvido</Badge> : <Badge className="bg-rose-100 text-rose-700 border-rose-200">pendente</Badge>}
+                        {episDevolvidos[e.id] ? <Badge className="bg-emerald-500/15 text-emerald-200 border-emerald-500/40">devolvido</Badge> : <Badge className="bg-red-500/15 text-red-200 border-red-500/40">pendente</Badge>}
                       </label>
                     ))}
                   </div>
@@ -482,7 +489,7 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
                           <div className="font-bold">{o.oss_templates?.codigo ?? "OS"} — {o.oss_templates?.procedimento ?? o.cargo_snapshot}</div>
                           <div className="text-muted-foreground">Status atual: {o.status}</div>
                         </div>
-                        <Badge className="bg-amber-100 text-amber-700 border-amber-200">→ SUBSTITUIDO</Badge>
+                        <Badge className="bg-amber-500/15 text-amber-200 border-amber-500/40">→ SUBSTITUIDO</Badge>
                       </div>
                     ))}
                   </div>
@@ -521,17 +528,17 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
                   <p className="text-[10px] text-violet-900 mt-2">A entrega do PPP ao trabalhador é responsabilidade do RH / Representante Legal — o TST prepara o rascunho.</p>
                 </div>
 
-                <div className="rounded-lg bg-white border border-slate-300 p-3 text-xs text-foreground space-y-1.5">
+                <div className="rounded-lg bg-card border border-border p-3 text-xs text-foreground space-y-1.5">
                   <div className="font-black text-foreground uppercase tracking-widest text-[10px]">Resumo</div>
                   <div>Data: <b>{new Date(data + "T00:00:00").toLocaleDateString("pt-BR")}</b> · Motivo: <b>{motivoFinal}</b></div>
-                  <div>ASO: {asoDispensado ? <b className="text-amber-800">DISPENSADO</b> : <b className="text-emerald-800">{asos?.find((a: any) => a.id === asoExamId)?.tipo_exame ?? "—"}</b>}</div>
+                  <div>ASO: {asoDispensado ? <b className="text-amber-200">DISPENSADO</b> : <b className="text-emerald-300">{asos?.find((a: any) => a.id === asoExamId)?.tipo_exame ?? "—"}</b>}</div>
                   <div>EPIs devolvidos: <b>{Object.values(episDevolvidos).filter(Boolean).length}</b> / {(epis ?? []).length}</div>
                   <div>OSs a substituir: <b>{(oss ?? []).length}</b></div>
-                  <div>PPP: {pppEmissaoId ? <b className="text-emerald-800">vinculado</b> : <span className="text-amber-800">não vinculado</span>}</div>
+                  <div>PPP: {pppEmissaoId ? <b className="text-emerald-300">vinculado</b> : <span className="text-amber-200">não vinculado</span>}</div>
                 </div>
 
-                <div className="rounded-lg bg-rose-100 border border-rose-300 p-3 text-xs text-rose-950 space-y-1.5">
-                  <div className="flex items-center gap-1.5 font-black text-rose-950"><AlertTriangle className="h-3.5 w-3.5" />Ao emitir:</div>
+                <div className="rounded-lg bg-red-500/10 border border-red-500/40 p-3 text-xs text-red-100 space-y-1.5">
+                  <div className="flex items-center gap-1.5 font-black text-red-200"><AlertTriangle className="h-3.5 w-3.5" />Ao emitir:</div>
                   <ul className="list-disc ml-5 space-y-0.5">
                     {modo === "novo" ? (
                       <>
@@ -565,7 +572,7 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
               </Button>
             )}
             {step < 4 && (
-              <Button onClick={() => setStep((s) => s + 1)} disabled={!canNext} className="bg-slate-900 hover:bg-slate-800">
+              <Button onClick={() => setStep((s) => s + 1)} disabled={!canNext} className="bg-[var(--brand)] hover:bg-[var(--brand)]/90 text-primary-foreground">
                 Continuar <ArrowRight className="h-4 w-4 ml-1" />
               </Button>
             )}
@@ -573,7 +580,7 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
               <Button
                 onClick={() => finalizar.mutate()}
                 disabled={!confirmacao || finalizar.isPending}
-                className="bg-rose-700 hover:bg-rose-800 text-white"
+                className="bg-red-700 hover:bg-red-800 text-white"
               >
                 <Download className="h-4 w-4 mr-1.5" />
                 {finalizar.isPending ? "Emitindo…" : "Emitir pacote"}
