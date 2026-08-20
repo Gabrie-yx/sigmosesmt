@@ -2791,7 +2791,7 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
             admissao: emp?.admissao,
           },
           entregas: episAtuais as any[],
-          localData: `${company?.name ?? ""} ${new Date().toLocaleDateString("pt-BR")}`.trim(),
+          localData: `Belém, ${new Date().toLocaleDateString("pt-BR")}`,
         },
       ]);
     } catch {
