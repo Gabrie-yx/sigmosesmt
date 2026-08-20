@@ -116,109 +116,71 @@ export async function printImagePages(pages: string[], fileName = "documento.pdf
   const { orientation } = await measureFirstPage(pages[0]);
   const pageSize = orientation === "landscape" ? "297mm 210mm" : "210mm 297mm";
   const pageClass = orientation === "landscape" ? "sigmo-print-page landscape" : "sigmo-print-page";
-  const previousTitle = document.title;
   const safeTitle = escapeHtml(fileName);
 
-  document.querySelectorAll(".sigmo-print-root, #sigmo-print-style").forEach((el) => el.remove());
+  // Imprime em um documento HTML isolado. Alterar o DOM principal durante a
+  // impressão conflita com portais/modais e estilos globais do app em alguns
+  // navegadores, produzindo página branca. O iframe contém somente as folhas.
+  document.querySelectorAll("iframe.sigmo-image-print-frame").forEach((el) => el.remove());
+  const iframe = document.createElement("iframe");
+  iframe.className = "sigmo-image-print-frame";
+  iframe.title = `Impressão de ${fileName}`;
+  Object.assign(iframe.style, {
+    position: "fixed",
+    left: "-320mm",
+    top: "0",
+    width: orientation === "landscape" ? "297mm" : "210mm",
+    height: orientation === "landscape" ? "210mm" : "297mm",
+    border: "0",
+    background: "white",
+    pointerEvents: "none",
+  } as CSSStyleDeclaration);
+  document.body.appendChild(iframe);
 
-  const style = document.createElement("style");
-  style.id = "sigmo-print-style";
-  style.textContent = `
-    @media screen {
-      .sigmo-print-root {
-        position: fixed !important;
-        left: -100000px !important;
-        top: 0 !important;
-        width: ${orientation === "landscape" ? "297mm" : "210mm"} !important;
-        min-height: ${orientation === "landscape" ? "210mm" : "297mm"} !important;
-        overflow: hidden !important;
-        pointer-events: none !important;
-        background: #fff !important;
-      }
-    }
-    @media print {
-      @page { size: ${pageSize}; margin: 0; }
-      html, body {
-        margin: 0 !important;
-        padding: 0 !important;
-        width: auto !important;
-        min-width: 0 !important;
-        height: auto !important;
-        min-height: 0 !important;
-        overflow: visible !important;
-        background: #fff !important;
-      }
-      body > *:not(.sigmo-print-root) { display: none !important; }
-      .sigmo-print-root {
-        display: block !important;
-        position: static !important;
-        inset: auto !important;
-        width: 100% !important;
-        height: auto !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        background: #fff !important;
-      }
-      .sigmo-print-page {
-        width: 210mm !important;
-        height: 297mm !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        overflow: hidden !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        break-after: page;
-        page-break-after: always;
-        background: #fff !important;
-      }
-      .sigmo-print-page.landscape {
-        width: 297mm !important;
-        height: 210mm !important;
-      }
-      .sigmo-print-page:last-child { break-after: auto; page-break-after: auto; }
-      .sigmo-print-page img {
-        display: block !important;
-        width: 100% !important;
-        height: 100% !important;
-        object-fit: contain !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        border: 0 !important;
-        box-shadow: none !important;
-        background: #fff !important;
-        opacity: 1 !important;
-        filter: contrast(1.18) saturate(1.05) brightness(0.97) !important;
-        image-rendering: -webkit-optimize-contrast;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-      }
+  const frameDoc = iframe.contentDocument;
+  const frameWindow = iframe.contentWindow;
+  if (!frameDoc || !frameWindow) {
+    iframe.remove();
+    throw new Error("Navegador não permitiu preparar a área de impressão");
+  }
 
-    }
-  `;
-
-  const root = document.createElement("div");
-  root.className = "sigmo-print-root";
-  root.setAttribute("aria-hidden", "true");
-  root.innerHTML = pages.map((src, index) => (
-    `<section class="${pageClass}" data-page="${index + 1}"><img src="${src}" alt="${safeTitle} - página ${index + 1}" /></section>`
+  const sheets = pages.map((src, index) => (
+    `<section class="${pageClass}" data-page="${index + 1}"><img src="${src}" alt="${safeTitle} - página ${index + 1}"></section>`
   )).join("");
+  frameDoc.open();
+  frameDoc.write(`<!doctype html><html><head><meta charset="utf-8"><title>${safeTitle}</title><style>
+    @page { size: ${pageSize}; margin: 0; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: #fff; color: #000; }
+    .sigmo-print-page {
+      width: 210mm; height: 297mm; margin: 0; padding: 0; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      background: #fff; break-after: page; page-break-after: always;
+    }
+    .sigmo-print-page.landscape { width: 297mm; height: 210mm; }
+    .sigmo-print-page:last-child { break-after: auto; page-break-after: auto; }
+    img {
+      display: block; width: 100%; height: 100%; object-fit: contain;
+      margin: 0; padding: 0; border: 0; background: #fff; opacity: 1;
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    }
+  </style></head><body>${sheets}</body></html>`);
+  frameDoc.close();
 
-  const cleanup = () => {
-    document.title = previousTitle;
-    root.remove();
-    style.remove();
-    window.removeEventListener("afterprint", cleanup);
-  };
-
-  document.head.appendChild(style);
-  document.body.appendChild(root);
-  document.title = fileName;
-  await waitImages(root);
+  await waitImages(frameDoc.body);
+  const images = Array.from(frameDoc.images);
+  await Promise.all(images.map((img) => typeof img.decode === "function" ? img.decode().catch(() => undefined) : Promise.resolve()));
   await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
-  window.addEventListener("afterprint", cleanup, { once: true });
-  window.focus();
-  window.print();
+
+  let cleaned = false;
+  const cleanup = () => {
+    if (cleaned) return;
+    cleaned = true;
+    iframe.remove();
+  };
+  frameWindow.addEventListener("afterprint", cleanup, { once: true });
+  frameWindow.focus();
+  frameWindow.print();
   window.setTimeout(cleanup, 120000);
 }
 
