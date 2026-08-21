@@ -1767,7 +1767,7 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved, initial }: 
         </div>
         {modo === "calc" && (
           <div className="space-y-3 p-3 rounded-md border border-white/10 bg-white/5">
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <Field label="Funcionários">
                 <Input type="number" value={calc.funcionarios} onChange={(e) => setC("funcionarios", e.target.value)} placeholder="50" className="bg-white/5 border-white/10 text-white placeholder:text-white/20" />
               </Field>

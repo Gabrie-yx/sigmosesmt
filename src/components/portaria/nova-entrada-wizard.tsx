@@ -435,7 +435,7 @@ export function NovaEntradaWizard({
             <div className="space-y-4">
               <div>
                 <Label className="text-xs font-black uppercase tracking-widest">Tipo</Label>
-                <div className="grid grid-cols-3 gap-2 mt-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2">
                   {(["VISITANTE","FORNECEDOR","PRESTADOR"] as Tipo[]).map((t) => (
                     <button key={t}
                       onClick={() => setTipo(t)}

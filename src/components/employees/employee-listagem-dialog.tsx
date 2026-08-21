@@ -152,7 +152,7 @@ export function EmployeeListagemDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-        <DialogContent className="max-w-[70vw] max-h-[80vh] w-full p-0 gap-0 overflow-hidden flex flex-col">
+        <DialogContent className="max-w-[95vw] sm:max-w-[70vw] max-h-[88vh] sm:max-h-[80vh] w-full p-0 gap-0 overflow-hidden flex flex-col">
           <DialogHeader className="px-6 py-4 border-b shrink-0">
             <DialogTitle className="text-xl font-semibold">
               Listagem de funcionários

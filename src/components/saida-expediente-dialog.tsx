@@ -280,7 +280,7 @@ export function SaidaExpedienteDialog({
               <Input type="time" className="rounded-xl" value={form.horario_saida} onChange={(e) => setForm({ ...form, horario_saida: e.target.value })} />
             </div>
           </div>
-          <div className={`grid gap-3 items-end ${form.com_retorno ? "grid-cols-3" : "grid-cols-2"}`}>
+          <div className={`grid gap-3 items-end ${form.com_retorno ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-1 sm:grid-cols-2"}`}>
             <div className="space-y-1.5">
               <Label className="text-[11px] font-black uppercase tracking-widest text-slate-500">Tipo *</Label>
               <Select value={form.tipo} onValueChange={(v) => setForm({ ...form, tipo: v })}>

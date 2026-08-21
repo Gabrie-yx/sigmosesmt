@@ -89,7 +89,7 @@ export function SnippetPicker({
           <Zap className="h-3.5 w-3.5 mr-1" /> {label}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[420px] p-0" align="end">
+      <PopoverContent className="w-[420px] max-w-[95vw] p-0" align="end">
         <div className="p-2 border-b border-black/10 flex items-center gap-2">
           <Search className="h-3.5 w-3.5 opacity-60" />
           <Input

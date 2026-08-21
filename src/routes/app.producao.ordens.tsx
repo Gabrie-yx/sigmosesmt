@@ -469,7 +469,7 @@ function OrdensListPage() {
 
 function Campo({ k, v }: { k: string; v?: string | null }) {
   return (
-    <div className="grid grid-cols-3 gap-3">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
       <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{k}</span>
       <span className="col-span-2">{v || "—"}</span>
     </div>

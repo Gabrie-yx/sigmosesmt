@@ -186,7 +186,7 @@ function DDSTemasPage() {
           <DialogHeader><DialogTitle>{editing?.id ? "Editar tema" : "Novo tema"}</DialogTitle></DialogHeader>
           {editing && (
             <div className="space-y-3">
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <Label>Código</Label>
                   <Input type="number" value={editing.codigo ?? ""} onChange={(e) => setEditing({ ...editing, codigo: e.target.value ? Number(e.target.value) : null })} />

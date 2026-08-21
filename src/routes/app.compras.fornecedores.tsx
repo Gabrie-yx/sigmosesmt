@@ -336,7 +336,7 @@ function EditFornecedorDialog({ f, onClose }: { f: Fornecedor | null; onClose: (
             <Label>Produto / serviço principal</Label>
             <Input value={produto} onChange={(e) => setProduto(e.target.value)} />
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <Label>Responsável</Label>
               <Input value={responsavel} onChange={(e) => setResponsavel(e.target.value)} />

@@ -407,7 +407,7 @@ function DDSDetail({ dds, temaMap, gestorMap }: { dds: DDS; temaMap: any; gestor
         <Field label="Duração" value={`${dds.duracao_min} min`} />
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
         <div className="border rounded p-3 bg-slate-50">
           <div className="text-[10px] font-bold uppercase text-slate-500">Esperados</div>
           <div className="text-2xl font-bold">{dds.participantes_esperados}</div>

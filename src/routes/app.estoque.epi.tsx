@@ -874,7 +874,7 @@ export function ConsultaColaborador() {
             <div className="font-bold text-base">{nomeColaborador}</div>
             <div className="text-xs text-muted-foreground font-mono">{maskCpf(cpfDigits)}</div>
           </div>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             <Card className="p-2 text-center">
               <div className="text-[10px] uppercase text-muted-foreground">Movimentações</div>
               <div className="text-xl font-black">{data.length}</div>

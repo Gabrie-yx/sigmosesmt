@@ -170,7 +170,7 @@ function IncidentesPage() {
               <div><Label>Descrição *</Label><Textarea value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} rows={3} /></div>
               <div><Label>Causa raiz</Label><Textarea value={form.causa_raiz} onChange={(e) => setForm({ ...form, causa_raiz: e.target.value })} rows={2} /></div>
               <div><Label>Ações corretivas</Label><Textarea value={form.acoes_corretivas} onChange={(e) => setForm({ ...form, acoes_corretivas: e.target.value })} rows={2} /></div>
-              <div className="grid grid-cols-3 gap-3 items-end">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
                 <div className="col-span-1 flex items-center gap-2 pb-2">
                   <input type="checkbox" id="cat" checked={form.cat_emitida} onChange={(e) => setForm({ ...form, cat_emitida: e.target.checked })} />
                   <Label htmlFor="cat" className="text-sm">CAT emitida</Label>

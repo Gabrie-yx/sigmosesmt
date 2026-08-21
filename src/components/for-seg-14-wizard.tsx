@@ -300,7 +300,7 @@ export function ForSeg14Wizard({
                 </div>
                 <Field label="Endereço"><Input value={data.endereco ?? ""} onChange={(e) => set("endereco", e.target.value)} /></Field>
                 <Field label="Descrição do acidente"><Textarea rows={4} value={data.descricao ?? ""} onChange={(e) => set("descricao", e.target.value)} /></Field>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <Field label="Hora"><Input value={data.hora ?? ""} onChange={(e) => set("hora", e.target.value)} /></Field>
                   <Field label="Hs trabalhadas"><Input value={data.horas_trabalhadas ?? ""} onChange={(e) => set("horas_trabalhadas", e.target.value)} /></Field>
                   <Field label="Local do acidente"><Input value={data.local_acidente ?? ""} onChange={(e) => set("local_acidente", e.target.value)} /></Field>

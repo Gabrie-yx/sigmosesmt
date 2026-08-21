@@ -250,7 +250,7 @@ export function EmployeeQuickView({ employeeId, open, onClose }: Props) {
                   {emp.status}
                 </Badge>
               </div>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <Sem icon={Stethoscope} label="ASO" tone={asoSem.tone} value={asoSem.label} />
                 <Sem icon={GraduationCap} label="Treinos" tone={trainSem.tone} value={trainSem.label} />
                 <Sem icon={HardHat} label="EPI" tone={(epis?.length ?? 0) > 0 ? "green" : "muted"} value={`${epis?.length ?? 0} itens`} />

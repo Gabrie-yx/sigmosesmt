@@ -282,7 +282,7 @@ export function AsoRapidoDialog({ open, onOpenChange }: { open: boolean; onOpenC
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <Label className="text-slate-200 text-xs">Realização *</Label>
                 <Input type="date" value={f.data_realizacao}

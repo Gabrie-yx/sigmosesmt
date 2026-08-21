@@ -285,9 +285,9 @@ function CompaniesPage() {
   }
 
   return (
-    <div className="p-6 md:p-8 flex gap-6 h-full page-canvas animate-fadeIn">
+    <div className="p-4 sm:p-6 md:p-8 flex flex-col lg:flex-row gap-4 sm:gap-6 h-auto min-h-full lg:h-full page-canvas animate-fadeIn overflow-y-auto lg:overflow-hidden">
       {/* LEFT: Company cards */}
-      <div className="w-[360px] flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-1 shrink-0">
+      <div className="w-full lg:w-[360px] max-h-[55vh] lg:max-h-none flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-1 shrink-0">
         {selectedEmpId && selected ? (
           <>
             <div
@@ -984,7 +984,7 @@ function CompanyForm({
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <Label className="text-[10px] font-black text-slate-500 uppercase">Telefone</Label>
             <Input value={editing?.telefone ?? ""} onChange={(e) => setEditing({ ...editing, telefone: e.target.value })} className="bg-slate-50 mt-1" />

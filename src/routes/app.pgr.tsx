@@ -1222,7 +1222,7 @@ function InvDialog({
               <Input value={tipoAv} onChange={(e) => setTipoAv(e.target.value)} placeholder="Qualitativa / Quantitativa" />
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <Label>Intensidade</Label>
               <Input type="number" step="any" value={intens} onChange={(e) => setIntens(e.target.value === "" ? "" : Number(e.target.value))} />
@@ -1240,7 +1240,7 @@ function InvDialog({
           {/* Matriz P × S */}
           <Card className="p-3 bg-slate-50">
             <div className="text-xs font-bold text-slate-600 uppercase mb-2">Classificação AIHA 5×5</div>
-            <div className="grid grid-cols-3 gap-3 items-end">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
               <div>
                 <Label>Probabilidade (1-5)</Label>
                 <Select value={prob === "" ? "" : String(prob)} onValueChange={(v) => setProb(v ? Number(v) : "")}>
