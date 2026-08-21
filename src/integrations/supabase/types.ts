@@ -5441,6 +5441,7 @@ export type Database = {
           pis: string | null
           reativado_por: string | null
           rg: string | null
+          rg_emissao: string | null
           rg_orgao: string | null
           role_id: string | null
           setor: string | null
@@ -5495,6 +5496,7 @@ export type Database = {
           pis?: string | null
           reativado_por?: string | null
           rg?: string | null
+          rg_emissao?: string | null
           rg_orgao?: string | null
           role_id?: string | null
           setor?: string | null
@@ -5549,6 +5551,7 @@ export type Database = {
           pis?: string | null
           reativado_por?: string | null
           rg?: string | null
+          rg_emissao?: string | null
           rg_orgao?: string | null
           role_id?: string | null
           setor?: string | null
