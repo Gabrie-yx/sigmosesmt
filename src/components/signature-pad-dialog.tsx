@@ -92,7 +92,8 @@ export function SignaturePadDialog({
   const hasStroke = useRef(false);
   const qc = useQueryClient();
 
-  const { data: salvas = [] } = useQuery({
+  // Galeria compartilhada (assinaturas_salvas)
+  const { data: compartilhadas = [] } = useQuery({
     queryKey: ["assinaturas-salvas"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -104,6 +105,42 @@ export function SignaturePadDialog({
     },
     enabled: open,
   });
+
+  // Minhas Assinaturas (user_signatures) — mesma fonte da galeria pessoal
+  const { data: minhas = [] } = useQuery({
+    queryKey: ["user-signatures-pad"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_signatures")
+        .select("id,label,signature_data,is_default,created_at")
+        .order("is_default", { ascending: false })
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: open,
+  });
+
+  const salvas = useMemo(
+    () => [
+      ...(minhas as any[]).map((s) => ({
+        id: s.id,
+        nome: s.label,
+        cargo: s.is_default ? "Minhas assinaturas · padrão" : "Minhas assinaturas",
+        imagem_data_url: s.signature_data,
+        origem: "user" as const,
+      })),
+      ...(compartilhadas as any[]).map((s) => ({
+        id: s.id,
+        nome: s.nome,
+        cargo: s.cargo,
+        imagem_data_url: s.imagem_data_url,
+        origem: "shared" as const,
+      })),
+    ],
+    [minhas, compartilhadas],
+  );
+
 
   const salvarMut = useMutation({
     mutationFn: async (payload: { nome: string; cargo: string; imagem_data_url: string }) => {
