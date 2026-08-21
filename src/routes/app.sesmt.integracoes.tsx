@@ -185,7 +185,10 @@ function IntegracoesPage() {
           <h1 className="text-2xl font-black uppercase tracking-widest text-rose-50 flex items-center gap-2">
             <GraduationCap className="h-6 w-6 text-emerald-400" /> Integrações NR-01
           </h1>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" onClick={() => setListagemOpen(true)}>
+              <FileText className="h-4 w-4 mr-1" /> Emitir listagem
+            </Button>
             <Button variant="outline" onClick={exportarRelatorioPeriodo} disabled={filtradas.length === 0}>
               <Printer className="h-4 w-4 mr-1" /> Relatório do período
             </Button>
