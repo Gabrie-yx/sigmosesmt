@@ -169,7 +169,7 @@ export function gerarFichaFuncionarioPdf(d: EmployeeFichaData): jsPDF {
   const pairs: [string, string][] = [
     ["Matrícula", emp.matricula ?? "—"],
     ["CPF", emp.cpf ?? "—"],
-    ["RG", [emp.rg, emp.rg_orgao].filter(Boolean).join(" / ") || "—"],
+    ["RG", [emp.rg, emp.rg_orgao, emp.rg_emissao ? `em ${fmtBR(emp.rg_emissao)}` : null].filter(Boolean).join(" / ") || "—"],
     ["CNH", emp.cnh ?? "—"],
     ["Admissão", fmtBR(emp.admissao)],
     ["Status", emp.status ?? "—"],
