@@ -213,6 +213,7 @@ export function IntegracaoDialog({
         qc.invalidateQueries({ queryKey: ["integracoes"] }),
         qc.invalidateQueries({ queryKey: ["employee"] }),
         qc.invalidateQueries({ queryKey: ["matriz-entries"] }),
+        qc.invalidateQueries({ queryKey: ["integracao-ja-registrados"] }),
       ]);
       onSaved?.(id);
       onOpenChange(false);
