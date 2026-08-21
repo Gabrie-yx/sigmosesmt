@@ -285,9 +285,9 @@ function RolesPage() {
     editing && setEditing({ ...editing, riscos: { ...riscos, ...patch } });
 
   return (
-    <div className="p-4 md:p-6 flex gap-4 md:gap-6 h-full bg-transparent animate-fadeIn relative overflow-hidden">
+    <div className="p-4 md:p-6 flex flex-col lg:flex-row gap-4 md:gap-6 h-auto min-h-full lg:h-full bg-transparent animate-fadeIn relative overflow-y-auto lg:overflow-hidden">
       {/* LEFT: Cargos Catalogados */}
-      <aside className="glass-card glass-shine w-[360px] flex flex-col overflow-hidden shrink-0 relative z-10">
+      <aside className="glass-card glass-shine w-full lg:w-[360px] max-h-[60vh] lg:max-h-none flex flex-col overflow-hidden shrink-0 relative z-10">
         {/* Header */}
         <div className="p-5 bg-accent/55 text-card-foreground relative overflow-hidden border-b border-border">
           <div className="flex items-center justify-between mb-3">
@@ -440,7 +440,7 @@ function RolesPage() {
       </aside>
 
       {/* RIGHT: Matriz de Requisitos */}
-      <main className="glass-card glass-shine flex-1 overflow-hidden flex flex-col relative z-10">
+      <main className="glass-card glass-shine flex-1 min-h-[60vh] lg:min-h-0 overflow-hidden flex flex-col relative z-10">
         {!editing ? (
           <EmptyState canEdit={isEditor} onNew={startNew} />
         ) : (
