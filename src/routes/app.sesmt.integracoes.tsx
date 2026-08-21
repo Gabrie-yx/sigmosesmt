@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, GraduationCap, Plus, FileSpreadsheet, Printer, Building2 } from "lucide-react";
 import { IntegracaoDialog } from "@/components/employees/integracao-dialog";
 import { EmpresaIntegracoesDialog } from "@/components/integracao/empresa-detalhe-dialog";
+import { ListagemIntegracoesDialog } from "@/components/integracao/listagem-integracoes-dialog";
 import { gerarListaPresenca } from "@/lib/lista-presenca-pdf";
 import { fetchSignatureAsCleanDataUrl } from "@/lib/signature-utils";
 import { toast } from "sonner";
