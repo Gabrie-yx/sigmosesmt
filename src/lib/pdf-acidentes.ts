@@ -5,14 +5,106 @@ import { EMPRESA_INFO } from "./empresa-info";
 
 const MESES = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
-type Acidente = {
+export type QuadroAcidente = {
   data_acidente: string;
   tipo: string;
   dias_perdidos?: number | null;
   dias_debitados?: number | null;
+  company_id?: string | null;
 };
 
-type Hht = { ano: number; mes: number; hht: number | string; empregados_medio?: number };
+export type QuadroHht = {
+  ano: number;
+  mes: number;
+  hht: number | string;
+  empregados_medio?: number | null;
+  company_id?: string | null;
+};
+
+type Acidente = QuadroAcidente;
+type Hht = QuadroHht;
+
+export type LinhaQuadro = {
+  label: string;
+  empregados: number;
+  hht: number;
+  absoluto: number;
+  afastLeve: number;
+  afastGrave: number;
+  semAfast: number;
+  indiceRelativo: number;
+  diasPerdidos: number;
+  tf: number;
+  tg: number;
+  obitos: number;
+};
+
+const isComAfast = (t: string) => t === "COM_AFASTAMENTO" || t === "FATAL";
+/** NBR 14280 / NR-04: acidente de trajeto não entra no quadro de acidentes típicos. */
+const isTipico = (t: string) => t !== "TRAJETO";
+
+function num(v: unknown) {
+  const n = Number(v ?? 0);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function montaLinha(label: string, acids: Acidente[], hhtRows: Hht[]): LinhaQuadro {
+  const tipicos = acids.filter((a) => isTipico(a.tipo));
+  const comAfast = tipicos.filter((a) => isComAfast(a.tipo));
+  const dias = (a: Acidente) => num(a.dias_perdidos) + num(a.dias_debitados);
+  const hht = hhtRows.reduce((s, h) => s + num(h.hht), 0);
+  const empregados = hhtRows.reduce((s, h) => s + num(h.empregados_medio), 0);
+  const diasPerdidos = tipicos.reduce((s, a) => s + dias(a), 0);
+  return {
+    label,
+    empregados,
+    hht,
+    absoluto: tipicos.length,
+    afastLeve: comAfast.filter((a) => dias(a) <= 15).length,
+    afastGrave: comAfast.filter((a) => dias(a) > 15).length,
+    semAfast: tipicos.filter((a) => a.tipo === "SEM_AFASTAMENTO").length,
+    indiceRelativo: empregados > 0 ? tipicos.length / empregados : 0,
+    diasPerdidos,
+    tf: hht > 0 ? (comAfast.length * 1_000_000) / hht : 0,
+    tg: hht > 0 ? (diasPerdidos * 1_000_000) / hht : 0,
+    obitos: tipicos.filter((a) => a.tipo === "FATAL").length,
+  };
+}
+
+/** Cálculo oficial do quadro (NBR 14280) — usado pela tela e pelo PDF. */
+export function calcularQuadroEstatistico(
+  ano: number,
+  acidentes: Acidente[],
+  hht: Hht[],
+): { meses: LinhaQuadro[]; total: LinhaQuadro } {
+  const acidsAno = acidentes.filter((a) => {
+    const d = new Date(`${String(a.data_acidente).slice(0, 10)}T00:00:00`);
+    return d.getFullYear() === ano;
+  });
+  const hhtAno = hht.filter((h) => Number(h.ano) === ano);
+
+  const meses = MESES.map((m, i) =>
+    montaLinha(
+      m,
+      acidsAno.filter(
+        (a) => new Date(`${String(a.data_acidente).slice(0, 10)}T00:00:00`).getMonth() === i,
+      ),
+      hhtAno.filter((h) => Number(h.mes) === i + 1),
+    ),
+  );
+
+  const total = montaLinha("Total", acidsAno, hhtAno);
+  // Nº médio de empregados no ano = média dos meses com lançamento de HHT
+  const mesesComDado = meses.filter((m) => m.empregados > 0);
+  total.empregados = mesesComDado.length
+    ? Math.round(mesesComDado.reduce((s, m) => s + m.empregados, 0) / mesesComDado.length)
+    : 0;
+  total.indiceRelativo = total.empregados > 0 ? total.absoluto / total.empregados : 0;
+
+  return { meses, total };
+}
+
+const n2 = (v: number) => v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 type DiasRow = {
   dias_sem_com_afast: number | null;
@@ -22,6 +114,7 @@ type DiasRow = {
   recorde_com_afast: number | null;
   recorde_registravel: number | null;
 };
+
 
 function footer(doc: jsPDF) {
   const pages = doc.getNumberOfPages();
