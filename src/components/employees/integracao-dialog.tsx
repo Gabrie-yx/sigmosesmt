@@ -97,16 +97,36 @@ export function IntegracaoDialog({
     },
   });
 
+  // IDs de quem já tem integração registrada — não devem aparecer na listagem
+  const { data: jaIntegrados = new Set<string>() } = useQuery({
+    queryKey: ["integracao-ja-registrados"],
+    enabled: open,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("integracao_participantes")
+        .select("employee_id")
+        .limit(20000);
+      if (error) throw error;
+      return new Set((data ?? []).map((r: any) => r.employee_id).filter(Boolean) as string[]);
+    },
+  });
+
+  const disponiveis = useMemo(
+    () => employees.filter((e) => !jaIntegrados.has(e.id) || e.id === preselectedEmployeeId),
+    [employees, jaIntegrados, preselectedEmployeeId],
+  );
+
   const filtrados = useMemo(() => {
     const q = busca.toLowerCase().trim();
-    if (!q) return employees;
-    return employees.filter(
+    if (!q) return disponiveis;
+    return disponiveis.filter(
       (e) =>
         e.nome.toLowerCase().includes(q) ||
         (e.companies?.name ?? "").toLowerCase().includes(q) ||
         (e.roles?.name ?? "").toLowerCase().includes(q),
     );
-  }, [employees, busca]);
+  }, [disponiveis, busca]);
+
 
   function toggle(id: string) {
     const n = new Set(sel);
