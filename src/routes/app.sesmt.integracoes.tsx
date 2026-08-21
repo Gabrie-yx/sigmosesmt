@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, GraduationCap, Plus, FileSpreadsheet, Printer, Building2 } from "lucide-react";
+import { ArrowLeft, GraduationCap, Plus, FileSpreadsheet, Printer, Building2, FileText } from "lucide-react";
 import { IntegracaoDialog } from "@/components/employees/integracao-dialog";
 import { EmpresaIntegracoesDialog } from "@/components/integracao/empresa-detalhe-dialog";
 import { ListagemIntegracoesDialog } from "@/components/integracao/listagem-integracoes-dialog";
@@ -278,6 +278,7 @@ function IntegracoesPage() {
 
         {isLoading && <div className="text-center text-sm text-muted-foreground py-8">Carregando…</div>}
       </div>
+      <ListagemIntegracoesDialog open={listagemOpen} onOpenChange={setListagemOpen} />
       <IntegracaoDialog open={open} onOpenChange={setOpen} onSaved={() => refetch()} />
       <EmpresaIntegracoesDialog
         open={!!empresaSel}
