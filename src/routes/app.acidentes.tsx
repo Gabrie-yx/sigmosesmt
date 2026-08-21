@@ -574,7 +574,7 @@ function AcidentesPage() {
                     Calculado conforme NBR 14280.
                   </p>
                   <div className="mt-2 text-lg font-black text-indigo-950">
-                    {kpis.tf}
+                    {quadro.total.tf.toFixed(2)}
                   </div>
                 </div>
 
@@ -587,7 +587,7 @@ function AcidentesPage() {
                     Calculado conforme NBR 14280.
                   </p>
                   <div className="mt-2 text-lg font-black text-purple-950">
-                    {kpis.tg}
+                    {quadro.total.tg.toFixed(2)}
                   </div>
                 </div>
               </div>
@@ -791,6 +791,7 @@ function AcidentesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <QuadroEstatisticoDialog open={quadroOpen} onOpenChange={setQuadroOpen} anoInicial={anoFiltro} />
       <HhtDialog
         open={hhtOpen}
         onOpenChange={setHhtOpen}
