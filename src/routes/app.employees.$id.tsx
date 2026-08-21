@@ -86,8 +86,8 @@ function EmployeeDetail() {
   }, [id]);
   const canGoBack = typeof window !== "undefined" && window.history.length > 1;
   return (
-    <div className="p-6 md:p-8 space-y-6 animate-fadeIn">
-      <div className="flex items-center gap-3">
+    <div className="px-4 pt-2 pb-6 sm:px-6 md:px-8 md:pt-3 md:pb-8 space-y-3 animate-fadeIn">
+      <div className="flex items-center gap-3 -ml-2">
         {canGoBack ? (
           <Button
             variant="ghost"
