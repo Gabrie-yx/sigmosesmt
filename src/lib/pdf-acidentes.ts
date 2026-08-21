@@ -132,71 +132,85 @@ function footer(doc: jsPDF) {
   }
 }
 
-/** FOR-SEG 09 — Quadro Estatístico Anual de Acidentes */
+export type EmpresaQuadro = {
+  nome?: string | null;
+  cnpj?: string | null;
+  endereco?: string | null;
+  bairro?: string | null;
+  cep?: string | null;
+  cnae?: string | null;
+  grau_risco?: string | null;
+};
+
+/** FOR-SEG 09 — Quadro Estatístico Anual de Acidentes (retorna o doc; nunca salva direto) */
 export function gerarForSeg09(opts: {
   ano: number;
   acidentes: Acidente[];
   hht: Hht[];
-  empresa?: string;
+  empresa?: EmpresaQuadro | string;
+  responsavel?: string | null;
+  /** compatibilidade com chamadas antigas */
   cnpj?: string;
   endereco?: string;
   bairro?: string;
   cep?: string;
   cnae?: string;
   grau_risco?: string;
-}) {
+}): jsPDF {
+  const emp: EmpresaQuadro =
+    typeof opts.empresa === "string" || opts.empresa == null
+      ? {
+          nome: (opts.empresa as string) || EMPRESA_INFO.razao_social,
+          cnpj: opts.cnpj,
+          endereco: opts.endereco,
+          bairro: opts.bairro,
+          cep: opts.cep,
+          cnae: opts.cnae,
+          grau_risco: opts.grau_risco,
+        }
+      : opts.empresa;
+
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
 
-  // Cabeçalho Rígido FOR-SEG 09
-  const header = () => {
-    doc.setDrawColor(0);
-    doc.setLineWidth(0.3);
-    
-    // Moldura principal do cabeçalho
-    doc.rect(10, 10, pageWidth - 20, 25);
-    
-    // Divisórias verticais
-    doc.line(60, 10, 60, 35);
-    doc.line(pageWidth - 65, 10, pageWidth - 65, 35);
-    
-    // Logo (DMN ESTALEIRO)
-    try {
-      doc.addImage(dmnLogoAsset.url, "PNG", 15, 12, 40, 20);
-    } catch (e) {
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(14);
-      doc.text("DMN", 35, 20, { align: "center" });
-      doc.setFontSize(8);
-      doc.text("ESTALEIRO", 35, 25, { align: "center" });
-    }
-    
-    // Título Central
-    doc.setFont("times", "bold");
-    doc.setFontSize(18); // Aumentado conforme solicitado
-    doc.text("Quadro Estatístico de Acidentes de Trabalho", (pageWidth / 2) - 2, 25, { align: "center" });
-    
-    // Removida a barra cinza e o texto de dentro do cabeçalho
-    
-    // Bloco Direita (Código/Revisão)
-    doc.setFont("helvetica", "bold"); // Volta para helvetica para o restante
+  // ===== Cabeçalho rígido FOR-SEG 09 =====
+  doc.setDrawColor(0);
+  doc.setLineWidth(0.3);
+  doc.rect(10, 10, pageWidth - 20, 25);
+  doc.line(60, 10, 60, 35);
+  doc.line(pageWidth - 65, 10, pageWidth - 65, 35);
+
+  try {
+    doc.addImage(dmnLogoAsset.url, "PNG", 15, 12, 40, 20);
+  } catch {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.text("DMN", 35, 20, { align: "center" });
     doc.setFontSize(8);
-    const rightX = pageWidth - 63;
-    doc.text("CÓG.:", rightX, 16);
-    doc.text("REVISÃO:", rightX, 21);
-    doc.text("DATA:", rightX, 26);
-    doc.text("PÁG.:", rightX, 31);
-    
-    doc.setFont("helvetica", "normal");
-    doc.text("FOR-SEG 09", rightX + 16, 16);
-    doc.text("00", rightX + 16, 21);
-    doc.text("30/08/2025", rightX + 16, 26);
-    doc.text("01/01", rightX + 16, 31);
-  };
+    doc.text("ESTALEIRO", 35, 25, { align: "center" });
+  }
 
-  header();
+  doc.setFont("times", "bold");
+  doc.setFontSize(18);
+  doc.text("Quadro Estatístico de Acidentes de Trabalho", pageWidth / 2 - 2, 24, { align: "center" });
+  doc.setFont("times", "normal");
+  doc.setFontSize(10);
+  doc.text(`Exercício ${opts.ano}`, pageWidth / 2 - 2, 30, { align: "center" });
 
-  // 3 - Logo abaixo do cabeçalho entra a faixa cinza com o título em arial e negrito "ACIDENTES COM VÍTIMA"
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  const rightX = pageWidth - 63;
+  doc.text("CÓG.:", rightX, 16);
+  doc.text("REVISÃO:", rightX, 21);
+  doc.text("DATA:", rightX, 26);
+  doc.text("PÁG.:", rightX, 31);
+  doc.setFont("helvetica", "normal");
+  doc.text("FOR-SEG 09", rightX + 16, 16);
+  doc.text("00", rightX + 16, 21);
+  doc.text("30/08/2025", rightX + 16, 26);
+  doc.text("01/01", rightX + 16, 31);
+
+  // Faixa
   doc.setFillColor(180, 180, 180);
   doc.rect(10, 35, pageWidth - 20, 5, "F");
   doc.setFont("helvetica", "bold");
@@ -204,118 +218,58 @@ export function gerarForSeg09(opts: {
   doc.setTextColor(0);
   doc.text("ACIDENTES COM VÍTIMA", pageWidth / 2, 38.5, { align: "center" });
 
-  // Seção de Informações da Empresa (Grid Compacto com Moldura sutil)
+  // ===== Identificação da empresa =====
   doc.setFontSize(9);
-  
-  // Moldura das informações da empresa
   doc.setLineWidth(0.2);
   doc.rect(10, 42, pageWidth - 20, 26);
   doc.line(10, 48.5, pageWidth - 10, 48.5);
   doc.line(10, 55, pageWidth - 10, 55);
   doc.line(10, 61.5, pageWidth - 10, 61.5);
+  doc.line(pageWidth - 65, 61.5, pageWidth - 65, 68);
 
-  // Colunas internas
-  doc.line(pageWidth - 65, 61.5, pageWidth - 65, 68); // Entre Grau de Risco e DATA (alinhada verticalmente)
+  const par = (labelX: number, label: string, valueX: number, value: string, y: number) => {
+    doc.setFont("helvetica", "bold");
+    doc.text(label, labelX, y);
+    doc.setFont("helvetica", "normal");
+    doc.text(value || "—", valueX, y);
+  };
 
-  // Linha 1: Empresa
-  doc.setFont("helvetica", "bold");
-  doc.text("Empresa:", 12, 46);
-  doc.setFont("helvetica", "normal");
-  doc.text(opts.empresa || EMPRESA_INFO.razao_social, 30, 46);
-  
-  // Linha 2: CNPJ
-  doc.setFont("helvetica", "bold");
-  doc.text("CNPJ:", 12, 52.5);
-  doc.setFont("helvetica", "normal");
-  doc.text(opts.cnpj || EMPRESA_INFO.cnpj, 30, 52.5);
-  
-  // Linha 3: Endereço / Bairro / CEP
-  doc.setFont("helvetica", "bold");
-  doc.text("Endereço:", 12, 59);
-  doc.setFont("helvetica", "normal");
-  doc.text(opts.endereco || EMPRESA_INFO.endereco, 30, 59);
-  
-  doc.setFont("helvetica", "bold");
-  doc.text("Bairro:", 117, 59);
-  doc.setFont("helvetica", "normal");
-  // Extrai o bairro do endereço se possível, ou usa o padrão
   const bairroMatch = EMPRESA_INFO.endereco.match(/—\s*(.*)$/);
-  doc.text(opts.bairro || (bairroMatch ? bairroMatch[1] : "DISTRITO INDUSTRIAL II"), 130, 59);
-  
-  doc.setFont("helvetica", "bold");
-  doc.text("CEP:", pageWidth - 63, 59);
-  doc.setFont("helvetica", "normal");
   const cepMatch = EMPRESA_INFO.cidade_uf_cep.match(/CEP\s*([\d.-]+)/);
-  doc.text(opts.cep || (cepMatch ? cepMatch[1] : "69.082-200"), pageWidth - 48, 59);
-  
-  // Linha 4: CNAE / Grau de Risco / Data
-  doc.setFont("helvetica", "bold");
-  doc.text("CNAE:", 12, 65.5);
-  doc.setFont("helvetica", "normal");
-  doc.text(opts.cnae || "30.11-3-01", 30, 65.5);
-  
-  doc.setFont("helvetica", "bold");
-  doc.text("Grau de risco:", 67, 65.5);
-  doc.setFont("helvetica", "normal");
-  doc.text(opts.grau_risco || "03", 92, 65.5);
-  
-  doc.setFont("helvetica", "bold");
-  doc.text("DATA:", pageWidth - 63, 65.5);
-  doc.setFont("helvetica", "normal");
-  doc.text(new Date().toLocaleDateString("pt-BR"), pageWidth - 48, 65.5);
 
-  // Tabela de Dados
-  const tableRows = MESES.map((m, i) => {
-    const acidsMes = opts.acidentes.filter(a => {
-      const d = new Date(a.data_acidente);
-      return d.getFullYear() === opts.ano && d.getMonth() === i;
-    });
-    
-    const hhtData = opts.hht.find(h => h.ano === opts.ano && h.mes === i + 1);
-    const hhtVal = Number(hhtData?.hht || 0);
-    const empMedio = Number(hhtData?.empregados_medio || 0);
-    
-    const comAfast = acidsMes.filter(a => a.tipo === "COM_AFASTAMENTO" || a.tipo === "FATAL");
-    const comAfastLeve = comAfast.filter(a => (Number(a.dias_perdidos || 0) + Number(a.dias_debitados || 0)) <= 15).length;
-    const comAfastGrave = comAfast.filter(a => (Number(a.dias_perdidos || 0) + Number(a.dias_debitados || 0)) > 15).length;
-    const semAfast = acidsMes.filter(a => a.tipo === "SEM_AFASTAMENTO").length;
-    const obitos = acidsMes.filter(a => a.tipo === "FATAL").length;
-    const totalAbs = acidsMes.length;
-    
-    const dp = acidsMes.reduce((s, a) => s + (Number(a.dias_perdidos || 0) + Number(a.dias_debitados || 0)), 0);
-    
-    const tf = hhtVal > 0 ? ((comAfast.length * 1_000_000) / hhtVal).toFixed(2) : "0,00";
-    const indiceRel = empMedio > 0 ? (totalAbs / empMedio).toFixed(2) : "0,00";
+  par(12, "Empresa:", 30, emp.nome || EMPRESA_INFO.razao_social, 46);
+  par(12, "CNPJ:", 30, emp.cnpj || EMPRESA_INFO.cnpj, 52.5);
+  par(12, "Endereço:", 30, emp.endereco || EMPRESA_INFO.endereco, 59);
+  par(117, "Bairro:", 130, emp.bairro || (bairroMatch ? bairroMatch[1] : "DISTRITO INDUSTRIAL II"), 59);
+  par(pageWidth - 63, "CEP:", pageWidth - 48, emp.cep || (cepMatch ? cepMatch[1] : "69.082-200"), 59);
+  par(12, "CNAE:", 30, emp.cnae || "30.11-3-01", 65.5);
+  par(67, "Grau de risco:", 92, emp.grau_risco || "03", 65.5);
+  par(pageWidth - 63, "DATA:", pageWidth - 48, new Date().toLocaleDateString("pt-BR"), 65.5);
 
+  // ===== Tabela =====
+  const { meses, total } = calcularQuadroEstatistico(opts.ano, opts.acidentes, opts.hht);
+
+  const linhaCells = (l: LinhaQuadro, bold: boolean) => {
+    const style = bold
+      ? { fontStyle: "bold" as const, fillColor: [190, 190, 190] as [number, number, number] }
+      : undefined;
+    const cell = (content: string) => (style ? { content, styles: style } : { content });
     return [
-      { content: m, styles: { fontStyle: "bold" as const, fontSize: 10 } },
-      { content: String(empMedio || "") },
-      { content: hhtVal > 0 ? hhtVal.toLocaleString("pt-BR") : "" },
-      { content: String(totalAbs) },
-      { content: String(comAfastLeve) },
-      { content: String(comAfastGrave) },
-      { content: String(semAfast) },
-      { content: String(indiceRel) },
-      { content: String(dp) },
-      { content: String(tf) },
-      { content: String(obitos) }
+      style
+        ? { content: l.label, styles: style }
+        : { content: l.label, styles: { fontStyle: "bold" as const, fontSize: 10 } },
+      cell(l.empregados ? String(l.empregados) : ""),
+      cell(l.hht > 0 ? l.hht.toLocaleString("pt-BR") : ""),
+      cell(String(l.absoluto)),
+      cell(String(l.afastLeve)),
+      cell(String(l.afastGrave)),
+      cell(String(l.semAfast)),
+      cell(n2(l.indiceRelativo)),
+      cell(String(l.diasPerdidos)),
+      cell(n2(l.tf)),
+      cell(String(l.obitos)),
     ];
-  });
-
-  // Totais
-  const hhtAno = opts.hht.filter(h => h.ano === opts.ano);
-  const totEmp = hhtAno.length > 0 ? Math.round(hhtAno.reduce((s, h) => s + Number(h.empregados_medio || 0), 0) / hhtAno.length) : 0;
-  const totHHT = hhtAno.reduce((s, h) => s + Number(h.hht || 0), 0);
-  const acidsAno = opts.acidentes.filter(a => new Date(a.data_acidente).getFullYear() === opts.ano);
-  const totAbs = acidsAno.length;
-  const totCLeve = acidsAno.filter(a => (a.tipo === "COM_AFASTAMENTO" || a.tipo === "FATAL") && (Number(a.dias_perdidos || 0) + Number(a.dias_debitados || 0)) <= 15).length;
-  const totCGrave = acidsAno.filter(a => (a.tipo === "COM_AFASTAMENTO" || a.tipo === "FATAL") && (Number(a.dias_perdidos || 0) + Number(a.dias_debitados || 0)) > 15).length;
-  const totS = acidsAno.filter(a => a.tipo === "SEM_AFASTAMENTO").length;
-  const totDP = acidsAno.reduce((s, a) => s + (Number(a.dias_perdidos || 0) + Number(a.dias_debitados || 0)), 0);
-  const totObitos = acidsAno.filter(a => a.tipo === "FATAL").length;
-  
-  const totTF = totHHT > 0 ? ((acidsAno.filter(a => a.tipo === "COM_AFASTAMENTO" || a.tipo === "FATAL").length * 1_000_000) / totHHT).toFixed(2) : "0,00";
-  const totIndice = totEmp > 0 ? (totAbs / totEmp).toFixed(2) : "0,00";
+  };
 
   autoTable(doc, {
     startY: 72,
@@ -331,58 +285,65 @@ export function gerarForSeg09(opts: {
       "Índice Relativo total de empregados",
       "Dias / homens Perdidos",
       "Taxa de frequência",
-      "Óbitos"
+      "Óbitos",
     ]],
-    body: [
-      ...tableRows,
-      [
-        { content: "Total", styles: { fontStyle: "bold" as const, fillColor: [160, 160, 160] } },
-        { content: String(totEmp || ""), styles: { fontStyle: "bold" as const, fillColor: [160, 160, 160] } },
-        { content: totHHT > 0 ? totHHT.toLocaleString("pt-BR") : "", styles: { fontStyle: "bold" as const, fillColor: [160, 160, 160] } },
-        { content: String(totAbs), styles: { fontStyle: "bold" as const, fillColor: [160, 160, 160] } },
-        { content: String(totCLeve), styles: { fontStyle: "bold" as const, fillColor: [160, 160, 160] } },
-        { content: String(totCGrave), styles: { fontStyle: "bold" as const, fillColor: [160, 160, 160] } },
-        { content: String(totS), styles: { fontStyle: "bold" as const, fillColor: [160, 160, 160] } },
-        { content: String(totIndice), styles: { fontStyle: "bold" as const, fillColor: [160, 160, 160] } },
-        { content: String(totDP), styles: { fontStyle: "bold" as const, fillColor: [160, 160, 160] } },
-        { content: String(totTF), styles: { fontStyle: "bold" as const, fillColor: [160, 160, 160] } },
-        { content: String(totObitos), styles: { fontStyle: "bold" as const, fillColor: [160, 160, 160] } },
-      ]
-    ],
-    headStyles: { 
-      fillColor: [180, 180, 180], 
-      textColor: 0, 
-      fontSize: 7, 
-      halign: "center", 
+    body: [...meses.map((m) => linhaCells(m, false)), linhaCells(total, true)],
+    headStyles: {
+      fillColor: [180, 180, 180],
+      textColor: 0,
+      fontSize: 7,
+      halign: "center",
       valign: "middle",
-      lineWidth: 0.2, 
+      lineWidth: 0.2,
       lineColor: 0,
       fontStyle: "bold",
-      minCellHeight: 12
+      minCellHeight: 12,
     },
-    bodyStyles: { 
-      fontSize: 8, 
-      halign: "center", 
+    bodyStyles: {
+      fontSize: 8,
+      halign: "center",
       valign: "middle",
-      lineWidth: 0.2, 
+      lineWidth: 0.2,
       lineColor: 0,
-      minCellHeight: 8
+      minCellHeight: 7,
     },
     theme: "grid",
-    styles: { overflow: 'linebreak', cellPadding: 1, minCellWidth: 10 }
+    styles: { overflow: "linebreak", cellPadding: 1, minCellWidth: 10 },
   });
 
-  // Assinatura
-
   // @ts-expect-error lastAutoTable injected by plugin
-  const finalY = doc.lastAutoTable.finalY + 12;
+  const afterTable = doc.lastAutoTable.finalY as number;
+
+  // Indicadores consolidados (ISO 9001/45001 — análise crítica)
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.text(
+    `Taxa de Frequência (anual): ${n2(total.tf)}   |   Taxa de Gravidade (anual): ${n2(total.tg)}   |   HHT total: ${total.hht.toLocaleString("pt-BR")} h`,
+    10,
+    afterTable + 6,
+  );
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7);
+  doc.text(
+    "TF = (acidentes com afastamento × 1.000.000) / HHT · TG = ((dias perdidos + debitados) × 1.000.000) / HHT — NBR 14280. Acidentes de trajeto não são computados no quadro de acidentes típicos.",
+    10,
+    afterTable + 10.5,
+  );
+
+  const finalY = afterTable + 22;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
   doc.text("RESPONSÁVEL:", 10, finalY);
   doc.line(38, finalY, 130, finalY);
+  if (opts.responsavel) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.text(opts.responsavel, 40, finalY - 1.5);
+  }
 
-  doc.save(`FOR-SEG-09_Quadro-Estatistico_${opts.ano}.pdf`);
+  return doc;
 }
+
 
 /** FOR-SEG 10 — Dias sem Acidente */
 export function gerarForSeg10(opts: {
