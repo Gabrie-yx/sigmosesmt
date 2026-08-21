@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Check, X, Pencil, Upload, Eraser, BookmarkPlus, Trash2, Library } from "lucide-react";
@@ -92,7 +92,8 @@ export function SignaturePadDialog({
   const hasStroke = useRef(false);
   const qc = useQueryClient();
 
-  const { data: salvas = [] } = useQuery({
+  // Galeria compartilhada (assinaturas_salvas)
+  const { data: compartilhadas = [] } = useQuery({
     queryKey: ["assinaturas-salvas"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -104,6 +105,42 @@ export function SignaturePadDialog({
     },
     enabled: open,
   });
+
+  // Minhas Assinaturas (user_signatures) — mesma fonte da galeria pessoal
+  const { data: minhas = [] } = useQuery({
+    queryKey: ["user-signatures-pad"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_signatures")
+        .select("id,label,signature_data,is_default,created_at")
+        .order("is_default", { ascending: false })
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: open,
+  });
+
+  const salvas = useMemo(
+    () => [
+      ...(minhas as any[]).map((s) => ({
+        id: s.id,
+        nome: s.label,
+        cargo: s.is_default ? "Minhas assinaturas · padrão" : "Minhas assinaturas",
+        imagem_data_url: s.signature_data,
+        origem: "user" as const,
+      })),
+      ...(compartilhadas as any[]).map((s) => ({
+        id: s.id,
+        nome: s.nome,
+        cargo: s.cargo,
+        imagem_data_url: s.imagem_data_url,
+        origem: "shared" as const,
+      })),
+    ],
+    [minhas, compartilhadas],
+  );
+
 
   const salvarMut = useMutation({
     mutationFn: async (payload: { nome: string; cargo: string; imagem_data_url: string }) => {
@@ -119,13 +156,18 @@ export function SignaturePadDialog({
   });
 
   const excluirMut = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("assinaturas_salvas").delete().eq("id", id);
+    mutationFn: async ({ id, origem }: { id: string; origem: "user" | "shared" }) => {
+      const { error } =
+        origem === "user"
+          ? await supabase.from("user_signatures").delete().eq("id", id)
+          : await supabase.from("assinaturas_salvas").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Assinatura removida");
       qc.invalidateQueries({ queryKey: ["assinaturas-salvas"] });
+      qc.invalidateQueries({ queryKey: ["user-signatures-pad"] });
+      qc.invalidateQueries({ queryKey: ["user-signatures"] });
     },
     onError: (e: any) => toast.error(e?.message ?? "Erro ao remover"),
   });
@@ -305,7 +347,7 @@ export function SignaturePadDialog({
                         Usar
                       </Button>
                       <Button type="button" size="icon" variant="ghost" className="h-7 w-7 text-red-700"
-                        onClick={() => { if (confirm(`Remover assinatura de ${s.nome}?`)) excluirMut.mutate(s.id); }}>
+                        onClick={() => { if (confirm(`Remover assinatura de ${s.nome}?`)) excluirMut.mutate({ id: s.id, origem: s.origem }); }}>
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
