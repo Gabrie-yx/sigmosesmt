@@ -401,9 +401,10 @@ export function EmployeeDetailContent({ id, showHeader = true, initialTab }: { i
           )}
         </div>
         <div className="min-w-0">
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-3">
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-2 lg:gap-3">
             <h1 className="heading-display text-lg sm:text-2xl lg:text-[28px] leading-tight text-slate-100/95 break-words min-w-0 tracking-tight drop-shadow-[0_1px_0_rgba(0,0,0,0.45)]">{emp.nome}</h1>
-            <div className="shrink-0 flex flex-row flex-wrap items-center gap-2">
+            <div className="flex flex-row flex-wrap items-center gap-2 lg:shrink-0">
+
               <button
                 type="button"
                 onClick={() => setSaidaExpedienteOpen(true)}
