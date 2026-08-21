@@ -223,7 +223,9 @@ export function ListagemIntegracoesDialog({
             </div>
 
             <div className="text-[11px] uppercase tracking-widest text-muted-foreground">
-              Período: {periodoLabel} · Empresa: {empresa === "TODAS" ? "Todas" : empresa}
+              Período: {periodoLabel} · Empresa: {empresa === "TODAS" ? "Todas" : empresa} ·{" "}
+              {totalIntegracoes ?? "…"} integração(ões) no banco
+
             </div>
           </div>
 
