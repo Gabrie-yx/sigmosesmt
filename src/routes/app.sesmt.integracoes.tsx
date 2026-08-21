@@ -6,9 +6,10 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, GraduationCap, Plus, FileSpreadsheet, Printer, Building2 } from "lucide-react";
+import { ArrowLeft, GraduationCap, Plus, FileSpreadsheet, Printer, Building2, FileText } from "lucide-react";
 import { IntegracaoDialog } from "@/components/employees/integracao-dialog";
 import { EmpresaIntegracoesDialog } from "@/components/integracao/empresa-detalhe-dialog";
+import { ListagemIntegracoesDialog } from "@/components/integracao/listagem-integracoes-dialog";
 import { gerarListaPresenca } from "@/lib/lista-presenca-pdf";
 import { fetchSignatureAsCleanDataUrl } from "@/lib/signature-utils";
 import { toast } from "sonner";
@@ -44,6 +45,7 @@ function IntegracoesPage() {
   const [fim, setFim] = useState("");
   const [empresa, setEmpresa] = useState("");
   const [open, setOpen] = useState(false);
+  const [listagemOpen, setListagemOpen] = useState(false);
   const [empresaSel, setEmpresaSel] = useState<string | null>(null);
   const [de, ate] = rangeFor(periodo, ini, fim);
 
@@ -183,7 +185,10 @@ function IntegracoesPage() {
           <h1 className="text-2xl font-black uppercase tracking-widest text-rose-50 flex items-center gap-2">
             <GraduationCap className="h-6 w-6 text-emerald-400" /> Integrações NR-01
           </h1>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" onClick={() => setListagemOpen(true)}>
+              <FileText className="h-4 w-4 mr-1" /> Emitir listagem
+            </Button>
             <Button variant="outline" onClick={exportarRelatorioPeriodo} disabled={filtradas.length === 0}>
               <Printer className="h-4 w-4 mr-1" /> Relatório do período
             </Button>
@@ -273,6 +278,7 @@ function IntegracoesPage() {
 
         {isLoading && <div className="text-center text-sm text-muted-foreground py-8">Carregando…</div>}
       </div>
+      <ListagemIntegracoesDialog open={listagemOpen} onOpenChange={setListagemOpen} />
       <IntegracaoDialog open={open} onOpenChange={setOpen} onSaved={() => refetch()} />
       <EmpresaIntegracoesDialog
         open={!!empresaSel}
