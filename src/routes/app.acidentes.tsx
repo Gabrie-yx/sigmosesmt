@@ -492,12 +492,10 @@ function AcidentesPage() {
                   variant="outline"
                   size="sm"
                   className="h-8 gap-2"
-                  onClick={() => {
-                    gerarForSeg09({ ano: anoFiltro, acidentes: acidentes as any, hht: hhtRows as any });
-                    toast.success("PDF do Quadro Estatístico gerado!");
-                  }}
+                  onClick={() => setQuadroOpen(true)}
                 >
-                  <FileDown className="h-4 w-4" /> Exportar PDF
+                  <FileDown className="h-4 w-4" /> Emitir FOR-SEG 09
+
                 </Button>
               </div>
             </CardHeader>
