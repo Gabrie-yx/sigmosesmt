@@ -74,17 +74,38 @@ export function ListagemIntegracoesDialog({
       const { data, error } = await q;
       if (error) throw error;
 
-      const sessoes = (data ?? []).map((r: any) => ({
-        ...r,
-        integracao_participantes: (r.integracao_participantes ?? []).filter((p: any) =>
-          empresa === "TODAS" ? true : (p.empresa_snapshot ?? "") === empresa,
-        ),
-      })).filter((r: any) => r.integracao_participantes.length > 0);
-
-      if (sessoes.length === 0) {
-        toast.error("Nenhuma integração encontrada com esses filtros.");
+      const todas = data ?? [];
+      if (todas.length === 0) {
+        toast.error(
+          escopo === "PERIODO"
+            ? `Nenhuma integração registrada entre ${brDate(de)} e ${brDate(ate)}.`
+            : "Nenhuma integração registrada no sistema ainda.",
+        );
         return;
       }
+
+      const sessoes = todas
+        .map((r: any) => ({
+          ...r,
+          integracao_participantes: (r.integracao_participantes ?? []).filter((p: any) =>
+            empresa === "TODAS" ? true : (p.empresa_snapshot ?? "") === empresa,
+          ),
+        }))
+        .filter((r: any) => r.integracao_participantes.length > 0);
+
+      if (sessoes.length === 0) {
+        const totalParts = todas.reduce(
+          (acc: number, r: any) => acc + (r.integracao_participantes?.length ?? 0),
+          0,
+        );
+        toast.error(
+          totalParts === 0
+            ? `${todas.length} integração(ões) encontrada(s), mas sem participantes cadastrados.`
+            : `Nenhum participante da empresa "${empresa}" nas ${todas.length} integração(ões) do período.`,
+        );
+        return;
+      }
+
 
       const participantes: any[] = [];
       for (const r of sessoes) {
