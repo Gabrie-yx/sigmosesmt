@@ -126,7 +126,8 @@ export function ListagemIntegracoesDialog({
           participantes.push({
             nome: p.nome_snapshot,
             empresa: p.empresa_snapshot ?? "— Sem empresa —",
-            cargo: `${p.cargo_snapshot ?? ""} · ${brDate(r.data_integracao)}`,
+            cargo: p.cargo_snapshot ?? "",
+            dataIntegracao: brDate(r.data_integracao),
             assinaturaDataUrl: await fetchSignatureAsCleanDataUrl(p.assinatura_snapshot),
           });
         }
