@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Check, X, Pencil, Upload, Eraser, BookmarkPlus, Trash2, Library } from "lucide-react";
@@ -156,13 +156,18 @@ export function SignaturePadDialog({
   });
 
   const excluirMut = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("assinaturas_salvas").delete().eq("id", id);
+    mutationFn: async ({ id, origem }: { id: string; origem: "user" | "shared" }) => {
+      const { error } =
+        origem === "user"
+          ? await supabase.from("user_signatures").delete().eq("id", id)
+          : await supabase.from("assinaturas_salvas").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Assinatura removida");
       qc.invalidateQueries({ queryKey: ["assinaturas-salvas"] });
+      qc.invalidateQueries({ queryKey: ["user-signatures-pad"] });
+      qc.invalidateQueries({ queryKey: ["user-signatures"] });
     },
     onError: (e: any) => toast.error(e?.message ?? "Erro ao remover"),
   });
@@ -342,7 +347,7 @@ export function SignaturePadDialog({
                         Usar
                       </Button>
                       <Button type="button" size="icon" variant="ghost" className="h-7 w-7 text-red-700"
-                        onClick={() => { if (confirm(`Remover assinatura de ${s.nome}?`)) excluirMut.mutate(s.id); }}>
+                        onClick={() => { if (confirm(`Remover assinatura de ${s.nome}?`)) excluirMut.mutate({ id: s.id, origem: s.origem }); }}>
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
