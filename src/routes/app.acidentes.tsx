@@ -262,12 +262,8 @@ function AcidentesPage() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-64">
               <DropdownMenuLabel className="text-xs text-muted-foreground">Documentos NBR 14280</DropdownMenuLabel>
-              <DropdownMenuItem
-                onClick={() => {
-                  gerarForSeg09({ ano: anoFiltro, acidentes: acidentes as any, hht: hhtRows as any });
-                  toast.success("Quadro Estatístico gerado");
-                }}
-              >
+              <DropdownMenuItem onClick={() => setQuadroOpen(true)}>
+
                 <FileDown className="h-4 w-4 mr-2" />
                 <div className="flex flex-col">
                   <span>Quadro Estatístico Anual</span>
