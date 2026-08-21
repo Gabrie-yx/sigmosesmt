@@ -45,6 +45,7 @@ function IntegracoesPage() {
   const [fim, setFim] = useState("");
   const [empresa, setEmpresa] = useState("");
   const [open, setOpen] = useState(false);
+  const [listagemOpen, setListagemOpen] = useState(false);
   const [empresaSel, setEmpresaSel] = useState<string | null>(null);
   const [de, ate] = rangeFor(periodo, ini, fim);
 
