@@ -49,6 +49,19 @@ export function ListagemIntegracoesDialog({
     },
   });
 
+  const { data: totalIntegracoes } = useQuery({
+    queryKey: ["integracoes-total"],
+    enabled: open,
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("integracoes")
+        .select("id", { count: "exact", head: true });
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
+
   const periodoLabel = useMemo(() => {
     if (escopo === "TUDO") return "Todo o histórico";
     if (!de || !ate) return "—";
