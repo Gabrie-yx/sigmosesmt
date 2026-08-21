@@ -11,7 +11,7 @@ export type ListaPresencaParams = {
   cargaHoraria: string;
   instituicao: string;
   local: string;
-  participantes: { nome: string; empresa: string; cargo: string; assinaturaDataUrl?: string | null }[];
+  participantes: { nome: string; empresa: string; cargo: string; dataIntegracao?: string; assinaturaDataUrl?: string | null }[];
   codigo?: string;
   revisao?: string;
   dataDocumento?: string;
@@ -250,9 +250,15 @@ export function gerarListaPresenca(p: ListaPresencaParams): jsPDF {
       doc.text(label, cx + w / 2, subY + 3.5, { align: "center" });
       cx += w;
     });
-    const rubCol = datW / 5;
-    for (let i = 0; i < 5; i++) {
-      doc.rect(margin + partW + i * rubCol, subY, rubCol, subH);
+    // Coluna DATA dedicada + 4 colunas de rubrica (assinatura vai na 1ª delas)
+    const dataColW = datW * 0.28;
+    const rubColCount = 4;
+    const rubTotal = datW - dataColW;
+    const rubCol = rubTotal / rubColCount;
+    doc.rect(margin + partW, subY, dataColW, subH);
+    doc.text("DATA", margin + partW + dataColW / 2, subY + 3.5, { align: "center" });
+    for (let i = 0; i < rubColCount; i++) {
+      doc.rect(margin + partW + dataColW + i * rubCol, subY, rubCol, subH);
     }
 
     // Body rows — a tabela para antes da área real do rodapé LGPD.
@@ -280,14 +286,17 @@ export function gerarListaPresenca(p: ListaPresencaParams): jsPDF {
       doc.rect(cx, ry, subCols[3], rowH);
       if (part) fitTextToCell(part.cargo, cx, ry, subCols[3], rowH);
       cx += subCols[3];
-      // 5 rubrica empty
-      for (let i = 0; i < 5; i++) {
-        doc.rect(margin + partW + i * rubCol, ry, rubCol, rowH);
+      // DATA (data da integração, separada do cargo)
+      doc.rect(margin + partW, ry, dataColW, rowH);
+      if (part?.dataIntegracao) fitTextToCell(part.dataIntegracao, margin + partW, ry, dataColW, rowH, { align: "center" });
+      // 4 rubrica empty
+      for (let i = 0; i < rubColCount; i++) {
+        doc.rect(margin + partW + dataColW + i * rubCol, ry, rubCol, rowH);
       }
-      // Estampa assinatura digital (se houver) na 1ª célula de rubrica
+      // Estampa assinatura digital (se houver) na 1ª célula de rubrica (logo após a DATA)
       if (part?.assinaturaDataUrl) {
         try {
-          drawImageContain(part.assinaturaDataUrl, margin + partW + 0.6, ry + 0.6, rubCol - 1.2, rowH - 1.2);
+          drawImageContain(part.assinaturaDataUrl, margin + partW + dataColW + 0.6, ry + 0.6, rubCol - 1.2, rowH - 1.2);
         } catch {}
       }
       ry += rowH;

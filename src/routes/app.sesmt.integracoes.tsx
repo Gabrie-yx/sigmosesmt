@@ -123,7 +123,8 @@ function IntegracoesPage() {
         participantes.push({
           nome: p.nome_snapshot,
           empresa: p.empresa_snapshot ?? "— Sem empresa —",
-          cargo: `${p.cargo_snapshot ?? ""} · ${r.data_integracao.split("-").reverse().join("/")}`,
+          cargo: p.cargo_snapshot ?? "",
+          dataIntegracao: r.data_integracao.split("-").reverse().join("/"),
           assinaturaDataUrl: await fetchSignatureAsCleanDataUrl(p.assinatura_snapshot),
         });
       }
