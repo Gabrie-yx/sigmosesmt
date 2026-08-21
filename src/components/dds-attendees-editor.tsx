@@ -185,19 +185,15 @@ function AddAttendeesDialog({
   const qc = useQueryClient();
 
   const { data: employees = [], isLoading } = useQuery({
-    queryKey: ["dds-add-employees-all"],
+    queryKey: ["dds-add-employees-ativos"],
     enabled: open,
     queryFn: async () => {
-      console.log("[DDS Search] Fetching employees...");
-      const { data, error, count } = await supabase
+      const { data, error } = await supabase
         .from("employees")
-        .select("id, nome, status, company_id, companies(name)", { count: 'exact' })
-        .order("nome", { ascending: true });
-      
-      console.log("[DDS Search] Result count:", count);
-      console.log("[DDS Search] Error:", error);
-      console.log("[DDS Search] First 10:", data?.slice(0, 10).map(e => e.nome));
-      
+        .select("id, nome, status, company_id, companies(name)")
+        .eq("status", "ATIVO")
+        .order("nome", { ascending: true })
+        .limit(5000);
       if (error) throw error;
       return (data ?? []) as any[];
     },
@@ -205,23 +201,18 @@ function AddAttendeesDialog({
 
   const disponiveis = useMemo(() => {
     const q = busca.toLowerCase().trim();
-    console.log("[DDS Search] Filtering for:", q || "(empty)");
-    const filtered = employees
+    return employees
       .filter((e) => !jaIncluidos.has(e.id))
+      .filter((e) => e.status === "ATIVO")
       .filter((e) => {
-        const nameMatch = !q || e.nome.toLowerCase().includes(q);
-        const companyMatch = !q || (e.companies?.name ?? "").toLowerCase().includes(q);
-        const matches = nameMatch || companyMatch;
-        
-        // Debug específico para o Paulo Laurindo ou qualquer busca que contenha "paulo"
-        if (q.includes("paulo") && e.nome.toLowerCase().includes("paulo")) {
-           console.log("[DDS Search] Found Paulo in list:", e.nome, "Matches:", matches, "Included already?", jaIncluidos.has(e.id));
-        }
-        return matches;
+        if (!q) return true;
+        return (
+          e.nome.toLowerCase().includes(q) ||
+          (e.companies?.name ?? "").toLowerCase().includes(q)
+        );
       });
-    console.log("[DDS Search] Displaying:", filtered.length, "employees");
-    return filtered;
   }, [employees, busca, jaIncluidos]);
+
 
   function toggle(id: string) {
     const n = new Set(sel);
