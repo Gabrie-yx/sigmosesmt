@@ -238,6 +238,13 @@ function AcidentesPage() {
     [acidentes, anoFiltro],
   );
 
+  // Quadro estatístico oficial (mesma engine do PDF FOR-SEG 09)
+  const quadro = useMemo(
+    () => calcularQuadroEstatistico(anoFiltro, acidentes as any, hhtRows as any),
+    [acidentes, hhtRows, anoFiltro],
+  );
+
+
   // Anos disponíveis (com base nos registros + ano atual)
   const anosDisponiveis = useMemo(() => {
     const set = new Set<number>([new Date().getFullYear()]);
