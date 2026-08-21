@@ -980,7 +980,7 @@ function PtesPage() {
             </div>
 
             {/* DATA + HORÁRIOS */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <Label className="text-xs font-black text-amber-50/85/70 uppercase tracking-wider">Data</Label>
                 <Input type="date" required value={f.data} onChange={(e) => setF({ ...f, data: e.target.value })} className="bg-black/30 border-white/10 text-rose-50 mt-2" />
@@ -998,7 +998,7 @@ function PtesPage() {
             {/* VALIDADE */}
             <div>
               <Label className="text-xs font-black text-amber-50/85/70 uppercase tracking-wider mb-2 block">Validade</Label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 {[
                   { v: "TURNO", l: "Turno" },
                   { v: "24H", l: "24h" },

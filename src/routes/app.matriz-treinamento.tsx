@@ -765,7 +765,7 @@ function EmpDialog({ emp, companies, roles, onClose, isAdmin }:
       <DialogContent className="max-w-md">
         <DialogHeader><DialogTitle>{emp ? "Editar funcionário" : "Novo funcionário"}</DialogTitle></DialogHeader>
         <div className="space-y-3">
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             <div className="col-span-1">
               <Label className="text-[10px] uppercase font-black">Matrícula</Label>
               <Input value={v.matricula} onChange={(e) => setV({ ...v, matricula: e.target.value })} className="mt-1" />

@@ -984,7 +984,7 @@ function CompanyForm({
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <Label className="text-[10px] font-black text-slate-500 uppercase">Telefone</Label>
             <Input value={editing?.telefone ?? ""} onChange={(e) => setEditing({ ...editing, telefone: e.target.value })} className="bg-slate-50 mt-1" />

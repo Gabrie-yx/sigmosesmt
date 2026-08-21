@@ -738,7 +738,7 @@ function MovStatCard({ entradas, saidas }: { entradas: number; saidas: number })
       <div className="text-[10px] font-black uppercase tracking-widest text-slate-500">
         Movimentações (total)
       </div>
-      <div className="mt-2 grid grid-cols-3 gap-3">
+      <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>
           <div className="text-[9px] font-bold uppercase tracking-wider text-emerald-700">Entradas</div>
           <div className="text-2xl font-black text-emerald-700 leading-tight">{entradas}</div>

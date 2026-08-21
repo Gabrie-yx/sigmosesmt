@@ -384,12 +384,12 @@ function NCsPage() {
                   </span>
                   <span className="text-xs font-medium text-white/95">Identificação e descrição do problema</span>
                 </div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div><Label>Emitente</Label><Input value={form.emitente} onChange={(e) => setForm({ ...form, emitente: e.target.value })} placeholder="Nome de quem abriu" /></div>
                 <div><Label>Departamento</Label><Input value={form.departamento} onChange={(e) => setForm({ ...form, departamento: e.target.value })} /></div>
                 <div><Label>Data de abertura</Label><Input type="date" value={form.data_identificacao} onChange={(e) => setForm({ ...form, data_identificacao: e.target.value })} /></div>
               </div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div><Label>Enviado para</Label><Input value={form.enviado_para} onChange={(e) => setForm({ ...form, enviado_para: e.target.value })} placeholder="Responsável tratativa" /></div>
                 <div>
                   <Label>Origem da ocorrência</Label>
@@ -417,7 +417,7 @@ function NCsPage() {
                   </Select>
                 </div>
               </div>
-              <div className="grid grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div><Label>Requisito</Label><Input value={form.requisito} onChange={(e) => setForm({ ...form, requisito: e.target.value })} placeholder="Ex: 8.1 / 9.1.1" /></div>
                 <div><Label>Norma</Label><Input value={form.norma} onChange={(e) => setForm({ ...form, norma: e.target.value })} /></div>
                 <div><Label>Reincidente?</Label>
@@ -514,7 +514,7 @@ function NCsPage() {
                   </div>
                 </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div><Label>As ações foram implementadas?</Label>
                   <Select value={form.acoes_implementadas == null ? "" : form.acoes_implementadas ? "S" : "N"} onValueChange={(v) => setForm({ ...form, acoes_implementadas: v === "" ? null : v === "S" })}>
                     <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>

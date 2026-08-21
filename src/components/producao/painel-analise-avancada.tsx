@@ -896,7 +896,7 @@ function AbaDrillDown({
           </SheetHeader>
           {detalhe && (
             <div className="mt-4 space-y-3">
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <KpiMini label="Real" value={fmt(detalhe.meta?.real ?? 0, 2)} accent="text-primary" />
                 <KpiMini label="Previsto" value={detalhe.meta?.previsto ? fmt(detalhe.meta.previsto, 2) : "—"} accent="text-muted-foreground" />
                 <KpiMini label="Movimentos" value={`${detalhe.list.length}`} accent="text-foreground" />

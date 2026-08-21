@@ -63,7 +63,7 @@ export function SinalCruzadoTab() {
 
       {resultado && (
         <>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             <KpiCard label="Atestados CID F (180d)" value={resultado.resumo.atestados_cid_f_180d} />
             <KpiCard label="Acidentes (180d)" value={resultado.resumo.acidentes_180d} />
             <KpiCard label="Horas extras (30d)" value={`${resultado.resumo.he_horas_30d}h`} />

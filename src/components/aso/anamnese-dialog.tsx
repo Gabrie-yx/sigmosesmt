@@ -364,7 +364,7 @@ export function AnamneseDialog({ open, onOpenChange, employeeId, atendimentoId, 
             </TabsContent>
 
             <TabsContent value="exame" className="pt-4 space-y-3">
-              <div className="grid grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <NumField label="PA sistólica (mmHg)" value={ef.pa_sistolica ?? null} onChange={(v) => setEf({ ...ef, pa_sistolica: v })} />
                 <NumField label="PA diastólica (mmHg)" value={ef.pa_diastolica ?? null} onChange={(v) => setEf({ ...ef, pa_diastolica: v })} />
                 <NumField label="FC (bpm)" value={ef.fc ?? null} onChange={(v) => setEf({ ...ef, fc: v })} />
@@ -399,7 +399,7 @@ export function AnamneseDialog({ open, onOpenChange, employeeId, atendimentoId, 
                 <Textarea value={conduta} onChange={(e) => setConduta(e.target.value)} rows={2}
                   placeholder="Ex.: liberar, encaminhar, solicitar exames complementares…" className="bg-slate-900/50 border-white/10" />
               </div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <Label className="text-xs text-slate-400">Aptidão</Label>
                   <Select value={aptidao} onValueChange={setAptidao}>
@@ -455,7 +455,7 @@ function SecaoAntecedentes({ titulo, data, onChange }: { titulo: string; data: A
   return (
     <div className="rounded-lg border border-white/10 bg-slate-900/40 p-3">
       <p className="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">{titulo}</p>
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
         {ANTEC_CAMPOS.map(({ key, label }) => (
           <label key={key} className="flex items-center gap-2 text-xs text-slate-200 cursor-pointer">
             <Checkbox checked={!!data[key]} onCheckedChange={(v) => onChange({ ...data, [key]: !!v })} />

@@ -1216,12 +1216,12 @@ function NovaGestaoDialog({ open, onClose, onCreated, edit }: { open: boolean; o
       <DialogContent>
         <DialogHeader><DialogTitle>{isEdit ? "Editar gestão da CIPA" : "Nova gestão da CIPA"}</DialogTitle></DialogHeader>
         <div className="space-y-3">
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             <div><Label>Gestão</Label><Input placeholder="2026/2027" value={gestao} onChange={(e) => setGestao(e.target.value)} /></div>
             <div><Label>Início</Label><Input type="date" value={inicio} onChange={(e) => setInicio(e.target.value)} /></div>
             <div><Label>Fim</Label><Input type="date" value={fim} onChange={(e) => setFim(e.target.value)} /></div>
           </div>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             <div>
               <Label>Grau de Risco</Label>
               <Select value={gr} onValueChange={setGr}>
@@ -1255,7 +1255,7 @@ function NovaGestaoDialog({ open, onClose, onCreated, edit }: { open: boolean; o
             </Select>
           </div>
           {modo === "COMISSAO" && (
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <div><Label className="text-[10px]">Efetivos empregador</Label><Input type="number" value={efE} onChange={(e) => setEfE(e.target.value)} /></div>
             <div><Label className="text-[10px]">Suplentes empregador</Label><Input type="number" value={suE} onChange={(e) => setSuE(e.target.value)} /></div>
             <div><Label className="text-[10px]">Efetivos empregados</Label><Input type="number" value={efF} onChange={(e) => setEfF(e.target.value)} /></div>

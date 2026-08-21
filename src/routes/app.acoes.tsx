@@ -388,7 +388,7 @@ function AcoesPage() {
                   <div><Label>COMO (método)</Label><Textarea rows={3} value={form.como} onChange={(e) => setForm({ ...form, como: e.target.value })} /></div>
                   <div><Label>ONDE (local)</Label><Textarea rows={3} value={form.onde} onChange={(e) => setForm({ ...form, onde: e.target.value })} /></div>
                 </div>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div><Label>QUANDO (prazo)</Label><Input type="date" value={form.quando} onChange={(e) => setForm({ ...form, quando: e.target.value })} /></div>
                   <div>
                     <Label>Prioridade</Label>
