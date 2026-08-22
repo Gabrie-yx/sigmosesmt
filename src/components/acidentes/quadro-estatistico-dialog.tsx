@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
-import { FileText, Loader2 } from "lucide-react";
+import { SignaturePadDialog } from "@/components/signature-pad-dialog";
+import { FileText, Loader2, PenLine, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type jsPDF from "jspdf";
 import { gerarForSeg09, calcularQuadroEstatistico } from "@/lib/pdf-acidentes";
@@ -25,6 +26,9 @@ export function QuadroEstatisticoDialog({
   const [ano, setAno] = useState<number>(anoInicial ?? anoAtual);
   const [companyId, setCompanyId] = useState<string>("TODAS");
   const [responsavel, setResponsavel] = useState("");
+  const [responsavelCargo, setResponsavelCargo] = useState("Técnico de Segurança do Trabalho");
+  const [assinatura, setAssinatura] = useState<string | null>(null);
+  const [sigOpen, setSigOpen] = useState(false);
   const [doc, setDoc] = useState<jsPDF | null>(null);
   const [gerando, setGerando] = useState(false);
 
@@ -106,6 +110,8 @@ export function QuadroEstatisticoDialog({
         acidentes: filtrados.acidentes,
         hht: filtrados.hht,
         responsavel: responsavel || null,
+        responsavelCargo: responsavel ? responsavelCargo || null : null,
+        assinaturaDataUrl: assinatura,
         empresa: empresaSel
           ? {
               nome: empresaSel.razao_social || empresaSel.name,
@@ -172,7 +178,40 @@ export function QuadroEstatisticoDialog({
                 onChange={(e) => setResponsavel(e.target.value)}
                 placeholder="Nome do responsável técnico / SESMT"
               />
+              <Input
+                value={responsavelCargo}
+                onChange={(e) => setResponsavelCargo(e.target.value)}
+                placeholder="Cargo / registro (ex.: TST — MTE 000000)"
+              />
             </div>
+
+            <div className="space-y-1.5">
+              <Label>Assinatura do responsável (TST)</Label>
+              <div className="flex items-center gap-3 rounded-md border p-2">
+                {assinatura ? (
+                  <img
+                    src={assinatura}
+                    alt="Assinatura selecionada do responsável"
+                    className="h-12 w-auto max-w-[200px] object-contain"
+                  />
+                ) : (
+                  <span className="text-xs text-muted-foreground flex-1">
+                    Nenhuma assinatura selecionada
+                  </span>
+                )}
+                <div className="ml-auto flex gap-2">
+                  <Button type="button" variant="outline" size="sm" className="gap-1.5" onClick={() => setSigOpen(true)}>
+                    <PenLine className="h-3.5 w-3.5" /> {assinatura ? "Trocar" : "Assinar"}
+                  </Button>
+                  {assinatura && (
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setAssinatura(null)}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+
 
             <div className="rounded-md border bg-muted/40 p-3 text-xs space-y-1">
               <div className="font-semibold uppercase tracking-wider text-[10px] text-muted-foreground">
@@ -219,6 +258,18 @@ export function QuadroEstatisticoDialog({
         fileName={`FOR-SEG-09_Quadro-Estatistico_${ano}.pdf`}
         title={`Quadro Estatístico de Acidentes — FOR-SEG 09 · ${ano}`}
       />
+
+      {sigOpen && (
+        <SignaturePadDialog
+          open={sigOpen}
+          onClose={() => setSigOpen(false)}
+          onConfirm={(r) => {
+            setAssinatura(r.dataUrl);
+            setSigOpen(false);
+          }}
+          title="Assinatura do responsável (TST)"
+        />
+      )}
     </>
   );
 }
