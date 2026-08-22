@@ -175,7 +175,7 @@ function AcidentesPage() {
     const noAno = acidentes.filter(a => new Date(a.data_acidente).getFullYear() === anoAtual);
     const noMes = noAno.filter(a => new Date(a.data_acidente).getMonth() + 1 === mesAtual);
     const comAfastAno = noAno.filter(a => a.tipo === "COM_AFASTAMENTO" || a.tipo === "FATAL");
-    const diasPerdidosAno = noAno.reduce((s, a) => s + (a.dias_perdidos || 0) + (a.dias_debitados || 0), 0);
+    const diasPerdidosAno = noAno.reduce((s, a) => s + diasComputados(a), 0);
     const hhtAno = hhtRows
       .filter(h => h.ano === anoAtual)
       .reduce((s, h) => s + Number(h.hht || 0), 0);
