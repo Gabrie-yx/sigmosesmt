@@ -673,14 +673,15 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
   }
 
   async function save() {
-    if (!gestorId) return toast.error("Selecione o gestor");
-    if (gerarPdf && companyIds.length === 0) return toast.error("Selecione ao menos uma empresa para gerar o PDF semanal");
+    if (!gestorEmp) return toast.error("Selecione o gestor na lista de funcionários");
+    if (companyIds.length === 0) return toast.error("Selecione ao menos uma empresa");
     if (temaIds.length === 0 && temasLivres.length === 0) return toast.error("Selecione ao menos um tema ou adicione um tema livre");
     if (!listaFile) toast.warning("Atenção: salvando sem lista de presença assinada");
     if (fotosFiles.length < 2) toast.warning(`Atenção: salvando com ${fotosFiles.length} foto(s) — recomendado 2 a 4`);
     if (fotosFiles.length > 4) return toast.error("Máximo de 4 fotos por DDS");
     setSaving(true);
     try {
+      const gestorId = await resolverGestorIdPorFuncionario(gestorEmp);
       const { data: created, error } = await supabase.from("dds").insert({
         data, hora, hora_fim: horaFim || null,
         gestor_id: gestorId, setor: setor || null,
