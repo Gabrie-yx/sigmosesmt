@@ -1877,6 +1877,7 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved, initial }: 
               <Field label="Funcionários">
                 <Input type="number" value={calc.funcionarios} onChange={(e) => setC("funcionarios", e.target.value)} placeholder="50" className="bg-white/5 border-white/10 text-white placeholder:text-white/20" />
               </Field>
+
               <Field label="Jornada (h/dia)">
                 <Input type="number" step="0.5" value={calc.jornada} onChange={(e) => setC("jornada", e.target.value)} className="bg-white/5 border-white/10 text-white" />
               </Field>
