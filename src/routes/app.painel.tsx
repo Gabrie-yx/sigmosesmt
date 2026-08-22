@@ -684,7 +684,7 @@ function TstPanel() {
     const tfVal = totalHHT > 0 ? (acidCAF.length * 1_000_000) / totalHHT : 0;
     const tgVal = totalHHT > 0 ? (dias * 1_000_000) / totalHHT : 0;
     // Série mensal 12m
-    const series: { mes: string; tf: number; tg: number }[] = [];
+    const series: { mes: string; tf: number; tg: number; hht: number }[] = [];
     const acidSerie: { mes: string; acid: number }[] = [];
     for (let i = 11; i >= 0; i--) {
       const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
