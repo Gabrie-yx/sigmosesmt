@@ -93,8 +93,9 @@ export function NewEmployeeDialog({ open, onOpenChange, defaultCompanyId, onCrea
   const { data: companies } = useQuery<Company[]>({
     queryKey: ["companies-with-type"],
     queryFn: async () =>
-      (await supabase.from("companies").select("id,name,type").order("name")).data ?? [],
+      (await supabase.from("companies").select("id,name,type").neq("status", "DESATIVADA").order("name")).data ?? [],
   });
+
   const { data: roles } = useQuery<Role[]>({
     queryKey: ["roles"],
     queryFn: async () => (await supabase.from("roles").select("id,name").order("name")).data ?? [],

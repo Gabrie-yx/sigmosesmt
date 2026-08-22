@@ -11,6 +11,8 @@ Tema escuro: telas/overlays/modais SEMPRE em tokens semânticos. PROIBIDO texto 
 Scrollbar SEMPRE glassmorph fina com flares (global em src/styles.css). PROIBIDO scrollbar padrão do SO/cinza, grossa ou hardcoded. Ver mem://constraints/scrollbar-glassmorph.
 Horas extras pertencem ao módulo de origem; não usar SESMT como caixa geral nem mexer no painel SESMT para esse fluxo.
 Aline Farias saiu; TST atual é Francisco Bandeira Almeida. Todo import (CAL/PGR/matriz) deve substituir "aline farias" por ele antes de gravar. Ver mem://constraints/aline-farias-fora.
+Empresa sem funcionário ATIVO vira DESATIVADA automaticamente (trigger) e volta a ATIVA ao ganhar efetivo; reativação manual só admin/moderador — ver mem://features/empresa-desativada-ciclo.
+
 
 ## Memories
 - [SIGMO Licenciamento - e-mail enviado](mem://features/sigmo-licenciamento-email-enviado) — E-mail formal enviado 21/07/2026 pra Anderson/Henrique/Leianderson provocando formalização; aguardando retorno.

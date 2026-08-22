@@ -12,13 +12,15 @@ import {
   UserPlus, Pencil, Plus, X, ChevronRight, HardHat,
   HeartPulse, Award, FolderOpen, CheckCircle2, AlertTriangle, Users, User, UserCog,
   Upload, Download, ArrowLeft, Building2, Briefcase, IdCard, Shield, Search,
-  Loader2, RefreshCw, FileText, MoreHorizontal,
+  Loader2, RefreshCw, FileText, MoreHorizontal, PowerOff, RotateCcw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { EmployeeDetailContent } from "./app.employees.$id";
 import { maskCNPJ } from "@/lib/masks";
 import { NewEmployeeDialog } from "@/components/employees/new-employee-dialog";
 import { CompanyDossieDialog } from "@/components/companies/company-dossie-dialog";
+import { EmpresaStatusDialog } from "@/components/companies/empresa-status-dialog";
+
 import { FileViewerHost, openFileViewer } from "@/components/file-viewer";
 import { consultarCNPJ, extrairCNPJdeTexto, extrairDadosCompletosDeTexto, validarCNPJ, type ReceitaCNPJData } from "@/lib/brasilapi-cnpj";
 import {
@@ -61,7 +63,11 @@ type Company = {
   cnaes_secundarias?: Array<{ codigo: string; descricao: string }> | null;
   cnpj_card_url?: string | null;
   receita_consultada_em?: string | null;
+  status?: string | null;
+  data_desativacao?: string | null;
+  motivo_desativacao?: string | null;
 };
+
 
 const empty: Partial<Company> = {
   name: "", type: "CLT", cnpj: "", email: "", encarregado1: "", encarregado2: "",
@@ -93,9 +99,12 @@ function CompaniesPage() {
   const [empSearch, setEmpSearch] = useState("");
   const [newEmpOpen, setNewEmpOpen] = useState(false);
   const [dossieOpen, setDossieOpen] = useState(false);
+  const [verDesativadas, setVerDesativadas] = useState(false);
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
 
   const { data: companies = [] } = useQuery({
     queryKey: ["companies"],
+
     queryFn: async () => {
       const { data, error } = await supabase.from("companies").select("*").order("name");
       if (error) throw error;
@@ -214,7 +223,18 @@ function CompaniesPage() {
   });
 
   const selected = useMemo(() => companies.find((c) => c.id === selectedId) || null, [companies, selectedId]);
+  const isDesativada = (c?: Company | null) => (c?.status ?? "ATIVA") === "DESATIVADA";
+  const desativadasCount = useMemo(() => companies.filter((c) => isDesativada(c)).length, [companies]);
+  const visibleCompanies = useMemo(
+    () => companies.filter((c) => (verDesativadas ? isDesativada(c) : !isDesativada(c))),
+    [companies, verDesativadas],
+  );
+  const ativosDaSelecionada = useMemo(
+    () => (selected ? employees.filter((e: any) => e.company_id === selected.id && e.status === "ATIVO").length : 0),
+    [employees, selected],
+  );
   const isContratante = (selected?.name ?? "").toUpperCase().includes("DMN");
+
   const compEmps = useMemo(
     () => {
       if (!selected) return [];
@@ -397,9 +417,31 @@ function CompaniesPage() {
               : <><RefreshCw className="h-3.5 w-3.5 mr-1" /> Atualizar todas (Receita)</>}
           </Button>
         )}
-        {companies.map((c) => {
+        <div className="flex items-center gap-2 mb-1">
+          <Button
+            size="sm"
+            variant={verDesativadas ? "default" : "outline"}
+            onClick={() => { setVerDesativadas((v) => !v); setSelectedId(null); setSelectedEmpId(null); setShowForm(false); }}
+            className="text-[10px] font-black uppercase tracking-widest"
+          >
+            <PowerOff className="h-3.5 w-3.5 mr-1" />
+            {verDesativadas ? "Ver ativas" : `Desativadas (${desativadasCount})`}
+          </Button>
+          {verDesativadas && (
+            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              Empresas sem efetivo ativo
+            </span>
+          )}
+        </div>
+        {visibleCompanies.length === 0 && (
+          <div className="rounded-xl border border-dashed border-slate-300/40 p-6 text-center text-xs font-bold uppercase tracking-widest text-muted-foreground">
+            {verDesativadas ? "Nenhuma empresa desativada" : "Nenhuma empresa ativa"}
+          </div>
+        )}
+        {visibleCompanies.map((c) => {
           const isSel = selectedId === c.id;
           const empCount = employees.filter((e: any) => e.company_id === c.id).length;
+
           const ts = typeStyle[c.type] ?? "bg-slate-100 text-slate-700";
           const entrada = (c as any).data_entrada
             ? new Date((c as any).data_entrada + "T00:00:00").toLocaleDateString("pt-BR")
@@ -445,6 +487,15 @@ function CompaniesPage() {
                     <Briefcase className="h-3 w-3" /> {c.type}
                   </div>
                   {dossieBadge}
+                  {isDesativada(c) && (
+                    <span
+                      title={`Desativada${c.data_desativacao ? " em " + new Date(c.data_desativacao + "T00:00:00").toLocaleDateString("pt-BR") : ""}${c.motivo_desativacao ? " · " + c.motivo_desativacao : ""}`}
+                      className="text-[8px] font-black px-1.5 py-1 rounded inline-flex items-center gap-1 ring-1 backdrop-blur bg-slate-700/50 text-slate-100 ring-slate-300/40"
+                    >
+                      <PowerOff className="h-3 w-3" /> DESATIVADA
+                    </span>
+                  )}
+
                 </div>
                 <div className="group/pill flex items-center gap-2 rounded-full pl-1 pr-3 py-1 backdrop-blur-xl bg-gradient-to-br from-rose-600/40 via-rose-700/30 to-rose-950/40 ring-1 ring-rose-400/40 shadow-[0_0_24px_-4px_rgba(244,80,110,0.75),inset_0_1px_0_rgba(255,230,235,0.15)] transition-all hover:shadow-[0_0_36px_-2px_rgba(244,80,110,1),inset_0_1px_0_rgba(255,230,235,0.25)]">
                   <span className="h-8 w-8 rounded-full flex items-center justify-center ring-1 ring-rose-300/60 bg-gradient-to-br from-rose-500 to-rose-800 shadow-[0_0_16px_-2px_rgba(244,80,110,0.9)]">
@@ -508,17 +559,36 @@ function CompaniesPage() {
               </div>
               <div className="min-w-0">
                 <h3 className="truncate text-xl md:text-2xl font-black uppercase text-[#991b1b] tracking-tighter">{selected.name}</h3>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1 flex items-center gap-1">
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1 flex items-center gap-1 flex-wrap">
                   <Shield className="h-3 w-3 text-[#991b1b]" /> {compEmps.length} colaborador{compEmps.length === 1 ? "" : "es"}
+                  {isDesativada(selected) && (
+                    <span className="ml-1 inline-flex items-center gap-1 rounded px-1.5 py-0.5 bg-slate-200 text-slate-700">
+                      <PowerOff className="h-3 w-3" /> Desativada
+                      {selected.data_desativacao ? ` em ${new Date(selected.data_desativacao + "T00:00:00").toLocaleDateString("pt-BR")}` : ""}
+                    </span>
+                  )}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
-              {isEditor && (
+              {isEditor && !isDesativada(selected) && (
                 <Button onClick={() => setNewEmpOpen(true)} size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black rounded-lg uppercase tracking-widest">
                   <UserPlus className="h-3.5 w-3.5 mr-1.5" /> Novo Func.
                 </Button>
               )}
+              {isAdmin && !isContratante && (
+                <Button
+                  onClick={() => setStatusDialogOpen(true)}
+                  size="sm"
+                  variant="outline"
+                  className="text-[10px] font-black rounded-lg uppercase tracking-widest"
+                >
+                  {isDesativada(selected)
+                    ? <><RotateCcw className="h-3.5 w-3.5 mr-1.5 text-emerald-600" /> Reativar</>
+                    : <><PowerOff className="h-3.5 w-3.5 mr-1.5 text-rose-600" /> Desativar</>}
+                </Button>
+              )}
+
               {isEditor && (
                 <Button onClick={startEdit} size="sm" className="bg-[#0f172a] hover:bg-[#991b1b] text-white text-[10px] font-black rounded-lg uppercase tracking-widest">
                   <Pencil className="h-3.5 w-3.5 mr-1.5" /> Editar
@@ -679,12 +749,21 @@ function CompaniesPage() {
         </div>
       )}
       <NewEmployeeDialog open={newEmpOpen} onOpenChange={setNewEmpOpen} defaultCompanyId={selected?.id} />
+      {selected && statusDialogOpen && (
+        <EmpresaStatusDialog
+          company={selected}
+          ativosCount={ativosDaSelecionada}
+          open={statusDialogOpen}
+          onClose={() => setStatusDialogOpen(false)}
+        />
+      )}
       <CompanyDossieDialog
         open={dossieOpen}
         onOpenChange={setDossieOpen}
         companyId={selected?.id ?? null}
         companyName={selected?.name ?? ""}
       />
+
       <FileViewerHost />
     </div>
   );
