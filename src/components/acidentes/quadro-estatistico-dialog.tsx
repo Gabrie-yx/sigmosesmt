@@ -26,6 +26,9 @@ export function QuadroEstatisticoDialog({
   const [ano, setAno] = useState<number>(anoInicial ?? anoAtual);
   const [companyId, setCompanyId] = useState<string>("TODAS");
   const [responsavel, setResponsavel] = useState("");
+  const [responsavelCargo, setResponsavelCargo] = useState("Técnico de Segurança do Trabalho");
+  const [assinatura, setAssinatura] = useState<string | null>(null);
+  const [sigOpen, setSigOpen] = useState(false);
   const [doc, setDoc] = useState<jsPDF | null>(null);
   const [gerando, setGerando] = useState(false);
 
