@@ -117,6 +117,7 @@ function RelatorioIndicadoresPage() {
         supabase.from("training_matrix_entries").select("course_id,employee_id,data_realizacao"),
         supabase.from("company_settings").select("meta_dds_semana,meta_inspecoes_pct,meta_treinamentos_pct,meta_aso_pct,meta_acidentes_taxa_max_pct").limit(1).maybeSingle(),
       ]);
+      const hht = await supabase.from("hht_mensal").select("ano,mes,company_id,hht");
       return {
         employees: emps.data ?? [],
         acidentes: acidentes.data ?? [],
@@ -128,6 +129,7 @@ function RelatorioIndicadoresPage() {
         courses: courses.data ?? [],
         entries: entries.data ?? [],
         settings: settings.data ?? null,
+        hht: hht.data ?? [],
       };
     },
   });
@@ -261,6 +263,20 @@ function RelatorioIndicadoresPage() {
     const acoesTotal = noPrazo + atrasadas + abertasOk;
     const acoesPct = acoesTotal > 0 ? Math.round((noPrazo / acoesTotal) * 100) : 0;
 
+    /* 07/08 · TF e TG (NBR 14280) — base HHT lançado no período */
+    const hhtPeriodo = ((data as any).hht as any[] ?? []).filter((h) => {
+      if (empresaId !== "ALL" && h.company_id !== empresaId) return false;
+      const d = iso(new Date(Number(h.ano), Number(h.mes) - 1, 1));
+      return d >= range.inicio && d < range.fimExcl;
+    });
+    const hhtTotal = hhtPeriodo.reduce((s2, h) => s2 + Number(h.hht ?? 0), 0);
+    const acidCAF = acidPeriodo.filter((a) => a.tipo === "COM_AFASTAMENTO" || a.tipo === "FATAL");
+    const diasDebitados = acidPeriodo.reduce(
+      (s2, a) => s2 + (a.tipo === "FATAL" ? 6000 : 0), 0,
+    );
+    const tfVal = hhtTotal > 0 ? Number(((acidCAF.length * 1_000_000) / hhtTotal).toFixed(2)) : 0;
+    const tgVal = hhtTotal > 0 ? Number((((diasPerdidos + diasDebitados) * 1_000_000) / hhtTotal).toFixed(2)) : 0;
+
     const indicadores: IndicadorReport[] = [
       {
         codigo: "01", nome: "Zero Acidentes", tipo: "QTD", unidade: "acid.",
@@ -300,6 +316,25 @@ function RelatorioIndicadoresPage() {
         valor: acoesPct, meta: 85,
         descricao: "Percentual de ações do plano 5W2H concluídas dentro do prazo pactuado.",
         detalhe: `${noPrazo} no prazo · ${atrasadas} atrasada(s) · ${acoesTotal} total`,
+      },
+      {
+        codigo: "07", nome: "Taxa de Frequência (TF)", tipo: "QTD", unidade: "por 10⁶ HHT",
+        valor: tfVal, meta: 0, menorMelhor: true,
+        descricao: "TF = (acidentes com afastamento × 1.000.000) ÷ HHT — NBR 14280.",
+        detalhe: hhtTotal > 0
+          ? `${acidCAF.length} acidente(s) c/ afastamento · HHT ${hhtTotal.toLocaleString("pt-BR")} h`
+          : "HHT não lançado no período — cálculo indisponível",
+        analise: hhtTotal > 0
+          ? `Taxa de frequência de ${tfVal.toFixed(2)} acidentes por milhão de homens-hora trabalhadas no período.`
+          : "Sem HHT lançado no período (aba HHT do módulo de Acidentes). Sem esse dado a TF não pode ser apurada conforme NBR 14280.",
+      },
+      {
+        codigo: "08", nome: "Taxa de Gravidade (TG)", tipo: "QTD", unidade: "por 10⁶ HHT",
+        valor: tgVal, meta: 0, menorMelhor: true,
+        descricao: "TG = ((dias perdidos + debitados) × 1.000.000) ÷ HHT — NBR 14280 (óbito = 6.000 dias).",
+        detalhe: hhtTotal > 0
+          ? `${diasPerdidos} dia(s) perdido(s) · ${diasDebitados} debitado(s) · HHT ${hhtTotal.toLocaleString("pt-BR")} h`
+          : "HHT não lançado no período — cálculo indisponível",
       },
     ];
 
