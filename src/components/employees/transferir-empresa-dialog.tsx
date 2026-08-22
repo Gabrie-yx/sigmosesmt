@@ -50,7 +50,7 @@ export function TransferirEmpresaDialog({ open, onClose, employee }: Props) {
   const { data: companies } = useQuery({
     queryKey: ["transfer-companies"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("companies").select("id, name").order("name");
+      const { data, error } = await supabase.from("companies").select("id, name").neq("status", "DESATIVADA").order("name");
       if (error) throw error;
       return data ?? [];
     },
