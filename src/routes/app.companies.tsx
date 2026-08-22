@@ -61,7 +61,11 @@ type Company = {
   cnaes_secundarias?: Array<{ codigo: string; descricao: string }> | null;
   cnpj_card_url?: string | null;
   receita_consultada_em?: string | null;
+  status?: string | null;
+  data_desativacao?: string | null;
+  motivo_desativacao?: string | null;
 };
+
 
 const empty: Partial<Company> = {
   name: "", type: "CLT", cnpj: "", email: "", encarregado1: "", encarregado2: "",
