@@ -18,7 +18,36 @@ import { DDSAttendeesEditor } from "@/components/dds-attendees-editor";
 import { DDSTabsNav } from "@/components/dds-tabs-nav";
 import { gerarFormularioSemanalDDS } from "@/lib/dds-formulario-semanal-pdf";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
+import { EmployeePicker, type EmployeeOption } from "@/components/employee-picker";
 import type jsPDF from "jspdf";
+
+/** Empresas elegíveis para novos DDS: nunca listar empresas DESATIVADAS. */
+const COMPANIES_ATIVAS_FILTER = "status.is.null,status.eq.ATIVA";
+
+/**
+ * Converte um funcionário em gestor de DDS (tabela dds_gestores), reaproveitando
+ * o registro existente quando já houver vínculo por employee_id ou nome.
+ */
+async function resolverGestorIdPorFuncionario(emp: { id: string; nome: string; setor: string | null; funcao?: string | null }) {
+  const { data: porEmp } = await supabase.from("dds_gestores").select("id,ativo").eq("employee_id", emp.id).limit(1);
+  if (porEmp && porEmp[0]) {
+    if (!porEmp[0].ativo) await supabase.from("dds_gestores").update({ ativo: true }).eq("id", porEmp[0].id);
+    return porEmp[0].id as string;
+  }
+  const { data: porNome } = await supabase.from("dds_gestores").select("id").ilike("nome", emp.nome).limit(1);
+  if (porNome && porNome[0]) {
+    await supabase.from("dds_gestores").update({ employee_id: emp.id, ativo: true }).eq("id", porNome[0].id);
+    return porNome[0].id as string;
+  }
+  const { data: novo, error } = await supabase
+    .from("dds_gestores")
+    .insert({ nome: emp.nome, employee_id: emp.id, setor: emp.setor ?? emp.funcao ?? null, ativo: true })
+    .select("id")
+    .single();
+  if (error) throw error;
+  return novo!.id as string;
+}
+
 
 export const Route = createFileRoute("/app/dds/")({
   component: DDSPage,
