@@ -179,9 +179,18 @@ function AcidentesPage() {
     const hhtAno = hhtRows
       .filter(h => h.ano === anoAtual)
       .reduce((s, h) => s + Number(h.hht || 0), 0);
-    const empMedioAno = hhtRows
+    // Nº médio de empregados do ano = soma por mês (todas as empresas) / meses COM lançamento
+    const porMes = new Map<number, number>();
+    hhtRows
       .filter(h => h.ano === anoAtual)
-      .reduce((s, h) => s + Number(h.empregados_medio || 0), 0) / (hhtRows.filter(h => h.ano === anoAtual).length || 1);
+      .forEach(h => {
+        const m = Number(h.mes);
+        porMes.set(m, (porMes.get(m) || 0) + Number(h.empregados_medio || 0));
+      });
+    const mesesComDado = [...porMes.values()].filter(v => v > 0);
+    const empMedioAno = mesesComDado.length
+      ? mesesComDado.reduce((s, v) => s + v, 0) / mesesComDado.length
+      : 0;
     
     const tf = hhtAno > 0 ? (comAfastAno.length * 1_000_000) / hhtAno : 0;
     const tg = hhtAno > 0 ? (diasPerdidosAno * 1_000_000) / hhtAno : 0;
