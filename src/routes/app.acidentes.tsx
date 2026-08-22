@@ -1710,32 +1710,50 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved, initial }: 
 
   const isAll = form.company_id === "ALL";
 
-  // Efetivo ativo por empresa — base do rateio do modo "TODAS AS EMPRESAS"
-  const { data: efetivo = [], isLoading: loadEfetivo } = useQuery({
-    queryKey: ["hht-efetivo-ativo"],
+  // Efetivo do MÊS de referência por empresa (admissão/desligamento) — base do rateio
+  const { data: quadro = [], isLoading: loadEfetivo } = useQuery({
+    queryKey: ["hht-efetivo-quadro"],
     enabled: open,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("employees")
-        .select("company_id")
-        .eq("status", "ATIVO")
-        .limit(5000);
+        .select("company_id, admissao, data_desligamento, status")
+        .limit(10000);
       if (error) throw error;
       return data ?? [];
     },
   });
 
+  // contagem por empresa no mês/ano selecionado
+  const contagemMes = useMemo(() => {
+    const ano = Number(form.ano);
+    const mes = Number(form.mes);
+    const ini = new Date(ano, mes - 1, 1);
+    const fim = new Date(ano, mes, 0);
+    const map = new Map<string, number>();
+    quadro.forEach((e: any) => {
+      if (!e.company_id) return;
+      const adm = e.admissao ? new Date(`${e.admissao}T00:00:00`) : null;
+      const des = e.data_desligamento ? new Date(`${e.data_desligamento}T00:00:00`) : null;
+      if (adm && adm > fim) return;
+      if (des && des < ini) return;
+      if (!adm && e.status !== "ATIVO") return;
+      map.set(e.company_id, (map.get(e.company_id) || 0) + 1);
+    });
+    return map;
+  }, [quadro, form.ano, form.mes]);
+
+  const totalEfetivoMes = useMemo(
+    () => Array.from(contagemMes.values()).reduce((s, n) => s + n, 0),
+    [contagemMes],
+  );
+
   const rateio = useMemo(() => {
     if (!isAll) return [];
     const totalHht = Number(form.hht) || 0;
     const totalEmp = Number(form.empregados_medio || 0);
-    const contagem = new Map<string, number>();
-    efetivo.forEach((e: any) => {
-      if (!e.company_id) return;
-      contagem.set(e.company_id, (contagem.get(e.company_id) || 0) + 1);
-    });
     const alvos = companies
-      .map((c: any) => ({ id: c.id, nome: c.name, ativos: contagem.get(c.id) || 0 }))
+      .map((c: any) => ({ id: c.id, nome: c.name, ativos: contagemMes.get(c.id) || 0 }))
       .filter((c: any) => c.ativos > 0);
     const somaAtivos = alvos.reduce((s: number, c: any) => s + c.ativos, 0);
     if (!somaAtivos) return [];
@@ -1753,7 +1771,8 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved, initial }: 
       empAcum += emp;
       return { ...c, hht, emp };
     });
-  }, [isAll, form.hht, form.empregados_medio, efetivo, companies]);
+  }, [isAll, form.hht, form.empregados_medio, contagemMes, companies]);
+
 
   const mut = useMutation({
     mutationFn: async () => {
@@ -1775,7 +1794,7 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved, initial }: 
           mes: Number(form.mes),
           hht: r.hht,
           empregados_medio: r.emp,
-          observacoes: [form.observacoes, `Rateio automático por efetivo ativo (${r.ativos} func.)`]
+          observacoes: [form.observacoes, `Rateio por efetivo do mês (${r.ativos} func.)`]
             .filter(Boolean)
             .join(" — "),
           created_by: userId,
@@ -1858,6 +1877,7 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved, initial }: 
               <Field label="Funcionários">
                 <Input type="number" value={calc.funcionarios} onChange={(e) => setC("funcionarios", e.target.value)} placeholder="50" className="bg-white/5 border-white/10 text-white placeholder:text-white/20" />
               </Field>
+
               <Field label="Jornada (h/dia)">
                 <Input type="number" step="0.5" value={calc.jornada} onChange={(e) => setC("jornada", e.target.value)} className="bg-white/5 border-white/10 text-white" />
               </Field>
@@ -1900,19 +1920,19 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved, initial }: 
           {isAll && (
             <div className="rounded-md border border-amber-400/30 bg-amber-400/10 p-3 space-y-2 text-xs">
               <div className="font-semibold text-amber-200">
-                Rateio automático por efetivo ativo
+                Rateio por efetivo real de {MESES[Number(form.mes) - 1]}/{form.ano}
               </div>
               {loadEfetivo ? (
                 <p className="text-white/60">Carregando efetivo…</p>
               ) : rateio.length === 0 ? (
                 <p className="text-red-300">
-                  Nenhuma empresa com funcionário ativo. O HHT não pode ser rateado — lance por empresa.
+                  Nenhuma empresa com funcionário nesse mês. Lance por empresa.
                 </p>
               ) : (
                 <>
                   <p className="text-white/60 leading-snug">
-                    O total informado será <strong>dividido</strong> entre as empresas (não duplicado),
-                    proporcionalmente ao nº de funcionários ativos.
+                    Considera quem estava com vínculo aberto no mês (admissão até o fim do mês e sem
+                    desligamento antes do início). O total é <strong>dividido</strong>, nunca duplicado.
                   </p>
                   <div className="max-h-36 overflow-auto space-y-0.5 tabular-nums">
                     {rateio.map((r: any) => (
@@ -1926,6 +1946,7 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved, initial }: 
               )}
             </div>
           )}
+
 
           <div className="grid grid-cols-2 gap-3">
             <Field label="Mês *">
@@ -1944,6 +1965,33 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved, initial }: 
           <Field label="Nº médio de empregados">
             <Input type="number" value={form.empregados_medio} onChange={e => set("empregados_medio", e.target.value)} className="bg-white/5 border-white/10 text-white" />
           </Field>
+          {!loadEfetivo && (
+            <div className="flex items-center justify-between gap-2 rounded-md border border-white/10 bg-white/5 p-2 text-xs">
+              <span className="text-white/60">
+                Efetivo real em {MESES[Number(form.mes) - 1]}/{form.ano}:{" "}
+                <strong className="text-white">
+                  {(isAll || !form.company_id
+                    ? totalEfetivoMes
+                    : contagemMes.get(form.company_id) || 0)}
+                </strong>{" "}
+                func.
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 border-white/20 bg-transparent text-white hover:bg-white/10"
+                onClick={() => {
+                  const n = isAll || !form.company_id ? totalEfetivoMes : contagemMes.get(form.company_id) || 0;
+                  set("empregados_medio", String(n));
+                  setC("funcionarios", String(n));
+                  toast.success(`Efetivo do mês aplicado: ${n} funcionários`);
+                }}
+              >
+                Usar efetivo do mês
+              </Button>
+            </div>
+          )}
+
           <Field label="Observações">
             <Textarea rows={2} value={form.observacoes} onChange={e => set("observacoes", e.target.value)} className="bg-white/5 border-white/10 text-white" />
           </Field>
