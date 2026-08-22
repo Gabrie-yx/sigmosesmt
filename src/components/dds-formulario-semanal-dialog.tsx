@@ -68,7 +68,7 @@ export function DDSFormularioSemanalDialog({ open, onClose }: { open: boolean; o
 
   const { data: companies = [] } = useQuery({
     queryKey: ["companies-for-dds"],
-    queryFn: async () => (await supabase.from("companies").select("id,name,cnpj,encarregado1,encarregado2,matriz_nome,matriz_cnpj").order("name")).data ?? [],
+    queryFn: async () => (await supabase.from("companies").select("id,name,cnpj,encarregado1,encarregado2,matriz_nome,matriz_cnpj").or("status.is.null,status.eq.ATIVA").order("name")).data ?? [],
   });
   const { data: temas = [] } = useQuery({
     queryKey: ["dds-temas-active"],
