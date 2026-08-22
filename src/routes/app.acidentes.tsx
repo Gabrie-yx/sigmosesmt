@@ -96,6 +96,8 @@ function AcidentesPage() {
   const [deleting, setDeleting] = useState<any>(null);
   const [deletingHht, setDeletingHht] = useState<any>(null);
   const [anoFiltro, setAnoFiltro] = useState<number>(new Date().getFullYear());
+  const [hhtAnoAberto, setHhtAnoAberto] = useState<number | null>(null);
+  const [hhtMesAberto, setHhtMesAberto] = useState<string | null>(null);
   const [quadroOpen, setQuadroOpen] = useState(false);
 
 
