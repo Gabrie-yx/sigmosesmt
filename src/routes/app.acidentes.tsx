@@ -237,6 +237,20 @@ function AcidentesPage() {
     () => acidentes.filter(a => new Date(a.data_acidente).getFullYear() === anoFiltro),
     [acidentes, anoFiltro],
   );
+  // Detecção de HHT replicado (modo antigo "todas as empresas")
+  const hhtSuspeitos = useMemo(() => {
+    const map = new Map<string, { ano: number; mes: number; hht: number; qtd: number }>();
+    hhtRows.forEach((h: any) => {
+      const v = Number(h.hht || 0);
+      if (v <= 0) return;
+      const k = `${h.ano}-${h.mes}-${v}`;
+      const cur = map.get(k) || { ano: h.ano, mes: h.mes, hht: v, qtd: 0 };
+      cur.qtd += 1;
+      map.set(k, cur);
+    });
+    return Array.from(map.values()).filter((x) => x.qtd > 1);
+  }, [hhtRows]);
+
 
   // Quadro estatístico oficial (mesma engine do PDF FOR-SEG 09)
   const quadro = useMemo(
