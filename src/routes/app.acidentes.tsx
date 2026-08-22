@@ -674,6 +674,26 @@ function AcidentesPage() {
               </Button>
             </CardContent>
           </Card>
+          {hhtSuspeitos.length > 0 && (
+            <Card className="mb-3 border-amber-300 bg-amber-50">
+              <CardContent className="p-4 text-sm text-amber-900 space-y-1">
+                <div className="font-semibold">Possível duplicação de HHT detectada</div>
+                <p className="text-xs leading-relaxed">
+                  Nestes períodos o mesmo valor de HHT aparece em várias empresas, o que infla o
+                  denominador e derruba a TF/TG artificialmente. Provavelmente foram lançados no modo
+                  antigo "todas as empresas" (que replicava em vez de ratear). Revise/exclua e relance:
+                </p>
+                <ul className="text-xs list-disc pl-4">
+                  {hhtSuspeitos.map((s) => (
+                    <li key={`${s.ano}-${s.mes}-${s.hht}`}>
+                      {MESES[s.mes - 1]}/{s.ano} — {s.qtd} empresas com {s.hht.toLocaleString("pt-BR")} h cada
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardContent className="p-0">
               <Table>
