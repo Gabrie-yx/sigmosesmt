@@ -747,12 +747,21 @@ function CompaniesPage() {
         </div>
       )}
       <NewEmployeeDialog open={newEmpOpen} onOpenChange={setNewEmpOpen} defaultCompanyId={selected?.id} />
+      {selected && statusDialogOpen && (
+        <EmpresaStatusDialog
+          company={selected}
+          ativosCount={ativosDaSelecionada}
+          open={statusDialogOpen}
+          onClose={() => setStatusDialogOpen(false)}
+        />
+      )}
       <CompanyDossieDialog
         open={dossieOpen}
         onOpenChange={setDossieOpen}
         companyId={selected?.id ?? null}
         companyName={selected?.name ?? ""}
       />
+
       <FileViewerHost />
     </div>
   );
