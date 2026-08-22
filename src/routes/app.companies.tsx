@@ -97,9 +97,12 @@ function CompaniesPage() {
   const [empSearch, setEmpSearch] = useState("");
   const [newEmpOpen, setNewEmpOpen] = useState(false);
   const [dossieOpen, setDossieOpen] = useState(false);
+  const [verDesativadas, setVerDesativadas] = useState(false);
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
 
   const { data: companies = [] } = useQuery({
     queryKey: ["companies"],
+
     queryFn: async () => {
       const { data, error } = await supabase.from("companies").select("*").order("name");
       if (error) throw error;
