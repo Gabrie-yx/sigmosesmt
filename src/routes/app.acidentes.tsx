@@ -260,6 +260,36 @@ function AcidentesPage() {
     return Array.from(map.values()).filter((x) => x.qtd > 1);
   }, [hhtRows]);
 
+  /* HHT agrupado: Ano → Mês (evita lista interminável) */
+  const hhtPorAno = useMemo(() => {
+    const anos = new Map<number, Map<number, any[]>>();
+    (hhtRows as any[]).forEach((h) => {
+      const a = Number(h.ano), m = Number(h.mes);
+      if (!anos.has(a)) anos.set(a, new Map());
+      const mm = anos.get(a)!;
+      mm.set(m, [...(mm.get(m) ?? []), h]);
+    });
+    return Array.from(anos.entries())
+      .sort((x, y) => y[0] - x[0])
+      .map(([ano, mm]) => ({
+        ano,
+        meses: Array.from(mm.entries())
+          .sort((x, y) => y[0] - x[0])
+          .map(([mes, rows]) => ({
+            mes,
+            rows: [...rows].sort((a, b) =>
+              String(companies.find((c) => c.id === a.company_id)?.name ?? "").localeCompare(
+                String(companies.find((c) => c.id === b.company_id)?.name ?? ""),
+              ),
+            ),
+            totalHht: rows.reduce((s, r) => s + Number(r.hht || 0), 0),
+            totalEmp: rows.reduce((s, r) => s + Number(r.empregados_medio || 0), 0),
+          })),
+        totalHht: Array.from(mm.values()).flat().reduce((s, r) => s + Number(r.hht || 0), 0),
+      }));
+  }, [hhtRows, companies]);
+
+
 
   // Quadro estatístico oficial (mesma engine do PDF FOR-SEG 09)
   const quadro = useMemo(
