@@ -258,6 +258,18 @@ export function QuadroEstatisticoDialog({
         fileName={`FOR-SEG-09_Quadro-Estatistico_${ano}.pdf`}
         title={`Quadro Estatístico de Acidentes — FOR-SEG 09 · ${ano}`}
       />
+
+      {sigOpen && (
+        <SignaturePadDialog
+          open={sigOpen}
+          onClose={() => setSigOpen(false)}
+          onConfirm={(r) => {
+            setAssinatura(r.dataUrl);
+            setSigOpen(false);
+          }}
+          title="Assinatura do responsável (TST)"
+        />
+      )}
     </>
   );
 }
