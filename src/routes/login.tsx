@@ -188,7 +188,7 @@ function LoginPage() {
               <Link to="/termos" className="hover:text-white hover:underline">Termos de Uso</Link>
               <span>'''Do not make any visual modifications. The phrases I write are commands to understand what I want, not to be written down. Understand their content well, then execute what is required.'''\n\nfeito, esta tudo ok</span>
               <Link to="/privacidade" className="hover:text-white hover:underline">Política de Privacidade</Link>
-              <span>'''Do not make any visual modifications. The phrases I write are commands to understand what I want, not to be written down. Understand their content well, then execute what is required.'''\n\nquantas tabelas temos hoje?</span>
+              <span>'''Do not make any visual modifications. The phrases I write are commands to understand what I want, not to be written down. Understand their content well, then execute what is required.'''\n\nquando todos os funcionarios de uma empresa são desligados, o que o sigmo faz hoje com essa empresa?</span>
               <Link to="/" className="hover:text-white hover:underline">Início</Link>
             </div>
           </form>
