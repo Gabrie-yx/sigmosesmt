@@ -31,7 +31,7 @@ import {
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
 import { CorpoHumanoAcidentes } from "@/components/corpo-humano-acidentes";
-import { gerarForSeg09, gerarForSeg10, calcularQuadroEstatistico } from "@/lib/pdf-acidentes";
+import { gerarForSeg09, gerarForSeg10, calcularQuadroEstatistico, diasComputados, DIAS_DEBITO_OBITO } from "@/lib/pdf-acidentes";
 import { QuadroEstatisticoDialog } from "@/components/acidentes/quadro-estatistico-dialog";
 
 import { MediaViewerDialog, type MediaItem } from "@/components/media-viewer-dialog";
