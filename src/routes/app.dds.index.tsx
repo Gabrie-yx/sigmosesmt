@@ -550,9 +550,10 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
   const [data, setData] = useState(today());
   const [hora, setHora] = useState("07:30");
   const [horaFim, setHoraFim] = useState("07:40");
-  const [gestorId, setGestorId] = useState<string>("");
+  const [gestorEmp, setGestorEmp] = useState<EmployeeOption | null>(null);
   const [setor, setSetor] = useState("");
   const [companyIds, setCompanyIds] = useState<string[]>([]);
+  const [companySearch, setCompanySearch] = useState("");
   const [encarregado, setEncarregado] = useState("");
   const [sesmt, setSesmt] = useState("");
   const [temaIds, setTemaIds] = useState<string[]>([]);
@@ -585,21 +586,31 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
   const primaryCompany = selectedCompanies[0];
 
   const empList = companyIds.length > 0 ? empresaEmployees as any[] : employees as any[];
+  const companiesFiltradas = useMemo(() => {
+    const q = companySearch.toLowerCase().trim();
+    if (!q) return companies as any[];
+    return (companies as any[]).filter((c) => (c.name ?? "").toLowerCase().includes(q));
+  }, [companies, companySearch]);
+
   // ao trocar empresas: pré-marcar todos como presentes e ajustar esperados
-  useMemo(() => {
+  useEffect(() => {
     if (companyIds.length > 0 && empresaEmployees.length > 0) {
       setPresentes(new Set(empresaEmployees.map((e: any) => e.id)));
       setEsperados(empresaEmployees.length);
       if (primaryCompany?.encarregado1 && !encarregado) setEncarregado(primaryCompany.encarregado1);
     }
+    if (companyIds.length === 0) {
+      setPresentes(new Set());
+      setEsperados(0);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companyIds.join(","), empresaEmployees.length]);
 
-  useMemo(() => {
+  useEffect(() => {
     if (!sesmt && user?.user_metadata?.full_name) setSesmt(user.user_metadata.full_name as string);
-    else if (!sesmt && user?.email) setSesmt(user.email);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
+
 
   const filteredEmp = useMemo(() => {
     const q = empSearch.toLowerCase().trim();
