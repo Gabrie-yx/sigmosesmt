@@ -3237,7 +3237,9 @@ export type Database = {
           cnpj_card_url: string | null
           complemento: string | null
           created_at: string
+          data_desativacao: string | null
           data_entrada: string | null
+          data_reativacao: string | null
           data_situacao: string | null
           email: string | null
           encarregado1: string | null
@@ -3247,6 +3249,8 @@ export type Database = {
           logradouro: string | null
           matriz_cnpj: string | null
           matriz_nome: string | null
+          motivo_desativacao: string | null
+          motivo_reativacao: string | null
           name: string
           natureza_juridica: string | null
           nome_fantasia: string | null
@@ -3254,6 +3258,7 @@ export type Database = {
           razao_social: string | null
           receita_consultada_em: string | null
           situacao_cadastral: string | null
+          status: string
           telefone: string | null
           type: string
           uf: string | null
@@ -3271,7 +3276,9 @@ export type Database = {
           cnpj_card_url?: string | null
           complemento?: string | null
           created_at?: string
+          data_desativacao?: string | null
           data_entrada?: string | null
+          data_reativacao?: string | null
           data_situacao?: string | null
           email?: string | null
           encarregado1?: string | null
@@ -3281,6 +3288,8 @@ export type Database = {
           logradouro?: string | null
           matriz_cnpj?: string | null
           matriz_nome?: string | null
+          motivo_desativacao?: string | null
+          motivo_reativacao?: string | null
           name: string
           natureza_juridica?: string | null
           nome_fantasia?: string | null
@@ -3288,6 +3297,7 @@ export type Database = {
           razao_social?: string | null
           receita_consultada_em?: string | null
           situacao_cadastral?: string | null
+          status?: string
           telefone?: string | null
           type?: string
           uf?: string | null
@@ -3305,7 +3315,9 @@ export type Database = {
           cnpj_card_url?: string | null
           complemento?: string | null
           created_at?: string
+          data_desativacao?: string | null
           data_entrada?: string | null
+          data_reativacao?: string | null
           data_situacao?: string | null
           email?: string | null
           encarregado1?: string | null
@@ -3315,6 +3327,8 @@ export type Database = {
           logradouro?: string | null
           matriz_cnpj?: string | null
           matriz_nome?: string | null
+          motivo_desativacao?: string | null
+          motivo_reativacao?: string | null
           name?: string
           natureza_juridica?: string | null
           nome_fantasia?: string | null
@@ -3322,6 +3336,7 @@ export type Database = {
           razao_social?: string | null
           receita_consultada_em?: string | null
           situacao_cadastral?: string | null
+          status?: string
           telefone?: string | null
           type?: string
           uf?: string | null
@@ -13548,6 +13563,10 @@ export type Database = {
         Returns: undefined
       }
       desarquivar_rc: { Args: { _rc_id: string }; Returns: undefined }
+      desativar_empresa: {
+        Args: { _company_id: string; _motivo: string }
+        Returns: undefined
+      }
       desmarcar_funcionario_sabado: {
         Args: { _row_id: string }
         Returns: undefined
@@ -13773,12 +13792,20 @@ export type Database = {
         Args: { _motivo: string; _rc_id: string }
         Returns: undefined
       }
+      reativar_empresa: {
+        Args: { _company_id: string; _motivo: string }
+        Returns: undefined
+      }
       reativar_funcionario: {
         Args: { _employee_id: string; _motivo?: string }
         Returns: undefined
       }
       recalcular_cobertura_cotacao: {
         Args: { _cotacao_id: string }
+        Returns: undefined
+      }
+      recalcular_status_empresa: {
+        Args: { _company_id: string }
         Returns: undefined
       }
       recalcular_valor_cotacao: {
