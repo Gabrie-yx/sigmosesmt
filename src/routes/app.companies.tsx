@@ -557,17 +557,36 @@ function CompaniesPage() {
               </div>
               <div className="min-w-0">
                 <h3 className="truncate text-xl md:text-2xl font-black uppercase text-[#991b1b] tracking-tighter">{selected.name}</h3>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1 flex items-center gap-1">
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1 flex items-center gap-1 flex-wrap">
                   <Shield className="h-3 w-3 text-[#991b1b]" /> {compEmps.length} colaborador{compEmps.length === 1 ? "" : "es"}
+                  {isDesativada(selected) && (
+                    <span className="ml-1 inline-flex items-center gap-1 rounded px-1.5 py-0.5 bg-slate-200 text-slate-700">
+                      <PowerOff className="h-3 w-3" /> Desativada
+                      {selected.data_desativacao ? ` em ${new Date(selected.data_desativacao + "T00:00:00").toLocaleDateString("pt-BR")}` : ""}
+                    </span>
+                  )}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
-              {isEditor && (
+              {isEditor && !isDesativada(selected) && (
                 <Button onClick={() => setNewEmpOpen(true)} size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black rounded-lg uppercase tracking-widest">
                   <UserPlus className="h-3.5 w-3.5 mr-1.5" /> Novo Func.
                 </Button>
               )}
+              {isAdmin && !isContratante && (
+                <Button
+                  onClick={() => setStatusDialogOpen(true)}
+                  size="sm"
+                  variant="outline"
+                  className="text-[10px] font-black rounded-lg uppercase tracking-widest"
+                >
+                  {isDesativada(selected)
+                    ? <><RotateCcw className="h-3.5 w-3.5 mr-1.5 text-emerald-600" /> Reativar</>
+                    : <><PowerOff className="h-3.5 w-3.5 mr-1.5 text-rose-600" /> Desativar</>}
+                </Button>
+              )}
+
               {isEditor && (
                 <Button onClick={startEdit} size="sm" className="bg-[#0f172a] hover:bg-[#991b1b] text-white text-[10px] font-black rounded-lg uppercase tracking-widest">
                   <Pencil className="h-3.5 w-3.5 mr-1.5" /> Editar
