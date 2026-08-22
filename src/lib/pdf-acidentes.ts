@@ -161,6 +161,9 @@ export function gerarForSeg09(opts: {
   hht: Hht[];
   empresa?: EmpresaQuadro | string;
   responsavel?: string | null;
+  /** Assinatura digitalizada do responsável (dataURL PNG) */
+  assinaturaDataUrl?: string | null;
+  responsavelCargo?: string | null;
   /** compatibilidade com chamadas antigas */
   cnpj?: string;
   endereco?: string;
