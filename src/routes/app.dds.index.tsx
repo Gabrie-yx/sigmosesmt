@@ -574,7 +574,7 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
 
   const { data: companies = [] } = useQuery({
     queryKey: ["companies-for-dds-novo"],
-    queryFn: async () => (await supabase.from("companies").select("id,name,cnpj,encarregado1,matriz_nome,matriz_cnpj").order("name")).data ?? [],
+    queryFn: async () => (await supabase.from("companies").select("id,name,cnpj,encarregado1,matriz_nome,matriz_cnpj").or(COMPANIES_ATIVAS_FILTER).order("name")).data ?? [],
   });
   const { data: empresaEmployees = [] } = useQuery({
     queryKey: ["employees-by-companies-dds", companyIds.join(",")],
