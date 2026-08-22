@@ -1654,48 +1654,113 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved, initial }: 
     return Math.max(0, f * j * d + he - hf);
   }, [calc]);
 
+  const isAll = form.company_id === "ALL";
+
+  // Efetivo ativo por empresa — base do rateio do modo "TODAS AS EMPRESAS"
+  const { data: efetivo = [], isLoading: loadEfetivo } = useQuery({
+    queryKey: ["hht-efetivo-ativo"],
+    enabled: open,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("employees")
+        .select("company_id")
+        .eq("status", "ATIVO")
+        .limit(5000);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const rateio = useMemo(() => {
+    if (!isAll) return [];
+    const totalHht = Number(form.hht) || 0;
+    const totalEmp = Number(form.empregados_medio || 0);
+    const contagem = new Map<string, number>();
+    efetivo.forEach((e: any) => {
+      if (!e.company_id) return;
+      contagem.set(e.company_id, (contagem.get(e.company_id) || 0) + 1);
+    });
+    const alvos = companies
+      .map((c: any) => ({ id: c.id, nome: c.name, ativos: contagem.get(c.id) || 0 }))
+      .filter((c: any) => c.ativos > 0);
+    const somaAtivos = alvos.reduce((s: number, c: any) => s + c.ativos, 0);
+    if (!somaAtivos) return [];
+    let hhtAcum = 0;
+    let empAcum = 0;
+    return alvos.map((c: any, i: number) => {
+      const ultimo = i === alvos.length - 1;
+      const hht = ultimo
+        ? Math.max(0, Number((totalHht - hhtAcum).toFixed(2)))
+        : Number(((totalHht * c.ativos) / somaAtivos).toFixed(2));
+      const emp = ultimo
+        ? Math.max(0, totalEmp - empAcum)
+        : Math.round((totalEmp * c.ativos) / somaAtivos);
+      hhtAcum += hht;
+      empAcum += emp;
+      return { ...c, hht, emp };
+    });
+  }, [isAll, form.hht, form.empregados_medio, efetivo, companies]);
+
   const mut = useMutation({
     mutationFn: async () => {
       if (!form.company_id) throw new Error("Selecione a empresa.");
       if (!form.hht || Number(form.hht) <= 0) throw new Error("Informe o HHT.");
-      
-      const isAll = form.company_id === "ALL";
-      const targetCompanies = isAll ? companies.map((c: any) => c.id) : [form.company_id];
 
-      const promises = targetCompanies.map(async (cid: string) => {
-        const payload = {
-          company_id: cid,
+      if (isAll) {
+        if (initial?.id) {
+          throw new Error("Ao editar um lançamento existente, selecione uma empresa específica.");
+        }
+        if (!rateio.length) {
+          throw new Error(
+            "Nenhuma empresa com funcionário ativo — não é possível ratear o HHT. Lance por empresa.",
+          );
+        }
+        const linhas = rateio.map((r: any) => ({
+          company_id: r.id,
           ano: Number(form.ano),
           mes: Number(form.mes),
-          hht: Number(form.hht),
-          empregados_medio: Number(form.empregados_medio || 0),
-          observacoes: form.observacoes || null,
+          hht: r.hht,
+          empregados_medio: r.emp,
+          observacoes: [form.observacoes, `Rateio automático por efetivo ativo (${r.ativos} func.)`]
+            .filter(Boolean)
+            .join(" — "),
           created_by: userId,
-        };
+        }));
+        const { error } = await supabase
+          .from("hht_mensal")
+          .upsert(linhas, { onConflict: "company_id,ano,mes" });
+        if (error) throw error;
+        return;
+      }
 
-        if (initial?.id && !isAll) {
-          const { error } = await supabase
-            .from("hht_mensal")
-            .update(payload)
-            .eq("id", initial.id);
-          if (error) throw error;
-        } else {
-          const { error } = await supabase
-            .from("hht_mensal")
-            .upsert(payload, { onConflict: "company_id,ano,mes" });
-          if (error) throw error;
-        }
-      });
+      const payload = {
+        company_id: form.company_id,
+        ano: Number(form.ano),
+        mes: Number(form.mes),
+        hht: Number(form.hht),
+        empregados_medio: Number(form.empregados_medio || 0),
+        observacoes: form.observacoes || null,
+        created_by: userId,
+      };
 
-      await Promise.all(promises);
+      if (initial?.id) {
+        const { error } = await supabase.from("hht_mensal").update(payload).eq("id", initial.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("hht_mensal")
+          .upsert(payload, { onConflict: "company_id,ano,mes" });
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
-      toast.success("HHT lançado.");
+      toast.success(isAll ? "HHT rateado entre as empresas ativas." : "HHT lançado.");
       onOpenChange(false);
       onSaved?.();
     },
     onError: (e: any) => toast.error(e.message || "Erro ao salvar."),
   });
+
 
   const set = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
   const setC = (k: string, v: any) => setCalc((c) => ({ ...c, [k]: v }));
