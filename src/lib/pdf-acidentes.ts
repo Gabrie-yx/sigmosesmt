@@ -43,15 +43,27 @@ const isComAfast = (t: string) => t === "COM_AFASTAMENTO" || t === "FATAL";
 /** NBR 14280 / NR-04: acidente de trajeto não entra no quadro de acidentes típicos. */
 const isTipico = (t: string) => t !== "TRAJETO";
 
+/** NBR 14280 — morte = débito fixo de 6.000 dias. */
+export const DIAS_DEBITO_OBITO = 6000;
+
 function num(v: unknown) {
   const n = Number(v ?? 0);
   return Number.isFinite(n) ? n : 0;
 }
 
+/** Dias computados: perdidos + debitados, com piso de 6.000 dias em óbito (NBR 14280). */
+export function diasComputados(a: { tipo?: string | null; dias_perdidos?: number | null; dias_debitados?: number | null }) {
+  const debitados = a.tipo === "FATAL"
+    ? Math.max(num(a.dias_debitados), DIAS_DEBITO_OBITO)
+    : num(a.dias_debitados);
+  return num(a.dias_perdidos) + debitados;
+}
+
 function montaLinha(label: string, acids: Acidente[], hhtRows: Hht[]): LinhaQuadro {
   const tipicos = acids.filter((a) => isTipico(a.tipo));
   const comAfast = tipicos.filter((a) => isComAfast(a.tipo));
-  const dias = (a: Acidente) => num(a.dias_perdidos) + num(a.dias_debitados);
+  const dias = (a: Acidente) => diasComputados(a);
+
   const hht = hhtRows.reduce((s, h) => s + num(h.hht), 0);
   const empregados = hhtRows.reduce((s, h) => s + num(h.empregados_medio), 0);
   const diasPerdidos = tipicos.reduce((s, a) => s + dias(a), 0);

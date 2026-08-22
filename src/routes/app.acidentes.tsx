@@ -31,7 +31,7 @@ import {
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
 import { CorpoHumanoAcidentes } from "@/components/corpo-humano-acidentes";
-import { gerarForSeg09, gerarForSeg10, calcularQuadroEstatistico } from "@/lib/pdf-acidentes";
+import { gerarForSeg09, gerarForSeg10, calcularQuadroEstatistico, diasComputados, DIAS_DEBITO_OBITO } from "@/lib/pdf-acidentes";
 import { QuadroEstatisticoDialog } from "@/components/acidentes/quadro-estatistico-dialog";
 
 import { MediaViewerDialog, type MediaItem } from "@/components/media-viewer-dialog";
@@ -175,7 +175,7 @@ function AcidentesPage() {
     const noAno = acidentes.filter(a => new Date(a.data_acidente).getFullYear() === anoAtual);
     const noMes = noAno.filter(a => new Date(a.data_acidente).getMonth() + 1 === mesAtual);
     const comAfastAno = noAno.filter(a => a.tipo === "COM_AFASTAMENTO" || a.tipo === "FATAL");
-    const diasPerdidosAno = noAno.reduce((s, a) => s + (a.dias_perdidos || 0) + (a.dias_debitados || 0), 0);
+    const diasPerdidosAno = noAno.reduce((s, a) => s + diasComputados(a), 0);
     const hhtAno = hhtRows
       .filter(h => h.ano === anoAtual)
       .reduce((s, h) => s + Number(h.hht || 0), 0);
@@ -1048,7 +1048,10 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
         payload.houve_obito = true;
         payload.tipo_cat = payload.tipo_cat === "REABERTURA" ? "REABERTURA" : "OBITO";
         if (!payload.data_obito) payload.data_obito = payload.data_acidente;
+        // NBR 14280: óbito debita no mínimo 6.000 dias
+        payload.dias_debitados = Math.max(Number(payload.dias_debitados || 0), DIAS_DEBITO_OBITO);
       }
+
       if (payload.tipo === "COM_AFASTAMENTO") {
         payload.houve_afastamento = true;
       }
@@ -1319,7 +1322,15 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
             </Field>
             <Field label="Nº CAT"><Input value={form.numero_cat} onChange={e => set("numero_cat", e.target.value)} placeholder="Ex.: 2026.000123" /></Field>
             <Field label="Dias perdidos"><Input type="number" min={0} value={form.dias_perdidos} onChange={e => set("dias_perdidos", e.target.value)} /></Field>
-            <Field label="Dias debitados (NBR 14280)"><Input type="number" min={0} value={form.dias_debitados} onChange={e => set("dias_debitados", e.target.value)} /></Field>
+            <Field label="Dias debitados (NBR 14280)">
+              <Input type="number" min={0} value={form.dias_debitados} onChange={e => set("dias_debitados", e.target.value)} />
+              {form.tipo === "FATAL" && (
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  Óbito: será aplicado o débito mínimo de <strong>6.000 dias</strong> (NBR 14280) ao salvar.
+                </p>
+              )}
+            </Field>
+
             <Field label="Parte do corpo atingida">
               <Select value={form.parte_corpo_atingida || undefined} onValueChange={v => set("parte_corpo_atingida", v)}>
                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
