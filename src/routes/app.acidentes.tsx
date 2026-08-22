@@ -1710,32 +1710,50 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved, initial }: 
 
   const isAll = form.company_id === "ALL";
 
-  // Efetivo ativo por empresa — base do rateio do modo "TODAS AS EMPRESAS"
-  const { data: efetivo = [], isLoading: loadEfetivo } = useQuery({
-    queryKey: ["hht-efetivo-ativo"],
+  // Efetivo do MÊS de referência por empresa (admissão/desligamento) — base do rateio
+  const { data: quadro = [], isLoading: loadEfetivo } = useQuery({
+    queryKey: ["hht-efetivo-quadro"],
     enabled: open,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("employees")
-        .select("company_id")
-        .eq("status", "ATIVO")
-        .limit(5000);
+        .select("company_id, admissao, data_desligamento, status")
+        .limit(10000);
       if (error) throw error;
       return data ?? [];
     },
   });
 
+  // contagem por empresa no mês/ano selecionado
+  const contagemMes = useMemo(() => {
+    const ano = Number(form.ano);
+    const mes = Number(form.mes);
+    const ini = new Date(ano, mes - 1, 1);
+    const fim = new Date(ano, mes, 0);
+    const map = new Map<string, number>();
+    quadro.forEach((e: any) => {
+      if (!e.company_id) return;
+      const adm = e.admissao ? new Date(`${e.admissao}T00:00:00`) : null;
+      const des = e.data_desligamento ? new Date(`${e.data_desligamento}T00:00:00`) : null;
+      if (adm && adm > fim) return;
+      if (des && des < ini) return;
+      if (!adm && e.status !== "ATIVO") return;
+      map.set(e.company_id, (map.get(e.company_id) || 0) + 1);
+    });
+    return map;
+  }, [quadro, form.ano, form.mes]);
+
+  const totalEfetivoMes = useMemo(
+    () => Array.from(contagemMes.values()).reduce((s, n) => s + n, 0),
+    [contagemMes],
+  );
+
   const rateio = useMemo(() => {
     if (!isAll) return [];
     const totalHht = Number(form.hht) || 0;
     const totalEmp = Number(form.empregados_medio || 0);
-    const contagem = new Map<string, number>();
-    efetivo.forEach((e: any) => {
-      if (!e.company_id) return;
-      contagem.set(e.company_id, (contagem.get(e.company_id) || 0) + 1);
-    });
     const alvos = companies
-      .map((c: any) => ({ id: c.id, nome: c.name, ativos: contagem.get(c.id) || 0 }))
+      .map((c: any) => ({ id: c.id, nome: c.name, ativos: contagemMes.get(c.id) || 0 }))
       .filter((c: any) => c.ativos > 0);
     const somaAtivos = alvos.reduce((s: number, c: any) => s + c.ativos, 0);
     if (!somaAtivos) return [];
@@ -1753,7 +1771,8 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved, initial }: 
       empAcum += emp;
       return { ...c, hht, emp };
     });
-  }, [isAll, form.hht, form.empregados_medio, efetivo, companies]);
+  }, [isAll, form.hht, form.empregados_medio, contagemMes, companies]);
+
 
   const mut = useMutation({
     mutationFn: async () => {
