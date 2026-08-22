@@ -110,6 +110,8 @@ export function QuadroEstatisticoDialog({
         acidentes: filtrados.acidentes,
         hht: filtrados.hht,
         responsavel: responsavel || null,
+        responsavelCargo: responsavel ? responsavelCargo || null : null,
+        assinaturaDataUrl: assinatura,
         empresa: empresaSel
           ? {
               nome: empresaSel.razao_social || empresaSel.name,
