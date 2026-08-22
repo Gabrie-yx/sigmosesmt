@@ -1048,7 +1048,10 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
         payload.houve_obito = true;
         payload.tipo_cat = payload.tipo_cat === "REABERTURA" ? "REABERTURA" : "OBITO";
         if (!payload.data_obito) payload.data_obito = payload.data_acidente;
+        // NBR 14280: óbito debita no mínimo 6.000 dias
+        payload.dias_debitados = Math.max(Number(payload.dias_debitados || 0), DIAS_DEBITO_OBITO);
       }
+
       if (payload.tipo === "COM_AFASTAMENTO") {
         payload.houve_afastamento = true;
       }
