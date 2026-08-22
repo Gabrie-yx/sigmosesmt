@@ -12,7 +12,7 @@ import {
   UserPlus, Pencil, Plus, X, ChevronRight, HardHat,
   HeartPulse, Award, FolderOpen, CheckCircle2, AlertTriangle, Users, User, UserCog,
   Upload, Download, ArrowLeft, Building2, Briefcase, IdCard, Shield, Search,
-  Loader2, RefreshCw, FileText, MoreHorizontal,
+  Loader2, RefreshCw, FileText, MoreHorizontal, PowerOff, RotateCcw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { EmployeeDetailContent } from "./app.employees.$id";
