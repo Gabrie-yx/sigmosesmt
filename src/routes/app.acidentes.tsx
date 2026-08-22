@@ -237,6 +237,20 @@ function AcidentesPage() {
     () => acidentes.filter(a => new Date(a.data_acidente).getFullYear() === anoFiltro),
     [acidentes, anoFiltro],
   );
+  // Detecção de HHT replicado (modo antigo "todas as empresas")
+  const hhtSuspeitos = useMemo(() => {
+    const map = new Map<string, { ano: number; mes: number; hht: number; qtd: number }>();
+    hhtRows.forEach((h: any) => {
+      const v = Number(h.hht || 0);
+      if (v <= 0) return;
+      const k = `${h.ano}-${h.mes}-${v}`;
+      const cur = map.get(k) || { ano: h.ano, mes: h.mes, hht: v, qtd: 0 };
+      cur.qtd += 1;
+      map.set(k, cur);
+    });
+    return Array.from(map.values()).filter((x) => x.qtd > 1);
+  }, [hhtRows]);
+
 
   // Quadro estatístico oficial (mesma engine do PDF FOR-SEG 09)
   const quadro = useMemo(
@@ -674,6 +688,26 @@ function AcidentesPage() {
               </Button>
             </CardContent>
           </Card>
+          {hhtSuspeitos.length > 0 && (
+            <Card className="mb-3 border-amber-300 bg-amber-50">
+              <CardContent className="p-4 text-sm text-amber-900 space-y-1">
+                <div className="font-semibold">Possível duplicação de HHT detectada</div>
+                <p className="text-xs leading-relaxed">
+                  Nestes períodos o mesmo valor de HHT aparece em várias empresas, o que infla o
+                  denominador e derruba a TF/TG artificialmente. Provavelmente foram lançados no modo
+                  antigo "todas as empresas" (que replicava em vez de ratear). Revise/exclua e relance:
+                </p>
+                <ul className="text-xs list-disc pl-4">
+                  {hhtSuspeitos.map((s) => (
+                    <li key={`${s.ano}-${s.mes}-${s.hht}`}>
+                      {MESES[s.mes - 1]}/{s.ano} — {s.qtd} empresas com {s.hht.toLocaleString("pt-BR")} h cada
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardContent className="p-0">
               <Table>
@@ -1654,48 +1688,113 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved, initial }: 
     return Math.max(0, f * j * d + he - hf);
   }, [calc]);
 
+  const isAll = form.company_id === "ALL";
+
+  // Efetivo ativo por empresa — base do rateio do modo "TODAS AS EMPRESAS"
+  const { data: efetivo = [], isLoading: loadEfetivo } = useQuery({
+    queryKey: ["hht-efetivo-ativo"],
+    enabled: open,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("employees")
+        .select("company_id")
+        .eq("status", "ATIVO")
+        .limit(5000);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const rateio = useMemo(() => {
+    if (!isAll) return [];
+    const totalHht = Number(form.hht) || 0;
+    const totalEmp = Number(form.empregados_medio || 0);
+    const contagem = new Map<string, number>();
+    efetivo.forEach((e: any) => {
+      if (!e.company_id) return;
+      contagem.set(e.company_id, (contagem.get(e.company_id) || 0) + 1);
+    });
+    const alvos = companies
+      .map((c: any) => ({ id: c.id, nome: c.name, ativos: contagem.get(c.id) || 0 }))
+      .filter((c: any) => c.ativos > 0);
+    const somaAtivos = alvos.reduce((s: number, c: any) => s + c.ativos, 0);
+    if (!somaAtivos) return [];
+    let hhtAcum = 0;
+    let empAcum = 0;
+    return alvos.map((c: any, i: number) => {
+      const ultimo = i === alvos.length - 1;
+      const hht = ultimo
+        ? Math.max(0, Number((totalHht - hhtAcum).toFixed(2)))
+        : Number(((totalHht * c.ativos) / somaAtivos).toFixed(2));
+      const emp = ultimo
+        ? Math.max(0, totalEmp - empAcum)
+        : Math.round((totalEmp * c.ativos) / somaAtivos);
+      hhtAcum += hht;
+      empAcum += emp;
+      return { ...c, hht, emp };
+    });
+  }, [isAll, form.hht, form.empregados_medio, efetivo, companies]);
+
   const mut = useMutation({
     mutationFn: async () => {
       if (!form.company_id) throw new Error("Selecione a empresa.");
       if (!form.hht || Number(form.hht) <= 0) throw new Error("Informe o HHT.");
-      
-      const isAll = form.company_id === "ALL";
-      const targetCompanies = isAll ? companies.map((c: any) => c.id) : [form.company_id];
 
-      const promises = targetCompanies.map(async (cid: string) => {
-        const payload = {
-          company_id: cid,
+      if (isAll) {
+        if (initial?.id) {
+          throw new Error("Ao editar um lançamento existente, selecione uma empresa específica.");
+        }
+        if (!rateio.length) {
+          throw new Error(
+            "Nenhuma empresa com funcionário ativo — não é possível ratear o HHT. Lance por empresa.",
+          );
+        }
+        const linhas = rateio.map((r: any) => ({
+          company_id: r.id,
           ano: Number(form.ano),
           mes: Number(form.mes),
-          hht: Number(form.hht),
-          empregados_medio: Number(form.empregados_medio || 0),
-          observacoes: form.observacoes || null,
+          hht: r.hht,
+          empregados_medio: r.emp,
+          observacoes: [form.observacoes, `Rateio automático por efetivo ativo (${r.ativos} func.)`]
+            .filter(Boolean)
+            .join(" — "),
           created_by: userId,
-        };
+        }));
+        const { error } = await supabase
+          .from("hht_mensal")
+          .upsert(linhas, { onConflict: "company_id,ano,mes" });
+        if (error) throw error;
+        return;
+      }
 
-        if (initial?.id && !isAll) {
-          const { error } = await supabase
-            .from("hht_mensal")
-            .update(payload)
-            .eq("id", initial.id);
-          if (error) throw error;
-        } else {
-          const { error } = await supabase
-            .from("hht_mensal")
-            .upsert(payload, { onConflict: "company_id,ano,mes" });
-          if (error) throw error;
-        }
-      });
+      const payload = {
+        company_id: form.company_id,
+        ano: Number(form.ano),
+        mes: Number(form.mes),
+        hht: Number(form.hht),
+        empregados_medio: Number(form.empregados_medio || 0),
+        observacoes: form.observacoes || null,
+        created_by: userId,
+      };
 
-      await Promise.all(promises);
+      if (initial?.id) {
+        const { error } = await supabase.from("hht_mensal").update(payload).eq("id", initial.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("hht_mensal")
+          .upsert(payload, { onConflict: "company_id,ano,mes" });
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
-      toast.success("HHT lançado.");
+      toast.success(isAll ? "HHT rateado entre as empresas ativas." : "HHT lançado.");
       onOpenChange(false);
       onSaved?.();
     },
     onError: (e: any) => toast.error(e.message || "Erro ao salvar."),
   });
+
 
   const set = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
   const setC = (k: string, v: any) => setCalc((c) => ({ ...c, [k]: v }));
@@ -1778,6 +1877,36 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved, initial }: 
               </SelectContent>
             </Select>
           </Field>
+          {isAll && (
+            <div className="rounded-md border border-amber-400/30 bg-amber-400/10 p-3 space-y-2 text-xs">
+              <div className="font-semibold text-amber-200">
+                Rateio automático por efetivo ativo
+              </div>
+              {loadEfetivo ? (
+                <p className="text-white/60">Carregando efetivo…</p>
+              ) : rateio.length === 0 ? (
+                <p className="text-red-300">
+                  Nenhuma empresa com funcionário ativo. O HHT não pode ser rateado — lance por empresa.
+                </p>
+              ) : (
+                <>
+                  <p className="text-white/60 leading-snug">
+                    O total informado será <strong>dividido</strong> entre as empresas (não duplicado),
+                    proporcionalmente ao nº de funcionários ativos.
+                  </p>
+                  <div className="max-h-36 overflow-auto space-y-0.5 tabular-nums">
+                    {rateio.map((r: any) => (
+                      <div key={r.id} className="flex justify-between gap-2 text-white/80">
+                        <span className="truncate">{r.nome} ({r.ativos})</span>
+                        <span className="font-semibold shrink-0">{r.hht.toLocaleString("pt-BR")} h</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-3">
             <Field label="Mês *">
               <Select value={String(form.mes)} onValueChange={v => set("mes", Number(v))}>
@@ -1801,7 +1930,7 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved, initial }: 
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-white/60 hover:text-white hover:bg-white/10">Cancelar</Button>
-          <Button onClick={() => mut.mutate()} disabled={mut.isPending} className="bg-red-600 hover:bg-red-700 text-white border-none shadow-[0_0_20px_rgba(220,38,38,0.3)]">
+          <Button onClick={() => mut.mutate()} disabled={mut.isPending || (isAll && (loadEfetivo || rateio.length === 0))} className="bg-red-600 hover:bg-red-700 text-white border-none shadow-[0_0_20px_rgba(220,38,38,0.3)]">
             {mut.isPending ? "Salvando..." : "Salvar HHT"}
           </Button>
         </DialogFooter>
