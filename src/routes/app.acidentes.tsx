@@ -1920,19 +1920,19 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved, initial }: 
           {isAll && (
             <div className="rounded-md border border-amber-400/30 bg-amber-400/10 p-3 space-y-2 text-xs">
               <div className="font-semibold text-amber-200">
-                Rateio automático por efetivo ativo
+                Rateio por efetivo real de {MESES[Number(form.mes) - 1]}/{form.ano}
               </div>
               {loadEfetivo ? (
                 <p className="text-white/60">Carregando efetivo…</p>
               ) : rateio.length === 0 ? (
                 <p className="text-red-300">
-                  Nenhuma empresa com funcionário ativo. O HHT não pode ser rateado — lance por empresa.
+                  Nenhuma empresa com funcionário nesse mês. Lance por empresa.
                 </p>
               ) : (
                 <>
                   <p className="text-white/60 leading-snug">
-                    O total informado será <strong>dividido</strong> entre as empresas (não duplicado),
-                    proporcionalmente ao nº de funcionários ativos.
+                    Considera quem estava com vínculo aberto no mês (admissão até o fim do mês e sem
+                    desligamento antes do início). O total é <strong>dividido</strong>, nunca duplicado.
                   </p>
                   <div className="max-h-36 overflow-auto space-y-0.5 tabular-nums">
                     {rateio.map((r: any) => (
@@ -1946,6 +1946,7 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved, initial }: 
               )}
             </div>
           )}
+
 
           <div className="grid grid-cols-2 gap-3">
             <Field label="Mês *">
