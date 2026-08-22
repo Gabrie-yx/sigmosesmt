@@ -1343,6 +1343,51 @@ function TstPanel() {
             </div>
           </Card>
 
+          {/* HHT · TF / TG (NBR 14280) — ocupa o vão ao lado do Status Geral */}
+          <Card title="13 · HHT · TF / TG" className="col-span-12 md:col-span-4 order-[9.5]"
+            period="12 MESES"
+            meta={`TF ${tf.toFixed(2)} · TG ${tg.toFixed(2)}`}
+            metaTone={tf === 0 && tg === 0 ? "ok" : tf <= 5 ? "warn" : "crit"}
+            action={<Calculator className="h-3 w-3 text-cyan-300" />}
+            ncPrefill={{ codigo: "IND-08", indicador: "TF / TG (NBR 14280)", mesRef: mesRefAtual }}>
+            {totalHHT12m === 0 ? (
+              <div className="h-56 flex flex-col items-center justify-center gap-1">
+                <AlertOctagon className="h-6 w-6 text-amber-400" />
+                <div className="text-[10px] font-black uppercase tracking-wider text-amber-300">Lançar HHT mensal</div>
+                <div className="text-[9px] text-slate-500">Sem HHT · TF e TG indisponíveis</div>
+              </div>
+            ) : (
+              <div className="h-56">
+                <ResponsiveContainer>
+                  <ComposedChart data={tfSerie} margin={{ top: 14, right: 8, left: -22, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="gradHHT" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#22d3ee" stopOpacity={0.9} />
+                        <stop offset="100%" stopColor="#22d3ee" stopOpacity={0.25} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="2 4" stroke="#1e293b" vertical={false} />
+                    <XAxis dataKey="mes" tick={{ fontSize: 8, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                    <YAxis yAxisId="h" tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                    <YAxis yAxisId="t" orientation="right" tick={{ fontSize: 9, fill: "#fda4af" }} axisLine={false} tickLine={false} />
+                    <Tooltip contentStyle={tooltipDark}
+                      formatter={(v: any, n: any) => [n === "HHT" ? Number(v).toLocaleString("pt-BR") : Number(v).toFixed(2), n]} />
+                    <Bar yAxisId="h" dataKey="hht" name="HHT" fill="url(#gradHHT)" radius={[5, 5, 0, 0]} barSize={14} />
+                    <Line yAxisId="t" type="monotone" dataKey="tf" name="TF" stroke="#f43f5e" strokeWidth={2.5}
+                      dot={{ r: 2.5, fill: "#0a0f1f", stroke: "#f43f5e", strokeWidth: 2 }} />
+                    <Line yAxisId="t" type="monotone" dataKey="tg" name="TG" stroke="#fbbf24" strokeWidth={2.5}
+                      strokeDasharray="4 3" dot={{ r: 2.5, fill: "#0a0f1f", stroke: "#fbbf24", strokeWidth: 2 }} />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+            <div className="flex justify-around pt-3 mt-2 border-t border-slate-800/80 text-[10px]">
+              <span className="text-slate-500">HHT 12m: <span className="text-cyan-300 font-black tabular-nums">{totalHHT12m.toLocaleString("pt-BR")}</span></span>
+              <span className="text-slate-500">TF: <span className="text-rose-300 font-black tabular-nums">{tf.toFixed(2)}</span></span>
+              <span className="text-slate-500">TG: <span className="text-amber-300 font-black tabular-nums">{tg.toFixed(2)}</span></span>
+            </div>
+          </Card>
+
           {/* 9 · Linha Documentos Abertos × Resolvidos */}
           <Card title="13 · Não Conformidades" className="col-span-12 md:col-span-6 order-11"
             period="6 MESES" meta="Resolv. ≥ Abertos" metaTone="neutral">
