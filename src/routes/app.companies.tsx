@@ -19,6 +19,8 @@ import { EmployeeDetailContent } from "./app.employees.$id";
 import { maskCNPJ } from "@/lib/masks";
 import { NewEmployeeDialog } from "@/components/employees/new-employee-dialog";
 import { CompanyDossieDialog } from "@/components/companies/company-dossie-dialog";
+import { EmpresaStatusDialog } from "@/components/companies/empresa-status-dialog";
+
 import { FileViewerHost, openFileViewer } from "@/components/file-viewer";
 import { consultarCNPJ, extrairCNPJdeTexto, extrairDadosCompletosDeTexto, validarCNPJ, type ReceitaCNPJData } from "@/lib/brasilapi-cnpj";
 import {
