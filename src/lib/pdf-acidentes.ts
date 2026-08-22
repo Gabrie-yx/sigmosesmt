@@ -350,10 +350,28 @@ export function gerarForSeg09(opts: {
   doc.setFontSize(9);
   doc.text("RESPONSÁVEL:", 10, finalY);
   doc.line(38, finalY, 130, finalY);
+
+  if (opts.assinaturaDataUrl) {
+    try {
+      const props = doc.getImageProperties(opts.assinaturaDataUrl);
+      const h = 14;
+      const w = Math.min(70, (props.width / props.height) * h);
+      doc.addImage(opts.assinaturaDataUrl, "PNG", 42, finalY - h - 1, w, h);
+    } catch {
+      /* assinatura inválida — mantém apenas a linha */
+    }
+  }
+
   if (opts.responsavel) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
-    doc.text(opts.responsavel, 40, finalY - 1.5);
+    doc.text(opts.responsavel, 40, finalY + 4);
+    if (opts.responsavelCargo) {
+      doc.setFontSize(7);
+      doc.setTextColor(90);
+      doc.text(opts.responsavelCargo, 40, finalY + 8);
+      doc.setTextColor(0);
+    }
   }
 
   return doc;
