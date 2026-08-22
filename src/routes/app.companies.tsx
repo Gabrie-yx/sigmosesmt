@@ -415,9 +415,31 @@ function CompaniesPage() {
               : <><RefreshCw className="h-3.5 w-3.5 mr-1" /> Atualizar todas (Receita)</>}
           </Button>
         )}
-        {companies.map((c) => {
+        <div className="flex items-center gap-2 mb-1">
+          <Button
+            size="sm"
+            variant={verDesativadas ? "default" : "outline"}
+            onClick={() => { setVerDesativadas((v) => !v); setSelectedId(null); setSelectedEmpId(null); setShowForm(false); }}
+            className="text-[10px] font-black uppercase tracking-widest"
+          >
+            <PowerOff className="h-3.5 w-3.5 mr-1" />
+            {verDesativadas ? "Ver ativas" : `Desativadas (${desativadasCount})`}
+          </Button>
+          {verDesativadas && (
+            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              Empresas sem efetivo ativo
+            </span>
+          )}
+        </div>
+        {visibleCompanies.length === 0 && (
+          <div className="rounded-xl border border-dashed border-slate-300/40 p-6 text-center text-xs font-bold uppercase tracking-widest text-muted-foreground">
+            {verDesativadas ? "Nenhuma empresa desativada" : "Nenhuma empresa ativa"}
+          </div>
+        )}
+        {visibleCompanies.map((c) => {
           const isSel = selectedId === c.id;
           const empCount = employees.filter((e: any) => e.company_id === c.id).length;
+
           const ts = typeStyle[c.type] ?? "bg-slate-100 text-slate-700";
           const entrada = (c as any).data_entrada
             ? new Date((c as any).data_entrada + "T00:00:00").toLocaleDateString("pt-BR")
