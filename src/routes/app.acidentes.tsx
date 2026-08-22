@@ -1322,7 +1322,15 @@ function NovoAcidenteDialog({ open, onOpenChange, companies, userId, onSaved, in
             </Field>
             <Field label="Nº CAT"><Input value={form.numero_cat} onChange={e => set("numero_cat", e.target.value)} placeholder="Ex.: 2026.000123" /></Field>
             <Field label="Dias perdidos"><Input type="number" min={0} value={form.dias_perdidos} onChange={e => set("dias_perdidos", e.target.value)} /></Field>
-            <Field label="Dias debitados (NBR 14280)"><Input type="number" min={0} value={form.dias_debitados} onChange={e => set("dias_debitados", e.target.value)} /></Field>
+            <Field label="Dias debitados (NBR 14280)">
+              <Input type="number" min={0} value={form.dias_debitados} onChange={e => set("dias_debitados", e.target.value)} />
+              {form.tipo === "FATAL" && (
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  Óbito: será aplicado o débito mínimo de <strong>6.000 dias</strong> (NBR 14280) ao salvar.
+                </p>
+              )}
+            </Field>
+
             <Field label="Parte do corpo atingida">
               <Select value={form.parte_corpo_atingida || undefined} onValueChange={v => set("parte_corpo_atingida", v)}>
                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
