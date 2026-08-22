@@ -742,79 +742,102 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-auto">
-        <DialogHeader><DialogTitle>Novo DDS — gera formulário semanal</DialogTitle></DialogHeader>
-        <div className="space-y-3">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-            <div><Label>Data *</Label><Input type="date" value={data} onChange={(e) => setData(e.target.value)} /></div>
-            <div><Label>Hora início</Label><Input type="time" value={hora} onChange={(e) => setHora(e.target.value)} /></div>
-            <div><Label>Hora fim</Label><Input type="time" value={horaFim} onChange={(e) => setHoraFim(e.target.value)} /></div>
-            <div><Label>Duração (min)</Label><Input type="number" value={duracao} onChange={(e) => setDuracao(Number(e.target.value) || 10)} /></div>
-            <div><Label>Esperados</Label><Input type="number" value={esperados} onChange={(e) => setEsperados(Number(e.target.value) || 0)} /></div>
-          </div>
+      <DialogContent className="max-w-3xl max-h-[92vh] overflow-auto">
+        <DialogHeader>
+          <DialogTitle>Novo DDS</DialogTitle>
+          <p className="text-xs text-muted-foreground">Gera o formulário semanal FOR-SEG 06 (uma página por empresa).</p>
+        </DialogHeader>
+        <div className="space-y-5">
+          {/* 1 — Quando */}
+          <section className="rounded-lg border p-3 space-y-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">1 · Quando</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div><Label>Data *</Label><Input type="date" value={data} onChange={(e) => setData(e.target.value)} /></div>
+              <div><Label>Hora início</Label><Input type="time" value={hora} onChange={(e) => setHora(e.target.value)} /></div>
+              <div><Label>Hora fim</Label><Input type="time" value={horaFim} onChange={(e) => setHoraFim(e.target.value)} /></div>
+              <div><Label>Duração (min)</Label><Input type="number" value={duracao} onChange={(e) => setDuracao(Number(e.target.value) || 10)} /></div>
+            </div>
+          </section>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <Label>Empresas * (uma página de PDF por empresa)</Label>
-              {companyIds.length > 0 && (
-                <div className="flex flex-wrap gap-1 mb-1 mt-1">
-                  {selectedCompanies.map((c: any) => (
-                    <Badge key={c.id} variant="secondary" className="gap-1 pr-1">
-                      <span className="truncate max-w-[200px]">{c.name}</span>
-                      <button type="button" onClick={() => setCompanyIds(companyIds.filter((x) => x !== c.id))} className="hover:bg-slate-300 rounded p-0.5"><X className="h-3 w-3" /></button>
-                    </Badge>
-                  ))}
+          {/* 2 — Onde */}
+          <section className="rounded-lg border p-3 space-y-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">2 · Onde</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <Label>Empresas * <span className="text-[10px] font-normal text-muted-foreground">(só empresas ativas)</span></Label>
+                {companyIds.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mb-1 mt-1">
+                    {selectedCompanies.map((c: any) => (
+                      <Badge key={c.id} variant="secondary" className="gap-1 pr-1">
+                        <span className="truncate max-w-[200px]">{c.name}</span>
+                        <button type="button" onClick={() => setCompanyIds(companyIds.filter((x) => x !== c.id))} className="hover:bg-muted rounded p-0.5"><X className="h-3 w-3" /></button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+                <Input placeholder="Buscar empresa..." value={companySearch} onChange={(e) => setCompanySearch(e.target.value)} className="mb-1" />
+                <div className="border rounded max-h-32 overflow-auto divide-y">
+                  {companiesFiltradas.map((c: any) => {
+                    const checked = companyIds.includes(c.id);
+                    return (
+                      <label key={c.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-accent hover:text-accent-foreground cursor-pointer text-sm">
+                        <Checkbox checked={checked} onCheckedChange={() => setCompanyIds(checked ? companyIds.filter((x) => x !== c.id) : [...companyIds, c.id])} />
+                        <span className="flex-1 truncate">{c.name}</span>
+                      </label>
+                    );
+                  })}
+                  {companiesFiltradas.length === 0 && <div className="p-3 text-xs text-muted-foreground text-center">Nenhuma empresa ativa encontrada</div>}
                 </div>
-              )}
-              <div className="border rounded max-h-32 overflow-auto divide-y">
-                {companies.map((c: any) => {
-                  const checked = companyIds.includes(c.id);
-                  return (
-                    <label key={c.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-accent hover:text-accent-foreground cursor-pointer text-sm">
-                      <Checkbox checked={checked} onCheckedChange={() => setCompanyIds(checked ? companyIds.filter((x) => x !== c.id) : [...companyIds, c.id])} />
-                      <span className="flex-1 truncate">{c.name}</span>
-                    </label>
-                  );
-                })}
+                {companyIds.length > 0 && <div className="text-xs text-muted-foreground mt-1">{empresaEmployees.length} funcionário(s) ativo(s) em {companyIds.length} empresa(s)</div>}
               </div>
-              {companyIds.length > 0 && <div className="text-xs text-muted-foreground mt-1">{empresaEmployees.length} funcionário(s) ativo(s) em {companyIds.length} empresa(s)</div>}
+              <div className="space-y-3">
+                <div><Label>Local / Setor</Label><Input value={setor} onChange={(e) => setSetor(e.target.value)} placeholder="Ex: PRODUÇÃO" /></div>
+                <div><Label>Participantes esperados</Label><Input type="number" value={esperados} onChange={(e) => setEsperados(Number(e.target.value) || 0)} /></div>
+              </div>
             </div>
-            <div><Label>Local / Setor</Label><Input value={setor} onChange={(e) => setSetor(e.target.value)} placeholder="Ex: PRODUÇÃO" /></div>
-          </div>
+          </section>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <Label>Gestor *</Label>
-              <Select value={gestorId} onValueChange={(v) => {
-                setGestorId(v);
-                const g = gestores.find((x) => x.id === v);
-                if (g?.setor && !setor) setSetor(g.setor);
-              }}>
-                <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                <SelectContent>
-                  {gestores.map((g) => <SelectItem key={g.id} value={g.id}>{g.nome}{g.setor ? ` — ${g.setor}` : ""}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              {gestores.length === 0 && (
-                <div className="text-xs text-amber-600 mt-1">
-                  Nenhum gestor cadastrado. <Link to="/app/dds/gestores" className="underline">Cadastrar agora</Link>
-                </div>
-              )}
+          {/* 3 — Responsáveis */}
+          <section className="rounded-lg border p-3 space-y-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">3 · Responsáveis</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <Label>Gestor *</Label>
+                <EmployeePicker
+                  value={gestorEmp?.nome ?? ""}
+                  placeholder="Buscar na lista de funcionários"
+                  onClear={() => setGestorEmp(null)}
+                  onSelect={(emp) => { setGestorEmp(emp); if (!setor && (emp.setor || emp.funcao)) setSetor(emp.setor || emp.funcao || ""); }}
+                />
+                <div className="text-[10px] text-muted-foreground mt-1">Vira gestor de DDS automaticamente ao salvar.</div>
+              </div>
+              <div>
+                <Label>Encarregado / Designado</Label>
+                <EmployeePicker
+                  value={encarregado}
+                  placeholder="Buscar na lista de funcionários"
+                  companyIds={companyIds.length ? companyIds : undefined}
+                  onClear={() => setEncarregado("")}
+                  onSelect={(emp) => setEncarregado(emp.nome)}
+                />
+              </div>
+              <div>
+                <Label>Responsável SESMT</Label>
+                <EmployeePicker
+                  value={sesmt}
+                  placeholder="Buscar na lista de funcionários"
+                  onClear={() => setSesmt("")}
+                  onSelect={(emp) => setSesmt(emp.nome)}
+                />
+              </div>
             </div>
-            <div><Label>Encarregado / Designado</Label><Input value={encarregado} onChange={(e) => setEncarregado(e.target.value)} placeholder="Nome do encarregado" /></div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div><Label>Responsável SESMT</Label><Input value={sesmt} onChange={(e) => setSesmt(e.target.value)} /></div>
-            <div className="flex items-end">
-              <label className="flex items-center gap-2 text-sm cursor-pointer">
-                <Checkbox checked={gerarPdf} onCheckedChange={(v) => setGerarPdf(Boolean(v))} />
-                <FileDown className="h-4 w-4" /> Gerar formulário semanal (PDF) ao salvar
-              </label>
-            </div>
-          </div>
+          </section>
 
-          <div>
-            <Label>Temas * ({temaIds.length + temasLivres.length} selecionado{temaIds.length + temasLivres.length === 1 ? "" : "s"})</Label>
+          {/* 4 — Temas */}
+          <section className="rounded-lg border p-3 space-y-2">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              4 · Temas * <span className="normal-case font-normal">({temaIds.length + temasLivres.length} selecionado{temaIds.length + temasLivres.length === 1 ? "" : "s"})</span>
+            </h3>
             {(temaIds.length > 0 || temasLivres.length > 0) && (
               <div className="flex flex-wrap gap-1 mb-2 mt-1">
                 {temaIds.map((id) => {
@@ -823,14 +846,14 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
                   return (
                     <Badge key={id} variant="secondary" className="gap-1 pr-1">
                       <span className="truncate max-w-[280px]">{t.codigo ? `${t.codigo}. ` : ""}{t.titulo}</span>
-                      <button type="button" onClick={() => setTemaIds(temaIds.filter((x) => x !== id))} className="hover:bg-slate-300 rounded p-0.5"><X className="h-3 w-3" /></button>
+                      <button type="button" onClick={() => setTemaIds(temaIds.filter((x) => x !== id))} className="hover:bg-muted rounded p-0.5"><X className="h-3 w-3" /></button>
                     </Badge>
                   );
                 })}
                 {temasLivres.map((tl, i) => (
-                  <Badge key={`l-${i}`} variant="outline" className="gap-1 pr-1 border-amber-400 text-amber-800">
+                  <Badge key={`l-${i}`} variant="outline" className="gap-1 pr-1 border-amber-400 text-amber-700">
                     <span className="truncate max-w-[280px]">{tl}</span>
-                    <button type="button" onClick={() => setTemasLivres(temasLivres.filter((_, idx) => idx !== i))} className="hover:bg-amber-100 rounded p-0.5"><X className="h-3 w-3" /></button>
+                    <button type="button" onClick={() => setTemasLivres(temasLivres.filter((_, idx) => idx !== i))} className="hover:bg-muted rounded p-0.5"><X className="h-3 w-3" /></button>
                   </Badge>
                 ))}
               </div>
@@ -873,19 +896,19 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
                 if (v) { setTemasLivres([...temasLivres, v]); setTemaLivreInput(""); }
               }}>Adicionar</Button>
             </div>
-          </div>
+            <div>
+              <Label>Conteúdo / Pontos abordados</Label>
+              <Textarea rows={3} value={conteudo} onChange={(e) => setConteudo(e.target.value)} />
+            </div>
+          </section>
 
-          <div>
-            <Label>Conteúdo / Pontos abordados</Label>
-            <Textarea rows={3} value={conteudo} onChange={(e) => setConteudo(e.target.value)} />
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <Label>Presentes ({presentes.size})</Label>
+          {/* 5 — Presentes */}
+          <section className="rounded-lg border p-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">5 · Presentes ({presentes.size})</h3>
               <button type="button" className="text-xs underline text-muted-foreground" onClick={() => setPresentes(new Set(filteredEmp.map((e) => e.id)))}>Marcar todos visíveis</button>
             </div>
-            <Input placeholder="Buscar funcionário..." value={empSearch} onChange={(e) => setEmpSearch(e.target.value)} className="mb-2" />
+            <Input placeholder="Buscar funcionário..." value={empSearch} onChange={(e) => setEmpSearch(e.target.value)} />
             <div className="border rounded max-h-56 overflow-auto divide-y">
               {filteredEmp.map((e) => (
                 <label key={e.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-accent hover:text-accent-foreground cursor-pointer text-sm">
@@ -894,45 +917,54 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
                   {e.cpf && <span className="text-xs text-muted-foreground">{e.cpf}</span>}
                 </label>
               ))}
-              {filteredEmp.length === 0 && <div className="p-3 text-xs text-muted-foreground text-center">Nenhum funcionário</div>}
+              {filteredEmp.length === 0 && <div className="p-3 text-xs text-muted-foreground text-center">Selecione uma empresa para listar os funcionários ativos</div>}
             </div>
-          </div>
+          </section>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="border rounded p-2">
-              <Label className="text-xs flex items-center gap-1"><ClipboardList className="h-3.5 w-3.5" />Lista de presença assinada</Label>
-              <div className="text-[10px] text-muted-foreground mb-1">1 arquivo (PDF ou foto da folha).</div>
-              <Input type="file" accept="application/pdf,image/*" onChange={(e) => setListaFile(e.target.files?.[0] ?? null)} />
-              {listaFile && (
-                <div className="mt-1 text-xs flex items-center gap-2">
-                  <span className="truncate flex-1">{listaFile.name}</span>
-                  <button type="button" onClick={() => setListaFile(null)} className="text-red-600 hover:underline">remover</button>
-                </div>
-              )}
+          {/* 6 — Evidências */}
+          <section className="rounded-lg border p-3 space-y-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">6 · Evidências e PDF</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="border rounded p-2">
+                <Label className="text-xs flex items-center gap-1"><ClipboardList className="h-3.5 w-3.5" />Lista de presença assinada</Label>
+                <div className="text-[10px] text-muted-foreground mb-1">1 arquivo (PDF ou foto da folha).</div>
+                <Input type="file" accept="application/pdf,image/*" onChange={(e) => setListaFile(e.target.files?.[0] ?? null)} />
+                {listaFile && (
+                  <div className="mt-1 text-xs flex items-center gap-2">
+                    <span className="truncate flex-1">{listaFile.name}</span>
+                    <button type="button" onClick={() => setListaFile(null)} className="text-destructive hover:underline">remover</button>
+                  </div>
+                )}
+              </div>
+              <div className="border rounded p-2">
+                <Label className="text-xs flex items-center gap-1"><ImageIcon className="h-3.5 w-3.5" />Fotos do DDS ({fotosFiles.length}/4)</Label>
+                <div className="text-[10px] text-muted-foreground mb-1">2 a 4 fotos do momento.</div>
+                <Input type="file" accept="image/*" multiple onChange={(e) => {
+                  const novos = Array.from(e.target.files ?? []);
+                  const total = [...fotosFiles, ...novos].slice(0, 4);
+                  if (fotosFiles.length + novos.length > 4) toast.warning("Limitado a 4 fotos");
+                  setFotosFiles(total);
+                  e.target.value = "";
+                }} />
+                {fotosFiles.length > 0 && (
+                  <div className="mt-1 space-y-0.5">
+                    {fotosFiles.map((f, i) => (
+                      <div key={i} className="text-xs flex items-center gap-2">
+                        <span className="truncate flex-1">{f.name}</span>
+                        <button type="button" onClick={() => setFotosFiles(fotosFiles.filter((_, idx) => idx !== i))} className="text-destructive hover:underline">remover</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="border rounded p-2">
-              <Label className="text-xs flex items-center gap-1"><ImageIcon className="h-3.5 w-3.5" />Fotos do DDS ({fotosFiles.length}/4)</Label>
-              <div className="text-[10px] text-muted-foreground mb-1">2 a 4 fotos do momento.</div>
-              <Input type="file" accept="image/*" multiple onChange={(e) => {
-                const novos = Array.from(e.target.files ?? []);
-                const total = [...fotosFiles, ...novos].slice(0, 4);
-                if (fotosFiles.length + novos.length > 4) toast.warning("Limitado a 4 fotos");
-                setFotosFiles(total);
-                e.target.value = "";
-              }} />
-              {fotosFiles.length > 0 && (
-                <div className="mt-1 space-y-0.5">
-                  {fotosFiles.map((f, i) => (
-                    <div key={i} className="text-xs flex items-center gap-2">
-                      <span className="truncate flex-1">{f.name}</span>
-                      <button type="button" onClick={() => setFotosFiles(fotosFiles.filter((_, idx) => idx !== i))} className="text-red-600 hover:underline">remover</button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+            <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <Checkbox checked={gerarPdf} onCheckedChange={(v) => setGerarPdf(Boolean(v))} />
+              <FileDown className="h-4 w-4" /> Gerar formulário semanal (PDF) ao salvar
+            </label>
+          </section>
         </div>
+
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>Cancelar</Button>
           {gerarPdf && companyIds.length > 0 && (
