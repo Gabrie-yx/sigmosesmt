@@ -485,6 +485,15 @@ function CompaniesPage() {
                     <Briefcase className="h-3 w-3" /> {c.type}
                   </div>
                   {dossieBadge}
+                  {isDesativada(c) && (
+                    <span
+                      title={`Desativada${c.data_desativacao ? " em " + new Date(c.data_desativacao + "T00:00:00").toLocaleDateString("pt-BR") : ""}${c.motivo_desativacao ? " · " + c.motivo_desativacao : ""}`}
+                      className="text-[8px] font-black px-1.5 py-1 rounded inline-flex items-center gap-1 ring-1 backdrop-blur bg-slate-700/50 text-slate-100 ring-slate-300/40"
+                    >
+                      <PowerOff className="h-3 w-3" /> DESATIVADA
+                    </span>
+                  )}
+
                 </div>
                 <div className="group/pill flex items-center gap-2 rounded-full pl-1 pr-3 py-1 backdrop-blur-xl bg-gradient-to-br from-rose-600/40 via-rose-700/30 to-rose-950/40 ring-1 ring-rose-400/40 shadow-[0_0_24px_-4px_rgba(244,80,110,0.75),inset_0_1px_0_rgba(255,230,235,0.15)] transition-all hover:shadow-[0_0_36px_-2px_rgba(244,80,110,1),inset_0_1px_0_rgba(255,230,235,0.25)]">
                   <span className="h-8 w-8 rounded-full flex items-center justify-center ring-1 ring-rose-300/60 bg-gradient-to-br from-rose-500 to-rose-800 shadow-[0_0_16px_-2px_rgba(244,80,110,0.9)]">
