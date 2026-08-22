@@ -221,7 +221,18 @@ function CompaniesPage() {
   });
 
   const selected = useMemo(() => companies.find((c) => c.id === selectedId) || null, [companies, selectedId]);
+  const isDesativada = (c?: Company | null) => (c?.status ?? "ATIVA") === "DESATIVADA";
+  const desativadasCount = useMemo(() => companies.filter((c) => isDesativada(c)).length, [companies]);
+  const visibleCompanies = useMemo(
+    () => companies.filter((c) => (verDesativadas ? isDesativada(c) : !isDesativada(c))),
+    [companies, verDesativadas],
+  );
+  const ativosDaSelecionada = useMemo(
+    () => (selected ? employees.filter((e: any) => e.company_id === selected.id && e.status === "ATIVO").length : 0),
+    [employees, selected],
+  );
   const isContratante = (selected?.name ?? "").toUpperCase().includes("DMN");
+
   const compEmps = useMemo(
     () => {
       if (!selected) return [];
