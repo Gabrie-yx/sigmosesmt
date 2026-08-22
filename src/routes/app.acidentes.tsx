@@ -1843,6 +1843,36 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved, initial }: 
               </SelectContent>
             </Select>
           </Field>
+          {isAll && (
+            <div className="rounded-md border border-amber-400/30 bg-amber-400/10 p-3 space-y-2 text-xs">
+              <div className="font-semibold text-amber-200">
+                Rateio automático por efetivo ativo
+              </div>
+              {loadEfetivo ? (
+                <p className="text-white/60">Carregando efetivo…</p>
+              ) : rateio.length === 0 ? (
+                <p className="text-red-300">
+                  Nenhuma empresa com funcionário ativo. O HHT não pode ser rateado — lance por empresa.
+                </p>
+              ) : (
+                <>
+                  <p className="text-white/60 leading-snug">
+                    O total informado será <strong>dividido</strong> entre as empresas (não duplicado),
+                    proporcionalmente ao nº de funcionários ativos.
+                  </p>
+                  <div className="max-h-36 overflow-auto space-y-0.5 tabular-nums">
+                    {rateio.map((r: any) => (
+                      <div key={r.id} className="flex justify-between gap-2 text-white/80">
+                        <span className="truncate">{r.nome} ({r.ativos})</span>
+                        <span className="font-semibold shrink-0">{r.hht.toLocaleString("pt-BR")} h</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-3">
             <Field label="Mês *">
               <Select value={String(form.mes)} onValueChange={v => set("mes", Number(v))}>
