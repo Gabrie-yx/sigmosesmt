@@ -347,7 +347,7 @@ function DDSDetail({ dds, temaMap, gestorMap }: { dds: DDS; temaMap: any; gestor
   const { data: allCompanies = [] } = useQuery({
     queryKey: ["companies-for-dds-prep"],
     enabled: prepOpen,
-    queryFn: async () => (await supabase.from("companies").select("id,name,cnpj,matriz_nome,matriz_cnpj,encarregado1").order("name")).data ?? [],
+    queryFn: async () => (await supabase.from("companies").select("id,name,cnpj,matriz_nome,matriz_cnpj,encarregado1").or(COMPANIES_ATIVAS_FILTER).order("name")).data ?? [],
   });
 
   function buildAndShow(companies: any[], funcs: { nome: string; funcao?: string | null }[]) {
