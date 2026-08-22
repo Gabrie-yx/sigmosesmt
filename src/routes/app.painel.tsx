@@ -698,6 +698,7 @@ function TstPanel() {
         mes: mesLabel,
         tf: hMes > 0 ? Number(((aCAF * 1_000_000) / hMes).toFixed(2)) : 0,
         tg: hMes > 0 ? Number(((dp * 1_000_000) / hMes).toFixed(2)) : 0,
+        hht: Math.round(hMes),
       });
       acidSerie.push({ mes: mesLabel, acid: aCAF });
     }
