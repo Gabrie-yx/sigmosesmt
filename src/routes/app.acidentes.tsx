@@ -1965,6 +1965,33 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved, initial }: 
           <Field label="Nº médio de empregados">
             <Input type="number" value={form.empregados_medio} onChange={e => set("empregados_medio", e.target.value)} className="bg-white/5 border-white/10 text-white" />
           </Field>
+          {!loadEfetivo && (
+            <div className="flex items-center justify-between gap-2 rounded-md border border-white/10 bg-white/5 p-2 text-xs">
+              <span className="text-white/60">
+                Efetivo real em {MESES[Number(form.mes) - 1]}/{form.ano}:{" "}
+                <strong className="text-white">
+                  {(isAll || !form.company_id
+                    ? totalEfetivoMes
+                    : contagemMes.get(form.company_id) || 0)}
+                </strong>{" "}
+                func.
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 border-white/20 bg-transparent text-white hover:bg-white/10"
+                onClick={() => {
+                  const n = isAll || !form.company_id ? totalEfetivoMes : contagemMes.get(form.company_id) || 0;
+                  set("empregados_medio", String(n));
+                  setC("funcionarios", String(n));
+                  toast.success(`Efetivo do mês aplicado: ${n} funcionários`);
+                }}
+              >
+                Usar efetivo do mês
+              </Button>
+            </div>
+          )}
+
           <Field label="Observações">
             <Textarea rows={2} value={form.observacoes} onChange={e => set("observacoes", e.target.value)} className="bg-white/5 border-white/10 text-white" />
           </Field>
