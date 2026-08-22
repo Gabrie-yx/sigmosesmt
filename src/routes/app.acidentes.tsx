@@ -1794,7 +1794,7 @@ function HhtDialog({ open, onOpenChange, companies, userId, onSaved, initial }: 
           mes: Number(form.mes),
           hht: r.hht,
           empregados_medio: r.emp,
-          observacoes: [form.observacoes, `Rateio automático por efetivo ativo (${r.ativos} func.)`]
+          observacoes: [form.observacoes, `Rateio por efetivo do mês (${r.ativos} func.)`]
             .filter(Boolean)
             .join(" — "),
           created_by: userId,
