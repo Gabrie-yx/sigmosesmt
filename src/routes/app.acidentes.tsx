@@ -749,62 +749,106 @@ function AcidentesPage() {
             </Card>
           )}
 
-          <Card>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Período</TableHead>
-                    <TableHead>Empresa</TableHead>
-                    <TableHead className="text-right">HHT</TableHead>
-                    <TableHead className="text-right">Empregados</TableHead>
-                    <TableHead>Observações</TableHead>
-                    {isAdmin && <TableHead className="w-[80px] text-right">Ações</TableHead>}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {hhtRows.length === 0 ? (
-                    <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Nenhum HHT lançado. Clique em "Lançar HHT" no topo.</TableCell></TableRow>
-                  ) : hhtRows.map(h => {
-                    const emp = companies.find(c => c.id === h.company_id);
-                    return (
-                      <TableRow key={h.id}>
-                        <TableCell className="whitespace-nowrap font-medium">{MESES[h.mes-1]}/{h.ano}</TableCell>
-                        <TableCell className="text-sm text-muted-foreground">{emp?.name || "—"}</TableCell>
-                        <TableCell className="text-right tabular-nums">{Number(h.hht).toLocaleString("pt-BR")}</TableCell>
-                        <TableCell className="text-right tabular-nums">{h.empregados_medio}</TableCell>
-                        <TableCell className="text-sm text-muted-foreground">{h.observacoes || "—"}</TableCell>
-                        {isAdmin && (
-                          <TableCell className="text-right">
-                            <div className="flex gap-1 justify-end">
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="h-7 w-7"
-                                onClick={() => setEditingHht(h)}
-                                title="Editar"
+          {hhtPorAno.length === 0 ? (
+            <Card>
+              <CardContent className="py-10 text-center text-muted-foreground text-sm">
+                Nenhum HHT lançado. Clique em "Lançar HHT" no topo.
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {hhtPorAno.map((grupoAno) => {
+                const anoAberto = (hhtAnoAberto ?? hhtPorAno[0].ano) === grupoAno.ano;
+                return (
+                  <Card key={grupoAno.ano} className="overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => setHhtAnoAberto(anoAberto ? -1 : grupoAno.ano)}
+                      className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <ChevronDown className={`h-4 w-4 transition-transform ${anoAberto ? "" : "-rotate-90"}`} />
+                        <span className="font-bold text-base tabular-nums">{grupoAno.ano}</span>
+                        <Badge variant="outline">{grupoAno.meses.length} {grupoAno.meses.length === 1 ? "mês" : "meses"}</Badge>
+                      </div>
+                      <span className="text-xs text-muted-foreground tabular-nums">
+                        HHT do ano: <strong className="text-foreground">{grupoAno.totalHht.toLocaleString("pt-BR")} h</strong>
+                      </span>
+                    </button>
+
+                    {anoAberto && (
+                      <CardContent className="p-3 pt-0 space-y-2">
+                        {grupoAno.meses.map((gm) => {
+                          const key = `${grupoAno.ano}-${gm.mes}`;
+                          const mesAberto = hhtMesAberto === key;
+                          return (
+                            <div key={key} className="rounded-lg border bg-card">
+                              <button
+                                type="button"
+                                onClick={() => setHhtMesAberto(mesAberto ? null : key)}
+                                className="w-full flex flex-wrap items-center justify-between gap-2 px-3 py-2.5 text-left hover:bg-muted/40 rounded-lg transition-colors"
                               >
-                                <Pencil className="h-3.5 w-3.5" />
-                              </Button>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="h-7 w-7 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                onClick={() => setDeletingHht(h)}
-                                title="Excluir"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
+                                <span className="flex items-center gap-2 font-semibold text-sm">
+                                  <ChevronDown className={`h-3.5 w-3.5 transition-transform ${mesAberto ? "" : "-rotate-90"}`} />
+                                  {MESES[gm.mes - 1]}/{grupoAno.ano}
+                                </span>
+                                <span className="flex items-center gap-3 text-xs text-muted-foreground tabular-nums">
+                                  <span>{gm.rows.length} empresa(s)</span>
+                                  <span>{gm.totalEmp} func.</span>
+                                  <span className="font-bold text-foreground">{gm.totalHht.toLocaleString("pt-BR")} h</span>
+                                </span>
+                              </button>
+
+                              {mesAberto && (
+                                <div className="border-t">
+                                  <Table>
+                                    <TableHeader>
+                                      <TableRow>
+                                        <TableHead>Empresa</TableHead>
+                                        <TableHead className="text-right">HHT</TableHead>
+                                        <TableHead className="text-right">Empregados</TableHead>
+                                        <TableHead>Observações</TableHead>
+                                        {isAdmin && <TableHead className="w-[80px] text-right">Ações</TableHead>}
+                                      </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                      {gm.rows.map((h: any) => {
+                                        const emp = companies.find((c) => c.id === h.company_id);
+                                        return (
+                                          <TableRow key={h.id}>
+                                            <TableCell className="text-sm">{emp?.name || "—"}</TableCell>
+                                            <TableCell className="text-right tabular-nums">{Number(h.hht).toLocaleString("pt-BR")}</TableCell>
+                                            <TableCell className="text-right tabular-nums">{h.empregados_medio}</TableCell>
+                                            <TableCell className="text-xs text-muted-foreground">{h.observacoes || "—"}</TableCell>
+                                            {isAdmin && (
+                                              <TableCell className="text-right">
+                                                <div className="flex gap-1 justify-end">
+                                                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditingHht(h)} title="Editar">
+                                                    <Pencil className="h-3.5 w-3.5" />
+                                                  </Button>
+                                                  <Button size="icon" variant="ghost" className="h-7 w-7 text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => setDeletingHht(h)} title="Excluir">
+                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                  </Button>
+                                                </div>
+                                              </TableCell>
+                                            )}
+                                          </TableRow>
+                                        );
+                                      })}
+                                    </TableBody>
+                                  </Table>
+                                </div>
+                              )}
                             </div>
-                          </TableCell>
-                        )}
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+                          );
+                        })}
+                      </CardContent>
+                    )}
+                  </Card>
+                );
+              })}
+            </div>
+          )}
         </TabsContent>
       </Tabs>
 
