@@ -13,8 +13,10 @@ import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import { Plus, Trash2, ArrowUp, ArrowDown, FileText, Save, PenLine, X, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { buildSimuladoCronogramaPdf, MESES_ABREV, type MesMarca } from "@/lib/simulado-cronograma-pdf";
-const EMPRESA_NOME = "DMN ESTALEIRO";
 import { uuid as newId } from "@/lib/uuid";
+
+const EMPRESA_NOME = "DMN ESTALEIRO";
+
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const sb: any = supabase;
