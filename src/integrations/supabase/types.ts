@@ -12573,6 +12573,257 @@ export type Database = {
         }
         Relationships: []
       }
+      simulado_cenarios: {
+        Row: {
+          acao_preparatoria: string | null
+          ativo: boolean
+          created_at: string
+          descricao: string
+          id: string
+          local: string | null
+          norma_ref: string | null
+          ordem: number
+          padrao: boolean
+          periodicidade_meses: number
+          responsavel: string | null
+        }
+        Insert: {
+          acao_preparatoria?: string | null
+          ativo?: boolean
+          created_at?: string
+          descricao: string
+          id?: string
+          local?: string | null
+          norma_ref?: string | null
+          ordem?: number
+          padrao?: boolean
+          periodicidade_meses?: number
+          responsavel?: string | null
+        }
+        Update: {
+          acao_preparatoria?: string | null
+          ativo?: boolean
+          created_at?: string
+          descricao?: string
+          id?: string
+          local?: string | null
+          norma_ref?: string | null
+          ordem?: number
+          padrao?: boolean
+          periodicidade_meses?: number
+          responsavel?: string | null
+        }
+        Relationships: []
+      }
+      simulado_cronograma: {
+        Row: {
+          ano: number
+          aprovado_assinatura: string | null
+          aprovado_por: string | null
+          created_at: string
+          created_by: string | null
+          data_documento: string
+          elaborado_assinatura: string | null
+          elaborado_por: string | null
+          id: string
+          observacoes: string | null
+          revisao: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          ano: number
+          aprovado_assinatura?: string | null
+          aprovado_por?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_documento?: string
+          elaborado_assinatura?: string | null
+          elaborado_por?: string | null
+          id?: string
+          observacoes?: string | null
+          revisao?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          ano?: number
+          aprovado_assinatura?: string | null
+          aprovado_por?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_documento?: string
+          elaborado_assinatura?: string | null
+          elaborado_por?: string | null
+          id?: string
+          observacoes?: string | null
+          revisao?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      simulado_cronograma_itens: {
+        Row: {
+          acao_preparatoria: string | null
+          cenario_id: string | null
+          created_at: string
+          cronograma_id: string
+          descricao: string
+          id: string
+          local: string | null
+          meses: Json
+          norma_ref: string | null
+          ordem: number
+          responsavel: string | null
+        }
+        Insert: {
+          acao_preparatoria?: string | null
+          cenario_id?: string | null
+          created_at?: string
+          cronograma_id: string
+          descricao: string
+          id?: string
+          local?: string | null
+          meses?: Json
+          norma_ref?: string | null
+          ordem?: number
+          responsavel?: string | null
+        }
+        Update: {
+          acao_preparatoria?: string | null
+          cenario_id?: string | null
+          created_at?: string
+          cronograma_id?: string
+          descricao?: string
+          id?: string
+          local?: string | null
+          meses?: Json
+          norma_ref?: string | null
+          ordem?: number
+          responsavel?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "simulado_cronograma_itens_cenario_id_fkey"
+            columns: ["cenario_id"]
+            isOneToOne: false
+            referencedRelation: "simulado_cenarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "simulado_cronograma_itens_cronograma_id_fkey"
+            columns: ["cronograma_id"]
+            isOneToOne: false
+            referencedRelation: "simulado_cronograma"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      simulados: {
+        Row: {
+          ano: number
+          assinatura_brigada: string | null
+          assinatura_tst: string | null
+          cenario: string
+          com_aviso: boolean
+          conceito: string | null
+          created_at: string
+          created_by: string | null
+          cronograma_item_id: string | null
+          data_simulado: string
+          escopo: string
+          falhas: string | null
+          fotos: Json
+          hora_alarme: string | null
+          id: string
+          local: string | null
+          mes: number | null
+          nota: number | null
+          observacoes: string | null
+          participantes: Json
+          pontos_positivos: string | null
+          qtd_brigadistas: number | null
+          qtd_participantes: number | null
+          recursos_acionados: string | null
+          responsavel_nome: string | null
+          tempo_abandono_seg: number | null
+          tempo_resgate_seg: number | null
+          tempo_total_seg: number | null
+          updated_at: string
+        }
+        Insert: {
+          ano?: number
+          assinatura_brigada?: string | null
+          assinatura_tst?: string | null
+          cenario: string
+          com_aviso?: boolean
+          conceito?: string | null
+          created_at?: string
+          created_by?: string | null
+          cronograma_item_id?: string | null
+          data_simulado?: string
+          escopo?: string
+          falhas?: string | null
+          fotos?: Json
+          hora_alarme?: string | null
+          id?: string
+          local?: string | null
+          mes?: number | null
+          nota?: number | null
+          observacoes?: string | null
+          participantes?: Json
+          pontos_positivos?: string | null
+          qtd_brigadistas?: number | null
+          qtd_participantes?: number | null
+          recursos_acionados?: string | null
+          responsavel_nome?: string | null
+          tempo_abandono_seg?: number | null
+          tempo_resgate_seg?: number | null
+          tempo_total_seg?: number | null
+          updated_at?: string
+        }
+        Update: {
+          ano?: number
+          assinatura_brigada?: string | null
+          assinatura_tst?: string | null
+          cenario?: string
+          com_aviso?: boolean
+          conceito?: string | null
+          created_at?: string
+          created_by?: string | null
+          cronograma_item_id?: string | null
+          data_simulado?: string
+          escopo?: string
+          falhas?: string | null
+          fotos?: Json
+          hora_alarme?: string | null
+          id?: string
+          local?: string | null
+          mes?: number | null
+          nota?: number | null
+          observacoes?: string | null
+          participantes?: Json
+          pontos_positivos?: string | null
+          qtd_brigadistas?: number | null
+          qtd_participantes?: number | null
+          recursos_acionados?: string | null
+          responsavel_nome?: string | null
+          tempo_abandono_seg?: number | null
+          tempo_resgate_seg?: number | null
+          tempo_total_seg?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "simulados_cronograma_item_id_fkey"
+            columns: ["cronograma_item_id"]
+            isOneToOne: false
+            referencedRelation: "simulado_cronograma_itens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       snippets: {
         Row: {
           campo_alvo: string | null
