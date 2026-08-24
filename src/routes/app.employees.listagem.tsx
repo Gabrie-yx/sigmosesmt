@@ -59,7 +59,7 @@ function ListagemFuncionariosPage() {
       if (desFim && (!des || des > desFim)) return false;
       return true;
     });
-  }, [emps, statusFilter, companyFilter, admIni, admFim, desIni, desFim]);
+  }, [emps, statusFilter, companyFilter, roleFilter, tipoFilter, admIni, admFim, desIni, desFim]);
 
   const empresaLabel = companyFilter === "TODAS"
     ? "Todas as empresas"
