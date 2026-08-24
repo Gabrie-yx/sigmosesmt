@@ -16,6 +16,8 @@ export const Route = createFileRoute("/app/employees/listagem")({
 
 function ListagemFuncionariosPage() {
   const [companyFilter, setCompanyFilter] = useState<string>("TODAS");
+  const [roleFilter, setRoleFilter] = useState<string>("TODOS");
+  const [tipoFilter, setTipoFilter] = useState<string>("TODOS");
   const [statusFilter, setStatusFilter] = useState<"TODOS" | "ATIVO" | "INATIVO" | "AFASTADO" | "DESLIGADO">("ATIVO");
   const [admIni, setAdmIni] = useState("");
   const [admFim, setAdmFim] = useState("");
