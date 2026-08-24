@@ -16,6 +16,8 @@ export const Route = createFileRoute("/app/employees/listagem")({
 
 function ListagemFuncionariosPage() {
   const [companyFilter, setCompanyFilter] = useState<string>("TODAS");
+  const [roleFilter, setRoleFilter] = useState<string>("TODOS");
+  const [tipoFilter, setTipoFilter] = useState<string>("TODOS");
   const [statusFilter, setStatusFilter] = useState<"TODOS" | "ATIVO" | "INATIVO" | "AFASTADO" | "DESLIGADO">("ATIVO");
   const [admIni, setAdmIni] = useState("");
   const [admFim, setAdmFim] = useState("");
@@ -47,6 +49,8 @@ function ListagemFuncionariosPage() {
     return (emps ?? []).filter((e: any) => {
       if (statusFilter !== "TODOS" && e.status !== statusFilter) return false;
       if (companyFilter !== "TODAS" && e.company_id !== companyFilter) return false;
+      if (roleFilter !== "TODOS" && e.role_id !== roleFilter) return false;
+      if (tipoFilter !== "TODOS" && (e.tipo_cadastro ?? "") !== tipoFilter) return false;
       const adm = (e.admissao ?? "").slice(0, 10);
       if (admIni && (!adm || adm < admIni)) return false;
       if (admFim && (!adm || adm > admFim)) return false;
@@ -55,12 +59,18 @@ function ListagemFuncionariosPage() {
       if (desFim && (!des || des > desFim)) return false;
       return true;
     });
-  }, [emps, statusFilter, companyFilter, admIni, admFim, desIni, desFim]);
+  }, [emps, statusFilter, companyFilter, roleFilter, tipoFilter, admIni, admFim, desIni, desFim]);
 
   const empresaLabel = companyFilter === "TODAS"
     ? "Todas as empresas"
     : (cMap.get(companyFilter) ?? "—");
-  const statusLabel = statusFilter === "TODOS" ? "Todos" : statusFilter;
+  const cargoLabel = roleFilter === "TODOS" ? "Todos os cargos" : (rMap.get(roleFilter) ?? "—");
+  const tipoLabel = tipoFilter === "TODOS" ? "Todos os tipos" : tipoFilter;
+  const statusLabel = [
+    statusFilter === "TODOS" ? "Todos" : statusFilter,
+    roleFilter !== "TODOS" ? `Cargo: ${cargoLabel}` : "",
+    tipoFilter !== "TODOS" ? `Cadastro: ${tipoLabel}` : "",
+  ].filter(Boolean).join(" • ");
   const fmtBR = (s: string) => {
     const [y, m, d] = s.split("-");
     return y && m && d ? `${d}/${m}/${y}` : s;
@@ -154,6 +164,30 @@ function ListagemFuncionariosPage() {
               <SelectItem value="AFASTADO">Afastados</SelectItem>
               <SelectItem value="INATIVO">Inativos</SelectItem>
               <SelectItem value="DESLIGADO">Desligados</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="md:col-span-6">
+          <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1 block">Cargo / Função</label>
+          <Select value={roleFilter} onValueChange={setRoleFilter}>
+            <SelectTrigger className="h-12 rounded-2xl bg-white"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="TODOS">Todos os cargos</SelectItem>
+              {(roles ?? []).map((r: any) => (
+                <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="md:col-span-3">
+          <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1 block">Tipo de cadastro</label>
+          <Select value={tipoFilter} onValueChange={setTipoFilter}>
+            <SelectTrigger className="h-12 rounded-2xl bg-white"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="TODOS">Todos os tipos</SelectItem>
+              <SelectItem value="CLT">CLT</SelectItem>
+              <SelectItem value="MEI">MEI</SelectItem>
+              <SelectItem value="AVULSO">Avulso</SelectItem>
             </SelectContent>
           </Select>
         </div>
