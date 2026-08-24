@@ -1,6 +1,6 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import dmnLogoAsset from "@/assets/dmn-logo-acidentes-v2.png.asset.json";
+import dmnLogo from "@/assets/dmn-logo-quadro.png";
 import { EMPRESA_INFO } from "./empresa-info";
 
 const MESES = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
@@ -196,7 +196,7 @@ export function gerarForSeg09(opts: {
   doc.line(pageWidth - 65, 10, pageWidth - 65, 35);
 
   try {
-    doc.addImage(dmnLogoAsset.url, "PNG", 15, 12, 40, 20);
+    doc.addImage(dmnLogo as unknown as string, "PNG", 13, 12.2, 44, 21.4, undefined, "FAST");
   } catch {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(14);
@@ -394,7 +394,7 @@ export function gerarForSeg10(opts: {
     doc.line(pageWidth - 65, 10, pageWidth - 65, 35);
     
     try {
-      doc.addImage(dmnLogoAsset.url, "PNG", 15, 12, 40, 20);
+      doc.addImage(dmnLogo as unknown as string, "PNG", 13, 12.2, 44, 21.4, undefined, "FAST");
     } catch (e) {}
     
     doc.setFont("helvetica", "bold");
