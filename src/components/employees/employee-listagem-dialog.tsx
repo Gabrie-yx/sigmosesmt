@@ -81,7 +81,7 @@ export function EmployeeListagemDialog({
       }
       return true;
     });
-  }, [emps, statusFilter, companyFilter, admIni, admFim, desIni, desFim]);
+  }, [emps, statusFilter, companyFilter, roleFilter, tipoFilter, admIni, admFim, desIni, desFim]);
 
   // Contagem de funcionários sem data de admissão (afetados pelo filtro estrito)
   const semAdmissao = useMemo(
