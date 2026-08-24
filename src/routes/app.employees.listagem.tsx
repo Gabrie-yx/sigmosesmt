@@ -64,7 +64,13 @@ function ListagemFuncionariosPage() {
   const empresaLabel = companyFilter === "TODAS"
     ? "Todas as empresas"
     : (cMap.get(companyFilter) ?? "—");
-  const statusLabel = statusFilter === "TODOS" ? "Todos" : statusFilter;
+  const cargoLabel = roleFilter === "TODOS" ? "Todos os cargos" : (rMap.get(roleFilter) ?? "—");
+  const tipoLabel = tipoFilter === "TODOS" ? "Todos os tipos" : tipoFilter;
+  const statusLabel = [
+    statusFilter === "TODOS" ? "Todos" : statusFilter,
+    roleFilter !== "TODOS" ? `Cargo: ${cargoLabel}` : "",
+    tipoFilter !== "TODOS" ? `Cadastro: ${tipoLabel}` : "",
+  ].filter(Boolean).join(" • ");
   const fmtBR = (s: string) => {
     const [y, m, d] = s.split("-");
     return y && m && d ? `${d}/${m}/${y}` : s;
