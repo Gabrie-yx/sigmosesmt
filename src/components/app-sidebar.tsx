@@ -189,6 +189,8 @@ const SESMT_GROUPS: { title: string; items: LeafItem[] }[] = [
       { to: "/app/trainings", label: "Treinamentos & NRs", icon: HardHat },
       { to: "/app/sesmt/integracoes", label: "Integrações NR-01", icon: GraduationCap },
       { to: "/app/sesmt/equipamentos-moveis", label: "Checklist de Equipamentos", icon: Wrench },
+      { to: "/app/sesmt/simulados", label: "Simulados de Emergência", icon: Flame },
+
     ],
   },
   {
