@@ -37,6 +37,8 @@ export function EmployeeListagemDialog({
   const [statusFilter, setStatusFilter] = useState<
     "TODOS" | "ATIVO" | "INATIVO" | "AFASTADO"
   >("ATIVO");
+  const [roleFilter, setRoleFilter] = useState<string>("TODOS");
+  const [tipoFilter, setTipoFilter] = useState<string>("TODOS");
   const [admIni, setAdmIni] = useState<string>("");
   const [admFim, setAdmFim] = useState<string>("");
   const [desIni, setDesIni] = useState<string>("");
@@ -60,6 +62,9 @@ export function EmployeeListagemDialog({
       if (statusFilter !== "TODOS" && e.status !== statusFilter) return false;
       if (companyFilter !== "TODAS" && e.company_id !== companyFilter)
         return false;
+      if (roleFilter !== "TODOS" && e.role_id !== roleFilter) return false;
+      if (tipoFilter !== "TODOS" && (e.tipo_cadastro ?? "") !== tipoFilter)
+        return false;
       // ESTRITO: filtro por período usa SOMENTE a data de admissão real.
       // Quem não tem admissao cadastrada não entra quando há período definido.
       const adm = ((e.admissao ?? "") as string).slice(0, 10);
@@ -76,7 +81,7 @@ export function EmployeeListagemDialog({
       }
       return true;
     });
-  }, [emps, statusFilter, companyFilter, admIni, admFim, desIni, desFim]);
+  }, [emps, statusFilter, companyFilter, roleFilter, tipoFilter, admIni, admFim, desIni, desFim]);
 
   // Contagem de funcionários sem data de admissão (afetados pelo filtro estrito)
   const semAdmissao = useMemo(
@@ -94,7 +99,16 @@ export function EmployeeListagemDialog({
     companyFilter === "TODAS"
       ? "Todas as empresas"
       : (cMap.get(companyFilter) ?? "—");
-  const statusLabel = statusFilter === "TODOS" ? "Todos" : statusFilter;
+  const cargoLabel =
+    roleFilter === "TODOS" ? "Todos os cargos" : (rMap.get(roleFilter) ?? "—");
+  const tipoLabel = tipoFilter === "TODOS" ? "Todos os tipos" : tipoFilter;
+  const statusLabel = [
+    statusFilter === "TODOS" ? "Todos" : statusFilter,
+    roleFilter !== "TODOS" ? `Cargo: ${cargoLabel}` : "",
+    tipoFilter !== "TODOS" ? `Cadastro: ${tipoLabel}` : "",
+  ]
+    .filter(Boolean)
+    .join("  •  ");
 
   const fmtBR = (d: string) => {
     if (!d) return "";
@@ -242,6 +256,41 @@ export function EmployeeListagemDialog({
                     {filtered.length}
                   </p>
                 </div>
+              </div>
+              <div className="md:col-span-7">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1 block">
+                  Cargo / Função
+                </label>
+                <Select value={roleFilter} onValueChange={setRoleFilter}>
+                  <SelectTrigger className="h-12 rounded-2xl bg-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="TODOS">Todos os cargos</SelectItem>
+                    {(roles ?? []).map((r: any) => (
+                      <SelectItem key={r.id} value={r.id}>
+                        {r.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="md:col-span-5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1 block">
+                  Tipo de cadastro
+                </label>
+                <Select value={tipoFilter} onValueChange={setTipoFilter}>
+                  <SelectTrigger className="h-12 rounded-2xl bg-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="TODOS">Todos os tipos</SelectItem>
+                    <SelectItem value="CLT">CLT</SelectItem>
+                    <SelectItem value="MEI">MEI</SelectItem>
+                    <SelectItem value="AVULSO">Avulso</SelectItem>
+                    <SelectItem value="TERCEIRIZADO">Terceirizado</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
