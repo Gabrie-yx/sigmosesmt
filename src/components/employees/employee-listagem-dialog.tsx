@@ -37,6 +37,8 @@ export function EmployeeListagemDialog({
   const [statusFilter, setStatusFilter] = useState<
     "TODOS" | "ATIVO" | "INATIVO" | "AFASTADO"
   >("ATIVO");
+  const [roleFilter, setRoleFilter] = useState<string>("TODOS");
+  const [tipoFilter, setTipoFilter] = useState<string>("TODOS");
   const [admIni, setAdmIni] = useState<string>("");
   const [admFim, setAdmFim] = useState<string>("");
   const [desIni, setDesIni] = useState<string>("");
