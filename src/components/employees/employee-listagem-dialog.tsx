@@ -257,6 +257,41 @@ export function EmployeeListagemDialog({
                   </p>
                 </div>
               </div>
+              <div className="md:col-span-7">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1 block">
+                  Cargo / Função
+                </label>
+                <Select value={roleFilter} onValueChange={setRoleFilter}>
+                  <SelectTrigger className="h-12 rounded-2xl bg-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="TODOS">Todos os cargos</SelectItem>
+                    {(roles ?? []).map((r: any) => (
+                      <SelectItem key={r.id} value={r.id}>
+                        {r.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="md:col-span-5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1 block">
+                  Tipo de cadastro
+                </label>
+                <Select value={tipoFilter} onValueChange={setTipoFilter}>
+                  <SelectTrigger className="h-12 rounded-2xl bg-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="TODOS">Todos os tipos</SelectItem>
+                    <SelectItem value="CLT">CLT</SelectItem>
+                    <SelectItem value="MEI">MEI</SelectItem>
+                    <SelectItem value="AVULSO">Avulso</SelectItem>
+                    <SelectItem value="TERCEIRIZADO">Terceirizado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
