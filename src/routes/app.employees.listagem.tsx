@@ -49,6 +49,8 @@ function ListagemFuncionariosPage() {
     return (emps ?? []).filter((e: any) => {
       if (statusFilter !== "TODOS" && e.status !== statusFilter) return false;
       if (companyFilter !== "TODAS" && e.company_id !== companyFilter) return false;
+      if (roleFilter !== "TODOS" && e.role_id !== roleFilter) return false;
+      if (tipoFilter !== "TODOS" && (e.tipo_cadastro ?? "") !== tipoFilter) return false;
       const adm = (e.admissao ?? "").slice(0, 10);
       if (admIni && (!adm || adm < admIni)) return false;
       if (admFim && (!adm || adm > admFim)) return false;
