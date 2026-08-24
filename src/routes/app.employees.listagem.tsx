@@ -167,6 +167,30 @@ function ListagemFuncionariosPage() {
             </SelectContent>
           </Select>
         </div>
+        <div className="md:col-span-6">
+          <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1 block">Cargo / Função</label>
+          <Select value={roleFilter} onValueChange={setRoleFilter}>
+            <SelectTrigger className="h-12 rounded-2xl bg-white"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="TODOS">Todos os cargos</SelectItem>
+              {(roles ?? []).map((r: any) => (
+                <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="md:col-span-3">
+          <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1 block">Tipo de cadastro</label>
+          <Select value={tipoFilter} onValueChange={setTipoFilter}>
+            <SelectTrigger className="h-12 rounded-2xl bg-white"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="TODOS">Todos os tipos</SelectItem>
+              <SelectItem value="CLT">CLT</SelectItem>
+              <SelectItem value="MEI">MEI</SelectItem>
+              <SelectItem value="AVULSO">Avulso</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         <div className="md:col-span-3 flex items-end">
           <div className="w-full rounded-2xl bg-[#7B1E2B]/5 ring-1 ring-[#7B1E2B]/20 px-4 py-3">
             <p className="text-[10px] font-black uppercase tracking-widest text-[#7B1E2B]">Total filtrado</p>
