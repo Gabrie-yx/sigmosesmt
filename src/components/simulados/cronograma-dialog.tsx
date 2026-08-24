@@ -13,8 +13,8 @@ import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import { Plus, Trash2, ArrowUp, ArrowDown, FileText, Save, PenLine, X, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { buildSimuladoCronogramaPdf, MESES_ABREV, type MesMarca } from "@/lib/simulado-cronograma-pdf";
-import { EMPRESA_INFO } from "@/lib/empresa-info";
-import { newId } from "@/lib/uuid";
+const EMPRESA_NOME = "DMN ESTALEIRO";
+import { uuid as newId } from "@/lib/uuid";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const sb: any = supabase;
@@ -259,7 +259,7 @@ export function CronogramaSimuladosDialog({
   function gerarPdf() {
     if (!itens.length) { toast.error("Adicione ao menos um simulado."); return; }
     setPdf(buildSimuladoCronogramaPdf({
-      empresa: EMPRESA_INFO.nomeCurto ?? "DMN ESTALEIRO",
+      empresa: EMPRESA_NOME,
       ano,
       revisao,
       dataDocumento: dataDoc,
@@ -312,7 +312,7 @@ export function CronogramaSimuladosDialog({
                 </div>
                 <div>
                   <Label className="text-xs">Empresa</Label>
-                  <Input value={EMPRESA_INFO.nomeCurto ?? "DMN ESTALEIRO"} disabled />
+                  <Input value={EMPRESA_NOME} disabled />
                 </div>
               </div>
             </section>
