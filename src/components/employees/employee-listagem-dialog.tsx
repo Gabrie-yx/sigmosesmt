@@ -62,6 +62,9 @@ export function EmployeeListagemDialog({
       if (statusFilter !== "TODOS" && e.status !== statusFilter) return false;
       if (companyFilter !== "TODAS" && e.company_id !== companyFilter)
         return false;
+      if (roleFilter !== "TODOS" && e.role_id !== roleFilter) return false;
+      if (tipoFilter !== "TODOS" && (e.tipo_cadastro ?? "") !== tipoFilter)
+        return false;
       // ESTRITO: filtro por período usa SOMENTE a data de admissão real.
       // Quem não tem admissao cadastrada não entra quando há período definido.
       const adm = ((e.admissao ?? "") as string).slice(0, 10);
