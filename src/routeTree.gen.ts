@@ -60,6 +60,7 @@ import { Route as AppCalIndexRouteImport } from './routes/app.cal.index'
 import { Route as AppSesmtVincularUsuariosRouteImport } from './routes/app.sesmt.vincular-usuarios'
 import { Route as AppSesmtTerceirosRouteImport } from './routes/app.sesmt.terceiros'
 import { Route as AppSesmtTemplatesDocumentosRouteImport } from './routes/app.sesmt.templates-documentos'
+import { Route as AppSesmtSimuladosRouteImport } from './routes/app.sesmt.simulados'
 import { Route as AppSesmtRequisicoesRouteImport } from './routes/app.sesmt.requisicoes'
 import { Route as AppSesmtProcedimentosRouteImport } from './routes/app.sesmt.procedimentos'
 import { Route as AppSesmtPrestadoresRouteImport } from './routes/app.sesmt.prestadores'
@@ -398,6 +399,11 @@ const AppSesmtTemplatesDocumentosRoute =
     path: '/sesmt/templates-documentos',
     getParentRoute: () => AppRoute,
   } as any)
+const AppSesmtSimuladosRoute = AppSesmtSimuladosRouteImport.update({
+  id: '/sesmt/simulados',
+  path: '/sesmt/simulados',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSesmtRequisicoesRoute = AppSesmtRequisicoesRouteImport.update({
   id: '/sesmt/requisicoes',
   path: '/sesmt/requisicoes',
@@ -912,6 +918,7 @@ export interface FileRoutesByFullPath {
   '/app/sesmt/prestadores': typeof AppSesmtPrestadoresRoute
   '/app/sesmt/procedimentos': typeof AppSesmtProcedimentosRoute
   '/app/sesmt/requisicoes': typeof AppSesmtRequisicoesRoute
+  '/app/sesmt/simulados': typeof AppSesmtSimuladosRoute
   '/app/sesmt/templates-documentos': typeof AppSesmtTemplatesDocumentosRoute
   '/app/sesmt/terceiros': typeof AppSesmtTerceirosRoute
   '/app/sesmt/vincular-usuarios': typeof AppSesmtVincularUsuariosRoute
@@ -1037,6 +1044,7 @@ export interface FileRoutesByTo {
   '/app/sesmt/prestadores': typeof AppSesmtPrestadoresRoute
   '/app/sesmt/procedimentos': typeof AppSesmtProcedimentosRoute
   '/app/sesmt/requisicoes': typeof AppSesmtRequisicoesRoute
+  '/app/sesmt/simulados': typeof AppSesmtSimuladosRoute
   '/app/sesmt/templates-documentos': typeof AppSesmtTemplatesDocumentosRoute
   '/app/sesmt/terceiros': typeof AppSesmtTerceirosRoute
   '/app/sesmt/vincular-usuarios': typeof AppSesmtVincularUsuariosRoute
@@ -1168,6 +1176,7 @@ export interface FileRoutesById {
   '/app/sesmt/prestadores': typeof AppSesmtPrestadoresRoute
   '/app/sesmt/procedimentos': typeof AppSesmtProcedimentosRoute
   '/app/sesmt/requisicoes': typeof AppSesmtRequisicoesRoute
+  '/app/sesmt/simulados': typeof AppSesmtSimuladosRoute
   '/app/sesmt/templates-documentos': typeof AppSesmtTemplatesDocumentosRoute
   '/app/sesmt/terceiros': typeof AppSesmtTerceirosRoute
   '/app/sesmt/vincular-usuarios': typeof AppSesmtVincularUsuariosRoute
@@ -1300,6 +1309,7 @@ export interface FileRouteTypes {
     | '/app/sesmt/prestadores'
     | '/app/sesmt/procedimentos'
     | '/app/sesmt/requisicoes'
+    | '/app/sesmt/simulados'
     | '/app/sesmt/templates-documentos'
     | '/app/sesmt/terceiros'
     | '/app/sesmt/vincular-usuarios'
@@ -1425,6 +1435,7 @@ export interface FileRouteTypes {
     | '/app/sesmt/prestadores'
     | '/app/sesmt/procedimentos'
     | '/app/sesmt/requisicoes'
+    | '/app/sesmt/simulados'
     | '/app/sesmt/templates-documentos'
     | '/app/sesmt/terceiros'
     | '/app/sesmt/vincular-usuarios'
@@ -1555,6 +1566,7 @@ export interface FileRouteTypes {
     | '/app/sesmt/prestadores'
     | '/app/sesmt/procedimentos'
     | '/app/sesmt/requisicoes'
+    | '/app/sesmt/simulados'
     | '/app/sesmt/templates-documentos'
     | '/app/sesmt/terceiros'
     | '/app/sesmt/vincular-usuarios'
@@ -1962,6 +1974,13 @@ declare module '@tanstack/react-router' {
       path: '/sesmt/templates-documentos'
       fullPath: '/app/sesmt/templates-documentos'
       preLoaderRoute: typeof AppSesmtTemplatesDocumentosRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/sesmt/simulados': {
+      id: '/app/sesmt/simulados'
+      path: '/sesmt/simulados'
+      fullPath: '/app/sesmt/simulados'
+      preLoaderRoute: typeof AppSesmtSimuladosRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/sesmt/requisicoes': {
@@ -2682,6 +2701,7 @@ interface AppRouteChildren {
   AppSesmtPrestadoresRoute: typeof AppSesmtPrestadoresRoute
   AppSesmtProcedimentosRoute: typeof AppSesmtProcedimentosRoute
   AppSesmtRequisicoesRoute: typeof AppSesmtRequisicoesRoute
+  AppSesmtSimuladosRoute: typeof AppSesmtSimuladosRoute
   AppSesmtTemplatesDocumentosRoute: typeof AppSesmtTemplatesDocumentosRoute
   AppSesmtTerceirosRoute: typeof AppSesmtTerceirosRoute
   AppSesmtVincularUsuariosRoute: typeof AppSesmtVincularUsuariosRoute
@@ -2780,6 +2800,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSesmtPrestadoresRoute: AppSesmtPrestadoresRoute,
   AppSesmtProcedimentosRoute: AppSesmtProcedimentosRoute,
   AppSesmtRequisicoesRoute: AppSesmtRequisicoesRoute,
+  AppSesmtSimuladosRoute: AppSesmtSimuladosRoute,
   AppSesmtTemplatesDocumentosRoute: AppSesmtTemplatesDocumentosRoute,
   AppSesmtTerceirosRoute: AppSesmtTerceirosRoute,
   AppSesmtVincularUsuariosRoute: AppSesmtVincularUsuariosRoute,
