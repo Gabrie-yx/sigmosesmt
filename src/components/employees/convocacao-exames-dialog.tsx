@@ -9,7 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { lazy, Suspense } from "react";
-import { Search, MessageCircle, FileDown, AlertTriangle, Clock, CalendarCheck, Stethoscope, Building2, Copy, ExternalLink, Users, ListChecks } from "lucide-react";
+import { Search, MessageCircle, FileDown, AlertTriangle, Clock, CalendarCheck, Stethoscope, Building2, Copy, ExternalLink, Users, ListChecks, Pencil, Upload } from "lucide-react";
+import { computeAso, diasParaVencer, bucketOf, type ExamRow } from "@/lib/aso-status";
+import { AsoEditarDialog } from "@/components/employees/aso-editar-dialog";
+import { AsoImportarDialog } from "@/components/employees/aso-importar-dialog";
 import type jsPDFType from "jspdf";
 import { EMPRESA_INFO } from "@/lib/empresa-info";
 import { toast } from "sonner";
@@ -37,14 +40,6 @@ const PERIODICIDADE_MESES = 12;
 
 type Janela = "VENCIDOS" | "30" | "60" | "90" | "TODOS";
 
-function addMonths(date: Date, m: number) {
-  const d = new Date(date);
-  d.setMonth(d.getMonth() + m);
-  return d;
-}
-function daysBetween(a: Date, b: Date) {
-  return Math.floor((a.getTime() - b.getTime()) / 86_400_000);
-}
 function fmtDate(d: Date | null) {
   if (!d) return "—";
   return d.toLocaleDateString("pt-BR");
@@ -528,6 +523,9 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
   const [whatsPreview, setWhatsPreview] = useState<{ nome: string; phone: string; message: string } | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [batchLoading, setBatchLoading] = useState(false);
+  const [asoEdit, setAsoEdit] = useState<{ emp: { id: string; nome: string }; atual: any } | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
+
 
   // Dados da solicitação do ofício (persistidos localmente)
   const [solicitante, setSolicitante] = useState("");
@@ -561,7 +559,7 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
   // Reseta seleção ao trocar filtros para evitar manter IDs invisíveis
   useEffect(() => { setSelectedIds(new Set()); }, [companyFilter, janela]);
 
-  const { data: emps } = useQuery({
+  const { data: emps, refetch: refetchEmps } = useQuery({
     queryKey: ["employees-convocacao"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -574,6 +572,35 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
     },
     enabled: open,
   });
+
+  // Exames reais (fonte oficial do último ASO / vencimento). O campo employees.data_aso
+  // é apenas fallback legado — sem esta query o ofício saía com "—".
+  const { data: exams, refetch: refetchExams } = useQuery({
+    queryKey: ["exames-convocacao"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("employee_exams")
+        .select("employee_id, tipo_exame, natureza, data_realizacao, data_vencimento, periodicidade_meses, aptidao")
+        .order("data_realizacao", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as ExamRow[];
+    },
+    enabled: open,
+  });
+
+  const examsByEmp = useMemo(() => {
+    const m = new Map<string, ExamRow[]>();
+    (exams ?? []).forEach((ex) => {
+      const arr = m.get(ex.employee_id);
+      if (arr) arr.push(ex); else m.set(ex.employee_id, [ex]);
+    });
+    return m;
+  }, [exams]);
+
+  function recarregar() {
+    refetchEmps();
+    refetchExams();
+  }
 
   const { data: companies } = useQuery({
     queryKey: ["companies"],
@@ -590,45 +617,36 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
   const cMap = new Map((companies ?? []).map((c: any) => [c.id, c.name]));
   const rMap = new Map((roles ?? []).map((r: any) => [r.id, r.name]));
 
+  const base = useMemo(() => {
+    return (emps ?? []).map((e: any) => {
+      const info = computeAso(examsByEmp.get(e.id) ?? [], e.data_aso);
+      const dias = diasParaVencer(info);
+      return { emp: e, info, asoData: info.ultimo, proximo: info.vencimento, dias, bucket: bucketOf(dias) };
+    });
+  }, [emps, examsByEmp]);
+
   const linha = useMemo(() => {
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
     const norm = (v: string) => (v ?? "").toString().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
     const s = norm(q.trim());
-
-    return (emps ?? [])
-      .map((e: any) => {
-        const asoData = e.data_aso ? new Date(e.data_aso) : null;
-        const proximo = asoData ? addMonths(asoData, PERIODICIDADE_MESES) : null;
-        const dias = proximo ? daysBetween(proximo, hoje) : null;
-        return { emp: e, asoData, proximo, dias };
-      })
-      .filter((row) => {
-        if (companyFilter !== "TODAS" && row.emp.company_id !== companyFilter) return false;
-        if (s && !norm(row.emp.nome).includes(s) && !norm(row.emp.matricula ?? "").includes(s)) return false;
-        if (janela === "TODOS") return true;
-        if (row.dias === null) return janela === "VENCIDOS";
-        if (janela === "VENCIDOS") return row.dias < 0;
-        if (janela === "30") return row.dias <= 30;
-        if (janela === "60") return row.dias <= 60;
-        if (janela === "90") return row.dias <= 90;
-        return true;
-      });
-  }, [emps, q, companyFilter, janela]);
+    return base.filter((row) => {
+      if (companyFilter !== "TODAS" && row.emp.company_id !== companyFilter) return false;
+      if (s && !norm(row.emp.nome).includes(s) && !norm(row.emp.matricula ?? "").includes(s)) return false;
+      if (janela === "TODOS") return true;
+      return row.bucket === janela;
+    });
+  }, [base, q, companyFilter, janela]);
 
   const counts = useMemo(() => {
-    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
     let venc = 0, d30 = 0, d60 = 0, d90 = 0;
-    (emps ?? []).forEach((e: any) => {
-      const proximo = e.data_aso ? addMonths(new Date(e.data_aso), PERIODICIDADE_MESES) : null;
-      const dias = proximo ? daysBetween(proximo, hoje) : null;
-      if (dias === null || dias < 0) venc++;
-      else if (dias <= 30) d30++;
-      else if (dias <= 60) d60++;
-      else if (dias <= 90) d90++;
+    base.forEach((r) => {
+      if (r.bucket === "VENCIDOS") venc++;
+      else if (r.bucket === "30") d30++;
+      else if (r.bucket === "60") d60++;
+      else if (r.bucket === "90") d90++;
     });
     return { venc, d30, d60, d90 };
-  }, [emps]);
+  }, [base]);
+
 
   return (
     <>
@@ -674,7 +692,15 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
               </SelectContent>
             </Select>
           </div>
-          <div className="md:col-span-1 flex items-center justify-end">
+          <div className="md:col-span-1 flex items-center justify-end gap-2">
+            <Button
+              size="sm" variant="outline"
+              className="h-9 bg-white/5 border-white/15 text-white hover:bg-white/10 whitespace-nowrap"
+              onClick={() => setImportOpen(true)}
+              title="Importar relação de ASOs da clínica (planilha)"
+            >
+              <Upload className="h-4 w-4 md:mr-1" /> <span className="hidden md:inline">Planilha</span>
+            </Button>
             <span className="text-[11px] font-black uppercase tracking-widest text-rose-200 bg-rose-500/15 border border-rose-400/30 rounded-full px-3 py-1.5">
               {linha.length}
             </span>
@@ -856,7 +882,7 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
             </div>
           ) : (
             <div className="space-y-2">
-              {linha.map(({ emp, asoData, proximo, dias }) => {
+              {linha.map(({ emp, info, asoData, proximo, dias }) => {
                 const st = statusOf(dias);
                 const proxStr = proximo ? fmtDate(proximo) : "—";
                 const hasWhats = !!(emp.whatsapp ?? "").replace(/\D/g, "");
@@ -904,6 +930,22 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
                       <span className="text-[10px] text-slate-400">
                         Último ASO: {fmtDate(asoData)} · Próximo: {proxStr}
                       </span>
+                      <button
+                        type="button"
+                        className="text-[10px] inline-flex items-center gap-1 text-rose-200/80 hover:text-rose-100 underline underline-offset-2"
+                        onClick={() => setAsoEdit({
+                          emp: { id: emp.id, nome: emp.nome },
+                          atual: {
+                            data_realizacao: info.ultimo ? info.ultimo.toISOString().slice(0, 10) : null,
+                            natureza: info.natureza,
+                            periodicidade: info.periodicidade,
+                          },
+                        })}
+                        title="Registrar / corrigir a data do último ASO"
+                      >
+                        <Pencil className="h-3 w-3" />
+                        {info.origem === "NENHUM" ? "informar último ASO" : `${info.natureza ?? "Periódico"} · ${info.periodicidade}m — editar`}
+                      </button>
                     </div>
                     <div className="flex gap-2">
                       {hasWhats ? (
@@ -1003,6 +1045,19 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
         />
       </Suspense>
     )}
+    <AsoEditarDialog
+      open={!!asoEdit}
+      onOpenChange={(v) => !v && setAsoEdit(null)}
+      employee={asoEdit?.emp ?? null}
+      atual={asoEdit?.atual ?? null}
+      onSaved={recarregar}
+    />
+    <AsoImportarDialog
+      open={importOpen}
+      onOpenChange={setImportOpen}
+      employees={(emps ?? []).map((e: any) => ({ id: e.id, nome: e.nome, matricula: e.matricula }))}
+      onImported={recarregar}
+    />
     <WhatsappPreviewDialog value={whatsPreview} onClose={() => setWhatsPreview(null)} />
     </>
   );
