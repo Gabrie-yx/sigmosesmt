@@ -3488,6 +3488,15 @@ function HealthTab({ empId, exams, role, canEdit, canDelete, qc }: any) {
         aptidao: f.aptidao, observacoes: f.observacoes || null, anexo_path,
       });
       if (error) throw error;
+      // Sincroniza o campo legado employees.data_aso (usado por convocação,
+      // organograma, safety-engine e pendências) quando for um ASO clínico mais recente.
+      const ehAso = /aso|cl[ií]nic/i.test(f.tipo_exame ?? "");
+      if (ehAso) {
+        const { data: emp } = await supabase.from("employees").select("data_aso").eq("id", empId).maybeSingle();
+        if (!emp?.data_aso || emp.data_aso < f.data_realizacao) {
+          await supabase.from("employees").update({ data_aso: f.data_realizacao }).eq("id", empId);
+        }
+      }
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["exams", empId] }); qc.invalidateQueries({ queryKey: ["employee", empId] }); setExamFile(null); toast.success("Exame registrado"); },
     onError: (e: any) => toast.error(e.message),
