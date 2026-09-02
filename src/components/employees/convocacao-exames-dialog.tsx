@@ -528,6 +528,9 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
   const [whatsPreview, setWhatsPreview] = useState<{ nome: string; phone: string; message: string } | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [batchLoading, setBatchLoading] = useState(false);
+  const [asoEdit, setAsoEdit] = useState<{ emp: { id: string; nome: string }; atual: any } | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
+
 
   // Dados da solicitação do ofício (persistidos localmente)
   const [solicitante, setSolicitante] = useState("");
