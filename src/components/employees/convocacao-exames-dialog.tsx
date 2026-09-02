@@ -692,7 +692,15 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
               </SelectContent>
             </Select>
           </div>
-          <div className="md:col-span-1 flex items-center justify-end">
+          <div className="md:col-span-1 flex items-center justify-end gap-2">
+            <Button
+              size="sm" variant="outline"
+              className="h-9 bg-white/5 border-white/15 text-white hover:bg-white/10 whitespace-nowrap"
+              onClick={() => setImportOpen(true)}
+              title="Importar relação de ASOs da clínica (planilha)"
+            >
+              <Upload className="h-4 w-4 md:mr-1" /> <span className="hidden md:inline">Planilha</span>
+            </Button>
             <span className="text-[11px] font-black uppercase tracking-widest text-rose-200 bg-rose-500/15 border border-rose-400/30 rounded-full px-3 py-1.5">
               {linha.length}
             </span>
@@ -874,7 +882,7 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
             </div>
           ) : (
             <div className="space-y-2">
-              {linha.map(({ emp, asoData, proximo, dias }) => {
+              {linha.map(({ emp, info, asoData, proximo, dias }) => {
                 const st = statusOf(dias);
                 const proxStr = proximo ? fmtDate(proximo) : "—";
                 const hasWhats = !!(emp.whatsapp ?? "").replace(/\D/g, "");
@@ -922,6 +930,22 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
                       <span className="text-[10px] text-slate-400">
                         Último ASO: {fmtDate(asoData)} · Próximo: {proxStr}
                       </span>
+                      <button
+                        type="button"
+                        className="text-[10px] inline-flex items-center gap-1 text-rose-200/80 hover:text-rose-100 underline underline-offset-2"
+                        onClick={() => setAsoEdit({
+                          emp: { id: emp.id, nome: emp.nome },
+                          atual: {
+                            data_realizacao: info.ultimo ? info.ultimo.toISOString().slice(0, 10) : null,
+                            natureza: info.natureza,
+                            periodicidade: info.periodicidade,
+                          },
+                        })}
+                        title="Registrar / corrigir a data do último ASO"
+                      >
+                        <Pencil className="h-3 w-3" />
+                        {info.origem === "NENHUM" ? "informar último ASO" : `${info.natureza ?? "Periódico"} · ${info.periodicidade}m — editar`}
+                      </button>
                     </div>
                     <div className="flex gap-2">
                       {hasWhats ? (
@@ -1021,6 +1045,19 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
         />
       </Suspense>
     )}
+    <AsoEditarDialog
+      open={!!asoEdit}
+      onOpenChange={(v) => !v && setAsoEdit(null)}
+      employee={asoEdit?.emp ?? null}
+      atual={asoEdit?.atual ?? null}
+      onSaved={recarregar}
+    />
+    <AsoImportarDialog
+      open={importOpen}
+      onOpenChange={setImportOpen}
+      employees={(emps ?? []).map((e: any) => ({ id: e.id, nome: e.nome, matricula: e.matricula }))}
+      onImported={recarregar}
+    />
     <WhatsappPreviewDialog value={whatsPreview} onClose={() => setWhatsPreview(null)} />
     </>
   );
