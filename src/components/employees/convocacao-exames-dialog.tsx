@@ -9,7 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { lazy, Suspense } from "react";
-import { Search, MessageCircle, FileDown, AlertTriangle, Clock, CalendarCheck, Stethoscope, Building2, Copy, ExternalLink, Users, ListChecks } from "lucide-react";
+import { Search, MessageCircle, FileDown, AlertTriangle, Clock, CalendarCheck, Stethoscope, Building2, Copy, ExternalLink, Users, ListChecks, Pencil, Upload } from "lucide-react";
+import { computeAso, diasParaVencer, bucketOf, type ExamRow } from "@/lib/aso-status";
+import { AsoEditarDialog } from "@/components/employees/aso-editar-dialog";
+import { AsoImportarDialog } from "@/components/employees/aso-importar-dialog";
 import type jsPDFType from "jspdf";
 import { EMPRESA_INFO } from "@/lib/empresa-info";
 import { toast } from "sonner";
@@ -37,14 +40,6 @@ const PERIODICIDADE_MESES = 12;
 
 type Janela = "VENCIDOS" | "30" | "60" | "90" | "TODOS";
 
-function addMonths(date: Date, m: number) {
-  const d = new Date(date);
-  d.setMonth(d.getMonth() + m);
-  return d;
-}
-function daysBetween(a: Date, b: Date) {
-  return Math.floor((a.getTime() - b.getTime()) / 86_400_000);
-}
 function fmtDate(d: Date | null) {
   if (!d) return "—";
   return d.toLocaleDateString("pt-BR");
