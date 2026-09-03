@@ -103,7 +103,7 @@ function AsoHubPage() {
 }
 
 
-function Header({ onAsoRapido }: { onAsoRapido: () => void }) {
+function Header({ onAsoRapido, onRelatorioPendentes }: { onAsoRapido: () => void; onRelatorioPendentes: () => void }) {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-3 text-sm">
@@ -111,7 +111,7 @@ function Header({ onAsoRapido }: { onAsoRapido: () => void }) {
           <ArrowLeft className="h-4 w-4" /> Hoje
         </Link>
       </div>
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="flex items-start gap-3 min-w-0">
           <div className="h-11 w-11 rounded-xl bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-400/30 grid place-items-center shrink-0">
             <Stethoscope className="h-5 w-5" />
@@ -123,13 +123,19 @@ function Header({ onAsoRapido }: { onAsoRapido: () => void }) {
             </p>
           </div>
         </div>
-        <Button onClick={onAsoRapido} className="shrink-0 bg-emerald-600 hover:bg-emerald-500 gap-1.5">
-          <Sparkles className="h-4 w-4" /> ASO Rápido
-        </Button>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button onClick={onRelatorioPendentes} variant="outline" className="border-white/15 gap-1.5">
+            <AlertTriangle className="h-4 w-4 text-amber-300" /> ASOs atrasados / sem ASO
+          </Button>
+          <Button onClick={onAsoRapido} className="bg-emerald-600 hover:bg-emerald-500 gap-1.5">
+            <Sparkles className="h-4 w-4" /> ASO Rápido
+          </Button>
+        </div>
       </div>
     </div>
   );
 }
+
 
 // ---------- Painel (KPIs semafóricos + agenda) ----------
 function PainelTab() {
