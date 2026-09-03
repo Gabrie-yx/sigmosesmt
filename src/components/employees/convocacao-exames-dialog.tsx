@@ -526,6 +526,7 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
   const [batchLoading, setBatchLoading] = useState(false);
   const [asoEdit, setAsoEdit] = useState<{ emp: { id: string; nome: string }; atual: any } | null>(null);
   const [importOpen, setImportOpen] = useState(false);
+  const [relatorioOpen, setRelatorioOpen] = useState(false);
 
 
   // Dados da solicitação do ofício (persistidos localmente)
