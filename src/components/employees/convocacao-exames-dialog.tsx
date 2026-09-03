@@ -670,6 +670,24 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
           <JanelaCard active={janela === "90"} onClick={() => setJanela("90")} icon={CalendarCheck} label="Vence em 90 dias" value={counts.d90} tone="emerald" />
         </div>
 
+        {/* Ações de dados */}
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            size="sm"
+            className="h-9 bg-emerald-600 hover:bg-emerald-500 text-white gap-1.5"
+            onClick={() => setImportOpen(true)}
+          >
+            <Upload className="h-4 w-4" /> Importar planilha de ASOs (clínica)
+          </Button>
+          <Button
+            size="sm" variant="outline"
+            className="h-9 bg-white/5 border-white/15 text-white hover:bg-white/10 gap-1.5"
+            onClick={() => setRelatorioOpen(true)}
+          >
+            <FileText className="h-4 w-4" /> Relatório de ASOs atrasados / sem ASO
+          </Button>
+        </div>
+
         {/* Filtros */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-2">
           <div className="md:col-span-7 relative">
@@ -692,20 +710,13 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
               </SelectContent>
             </Select>
           </div>
-          <div className="md:col-span-1 flex items-center justify-end gap-2">
-            <Button
-              size="sm" variant="outline"
-              className="h-9 bg-white/5 border-white/15 text-white hover:bg-white/10 whitespace-nowrap"
-              onClick={() => setImportOpen(true)}
-              title="Importar relação de ASOs da clínica (planilha)"
-            >
-              <Upload className="h-4 w-4 md:mr-1" /> <span className="hidden md:inline">Planilha</span>
-            </Button>
+          <div className="md:col-span-1 flex items-center justify-end">
             <span className="text-[11px] font-black uppercase tracking-widest text-rose-200 bg-rose-500/15 border border-rose-400/30 rounded-full px-3 py-1.5">
               {linha.length}
             </span>
           </div>
         </div>
+
 
         {/* Dados da solicitação (vão para o cabeçalho do ofício) */}
         <details className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-white">
