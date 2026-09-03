@@ -9,10 +9,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { lazy, Suspense } from "react";
-import { Search, MessageCircle, FileDown, AlertTriangle, Clock, CalendarCheck, Stethoscope, Building2, Copy, ExternalLink, Users, ListChecks, Pencil, Upload } from "lucide-react";
+import { Search, MessageCircle, FileDown, AlertTriangle, Clock, CalendarCheck, Stethoscope, Building2, Copy, ExternalLink, Users, ListChecks, Pencil, Upload, FileText } from "lucide-react";
 import { computeAso, diasParaVencer, bucketOf, type ExamRow } from "@/lib/aso-status";
 import { AsoEditarDialog } from "@/components/employees/aso-editar-dialog";
 import { AsoImportarDialog } from "@/components/employees/aso-importar-dialog";
+import { AsoPendentesDialog } from "@/components/employees/aso-pendentes-dialog";
 import type jsPDFType from "jspdf";
 import { EMPRESA_INFO } from "@/lib/empresa-info";
 import { toast } from "sonner";
