@@ -75,9 +75,10 @@ type Clinica = {
 
 function AsoHubPage() {
   const [rapidoOpen, setRapidoOpen] = useState(false);
+  const [pendentesOpen, setPendentesOpen] = useState(false);
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-4">
-      <Header onAsoRapido={() => setRapidoOpen(true)} />
+      <Header onAsoRapido={() => setRapidoOpen(true)} onRelatorioPendentes={() => setPendentesOpen(true)} />
       <Tabs defaultValue="painel">
         <TabsList className="flex-wrap h-auto bg-slate-900/60 border border-white/10">
           <TabsTrigger value="painel"><Activity className="h-4 w-4 mr-1.5" /> Painel</TabsTrigger>
@@ -96,9 +97,11 @@ function AsoHubPage() {
         <TabsContent value="analitico" className="pt-4"><AnaliticoTab /></TabsContent>
       </Tabs>
       <AsoRapidoDialog open={rapidoOpen} onOpenChange={setRapidoOpen} />
+      <AsoPendentesDialog open={pendentesOpen} onOpenChange={setPendentesOpen} />
     </div>
   );
 }
+
 
 function Header({ onAsoRapido }: { onAsoRapido: () => void }) {
   return (
