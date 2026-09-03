@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { Sparkles, PlayCircle, LogIn, ClipboardCheck, Timer } from "lucide-react";
 import { AsoRapidoDialog } from "@/components/aso/aso-rapido-dialog";
+import { AsoPendentesDialog } from "@/components/employees/aso-pendentes-dialog";
 import { AnamneseDialog } from "@/components/aso/anamnese-dialog";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import { gerarPcmsoAnaliticoPdf } from "@/lib/pcmso-analitico-pdf";
