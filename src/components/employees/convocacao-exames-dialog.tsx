@@ -1071,7 +1071,9 @@ export function ConvocacaoExamesDialog({ open, onOpenChange }: { open: boolean; 
       employees={(emps ?? []).map((e: any) => ({ id: e.id, nome: e.nome, matricula: e.matricula }))}
       onImported={recarregar}
     />
+    <AsoPendentesDialog open={relatorioOpen} onOpenChange={setRelatorioOpen} />
     <WhatsappPreviewDialog value={whatsPreview} onClose={() => setWhatsPreview(null)} />
+
     </>
   );
 }
