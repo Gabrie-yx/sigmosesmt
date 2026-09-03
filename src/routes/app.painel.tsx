@@ -1344,7 +1344,7 @@ function TstPanel() {
           </Card>
 
           {/* HHT · TF / TG (NBR 14280) — ocupa o vão ao lado do Status Geral */}
-          <Card title="13 · HHT · TF / TG" className="col-span-12 md:col-span-4 order-[9.5]"
+          <Card title="13 · HHT · TF / TG" className="col-span-12 md:col-span-4 order-10"
             period="12 MESES"
             meta={`TF ${tf.toFixed(2)} · TG ${tg.toFixed(2)}`}
             metaTone={tf === 0 && tg === 0 ? "ok" : tf <= 5 ? "warn" : "crit"}
