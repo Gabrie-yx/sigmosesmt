@@ -216,11 +216,22 @@ function MatrizPage() {
         )}
       </div>
 
-      <div className="glass-card glass-shine rounded-xl p-3 mb-3 flex flex-wrap items-end gap-3 border-rose-300/20 shadow-[0_0_34px_-12px_rgba(220,38,70,0.72)]">
-        <div className="flex items-center gap-2 text-xs font-bold text-rose-200/70 uppercase">
-          <Filter className="h-4 w-4" /> Filtros
+      <div className="glass-card glass-shine rounded-xl p-3 mb-3 border-rose-300/20 shadow-[0_0_34px_-12px_rgba(220,38,70,0.72)]">
+        <div className="flex items-center gap-2 text-[10px] font-black text-rose-200/70 uppercase mb-2">
+          <Filter className="h-3.5 w-3.5 shrink-0" /> Filtros
         </div>
-        <div>
+        <div className="flex flex-wrap items-end gap-3">
+        <div className="min-w-0">
+          <Label className="text-[10px] font-black text-rose-200/70 uppercase">Empresa</Label>
+          <Select value={filtroEmpresa} onValueChange={setFiltroEmpresa}>
+            <SelectTrigger className="mt-1 h-8 w-52 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Todas</SelectItem>
+              {companies.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="min-w-0">
           <Label className="text-[10px] font-black text-rose-200/70 uppercase">Setor</Label>
           <Select value={filtroSetor} onValueChange={setFiltroSetor}>
             <SelectTrigger className="mt-1 h-8 w-44 text-xs"><SelectValue /></SelectTrigger>
@@ -230,6 +241,7 @@ function MatrizPage() {
             </SelectContent>
           </Select>
         </div>
+
         <div>
           <Label className="text-[10px] font-black text-rose-200/70 uppercase">Vínculo</Label>
           <Select value={filtroVinculo} onValueChange={setFiltroVinculo}>
