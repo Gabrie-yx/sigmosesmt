@@ -262,12 +262,23 @@ function MatrizPage() {
             </SelectContent>
           </Select>
         </div>
-        <div className="flex-1 min-w-[200px]">
+        <div className="flex-1 min-w-[180px]">
           <Label className="text-[10px] font-black text-rose-200/70 uppercase">Buscar</Label>
           <Input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="nome ou matrícula" className="mt-1 h-8 text-xs" />
         </div>
+        <Button
+          type="button"
+          size="sm"
+          variant={todasNRs ? "default" : "outline"}
+          className="h-8 text-[11px]"
+          onClick={() => setTodasNRs((v) => !v)}
+        >
+          {todasNRs ? "Mostrando todas as NRs" : "Mostrar todas as NRs"}
+        </Button>
         <div className="text-[11px] text-rose-200/70 font-bold">{empsFiltrados.length} funcionário(s) · {cursosVisiveis.length} curso(s)</div>
+        </div>
       </div>
+
 
       <div className="mb-3 glass-card glass-shine rounded-xl px-3 py-2 flex flex-wrap items-center gap-x-4 gap-y-2 border-rose-300/20 shadow-[0_0_34px_-12px_rgba(220,38,70,0.72)]">
         <div className="text-[10px] font-black uppercase text-rose-200/70">Legenda</div>
