@@ -178,17 +178,19 @@ function MatrizPage() {
         return wanted.has(computeCellStatus(en, c, sched, hoje).label);
       });
     });
-  }, [employees, filtroSetor, filtroVinculo, busca, compMap, filtroStatus, courses, entryMap, roleCourses, scheduledMap, hoje]);
+  }, [employees, filtroSetor, filtroEmpresa, filtroVinculo, busca, compMap, filtroStatus, courses, entryMap, roleCourses, scheduledMap, hoje]);
 
-  // Cursos visíveis: somente os exigidos pela função dos funcionários filtrados.
-  // Lançamentos manuais ou históricos fora da função não criam coluna na matriz.
+  // Cursos visíveis: por padrão só os exigidos pela função dos funcionários filtrados.
+  // Com "Todas as NRs" ligado, mostra o catálogo completo de cursos ativos.
   const cursosVisiveis = useMemo(() => {
+    if (todasNRs) return courses;
     const ids = new Set<string>();
     empsFiltrados.forEach((e) => {
       requiredCourseIds(e, roleCourses).forEach((id) => ids.add(id));
     });
     return courses.filter((c) => ids.has(c.id));
-  }, [courses, roleCourses, empsFiltrados]);
+  }, [courses, roleCourses, empsFiltrados, todasNRs]);
+
 
   return (
     <div className="p-4 md:p-6 animate-fadeIn h-full">
