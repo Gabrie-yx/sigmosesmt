@@ -2963,24 +2963,6 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
         </div>
       </Card>
 
-      {canEdit && (
-        <Card className="p-5 rounded-2xl border-primary/30">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h3 className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4" /> Autorizar entrega de EPI
-              </h3>
-              <p className="text-xs text-muted-foreground mt-1">
-                Fluxo oficial: o TST autoriza, o almoxarifado entrega e dá baixa no estoque.
-              </p>
-            </div>
-            <Button onClick={() => setAutorizarOpen(true)}>
-              <ShieldCheck className="h-4 w-4 mr-2" /> Autorizar EPI
-            </Button>
-          </div>
-        </Card>
-      )}
-
       <AutorizarEpiDialog
         open={autorizarOpen}
         onOpenChange={setAutorizarOpen}
@@ -3112,7 +3094,17 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
               </div>
             )}
 
-            <div className="md:col-span-12 flex justify-end">
+            <div className="md:col-span-12 flex flex-wrap items-center justify-between gap-3">
+              {canEdit && (
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    Autorizar entrega de EPI
+                  </span>
+                  <Button type="button" variant="outline" onClick={() => setAutorizarOpen(true)}>
+                    <ShieldCheck className="h-4 w-4 mr-2" /> Autorizar EPI
+                  </Button>
+                </div>
+              )}
               <Button
                 type="submit"
                 disabled={create.isPending || !f.epi_id || (f.motivo_entrega === "EMPRESTIMO" && !f.data_devolucao_prevista)}
