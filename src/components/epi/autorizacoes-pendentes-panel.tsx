@@ -82,13 +82,13 @@ export function AutorizacoesPendentesPanel({ compact = false }: { compact?: bool
 
   return (
     <>
-      <Card className="p-4 border-amber-300 bg-amber-50/60 dark:bg-amber-950/20 space-y-3">
+      <Card className="p-4 border-primary/40 bg-card space-y-3">
         <div className="flex items-center gap-2">
-          <PackageCheck className="h-5 w-5 text-amber-600" />
-          <h3 className="text-xs font-black uppercase tracking-widest text-amber-800 dark:text-amber-300">
+          <PackageCheck className="h-5 w-5 text-primary" />
+          <h3 className="text-xs font-black uppercase tracking-widest text-foreground">
             Entregas autorizadas aguardando o almoxarifado
           </h3>
-          <Badge className="bg-amber-600 text-white">{rows.length}</Badge>
+          <Badge className="bg-primary text-primary-foreground">{rows.length}</Badge>
         </div>
         <div className="space-y-2">
           {rows.map((r) => (
