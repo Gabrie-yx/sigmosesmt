@@ -160,8 +160,36 @@ export function EstoqueEpiPage() {
   const criticos = epis.filter((e) => e.quantidade_atual <= e.estoque_minimo).length;
   const totalItens = epis.reduce((s, e) => s + e.quantidade_atual, 0);
 
+  // Fila de autorizações do TST aguardando entrega pelo almoxarifado
+  const { data: pendentes = [] } = useAutorizacoesPendentes();
+  const [alertaOpen, setAlertaOpen] = useState(false);
+  const [alertaJaMostrado, setAlertaJaMostrado] = useState(false);
+  useEffect(() => {
+    if (!alertaJaMostrado && pendentes.length > 0) {
+      setAlertaOpen(true);
+      setAlertaJaMostrado(true);
+    }
+  }, [pendentes.length, alertaJaMostrado]);
+
   return (
     <div className="mx-auto max-w-7xl p-4 md:p-6 space-y-4">
+      <Dialog open={alertaOpen} onOpenChange={setAlertaOpen}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <PackageCheck className="h-5 w-5 text-amber-600" />
+              {pendentes.length} entrega(s) de EPI autorizadas aguardando
+            </DialogTitle>
+          </DialogHeader>
+          <AutorizacoesPendentesPanel />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAlertaOpen(false)}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AutorizacoesPendentesPanel compact />
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-black tracking-tight text-foreground flex items-center gap-2">
