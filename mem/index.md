@@ -55,3 +55,4 @@ Empresa sem funcionário ATIVO vira DESATIVADA automaticamente (trigger) e volta
 - [Um comando por vez](mem://preferences/um-comando-por-vez.md) — No terminal/servidor: 1 comando por mensagem, esperar a saída, e sempre dizer de onde tirar senhas/chaves.
 - [Projeto ESO concorrente](mem://features/projeto-eso-concorrente.md) — Ideia de SaaS SST multiempresa (PGR/PCMSO/LTCAT/LIP) + créditos pré-pagos; riscos: multi-tenant, ART, eSocial, LGPD saúde. Só discussão.
 - [Projeto ESO clone — arquitetura](mem://features/projeto-eso-clone-arquitetura.md) — Entendimento correto: ESO = fábrica de documentos SST multiempresa para consultorias. Núcleo Ambiente→Cargo(CBO)→Risco→Exame→Documento versionado + faturamento. SIGMO não faz isso.
+- [Matriz de Treinamento — regras](mem://features/matriz-treinamento-regras) — Exigência só por função; lógica única em matriz-queries.ts; status "A INICIAR"; sync limpa override.
