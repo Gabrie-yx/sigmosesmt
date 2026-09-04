@@ -70,6 +70,17 @@ export function EstoqueSesmtPage() {
   const [showRelatorioEntregas, setShowRelatorioEntregas] = useState(false);
   const CART_MAX = 15;
 
+  // Fila de autorizações de EPI (TST autoriza → almoxarifado entrega)
+  const { data: pendentesAut = [] } = useAutorizacoesPendentes();
+  const [autOpen, setAutOpen] = useState(false);
+  const [autJaMostrado, setAutJaMostrado] = useState(false);
+  useEffect(() => {
+    if (!autJaMostrado && pendentesAut.length > 0) {
+      setAutOpen(true);
+      setAutJaMostrado(true);
+    }
+  }, [pendentesAut.length, autJaMostrado]);
+
   const { data: items = [] } = useQuery({
     queryKey: ["estoque_epi"],
     queryFn: async () => {
