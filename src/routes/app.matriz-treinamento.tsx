@@ -152,10 +152,12 @@ function MatrizPage() {
   const empsFiltrados = useMemo(() => {
     const base = employees.filter((e) => {
       if (filtroSetor !== "ALL" && (e.setor ?? "") !== filtroSetor) return false;
+      if (filtroEmpresa !== "ALL" && (e.company_id ?? "") !== filtroEmpresa) return false;
       if (filtroVinculo !== "ALL") {
         const c = e.company_id ? compMap[e.company_id] : null;
         if ((c?.type ?? "") !== filtroVinculo) return false;
       }
+
       if (busca) {
         const q = busca.toLowerCase();
         const txt = `${e.nome} ${e.matricula ?? ""}`.toLowerCase();
