@@ -460,8 +460,38 @@ export function EstoqueSesmtPage() {
           >
             <History className="h-4 w-4 mr-2" /> Relatório de entregas
           </Button>
+          <Button
+            variant="outline"
+            className="border-amber-500 text-amber-700 hover:bg-amber-50"
+            onClick={() => setAutOpen(true)}
+          >
+            <PackageCheck className="h-4 w-4 mr-2" /> Autorizações
+            {pendentesAut.length > 0 && (
+              <Badge className="ml-2 bg-amber-600 text-white text-[10px] px-1.5 py-0">
+                {pendentesAut.length}
+              </Badge>
+            )}
+          </Button>
         </div>
       </div>
+
+      {/* Fila de autorizações aguardando entrega */}
+      <AutorizacoesPendentesPanel compact />
+
+      <Dialog open={autOpen} onOpenChange={setAutOpen}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <PackageCheck className="h-5 w-5 text-amber-600" />
+              {pendentesAut.length} entrega(s) de EPI autorizadas aguardando
+            </DialogTitle>
+          </DialogHeader>
+          <AutorizacoesPendentesPanel />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAutOpen(false)}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Stats — consolidados para evitar redundância */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
