@@ -143,6 +143,7 @@ function MatrizPage() {
 
 
   const compMap = useMemo(() => Object.fromEntries(companies.map((c) => [c.id, c])), [companies]);
+  const roleMap = useMemo(() => Object.fromEntries(roles.map((r) => [r.id, r])), [roles]);
   const entryMap = useMemo(() => {
     const m = new Map<string, Entry>();
     entries.forEach((e) => m.set(`${e.employee_id}|${e.course_id}`, e));
@@ -280,24 +281,23 @@ function MatrizPage() {
       </div>
 
 
-      <div className="mb-3 glass-card glass-shine rounded-xl px-3 py-2 flex flex-wrap items-center gap-x-4 gap-y-2 border-rose-300/20 shadow-[0_0_34px_-12px_rgba(220,38,70,0.72)]">
-        <div className="text-[10px] font-black uppercase text-rose-200/70">Legenda</div>
+      <div className="mb-3 glass-card glass-shine rounded-xl px-3 py-2 flex flex-nowrap items-center gap-x-4 overflow-x-auto custom-scrollbar border-rose-300/20 shadow-[0_0_34px_-12px_rgba(220,38,70,0.72)]">
+        <div className="text-[10px] font-black uppercase text-rose-200/70 shrink-0">Legenda</div>
         {STATUS_LEGENDA.map((item) => (
-          <div key={item.label} className="flex items-center gap-1.5 text-[10px] font-bold text-rose-100/90">
+          <div key={item.label} className="flex items-center gap-1.5 text-[10px] font-bold text-rose-100/90 shrink-0">
             <span className={`h-3.5 w-3.5 rounded-sm border border-white/20 ${item.className}`} />
             <span className="uppercase">{item.label}</span>
-            <span className="hidden md:inline text-rose-200/50 normal-case">({item.detalhe})</span>
           </div>
         ))}
       </div>
 
-      <div className="glass-card glass-shine rounded-xl overflow-auto custom-scrollbar border-rose-300/20 shadow-[0_0_34px_-12px_rgba(220,38,70,0.72)]" style={{ maxHeight: "calc(100vh - 340px)" }}>
+      <div className="overflow-x-auto custom-scrollbar" style={{ maxHeight: "calc(100vh - 300px)" }}>
         <table className="text-[11px] border-collapse w-full table-fixed">
           <thead className="sticky top-0 bg-[#170710] z-30 text-rose-100">
             <tr>
               <th className="sticky left-0 bg-[#170710] z-40 text-left px-2 py-2 font-black uppercase border-b border-r border-white/10 text-[11px]" style={{ width: 60, minWidth: 60 }}>Mat.</th>
               <th className="sticky left-[60px] bg-[#170710] z-40 text-left px-2 py-2 font-black uppercase border-b border-r border-white/10 text-[11px]" style={{ width: 210, minWidth: 210 }}>Funcionário</th>
-              <th className="sticky left-[270px] bg-[#170710] z-40 text-left px-2 py-2 font-black uppercase border-b border-r border-white/10 text-[11px]" style={{ width: 120, minWidth: 120 }}>Setor</th>
+              <th className="sticky left-[270px] bg-[#170710] z-40 text-left px-2 py-2 font-black uppercase border-b border-r border-white/10 text-[11px]" style={{ width: 120, minWidth: 120 }}>Cargo</th>
               {cursosVisiveis.map((c) => (
                 <th key={c.id} className="text-center px-0.5 py-2 font-black uppercase border-b border-r border-white/10 align-bottom" style={{ width: "auto", minWidth: 44, height: 140 }} title={`${c.nome} (${c.periodicidade})`}>
                   <div className="flex flex-col items-center justify-end h-full">
@@ -319,7 +319,7 @@ function MatrizPage() {
                     <div className="text-[9px] text-rose-200/60 uppercase truncate max-w-[200px]">{comp?.name ?? "—"} · {comp?.type ?? "—"}</div>
                   </td>
                   <td className="sticky left-[270px] z-10 bg-[#1a0810] px-2 py-1.5 border-b border-r border-white/10 text-[10px] uppercase font-bold text-rose-100/90">
-                    {emp.setor ?? <span className="text-rose-400">—</span>}
+                    {roleMap[emp.role_id ?? ""]?.name ?? <span className="text-rose-400">—</span>}
                     {isEditor && (
                       <button onClick={() => setOpenEmp(emp)} className="ml-1 text-rose-300/60 hover:text-rose-200"><Pencil className="h-3 w-3 inline" /></button>
                     )}
