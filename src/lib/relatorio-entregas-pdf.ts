@@ -3,12 +3,14 @@ import autoTable from "jspdf-autotable";
 import { drawPdfHeader } from "./pdf-header";
 
 export type EntregaRow = {
-  data_entrega: string; // ISO
+  data_entrega: string; // ISO (yyyy-mm-dd ou completo)
   epi_nome: string;
   epi_codigo: string;
   ca: string | null;
   nome_colaborador: string;
   cpf_colaborador: string;
+  empresa: string;
+  tamanho?: string | null;
   quantidade: number;
 };
 
@@ -16,14 +18,17 @@ export type RelatorioEntregasOpts = {
   rows: EntregaRow[];
   inicio: string; // YYYY-MM-DD
   fim: string;
-  agrupamento: "semanal" | "mensal";
+  agrupamento: "semanal" | "mensal" | "epi";
   filtroEpi?: string | null;
+  filtroEmpresa?: string | null;
   responsavel?: string | null;
 };
 
 function brDate(s: string) {
-  const d = new Date(s);
-  return d.toLocaleDateString("pt-BR");
+  const only = s.split("T")[0];
+  const [y, m, d] = only.split("-");
+  if (y && m && d) return `${d}/${m}/${y}`;
+  return new Date(s).toLocaleDateString("pt-BR");
 }
 function brDateOnly(s: string) {
   const [y, m, d] = s.split("-");
@@ -32,7 +37,7 @@ function brDateOnly(s: string) {
 
 // Segunda-feira como início da semana (ISO)
 function weekKey(iso: string): { key: string; label: string } {
-  const d = new Date(iso);
+  const d = new Date(iso.split("T")[0] + "T00:00:00");
   const day = (d.getDay() + 6) % 7; // 0 = segunda
   const monday = new Date(d);
   monday.setDate(d.getDate() - day);
@@ -44,7 +49,7 @@ function weekKey(iso: string): { key: string; label: string } {
   return { key, label };
 }
 function monthKey(iso: string): { key: string; label: string } {
-  const d = new Date(iso);
+  const d = new Date(iso.split("T")[0] + "T00:00:00");
   const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
   const label = d.toLocaleDateString("pt-BR", { month: "long", year: "numeric" }).replace(/^./, (c) => c.toUpperCase());
   return { key, label };
@@ -57,10 +62,17 @@ export function buildRelatorioEntregasPdf(opts: RelatorioEntregasOpts): jsPDF {
   const M = 12;
 
   // Agrupar
-  const groupOf = opts.agrupamento === "semanal" ? weekKey : monthKey;
+  const groupOf = (r: EntregaRow): { key: string; label: string } => {
+    if (opts.agrupamento === "epi") {
+      const nome = r.epi_nome || "—";
+      return { key: nome.toUpperCase(), label: r.ca ? `${nome} · CA ${r.ca}` : nome };
+    }
+    return opts.agrupamento === "semanal" ? weekKey(r.data_entrega) : monthKey(r.data_entrega);
+  };
+
   const buckets = new Map<string, { label: string; rows: EntregaRow[]; total: number }>();
   for (const r of opts.rows) {
-    const { key, label } = groupOf(r.data_entrega);
+    const { key, label } = groupOf(r);
     let b = buckets.get(key);
     if (!b) { b = { label, rows: [], total: 0 }; buckets.set(key, b); }
     b.rows.push(r);
@@ -70,9 +82,13 @@ export function buildRelatorioEntregasPdf(opts: RelatorioEntregasOpts): jsPDF {
 
   const totalGeral = opts.rows.reduce((a, r) => a + (r.quantidade ?? 0), 0);
 
+  const agrupLabel =
+    opts.agrupamento === "semanal" ? "Semanal" : opts.agrupamento === "mensal" ? "Mensal" : "Por tipo de EPI";
+
   const filtros: string[] = [
     `Período: ${brDateOnly(opts.inicio)} a ${brDateOnly(opts.fim)}`,
-    `Agrupamento: ${opts.agrupamento === "semanal" ? "Semanal" : "Mensal"}`,
+    `Empresa: ${opts.filtroEmpresa ?? "Todas"}`,
+    `Agrupamento: ${agrupLabel}`,
   ];
   if (opts.filtroEpi) filtros.push(`EPI: ${opts.filtroEpi}`);
 
@@ -84,7 +100,7 @@ export function buildRelatorioEntregasPdf(opts: RelatorioEntregasOpts): jsPDF {
     kpis: [
       { label: "Registros", value: opts.rows.length, tone: "neutral" },
       { label: "Unidades entregues", value: totalGeral, tone: "success" },
-      { label: sortedKeys.length === 1 ? "Período" : "Grupos", value: sortedKeys.length, tone: "warning" },
+      { label: opts.agrupamento === "epi" ? "Tipos de EPI" : "Grupos", value: sortedKeys.length, tone: "warning" },
     ],
   });
 
@@ -92,7 +108,7 @@ export function buildRelatorioEntregasPdf(opts: RelatorioEntregasOpts): jsPDF {
   autoTable(doc, {
     startY: y + 1,
     margin: { left: M, right: M, bottom: 14 },
-    head: [["Período", "Registros", "Unidades entregues"]],
+    head: [[opts.agrupamento === "epi" ? "EPI" : "Período", "Registros", "Unidades entregues"]],
     body: sortedKeys.map((k) => {
       const b = buckets.get(k)!;
       return [b.label, String(b.rows.length), String(b.total)];
@@ -129,24 +145,24 @@ export function buildRelatorioEntregasPdf(opts: RelatorioEntregasOpts): jsPDF {
     autoTable(doc, {
       startY: startY + 3,
       margin: { left: M, right: M, bottom: 14 },
-      head: [["Data", "EPI", "CA", "Colaborador", "CPF", "Qtd"]],
+      head: [["Data", "EPI", "CA", "Colaborador", "Empresa", "Qtd"]],
       body: b.rows
         .slice()
         .sort((a, c) => a.data_entrega.localeCompare(c.data_entrega))
         .map((r) => [
           brDate(r.data_entrega),
-          r.epi_nome,
+          r.tamanho ? `${r.epi_nome} (${r.tamanho})` : r.epi_nome,
           r.ca ?? "—",
           r.nome_colaborador || "—",
-          r.cpf_colaborador || "—",
+          r.empresa || "—",
           String(r.quantidade ?? 0),
         ]),
       styles: { font: "helvetica", fontSize: 7.5, cellPadding: 1.2 },
       headStyles: { fillColor: [71, 85, 105], textColor: 255 },
       columnStyles: {
-        0: { cellWidth: 22, halign: "center" },
-        2: { cellWidth: 18, halign: "center" },
-        4: { cellWidth: 26 },
+        0: { cellWidth: 20, halign: "center" },
+        2: { cellWidth: 16, halign: "center" },
+        4: { cellWidth: 40 },
         5: { cellWidth: 12, halign: "center", fontStyle: "bold" },
       },
     });
