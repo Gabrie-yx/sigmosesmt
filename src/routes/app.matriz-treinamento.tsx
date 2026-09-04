@@ -61,17 +61,17 @@ const STATUS_CELL_MAP: Record<string, string[]> = {
 };
 
 const CELL_BG: Record<string, string> = {
-  // Paleta segura p/ daltônicos (Okabe-Ito adaptado):
-  // verde = ok | amarelo = atenção | bordô = vencido | salmão = pendente
-  // ciano = em andamento (azul distintivo) | roxo = a iniciar (violeta distintivo)
-  "REALIZADO": "bg-emerald-400 hover:bg-emerald-500",
-  "A VENCER": "bg-amber-400 hover:bg-amber-500",
-  "VENCIDO": "bg-red-600 hover:bg-red-700",
-  "PENDENTE": "bg-rose-300 hover:bg-rose-400",
-  "EM ANDAMENTO": "bg-cyan-500 hover:bg-cyan-600",
-  "A INICIAR": "bg-violet-500 hover:bg-violet-600",
-  "N/A": "bg-rose-950/70 hover:bg-rose-900/80",
+  // Tons ajustados à paleta escura (vinho/vermelho) do SIGMO, mantendo
+  // distinção segura p/ daltônicos: verde | âmbar | vermelho | rosa escuro | azul | violeta
+  "REALIZADO": "bg-emerald-600/90 hover:bg-emerald-500",
+  "A VENCER": "bg-amber-500/90 hover:bg-amber-400",
+  "VENCIDO": "bg-red-700/90 hover:bg-red-600",
+  "PENDENTE": "bg-rose-800/80 hover:bg-rose-700",
+  "EM ANDAMENTO": "bg-sky-600/90 hover:bg-sky-500",
+  "A INICIAR": "bg-violet-600/90 hover:bg-violet-500",
+  "N/A": "bg-rose-950/60 hover:bg-rose-900/70",
 };
+
 
 const STATUS_LEGENDA = [
   { label: "Realizado", className: CELL_BG["REALIZADO"], detalhe: "concluído e válido" },
@@ -99,8 +99,11 @@ function MatrizPage() {
 
   const [filtroSetor, setFiltroSetor] = useState<string>("ALL");
   const [filtroVinculo, setFiltroVinculo] = useState<string>("ALL");
+  const [filtroEmpresa, setFiltroEmpresa] = useState<string>("ALL");
   const [filtroStatus, setFiltroStatus] = useState<string>("ALL");
+  const [todasNRs, setTodasNRs] = useState(false);
   const [busca, setBusca] = useState("");
+
   const [editing, setEditing] = useState<{ emp: Employee; course: Course; entry?: Entry } | null>(null);
   const [openCatalog, setOpenCatalog] = useState(false);
   const [openSetores, setOpenSetores] = useState(false);
@@ -149,10 +152,12 @@ function MatrizPage() {
   const empsFiltrados = useMemo(() => {
     const base = employees.filter((e) => {
       if (filtroSetor !== "ALL" && (e.setor ?? "") !== filtroSetor) return false;
+      if (filtroEmpresa !== "ALL" && (e.company_id ?? "") !== filtroEmpresa) return false;
       if (filtroVinculo !== "ALL") {
         const c = e.company_id ? compMap[e.company_id] : null;
         if ((c?.type ?? "") !== filtroVinculo) return false;
       }
+
       if (busca) {
         const q = busca.toLowerCase();
         const txt = `${e.nome} ${e.matricula ?? ""}`.toLowerCase();
@@ -173,17 +178,19 @@ function MatrizPage() {
         return wanted.has(computeCellStatus(en, c, sched, hoje).label);
       });
     });
-  }, [employees, filtroSetor, filtroVinculo, busca, compMap, filtroStatus, courses, entryMap, roleCourses, scheduledMap, hoje]);
+  }, [employees, filtroSetor, filtroEmpresa, filtroVinculo, busca, compMap, filtroStatus, courses, entryMap, roleCourses, scheduledMap, hoje]);
 
-  // Cursos visíveis: somente os exigidos pela função dos funcionários filtrados.
-  // Lançamentos manuais ou históricos fora da função não criam coluna na matriz.
+  // Cursos visíveis: por padrão só os exigidos pela função dos funcionários filtrados.
+  // Com "Todas as NRs" ligado, mostra o catálogo completo de cursos ativos.
   const cursosVisiveis = useMemo(() => {
+    if (todasNRs) return courses;
     const ids = new Set<string>();
     empsFiltrados.forEach((e) => {
       requiredCourseIds(e, roleCourses).forEach((id) => ids.add(id));
     });
     return courses.filter((c) => ids.has(c.id));
-  }, [courses, roleCourses, empsFiltrados]);
+  }, [courses, roleCourses, empsFiltrados, todasNRs]);
+
 
   return (
     <div className="p-4 md:p-6 animate-fadeIn h-full">
@@ -209,11 +216,22 @@ function MatrizPage() {
         )}
       </div>
 
-      <div className="glass-card glass-shine rounded-xl p-3 mb-3 flex flex-wrap items-end gap-3 border-rose-300/20 shadow-[0_0_34px_-12px_rgba(220,38,70,0.72)]">
-        <div className="flex items-center gap-2 text-xs font-bold text-rose-200/70 uppercase">
-          <Filter className="h-4 w-4" /> Filtros
+      <div className="glass-card glass-shine rounded-xl p-3 mb-3 border-rose-300/20 shadow-[0_0_34px_-12px_rgba(220,38,70,0.72)]">
+        <div className="flex items-center gap-2 text-[10px] font-black text-rose-200/70 uppercase mb-2">
+          <Filter className="h-3.5 w-3.5 shrink-0" /> Filtros
         </div>
-        <div>
+        <div className="flex flex-wrap items-end gap-3">
+        <div className="min-w-0">
+          <Label className="text-[10px] font-black text-rose-200/70 uppercase">Empresa</Label>
+          <Select value={filtroEmpresa} onValueChange={setFiltroEmpresa}>
+            <SelectTrigger className="mt-1 h-8 w-52 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Todas</SelectItem>
+              {companies.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="min-w-0">
           <Label className="text-[10px] font-black text-rose-200/70 uppercase">Setor</Label>
           <Select value={filtroSetor} onValueChange={setFiltroSetor}>
             <SelectTrigger className="mt-1 h-8 w-44 text-xs"><SelectValue /></SelectTrigger>
@@ -223,6 +241,7 @@ function MatrizPage() {
             </SelectContent>
           </Select>
         </div>
+
         <div>
           <Label className="text-[10px] font-black text-rose-200/70 uppercase">Vínculo</Label>
           <Select value={filtroVinculo} onValueChange={setFiltroVinculo}>
@@ -243,12 +262,23 @@ function MatrizPage() {
             </SelectContent>
           </Select>
         </div>
-        <div className="flex-1 min-w-[200px]">
+        <div className="flex-1 min-w-[180px]">
           <Label className="text-[10px] font-black text-rose-200/70 uppercase">Buscar</Label>
           <Input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="nome ou matrícula" className="mt-1 h-8 text-xs" />
         </div>
+        <Button
+          type="button"
+          size="sm"
+          variant={todasNRs ? "default" : "outline"}
+          className="h-8 text-[11px]"
+          onClick={() => setTodasNRs((v) => !v)}
+        >
+          {todasNRs ? "Mostrando todas as NRs" : "Mostrar todas as NRs"}
+        </Button>
         <div className="text-[11px] text-rose-200/70 font-bold">{empsFiltrados.length} funcionário(s) · {cursosVisiveis.length} curso(s)</div>
+        </div>
       </div>
+
 
       <div className="mb-3 glass-card glass-shine rounded-xl px-3 py-2 flex flex-wrap items-center gap-x-4 gap-y-2 border-rose-300/20 shadow-[0_0_34px_-12px_rgba(220,38,70,0.72)]">
         <div className="text-[10px] font-black uppercase text-rose-200/70">Legenda</div>
@@ -263,11 +293,11 @@ function MatrizPage() {
 
       <div className="glass-card glass-shine rounded-xl overflow-auto custom-scrollbar border-rose-300/20 shadow-[0_0_34px_-12px_rgba(220,38,70,0.72)]" style={{ maxHeight: "calc(100vh - 340px)" }}>
         <table className="text-[11px] border-collapse w-full table-fixed">
-          <thead className="sticky top-0 bg-black/60 backdrop-blur-md z-10 text-rose-100">
+          <thead className="sticky top-0 bg-[#170710] z-30 text-rose-100">
             <tr>
-              <th className="sticky left-0 bg-black/70 backdrop-blur-md z-20 text-left px-2 py-2 font-black uppercase border-b border-r border-white/10 text-[11px]" style={{ width: 60, minWidth: 60 }}>Mat.</th>
-              <th className="sticky left-[60px] bg-black/70 backdrop-blur-md z-20 text-left px-2 py-2 font-black uppercase border-b border-r border-white/10 text-[11px]" style={{ width: 210, minWidth: 210 }}>Funcionário</th>
-              <th className="sticky left-[270px] bg-black/70 backdrop-blur-md z-20 text-left px-2 py-2 font-black uppercase border-b border-r border-white/10 text-[11px]" style={{ width: 120, minWidth: 120 }}>Setor</th>
+              <th className="sticky left-0 bg-[#170710] z-40 text-left px-2 py-2 font-black uppercase border-b border-r border-white/10 text-[11px]" style={{ width: 60, minWidth: 60 }}>Mat.</th>
+              <th className="sticky left-[60px] bg-[#170710] z-40 text-left px-2 py-2 font-black uppercase border-b border-r border-white/10 text-[11px]" style={{ width: 210, minWidth: 210 }}>Funcionário</th>
+              <th className="sticky left-[270px] bg-[#170710] z-40 text-left px-2 py-2 font-black uppercase border-b border-r border-white/10 text-[11px]" style={{ width: 120, minWidth: 120 }}>Setor</th>
               {cursosVisiveis.map((c) => (
                 <th key={c.id} className="text-center px-0.5 py-2 font-black uppercase border-b border-r border-white/10 align-bottom" style={{ width: "auto", minWidth: 44, height: 140 }} title={`${c.nome} (${c.periodicidade})`}>
                   <div className="flex flex-col items-center justify-end h-full">
@@ -283,12 +313,12 @@ function MatrizPage() {
               const comp = emp.company_id ? compMap[emp.company_id] : null;
               return (
                 <tr key={emp.id} className={i % 2 ? "bg-rose-950/20" : "bg-transparent"}>
-                  <td className="sticky left-0 z-10 bg-[#1a0810]/90 backdrop-blur-sm px-2 py-1.5 border-b border-r border-white/10 font-bold text-[11px] text-rose-100">{emp.matricula ?? "—"}</td>
-                  <td className="sticky left-[60px] z-10 bg-[#1a0810]/90 backdrop-blur-sm px-2 py-1.5 border-b border-r border-white/10">
+                  <td className="sticky left-0 z-10 bg-[#1a0810] px-2 py-1.5 border-b border-r border-white/10 font-bold text-[11px] text-rose-100">{emp.matricula ?? "—"}</td>
+                  <td className="sticky left-[60px] z-10 bg-[#1a0810] px-2 py-1.5 border-b border-r border-white/10">
                     <div className="font-bold text-rose-50 text-[12px] leading-tight truncate max-w-[200px]">{emp.nome}</div>
                     <div className="text-[9px] text-rose-200/60 uppercase truncate max-w-[200px]">{comp?.name ?? "—"} · {comp?.type ?? "—"}</div>
                   </td>
-                  <td className="sticky left-[270px] z-10 bg-[#1a0810]/90 backdrop-blur-sm px-2 py-1.5 border-b border-r border-white/10 text-[10px] uppercase font-bold text-rose-100/90">
+                  <td className="sticky left-[270px] z-10 bg-[#1a0810] px-2 py-1.5 border-b border-r border-white/10 text-[10px] uppercase font-bold text-rose-100/90">
                     {emp.setor ?? <span className="text-rose-400">—</span>}
                     {isEditor && (
                       <button onClick={() => setOpenEmp(emp)} className="ml-1 text-rose-300/60 hover:text-rose-200"><Pencil className="h-3 w-3 inline" /></button>
