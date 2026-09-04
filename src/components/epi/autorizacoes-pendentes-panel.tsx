@@ -82,13 +82,13 @@ export function AutorizacoesPendentesPanel({ compact = false }: { compact?: bool
 
   return (
     <>
-      <Card className="p-4 border-amber-300 bg-amber-50/60 dark:bg-amber-950/20 space-y-3">
+      <Card className="p-4 border-primary/40 bg-card space-y-3">
         <div className="flex items-center gap-2">
-          <PackageCheck className="h-5 w-5 text-amber-600" />
-          <h3 className="text-xs font-black uppercase tracking-widest text-amber-800 dark:text-amber-300">
+          <PackageCheck className="h-5 w-5 text-primary" />
+          <h3 className="text-xs font-black uppercase tracking-widest text-foreground">
             Entregas autorizadas aguardando o almoxarifado
           </h3>
-          <Badge className="bg-amber-600 text-white">{rows.length}</Badge>
+          <Badge className="bg-primary text-primary-foreground">{rows.length}</Badge>
         </div>
         <div className="space-y-2">
           {rows.map((r) => (
@@ -322,23 +322,23 @@ function EntregarDialog({ row, onClose }: { row: Row | null; onClose: () => void
             </div>
 
             {saldoInsuficiente && (
-              <div className="rounded-lg border-2 border-rose-300 bg-rose-50 p-3 text-xs text-rose-900 flex gap-2">
-                <AlertTriangle className="h-4 w-4 shrink-0" />
+              <div className="rounded-lg border-2 border-destructive/50 bg-destructive/10 p-3 text-xs text-foreground flex gap-2">
+                <AlertTriangle className="h-4 w-4 shrink-0 text-destructive" />
                 Saldo insuficiente no estoque para este item.
               </div>
             )}
 
             {semAssinatura && (
-              <div className="rounded-lg border-2 border-amber-300 bg-amber-50 p-3 text-xs text-amber-900 flex gap-2">
-                <AlertTriangle className="h-4 w-4 shrink-0" />
+              <div className="rounded-lg border-2 border-primary/40 bg-muted p-3 text-xs text-foreground flex gap-2">
+                <AlertTriangle className="h-4 w-4 shrink-0 text-primary" />
                 O funcionário ainda não tem assinatura cadastrada na ficha. A entrega pode ser
                 concluída, mas a assinatura ficará pendente de coleta.
               </div>
             )}
 
             {excecao && (
-              <div className="rounded-lg border border-sky-300 bg-sky-50 p-3 text-xs text-sky-900">
-                Esta baixa será registrada como <strong>exceção do TST</strong> (fora do
+              <div className="rounded-lg border bg-muted p-3 text-xs text-muted-foreground">
+                Esta baixa será registrada como <strong className="text-foreground">exceção do TST</strong> (fora do
                 almoxarifado) no histórico.
               </div>
             )}
