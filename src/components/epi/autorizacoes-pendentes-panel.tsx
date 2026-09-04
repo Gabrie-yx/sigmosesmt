@@ -14,7 +14,7 @@ import {
 import {
   Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
 } from "@/components/ui/select";
-import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
+import { PdfSignerDialog } from "@/components/pdf-signer-dialog";
 import { openTermoPerdaPdf } from "@/lib/epi-termo-perda-pdf";
 import {
   MOTIVO_EPI_LABEL, MOTIVO_EPI_COR, tempoRestante,
@@ -356,15 +356,13 @@ function EntregarDialog({ row, onClose }: { row: Row | null; onClose: () => void
         </DialogContent>
       </Dialog>
 
-      {pdf && (
-        <PDFPreviewDialog
-          open={!!pdf}
-          onOpenChange={(v) => !v && setPdf(null)}
-          pdfBytes={pdf.bytes}
-          fileName={pdf.name}
-          title="Termo de responsabilidade"
-        />
-      )}
+      <PdfSignerDialog
+        open={!!pdf}
+        onClose={() => setPdf(null)}
+        source={pdf?.bytes ?? null}
+        nomeArquivo={pdf?.name ?? "termo.pdf"}
+        modulo="termo_perda"
+      />
     </>
   );
 }
