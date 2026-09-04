@@ -155,8 +155,14 @@ function LinhaAutorizacao({ row, onEntregar }: { row: Row; onEntregar: () => voi
         <Button size="sm" onClick={onEntregar}>
           <PackageCheck className="h-4 w-4 mr-1.5" /> Entregar
         </Button>
-        <Button size="sm" variant="ghost" onClick={() => cancelar.mutate()} disabled={cancelar.isPending}>
-          <Ban className="h-4 w-4" />
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+          onClick={() => cancelar.mutate()}
+          disabled={cancelar.isPending}
+        >
+          <Ban className="h-3.5 w-3.5 mr-1" /> Cancelar
         </Button>
       </div>
     </div>
