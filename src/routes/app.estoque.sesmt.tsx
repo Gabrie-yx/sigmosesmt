@@ -31,6 +31,8 @@ import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
 import { openEstoqueSesmtPdf } from "@/lib/estoque-sesmt-pdf";
 import { RelatorioEntregasDialog } from "@/components/estoque/relatorio-entregas-dialog";
+import { AutorizacoesPendentesPanel, useAutorizacoesPendentes } from "@/components/epi/autorizacoes-pendentes-panel";
+import { PackageCheck } from "lucide-react";
 
 type Item = {
   id: string;
