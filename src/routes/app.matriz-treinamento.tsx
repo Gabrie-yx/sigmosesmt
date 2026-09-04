@@ -61,17 +61,17 @@ const STATUS_CELL_MAP: Record<string, string[]> = {
 };
 
 const CELL_BG: Record<string, string> = {
-  // Paleta segura p/ daltônicos (Okabe-Ito adaptado):
-  // verde = ok | amarelo = atenção | bordô = vencido | salmão = pendente
-  // ciano = em andamento (azul distintivo) | roxo = a iniciar (violeta distintivo)
-  "REALIZADO": "bg-emerald-400 hover:bg-emerald-500",
-  "A VENCER": "bg-amber-400 hover:bg-amber-500",
-  "VENCIDO": "bg-red-600 hover:bg-red-700",
-  "PENDENTE": "bg-rose-300 hover:bg-rose-400",
-  "EM ANDAMENTO": "bg-cyan-500 hover:bg-cyan-600",
-  "A INICIAR": "bg-violet-500 hover:bg-violet-600",
-  "N/A": "bg-rose-950/70 hover:bg-rose-900/80",
+  // Tons ajustados à paleta escura (vinho/vermelho) do SIGMO, mantendo
+  // distinção segura p/ daltônicos: verde | âmbar | vermelho | rosa escuro | azul | violeta
+  "REALIZADO": "bg-emerald-600/90 hover:bg-emerald-500",
+  "A VENCER": "bg-amber-500/90 hover:bg-amber-400",
+  "VENCIDO": "bg-red-700/90 hover:bg-red-600",
+  "PENDENTE": "bg-rose-800/80 hover:bg-rose-700",
+  "EM ANDAMENTO": "bg-sky-600/90 hover:bg-sky-500",
+  "A INICIAR": "bg-violet-600/90 hover:bg-violet-500",
+  "N/A": "bg-rose-950/60 hover:bg-rose-900/70",
 };
+
 
 const STATUS_LEGENDA = [
   { label: "Realizado", className: CELL_BG["REALIZADO"], detalhe: "concluído e válido" },
