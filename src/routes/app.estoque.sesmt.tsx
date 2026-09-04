@@ -462,12 +462,14 @@ export function EstoqueSesmtPage() {
           </Button>
           <Button
             variant="outline"
-            className="border-amber-500 text-amber-700 hover:bg-amber-50"
+            className={`border-amber-500/60 text-amber-200 hover:bg-amber-500/20 hover:text-amber-100 ${
+              pendentesAut.length > 0 ? "animate-pulse-amber" : ""
+            }`}
             onClick={() => setAutOpen(true)}
           >
             <PackageCheck className="h-4 w-4 mr-2" /> Autorizações
             {pendentesAut.length > 0 && (
-              <Badge className="ml-2 bg-amber-600 text-white text-[10px] px-1.5 py-0">
+              <Badge className="ml-2 bg-amber-500 text-amber-950 text-[10px] px-1.5 py-0">
                 {pendentesAut.length}
               </Badge>
             )}
@@ -503,20 +505,20 @@ export function EstoqueSesmtPage() {
 
       {/* Banner de reposição */}
       {isEditor && reposicaoItems.length > 0 && (
-        <div className="rounded-2xl border border-amber-300 bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 px-4 py-3 flex flex-wrap items-center gap-3">
-          <AlertTriangle className="h-5 w-5 text-amber-700 shrink-0" />
+        <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 flex flex-wrap items-center gap-3">
+          <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0" />
           <div className="flex-1 min-w-[200px]">
-            <div className="text-sm font-bold text-amber-900">
+            <div className="text-sm font-bold text-amber-200">
               {reposicaoItems.length} {reposicaoItems.length === 1 ? "item precisa" : "itens precisam"} de reposição
             </div>
-            <div className="text-xs text-amber-800/80">
+            <div className="text-xs text-amber-300/70">
               {stockAlerts.zerados} zerado(s) · {stockAlerts.criticos} abaixo do mínimo. Marque os que deseja comprar e gere a requisição em um clique.
             </div>
           </div>
           <Button
             size="sm"
             variant="outline"
-            className="border-amber-500 text-amber-900 hover:bg-amber-100"
+            className="border-amber-500/50 text-amber-200 hover:bg-amber-500/20 hover:text-amber-100"
             onClick={selecionarTodosReposicao}
           >
             <CheckSquare className="h-4 w-4 mr-1.5" />
