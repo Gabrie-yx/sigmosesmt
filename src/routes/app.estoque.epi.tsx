@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -52,12 +52,14 @@ import {
   Download,
   FileText,
   Printer,
+  PackageCheck,
 } from "lucide-react";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import { gerarPdfEntregasEpi, type EntregaRow } from "@/lib/epi-entregas-pdf";
 import { gerarPdfCatalogoEpi } from "@/lib/epi-catalogo-pdf";
 import type jsPDF from "jspdf";
 import { FichasMensaisPanel } from "@/components/epi/fichas-mensais-panel";
+import { AutorizacoesPendentesPanel, useAutorizacoesPendentes } from "@/components/epi/autorizacoes-pendentes-panel";
 
 export const Route = createFileRoute("/app/estoque/epi")({
   component: EstoqueEpiPage,
@@ -160,8 +162,36 @@ export function EstoqueEpiPage() {
   const criticos = epis.filter((e) => e.quantidade_atual <= e.estoque_minimo).length;
   const totalItens = epis.reduce((s, e) => s + e.quantidade_atual, 0);
 
+  // Fila de autorizações do TST aguardando entrega pelo almoxarifado
+  const { data: pendentes = [] } = useAutorizacoesPendentes();
+  const [alertaOpen, setAlertaOpen] = useState(false);
+  const [alertaJaMostrado, setAlertaJaMostrado] = useState(false);
+  useEffect(() => {
+    if (!alertaJaMostrado && pendentes.length > 0) {
+      setAlertaOpen(true);
+      setAlertaJaMostrado(true);
+    }
+  }, [pendentes.length, alertaJaMostrado]);
+
   return (
     <div className="mx-auto max-w-7xl p-4 md:p-6 space-y-4">
+      <Dialog open={alertaOpen} onOpenChange={setAlertaOpen}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <PackageCheck className="h-5 w-5 text-amber-600" />
+              {pendentes.length} entrega(s) de EPI autorizadas aguardando
+            </DialogTitle>
+          </DialogHeader>
+          <AutorizacoesPendentesPanel />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAlertaOpen(false)}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AutorizacoesPendentesPanel compact />
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-black tracking-tight text-foreground flex items-center gap-2">
@@ -229,12 +259,22 @@ export function EstoqueEpiPage() {
 
       <Tabs defaultValue="inventario">
         <TabsList>
+          <TabsTrigger value="autorizacoes" className="gap-1.5">
+            Autorizações
+            {pendentes.length > 0 && (
+              <Badge className="bg-amber-600 text-white text-[10px] px-1.5 py-0">{pendentes.length}</Badge>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="inventario">Inventário</TabsTrigger>
           <TabsTrigger value="colaborador">Consulta por Colaborador</TabsTrigger>
           <TabsTrigger value="historico">Histórico Geral</TabsTrigger>
           <TabsTrigger value="entregas">Ficha de Entregas (NR-06)</TabsTrigger>
           <TabsTrigger value="fichas-mensais">Fichas Mensais</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="autorizacoes" className="mt-4">
+          <AutorizacoesPendentesPanel />
+        </TabsContent>
 
         <TabsContent value="inventario" className="mt-4">
           {isLoading ? (

@@ -37,6 +37,7 @@ const PdfSignerDialog = lazy(() =>
   import("@/components/pdf-signer-dialog").then((m) => ({ default: m.PdfSignerDialog }))
 );
 import { openTermoPerdaPdf } from "@/lib/epi-termo-perda-pdf";
+import { AutorizarEpiDialog } from "@/components/epi/autorizar-epi-dialog";
 import { gerarFichaFuncionarioPdf, loadEmployeePhotoDataUrl } from "@/lib/employee-ficha-pdf";
 const PDFPreviewDialog = lazy(() =>
   import("@/components/pdf-preview-dialog").then((m) => ({ default: m.PDFPreviewDialog }))
@@ -2369,6 +2370,7 @@ type EstoqueRow = {
   quantidade_atual: number;
 };
 function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsOk, missingDocs }: any) {
+  const [autorizarOpen, setAutorizarOpen] = useState(false);
   const { data: stockItems = [] } = useQuery({
     queryKey: ["estoque_epi"],
     queryFn: async () => {
@@ -2962,10 +2964,34 @@ function EpiTab({ empId, epis, emp, company, role, canEdit, canDelete, qc, docsO
       </Card>
 
       {canEdit && (
+        <Card className="p-5 rounded-2xl border-primary/30">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4" /> Autorizar entrega de EPI
+              </h3>
+              <p className="text-xs text-muted-foreground mt-1">
+                Fluxo oficial: o TST autoriza, o almoxarifado entrega e dá baixa no estoque.
+              </p>
+            </div>
+            <Button onClick={() => setAutorizarOpen(true)}>
+              <ShieldCheck className="h-4 w-4 mr-2" /> Autorizar EPI
+            </Button>
+          </div>
+        </Card>
+      )}
+
+      <AutorizarEpiDialog
+        open={autorizarOpen}
+        onOpenChange={setAutorizarOpen}
+        employee={emp ? { id: emp.id, nome: emp.nome, company_id: emp.company_id } : null}
+      />
+
+      {canEdit && (
         <Card className="p-5 rounded-2xl">
           <div className="flex items-center gap-2 mb-4">
             <Plus className="h-4 w-4 text-brand" />
-            <h3 className="text-xs font-black uppercase tracking-widest text-brand">Registrar entrega de EPI</h3>
+            <h3 className="text-xs font-black uppercase tracking-widest text-brand">Registrar entrega de EPI (exceção — baixa direta)</h3>
           </div>
           <form onSubmit={(e) => { e.preventDefault(); submitDelivery(); }} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
             <div className="md:col-span-12 space-y-1.5">

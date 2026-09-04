@@ -5689,6 +5689,148 @@ export type Database = {
         }
         Relationships: []
       }
+      epi_autorizacoes: {
+        Row: {
+          autorizado_por: string | null
+          autorizado_por_nome: string | null
+          cancelado_motivo: string | null
+          company_id: string | null
+          created_at: string
+          employee_id: string
+          entrega_excecao: boolean
+          entregue_em: string | null
+          entregue_por: string | null
+          entregue_por_nome: string | null
+          epi_delivery_id: string | null
+          epi_descricao: string
+          estoque_epi_id: string | null
+          expira_em: string
+          gera_termo: boolean
+          id: string
+          motivo: string
+          observacoes: string | null
+          previsao_devolucao: string | null
+          quantidade: number
+          status: string
+          tamanho: string | null
+          updated_at: string
+        }
+        Insert: {
+          autorizado_por?: string | null
+          autorizado_por_nome?: string | null
+          cancelado_motivo?: string | null
+          company_id?: string | null
+          created_at?: string
+          employee_id: string
+          entrega_excecao?: boolean
+          entregue_em?: string | null
+          entregue_por?: string | null
+          entregue_por_nome?: string | null
+          epi_delivery_id?: string | null
+          epi_descricao: string
+          estoque_epi_id?: string | null
+          expira_em?: string
+          gera_termo?: boolean
+          id?: string
+          motivo: string
+          observacoes?: string | null
+          previsao_devolucao?: string | null
+          quantidade?: number
+          status?: string
+          tamanho?: string | null
+          updated_at?: string
+        }
+        Update: {
+          autorizado_por?: string | null
+          autorizado_por_nome?: string | null
+          cancelado_motivo?: string | null
+          company_id?: string | null
+          created_at?: string
+          employee_id?: string
+          entrega_excecao?: boolean
+          entregue_em?: string | null
+          entregue_por?: string | null
+          entregue_por_nome?: string | null
+          epi_delivery_id?: string | null
+          epi_descricao?: string
+          estoque_epi_id?: string | null
+          expira_em?: string
+          gera_termo?: boolean
+          id?: string
+          motivo?: string
+          observacoes?: string | null
+          previsao_devolucao?: string | null
+          quantidade?: number
+          status?: string
+          tamanho?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "epi_autorizacoes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epi_autorizacoes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "v_contratada_dossie_status"
+            referencedColumns: ["company_id"]
+          },
+          {
+            foreignKeyName: "epi_autorizacoes_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epi_autorizacoes_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligados_sem_pacote"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "epi_autorizacoes_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_desligamento_pendencias"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "epi_autorizacoes_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "v_termos_consentimento_status"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "epi_autorizacoes_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "vw_colaborador_pgr"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "epi_autorizacoes_epi_delivery_id_fkey"
+            columns: ["epi_delivery_id"]
+            isOneToOne: false
+            referencedRelation: "epi_deliveries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epi_autorizacoes_estoque_epi_id_fkey"
+            columns: ["estoque_epi_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_epi"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       epi_deliveries: {
         Row: {
           assinatura_data: string | null
