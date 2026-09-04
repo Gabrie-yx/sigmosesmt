@@ -50,7 +50,8 @@ import { HardHat, Printer, FileSignature, AlertCircle, Clock, FileWarning, Ban, 
 import { OssRowActions } from "@/components/oss/oss-row-actions";
 import { GraduationCap } from "lucide-react";
 import { Save } from "lucide-react";
-import { computeStatus, requiredCourseIds, STATUS_OVERRIDE, CATEGORIA_COLOR, CATEGORIA_LABEL, type MatrizCourse, type MatrizEntry, type RoleCourse } from "@/lib/matriz-status";
+import { requiredCourseIds, STATUS_OVERRIDE, CATEGORIA_COLOR, CATEGORIA_LABEL, type MatrizCourse, type MatrizEntry, type RoleCourse } from "@/lib/matriz-status";
+import { matrizCoursesQuery, matrizRoleCoursesQuery, matrizEntriesQuery, matrizScheduledQuery, buildScheduledMap, computeCellStatus, invalidateMatriz, saveMatrizEntry, todayISO as matrizHoje } from "@/lib/matriz-queries";
 import { uploadEmployeePhoto, removeEmployeePhoto } from "@/lib/employee-photo.functions";
 import { AtestadosTab } from "@/components/employees/atestados-tab";
 const SignaturePadDialog = lazy(() =>
@@ -3827,26 +3828,12 @@ function MatrizTab({ emp, canEdit }: { emp: any; canEdit: boolean }) {
   const qc = useQueryClient();
   const [editing, setEditing] = useState<{ course: MatrizCourse; entry?: MatrizEntry } | null>(null);
 
-  const { data: courses = [] } = useQuery<MatrizCourse[]>({
-    queryKey: ["matriz-courses"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("training_matrix_courses").select("*").eq("ativo", true).order("ordem");
-      if (error) throw error;
-      return data as MatrizCourse[];
-    },
-  });
-  const { data: roleCourses = [] } = useQuery<RoleCourse[]>({
-    queryKey: ["matriz-role-courses"],
-    queryFn: async () => (await supabase.from("training_matrix_role_courses").select("*")).data as RoleCourse[] ?? [],
-  });
-  const { data: entries = [] } = useQuery<MatrizEntry[]>({
-    queryKey: ["matriz-entries", emp.id],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("training_matrix_entries").select("*").eq("employee_id", emp.id);
-      if (error) throw error;
-      return data as MatrizEntry[];
-    },
-  });
+  const hoje = matrizHoje();
+  const { data: courses = [] } = useQuery<MatrizCourse[]>(matrizCoursesQuery());
+  const { data: roleCourses = [] } = useQuery<RoleCourse[]>(matrizRoleCoursesQuery());
+  const { data: entries = [] } = useQuery<MatrizEntry[]>(matrizEntriesQuery(emp.id));
+  const { data: scheduled = [] } = useQuery(matrizScheduledQuery(hoje, emp.id));
+  const scheduledMap = useMemo(() => buildScheduledMap(scheduled), [scheduled]);
 
   const requiredIds = useMemo(
     () => requiredCourseIds({ role_id: emp.role_id }, roleCourses),
@@ -3865,17 +3852,24 @@ function MatrizTab({ emp, canEdit }: { emp: any; canEdit: boolean }) {
     [courses, requiredIds],
   );
 
-  const stats = useMemo(() => {
-    const counts: Record<string, number> = { REALIZADO: 0, "A VENCER": 0, VENCIDO: 0, PENDENTE: 0, "EM ANDAMENTO": 0, "N/A": 0 };
+  const statusByCourse = useMemo(() => {
+    const m = new Map<string, ReturnType<typeof computeCellStatus>>();
     cursosExibidos.forEach((c) => {
-      const st = computeStatus(entryByCourse.get(c.id), c);
+      m.set(c.id, computeCellStatus(entryByCourse.get(c.id), c, scheduledMap.get(`${emp.id}|${c.id}`), hoje));
+    });
+    return m;
+  }, [cursosExibidos, entryByCourse, scheduledMap, emp.id, hoje]);
+
+  const stats = useMemo(() => {
+    const counts: Record<string, number> = { REALIZADO: 0, "A VENCER": 0, VENCIDO: 0, PENDENTE: 0, "EM ANDAMENTO": 0, "A INICIAR": 0, "N/A": 0 };
+    cursosExibidos.forEach((c) => {
+      const st = statusByCourse.get(c.id)!;
       counts[st.label] = (counts[st.label] ?? 0) + 1;
     });
-    const aderencia = cursosExibidos.length
-      ? Math.round((counts.REALIZADO / cursosExibidos.length) * 100)
-      : 0;
+    const aplicaveis = cursosExibidos.length - counts["N/A"];
+    const aderencia = aplicaveis > 0 ? Math.round((counts.REALIZADO / aplicaveis) * 100) : 0;
     return { counts, aderencia, total: cursosExibidos.length };
-  }, [cursosExibidos, entryByCourse]);
+  }, [cursosExibidos, statusByCourse]);
 
   return (
     <Card className="p-6 space-y-4">
@@ -3884,7 +3878,7 @@ function MatrizTab({ emp, canEdit }: { emp: any; canEdit: boolean }) {
           <GraduationCap className="h-6 w-6 text-[#991b1b]" />
           <div>
             <div className="text-lg font-black text-slate-800">Matriz de Treinamento</div>
-            <div className="text-xs text-slate-500">Cursos exigidos pela função e setor do funcionário</div>
+            <div className="text-xs text-slate-500">Cursos exigidos pela função do funcionário (mesma regra da Matriz de Treinamento)</div>
           </div>
         </div>
         <div className="flex items-center gap-4">
@@ -3892,9 +3886,10 @@ function MatrizTab({ emp, canEdit }: { emp: any; canEdit: boolean }) {
             <div className="text-3xl font-black text-emerald-600">{stats.aderencia}%</div>
             <div className="text-[10px] uppercase font-bold text-slate-500">Aderência</div>
           </div>
-          <div className="grid grid-cols-3 gap-1 text-[10px] font-bold uppercase">
+          <div className="grid grid-cols-4 gap-1 text-[10px] font-bold uppercase">
             <span className="px-2 py-1 rounded border bg-emerald-100 text-emerald-700 border-emerald-300">Realiz: {stats.counts.REALIZADO}</span>
             <span className="px-2 py-1 rounded border bg-amber-100 text-amber-700 border-amber-300">A venc: {stats.counts["A VENCER"]}</span>
+            <span className="px-2 py-1 rounded border bg-violet-100 text-violet-700 border-violet-300">A iniciar: {stats.counts["A INICIAR"]}</span>
             <span className="px-2 py-1 rounded border bg-red-100 text-red-700 border-red-300">Pend/Venc: {stats.counts.VENCIDO + stats.counts.PENDENTE}</span>
           </div>
         </div>
@@ -3902,8 +3897,8 @@ function MatrizTab({ emp, canEdit }: { emp: any; canEdit: boolean }) {
 
       {cursosExibidos.length === 0 ? (
         <div className="text-center py-12 border border-dashed rounded-xl text-xs uppercase font-bold text-slate-400">
-          Nenhum curso vinculado ao setor ({emp.setor ?? "—"}) ou função deste funcionário.<br />
-          Configure em <strong>Matriz de Treinamento → Vincular Cursos</strong>.
+          Nenhum curso vinculado à função deste funcionário{emp.role_id ? "" : " (funcionário sem função cadastrada)"}.<br />
+          Configure em <strong>Matriz de Treinamento → Vincular por Função</strong>.
         </div>
       ) : (
         <div className="overflow-auto rounded-xl border border-slate-200">
@@ -3923,7 +3918,8 @@ function MatrizTab({ emp, canEdit }: { emp: any; canEdit: boolean }) {
             <TableBody>
               {cursosExibidos.map((c) => {
                 const entry = entryByCourse.get(c.id);
-                const st = computeStatus(entry, c);
+                const st = statusByCourse.get(c.id)!;
+                const agendada = scheduledMap.get(`${emp.id}|${c.id}`);
                 const cat = c.categoria ?? "NR";
                 return (
                   <TableRow key={c.id} className="hover:bg-slate-50/50">
@@ -3935,10 +3931,10 @@ function MatrizTab({ emp, canEdit }: { emp: any; canEdit: boolean }) {
                       </span>
                     </TableCell>
                     <TableCell className="text-xs uppercase font-bold">{c.periodicidade}</TableCell>
-                    <TableCell className="text-xs">{entry?.data_realizacao ? formatDateBR(entry.data_realizacao) : "—"}</TableCell>
+                    <TableCell className="text-xs">{entry?.data_realizacao ? formatDateBR(entry.data_realizacao) : (agendada ? `Turma: ${formatDateBR(agendada.data)}` : "—")}</TableCell>
                     <TableCell className="text-xs">{st.expira ? formatDateBR(st.expira) : "—"}</TableCell>
                     <TableCell>
-                      <span className={`px-2 py-1 rounded border text-[10px] font-black ${st.color}`}>{st.label}</span>
+                      <span className={`px-2 py-1 rounded border text-[10px] font-black ${st.color}`} title={agendada ? `Turma agendada: ${agendada.titulo}` : undefined}>{st.label}</span>
                     </TableCell>
                     {canEdit && (
                       <TableCell>
@@ -3961,7 +3957,7 @@ function MatrizTab({ emp, canEdit }: { emp: any; canEdit: boolean }) {
           course={editing.course}
           entry={editing.entry}
           onClose={() => setEditing(null)}
-          onSaved={() => { qc.invalidateQueries({ queryKey: ["matriz-entries", emp.id] }); setEditing(null); }}
+          onSaved={() => { invalidateMatriz(qc); setEditing(null); }}
         />
       )}
     </Card>
@@ -3976,19 +3972,14 @@ function MatrizEntryDialog({ empId, course, entry, onClose, onSaved }:
 
   const save = useMutation({
     mutationFn: async () => {
-      const payload: any = {
-        employee_id: empId, course_id: course.id,
+      await saveMatrizEntry({
+        employee_id: empId,
+        course_id: course.id,
         data_realizacao: data || null,
         status_override: stOver === "AUTO" ? null : stOver,
         observacao: obs || null,
-      };
-      if (entry) {
-        const { error } = await supabase.from("training_matrix_entries").update(payload).eq("id", entry.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("training_matrix_entries").insert(payload);
-        if (error) throw error;
-      }
+        entryId: entry?.id,
+      });
     },
     onSuccess: () => { toast.success("Salvo"); onSaved(); },
     onError: (e: any) => toast.error(e.message),

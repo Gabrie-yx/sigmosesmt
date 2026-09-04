@@ -14,7 +14,6 @@ import { GraduationCap, Plus, Pencil, Trash2, Settings2, Filter, Save, Users, Ch
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
 import {
-  computeStatus,
   requiredCourseIds,
   PERIODICIDADES,
   STATUS_OVERRIDE,
@@ -25,6 +24,17 @@ import {
   type MatrizEntry as Entry,
   type RoleCourse,
 } from "@/lib/matriz-status";
+import {
+  matrizCoursesQuery,
+  matrizRoleCoursesQuery,
+  matrizEntriesQuery,
+  matrizScheduledQuery,
+  buildScheduledMap,
+  computeCellStatus,
+  invalidateMatriz,
+  saveMatrizEntry,
+  fetchAllRows,
+} from "@/lib/matriz-queries";
 
 export const Route = createFileRoute("/app/matriz-treinamento")({
   component: MatrizPage,
@@ -97,22 +107,9 @@ function MatrizPage() {
   const [openEmp, setOpenEmp] = useState<Employee | null | "new">(null);
   const [openBulk, setOpenBulk] = useState(false);
 
-  const { data: courses = [] } = useQuery<Course[]>({
-    queryKey: ["matriz-courses"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("training_matrix_courses")
-        .select("*").eq("ativo", true).order("ordem");
-      if (error) throw error; return data as Course[];
-    },
-  });
+  const { data: courses = [] } = useQuery<Course[]>(matrizCoursesQuery());
 
-  const { data: roleCourses = [] } = useQuery<RoleCourse[]>({
-    queryKey: ["matriz-role-courses"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("training_matrix_role_courses").select("*");
-      if (error) throw error; return data as RoleCourse[];
-    },
-  });
+  const { data: roleCourses = [] } = useQuery<RoleCourse[]>(matrizRoleCoursesQuery());
 
   const { data: roles = [] } = useQuery<Role[]>({
     queryKey: ["roles-list"],
@@ -121,71 +118,26 @@ function MatrizPage() {
 
   const { data: companies = [] } = useQuery<Company[]>({
     queryKey: ["companies"],
-    queryFn: async () => (await supabase.from("companies").select("id,name,type")).data ?? [],
+    queryFn: async () => (await supabase.from("companies").select("id,name,type").or("status.is.null,status.eq.ATIVA").order("name")).data ?? [],
   });
 
   const { data: employees = [] } = useQuery<Employee[]>({
     queryKey: ["matriz-employees"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("employees")
-        .select("id,matricula,nome,setor,company_id,role_id").eq("status", "ATIVO").order("nome");
-      if (error) throw error; return data as Employee[];
-    },
+    queryFn: async () =>
+      fetchAllRows<Employee>((from, to) =>
+        supabase.from("employees")
+          .select("id,matricula,nome,setor,company_id,role_id")
+          .eq("status", "ATIVO").order("nome").range(from, to),
+      ),
   });
 
-  const { data: entries = [] } = useQuery<Entry[]>({
-    queryKey: ["matriz-entries"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("training_matrix_entries").select("*");
-      if (error) throw error; return data as Entry[];
-    },
-  });
+  const { data: entries = [] } = useQuery<Entry[]>(matrizEntriesQuery());
 
   // Inscritos em turmas vinculadas a curso da matriz (mostrar "A INICIAR")
-  const { data: scheduled = [] } = useQuery<Array<{ employee_id: string; course_id: string; data_realizacao: string; titulo: string | null; tipo: string }>>({
-    queryKey: ["matriz-scheduled", hoje],
-    queryFn: async () => {
-      const { data: attendees, error: attendeesError } = await supabase
-        .from("training_attendees")
-        .select("employee_id, training_id, situacao")
-        .in("situacao", ["APROVADO", "PRESENTE"]);
-      if (attendeesError) throw attendeesError;
-      const trainingIds = Array.from(new Set((attendees ?? []).map((r: any) => r.training_id).filter(Boolean)));
-      if (trainingIds.length === 0) return [];
-      const { data: trainings, error: trainingsError } = await supabase
-        .from("trainings")
-        .select("id, course_id, data_realizacao, titulo, tipo")
-        .in("id", trainingIds)
-        .not("course_id", "is", null)
-        .gte("data_realizacao", hoje);
-      if (trainingsError) throw trainingsError;
-      const trainingMap = new Map((trainings ?? []).map((t: any) => [t.id, t]));
-      return (attendees ?? []).flatMap((r: any) => {
-        const t = trainingMap.get(r.training_id) as any;
-        if (!t?.course_id) return [];
-        return [{
-          employee_id: r.employee_id,
-          course_id: t.course_id,
-          data_realizacao: t.data_realizacao,
-          titulo: t.titulo,
-          tipo: t.tipo,
-        }];
-      });
-    },
-  });
+  const { data: scheduled = [] } = useQuery(matrizScheduledQuery(hoje));
 
-  const scheduledMap = useMemo(() => {
-    const m = new Map<string, { data: string; titulo: string }>();
-    scheduled.forEach((s) => {
-      const k = `${s.employee_id}|${s.course_id}`;
-      const cur = m.get(k);
-      // Mantém a próxima data agendada
-      if (!cur || s.data_realizacao < cur.data) {
-        m.set(k, { data: s.data_realizacao, titulo: s.titulo || s.tipo });
-      }
-    });
-    return m;
-  }, [scheduled]);
+  const scheduledMap = useMemo(() => buildScheduledMap(scheduled), [scheduled]);
+
 
   const compMap = useMemo(() => Object.fromEntries(companies.map((c) => [c.id, c])), [companies]);
   const entryMap = useMemo(() => {
@@ -209,29 +161,18 @@ function MatrizPage() {
       return true;
     });
     if (filtroStatus === "ALL") return base;
-    if (filtroStatus === "A_INICIAR") {
-      return base.filter((e) => {
-        const requiredIds = requiredCourseIds(e, roleCourses);
-        return courses.some((c) => {
-          if (!requiredIds.has(c.id)) return false;
-          const en = entryMap.get(`${e.id}|${c.id}`);
-          const sched = scheduledMap.get(`${e.id}|${c.id}`);
-          return Boolean(sched) || Boolean(en?.data_realizacao && en.data_realizacao >= hoje);
-        });
-      });
-    }
-    const wanted = new Set(STATUS_CELL_MAP[filtroStatus] ?? []);
-    return base.filter((e) =>
-      courses.some((c) => {
+    const wanted = new Set(
+      filtroStatus === "A_INICIAR" ? ["A INICIAR"] : (STATUS_CELL_MAP[filtroStatus] ?? []),
+    );
+    return base.filter((e) => {
+      const requiredIds = requiredCourseIds(e, roleCourses);
+      return courses.some((c) => {
+        if (!requiredIds.has(c.id)) return false;
         const en = entryMap.get(`${e.id}|${c.id}`);
         const sched = scheduledMap.get(`${e.id}|${c.id}`);
-        const required = requiredCourseIds(e, roleCourses).has(c.id);
-        if (!required) return false;
-        const showAIniciar = Boolean(sched) || Boolean(en?.data_realizacao && en.data_realizacao >= hoje);
-        const statusLabel = showAIniciar ? "A INICIAR" : computeStatus(en, c).label;
-        return wanted.has(statusLabel);
-      }),
-    );
+        return wanted.has(computeCellStatus(en, c, sched, hoje).label);
+      });
+    });
   }, [employees, filtroSetor, filtroVinculo, busca, compMap, filtroStatus, courses, entryMap, roleCourses, scheduledMap, hoje]);
 
   // Cursos visíveis: somente os exigidos pela função dos funcionários filtrados.
@@ -365,12 +306,9 @@ function MatrizPage() {
                         </td>
                       );
                     }
-                    const baseSt = computeStatus(entry, c);
-                    // Sobrescreve com "A INICIAR" quando há turma agendada ou data futura na matriz
-                    const showAIniciar = Boolean(sched) || Boolean(entry?.data_realizacao && entry.data_realizacao >= hoje);
-                    const st = showAIniciar
-                      ? { label: "A INICIAR", color: "bg-violet-500/30 text-violet-100 border-violet-400/40" }
-                      : baseSt;
+                    // Mesma regra usada na aba MATRIZ da ficha do funcionário
+                    const st = computeCellStatus(entry, c, sched, hoje);
+                    const showAIniciar = st.label === "A INICIAR";
                     // Aplica filtro de status à célula: se um filtro está ativo e esta célula não corresponde, oculta
                     if (filtroStatus !== "ALL") {
                       const wantedCell = STATUS_CELL_MAP[filtroStatus] ?? [];
@@ -411,7 +349,7 @@ function MatrizPage() {
         <EntryDialog
           emp={editing.emp} course={editing.course} entry={editing.entry}
           onClose={() => setEditing(null)}
-          onSaved={() => { qc.invalidateQueries({ queryKey: ["matriz-entries"] }); setEditing(null); }}
+          onSaved={() => { invalidateMatriz(qc); setEditing(null); }}
           isAdmin={isAdmin}
         />
       )}
@@ -431,19 +369,14 @@ function EntryDialog({ emp, course, entry, onClose, onSaved, isAdmin }:
 
   const save = useMutation({
     mutationFn: async () => {
-      const payload: any = {
-        employee_id: emp.id, course_id: course.id,
+      await saveMatrizEntry({
+        employee_id: emp.id,
+        course_id: course.id,
         data_realizacao: data || null,
         status_override: stOver === "AUTO" ? null : stOver,
         observacao: obs || null,
-      };
-      if (entry) {
-        const { error } = await supabase.from("training_matrix_entries").update(payload).eq("id", entry.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("training_matrix_entries").insert(payload);
-        if (error) throw error;
-      }
+        entryId: entry?.id,
+      });
     },
     onSuccess: () => { toast.success("Salvo"); onSaved(); },
     onError: (e: any) => toast.error(e.message),
