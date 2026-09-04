@@ -99,8 +99,11 @@ function MatrizPage() {
 
   const [filtroSetor, setFiltroSetor] = useState<string>("ALL");
   const [filtroVinculo, setFiltroVinculo] = useState<string>("ALL");
+  const [filtroEmpresa, setFiltroEmpresa] = useState<string>("ALL");
   const [filtroStatus, setFiltroStatus] = useState<string>("ALL");
+  const [todasNRs, setTodasNRs] = useState(false);
   const [busca, setBusca] = useState("");
+
   const [editing, setEditing] = useState<{ emp: Employee; course: Course; entry?: Entry } | null>(null);
   const [openCatalog, setOpenCatalog] = useState(false);
   const [openSetores, setOpenSetores] = useState(false);
