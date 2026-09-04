@@ -462,14 +462,14 @@ export function EstoqueSesmtPage() {
           </Button>
           <Button
             variant="outline"
-            className={`border-amber-500/60 text-amber-200 hover:bg-amber-500/20 hover:text-amber-100 ${
-              pendentesAut.length > 0 ? "animate-pulse-amber" : ""
+            className={`border-white/50 text-white hover:bg-white/15 hover:text-white ${
+              pendentesAut.length > 0 ? "animate-pulse-white" : ""
             }`}
             onClick={() => setAutOpen(true)}
           >
             <PackageCheck className="h-4 w-4 mr-2" /> Autorizações
             {pendentesAut.length > 0 && (
-              <Badge className="ml-2 bg-amber-500 text-amber-950 text-[10px] px-1.5 py-0">
+              <Badge className="ml-2 bg-white text-black text-[10px] px-1.5 py-0">
                 {pendentesAut.length}
               </Badge>
             )}
