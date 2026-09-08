@@ -75,6 +75,7 @@ type ExamesPorNatureza = Record<Natureza, string[]>;
 type Role = {
   id: string; name: string; ativo: boolean;
   ghe: string | null; setor: string | null; cbo: string | null; cbo_titulo: string | null;
+  descricao_atividades: string | null;
   req_aso: boolean; req_integra: boolean;
   periodicidade_integracao_meses: number | null;
   req_nrs: string[]; req_exames: string[]; req_vacinas: string[];
