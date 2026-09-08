@@ -775,6 +775,7 @@ async function buildDefaults(emp: AnyRow, company: AnyRow | null, role: AnyRow |
       const nome = r.catalogo_riscos?.nome ?? "—";
       const cat = tipoFromCategoria(r.catalogo_riscos?.categoria);
       const intensidade = r.intensidade != null ? `${r.intensidade}${r.unidade ? " " + r.unidade : ""}` : "NA";
+      const casFicha = casParaRisco(nome, fichaEpi);
       return {
         periodo,
         tipo: cat,
