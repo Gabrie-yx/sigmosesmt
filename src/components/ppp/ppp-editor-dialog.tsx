@@ -750,7 +750,11 @@ async function buildDefaults(emp: AnyRow, company: AnyRow | null, role: AnyRow |
   }
 
   // Profissiografia (14.2) — cadeia de fallback para nunca sair em branco
-  let descricao = atividadesToTexto(role?.descricao_atividades) || atividadesToTexto(role?.atividades);
+  let descricao =
+    // 1º: "Descrição da função" do cargo (aba Riscos) — alimentada pelo PGR
+    atividadesToTexto((role as any)?.riscos?.descricao) ||
+    atividadesToTexto(role?.descricao_atividades) ||
+    atividadesToTexto(role?.atividades);
   if (!descricao && (emp?.ghe_id ?? role?.ghe_id)) {
     // 3º nível: ambiente/atividade descritos no GHE do PGR
     const { data: ghe } = await supabase
