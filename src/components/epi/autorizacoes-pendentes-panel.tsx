@@ -33,12 +33,6 @@ type Row = AutorizacaoEpi & {
   } | null;
 };
 
-const SELECT = `
-  *,
-  employees:employee_id ( nome, cpf, matricula, assinatura_url, company_id,
-    companies:company_id ( name ), roles:role_id ( name ) )
-`;
-
 /** Hook compartilhado: autorizações pendentes (não expiradas). */
 export function useAutorizacoesPendentes() {
   return useQuery({
@@ -47,7 +41,7 @@ export function useAutorizacoesPendentes() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("epi_autorizacoes")
-        .select(SELECT)
+        .select("*")
         .eq("status", "PENDENTE")
         .order("created_at", { ascending: true });
       if (error) throw error;
@@ -60,10 +54,22 @@ export function useAutorizacoesPendentes() {
           .update({ status: "EXPIRADA" })
           .in("id", vencidas.map((v) => v.id));
       }
-      return rows.filter((r) => new Date(r.expira_em).getTime() > Date.now());
+      const vivas = rows.filter((r) => new Date(r.expira_em).getTime() > Date.now());
+      if (!vivas.length) return vivas;
+
+      // Dados do funcionário buscados à parte: se o usuário (ex.: almoxarifado)
+      // não tiver leitura de funcionários, a fila continua aparecendo.
+      const ids = Array.from(new Set(vivas.map((r) => r.employee_id)));
+      const { data: emps } = await (supabase as any)
+        .from("employees")
+        .select("id, nome, cpf, matricula, assinatura_url, company_id, companies:company_id ( name ), roles:role_id ( name )")
+        .in("id", ids);
+      const map = new Map<string, any>((emps ?? []).map((e: any) => [e.id, e]));
+      return vivas.map((r) => ({ ...r, employees: map.get(r.employee_id) ?? r.employees ?? null }));
     },
   });
 }
+
 
 export function AutorizacoesPendentesPanel({ compact = false }: { compact?: boolean }) {
   const { data: rows = [], isLoading } = useAutorizacoesPendentes();
