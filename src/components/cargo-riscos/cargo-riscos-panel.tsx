@@ -28,6 +28,9 @@ type CargoRisco = {
   aposentadoria_especial_anos: number | null;
   data_avaliacao: string | null;
   observacao: string | null;
+  ca_epi: string | null;
+  epc_eficaz: string | null;
+  epi_eficaz: string | null;
   ativo: boolean;
   catalogo_riscos: { id: string; nome: string; categoria: string } | null;
   roles: { id: string; name: string } | null;
