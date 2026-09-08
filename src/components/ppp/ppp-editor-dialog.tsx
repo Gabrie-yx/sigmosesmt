@@ -79,7 +79,7 @@ export function PPPEditorDialog({
   const isFinal = status === "EMITIDO";
 
   useQuery({
-    queryKey: ["ppp-load", empId, open],
+    queryKey: ["ppp-load", empId, open, employee?.data_desligamento ?? null],
     enabled: !!empId && open,
     queryFn: async () => {
       const { data: rasc } = await supabase
