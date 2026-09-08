@@ -12,6 +12,7 @@ Scrollbar SEMPRE glassmorph fina com flares (global em src/styles.css). PROIBIDO
 Horas extras pertencem ao módulo de origem; não usar SESMT como caixa geral nem mexer no painel SESMT para esse fluxo.
 Aline Farias saiu; TST atual é Francisco Bandeira Almeida. Todo import (CAL/PGR/matriz) deve substituir "aline farias" por ele antes de gravar. Ver mem://constraints/aline-farias-fora.
 Empresa sem funcionário ATIVO vira DESATIVADA automaticamente (trigger) e volta a ATIVA ao ganhar efetivo; reativação manual só admin/moderador — ver mem://features/empresa-desativada-ciclo.
+PRIORIDADE MÁXIMA pendente: correções do PPP (numerador, razão social, CNAE, campo 16) — ver mem://features/ppp-pendencias-emissao. Relembrar o usuário.
 
 
 ## Memories
