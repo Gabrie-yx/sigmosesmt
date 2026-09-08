@@ -43,11 +43,17 @@ mkdir -p "$BK"
 if [ -z "${DEPLOY_DETACHED:-}" ] && [ -t 1 ]; then
   echo "Rodando em segundo plano (imune a queda de SSH)."
   echo "Acompanhe com:  tail -f /home/sigmo/deploy.log"
+  : > /home/sigmo/deploy.log
   DEPLOY_DETACHED=1 setsid nohup bash "$0" "$@" > /home/sigmo/deploy.log 2>&1 < /dev/null &
+  DEPLOY_PID=$!
   disown
-  sleep 2; tail -f /home/sigmo/deploy.log &
-  wait $! 2>/dev/null
+  sleep 1
+  # segue o log e ENCERRA sozinho quando o deploy terminar (devolve o prompt)
+  tail -n +1 -f --pid="$DEPLOY_PID" /home/sigmo/deploy.log
+  echo
+  echo "Prompt liberado. Log completo: /home/sigmo/deploy.log"
   exit 0
+
 fi
 
 # ------------------------------------------------ trava contra deploy duplicado
