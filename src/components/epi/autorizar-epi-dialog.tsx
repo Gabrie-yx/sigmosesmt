@@ -39,7 +39,7 @@ type LinhaItem = {
 
 function novaLinha(): LinhaItem {
   return {
-    key: newId(),
+    key: uuid(),
     descricao: "",
     estoqueId: "",
     tamanho: "",
