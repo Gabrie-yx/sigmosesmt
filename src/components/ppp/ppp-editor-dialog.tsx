@@ -692,6 +692,45 @@ function atividadesToTexto(v: any): string {
   return "";
 }
 
+/** Palavras-chave que ligam um EPI entregue ao fator de risco do PPP (15.8). */
+const EPI_POR_RISCO: { risco: RegExp; epi: RegExp }[] = [
+  { risco: /ru[ií]do|som|ac[uú]stic/i, epi: /auricul|auditiv|protetor de ouvido|abafador|plug/i },
+  { risco: /calor|ibutg|t[eé]rmic|frio/i, epi: /t[eé]rmic|aluminizad|manga|balaclava/i },
+  { risco: /poeira|fumo|gas|gás|vapor|qu[ií]mic|s[ií]lica|solvente|tinta|part[ií]cul/i, epi: /respirat|m[aá]scara|resping|pff|filtro|cartucho/i },
+  { risco: /radia|solda|luminos|ultraviolet|infraverm/i, epi: /[oó]culos|face|m[aá]scara de solda|solda/i },
+  { risco: /vibra/i, epi: /luva|antivibrat/i },
+  { risco: /queda|altura/i, epi: /cintur[aã]o|talabarte|trava.?queda|paraquedista/i },
+  { risco: /el[eé]tric|eletricidade/i, epi: /isolante|diel[eé]tric|luva de borracha/i },
+  { risco: /biol[oó]gic|corte|perfur|manuseio|mec[aâ]nic/i, epi: /luva|bota|botina|calçado|avental/i },
+];
+
+/** CAs dos EPIs realmente entregues ao funcionário, agrupados por fator de risco. */
+async function casDaFichaEpi(employeeId?: string | null) {
+  if (!employeeId) return [] as { item: string; ca: string }[];
+  const { data } = await supabase
+    .from("epi_deliveries")
+    .select("item, ca, data_entrega")
+    .eq("employee_id", employeeId)
+    .order("data_entrega", { ascending: false });
+  const vistos = new Set<string>();
+  const out: { item: string; ca: string }[] = [];
+  for (const r of ((data as any[]) ?? [])) {
+    const ca = String(r.ca ?? "").trim();
+    const item = String(r.item ?? "").trim();
+    if (!ca || vistos.has(`${item}|${ca}`)) continue;
+    vistos.add(`${item}|${ca}`);
+    out.push({ item, ca });
+  }
+  return out;
+}
+
+function casParaRisco(nomeRisco: string, ficha: { item: string; ca: string }[]) {
+  const regras = EPI_POR_RISCO.filter((m) => m.risco.test(nomeRisco));
+  if (!regras.length) return [];
+  const casados = ficha.filter((e) => regras.some((m) => m.epi.test(e.item)));
+  return Array.from(new Set(casados.map((e) => `${e.ca} (${e.item})`)));
+}
+
 async function buildDefaults(emp: AnyRow, company: AnyRow | null, role: AnyRow | null): Promise<PPPDados> {
   const d = emptyPPPDados();
   // Empresa
@@ -724,6 +763,7 @@ async function buildDefaults(emp: AnyRow, company: AnyRow | null, role: AnyRow |
 
   // Riscos do cargo
   let nomesRiscos: string[] = [];
+  const fichaEpi = await casDaFichaEpi(emp?.id);
   if (emp?.role_id) {
     const { data: rs } = await supabase
       .from("cargo_riscos")
@@ -735,6 +775,7 @@ async function buildDefaults(emp: AnyRow, company: AnyRow | null, role: AnyRow |
       const nome = r.catalogo_riscos?.nome ?? "—";
       const cat = tipoFromCategoria(r.catalogo_riscos?.categoria);
       const intensidade = r.intensidade != null ? `${r.intensidade}${r.unidade ? " " + r.unidade : ""}` : "NA";
+      const casFicha = casParaRisco(nome, fichaEpi);
       return {
         periodo,
         tipo: cat,
@@ -742,8 +783,13 @@ async function buildDefaults(emp: AnyRow, company: AnyRow | null, role: AnyRow |
         intensidade,
         tecnica: r.tecnica_medicao ?? "NA",
         epc_eficaz: r.epc_eficaz || (r.meios_controle ? "Sim" : "NA"),
-        epi_eficaz: r.epi_eficaz || (r.epi_atenuacao_db != null || r.ca_epi ? "Sim" : "NA"),
-        ca_epi: r.ca_epi ?? "",
+        epi_eficaz:
+          r.epi_eficaz && r.epi_eficaz !== "NA"
+            ? r.epi_eficaz
+            : casFicha.length || r.epi_atenuacao_db != null || r.ca_epi
+              ? "Sim"
+              : "NA",
+        ca_epi: casFicha.length ? casFicha.join("; ") : (r.ca_epi ?? ""),
       } as PPPRisco;
     });
     nomesRiscos = Array.from(new Set(d.riscos.map((r) => r.fator_risco).filter((n) => n && n !== "—")));
