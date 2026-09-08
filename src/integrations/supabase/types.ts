@@ -1831,11 +1831,14 @@ export type Database = {
         Row: {
           aposentadoria_especial_anos: number | null
           ativo: boolean
+          ca_epi: string | null
           created_at: string
           created_by: string | null
           data_avaliacao: string | null
+          epc_eficaz: string
           epi_atenuacao_db: number | null
           epi_atenuacao_pct: number | null
+          epi_eficaz: string
           fonte_geradora: string | null
           id: string
           insalubridade_grau: string | null
@@ -1859,11 +1862,14 @@ export type Database = {
         Insert: {
           aposentadoria_especial_anos?: number | null
           ativo?: boolean
+          ca_epi?: string | null
           created_at?: string
           created_by?: string | null
           data_avaliacao?: string | null
+          epc_eficaz?: string
           epi_atenuacao_db?: number | null
           epi_atenuacao_pct?: number | null
+          epi_eficaz?: string
           fonte_geradora?: string | null
           id?: string
           insalubridade_grau?: string | null
@@ -1887,11 +1893,14 @@ export type Database = {
         Update: {
           aposentadoria_especial_anos?: number | null
           ativo?: boolean
+          ca_epi?: string | null
           created_at?: string
           created_by?: string | null
           data_avaliacao?: string | null
+          epc_eficaz?: string
           epi_atenuacao_db?: number | null
           epi_atenuacao_pct?: number | null
+          epi_eficaz?: string
           fonte_geradora?: string | null
           id?: string
           insalubridade_grau?: string | null

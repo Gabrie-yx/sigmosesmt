@@ -1,0 +1,4 @@
+ALTER TABLE public.cargo_riscos
+  ADD COLUMN IF NOT EXISTS ca_epi text,
+  ADD COLUMN IF NOT EXISTS epc_eficaz text NOT NULL DEFAULT 'NA',
+  ADD COLUMN IF NOT EXISTS epi_eficaz text NOT NULL DEFAULT 'NA';
