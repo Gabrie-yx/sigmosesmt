@@ -169,6 +169,45 @@ export function EditarCargoRiscoDialog({
             />
           </div>
 
+          <div>
+            <Label>CA do EPI (PPP 15.8)</Label>
+            <Input
+              value={form.ca_epi ?? ""}
+              onChange={(e) => setField("ca_epi", e.target.value)}
+              placeholder="Ex: 41.234"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>EPC eficaz (15.6)</Label>
+              <Select
+                value={form.epc_eficaz ?? "NA"}
+                onValueChange={(v) => setField("epc_eficaz", v)}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="NA">NA</SelectItem>
+                  <SelectItem value="Sim">Sim</SelectItem>
+                  <SelectItem value="Não">Não</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>EPI eficaz (15.7)</Label>
+              <Select
+                value={form.epi_eficaz ?? "NA"}
+                onValueChange={(v) => setField("epi_eficaz", v)}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="NA">NA</SelectItem>
+                  <SelectItem value="Sim">Sim</SelectItem>
+                  <SelectItem value="Não">Não</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           <div className="md:col-span-2">
             <Label>Técnica de medição</Label>
             <Input
