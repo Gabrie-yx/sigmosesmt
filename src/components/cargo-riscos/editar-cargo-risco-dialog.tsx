@@ -29,6 +29,9 @@ type Row = {
   aposentadoria_especial_anos: number | null;
   data_avaliacao: string | null;
   observacao: string | null;
+  ca_epi: string | null;
+  epc_eficaz: string | null;
+  epi_eficaz: string | null;
   catalogo_riscos: { nome: string; categoria: string } | null;
   roles: { name: string } | null;
 };
@@ -64,6 +67,9 @@ export function EditarCargoRiscoDialog({
           periculosidade: !!form.periculosidade,
           aposentadoria_especial_anos: form.aposentadoria_especial_anos ?? null,
           observacao: form.observacao?.trim() || null,
+          ca_epi: form.ca_epi?.trim() || null,
+          epc_eficaz: form.epc_eficaz || "NA",
+          epi_eficaz: form.epi_eficaz || "NA",
           data_avaliacao: dataAvaliacao,
         })
         .eq("id", row.id);
@@ -161,6 +167,45 @@ export function EditarCargoRiscoDialog({
               onChange={(e) => setNumOrNull("epi_atenuacao_db", e.target.value)}
               placeholder="Ex: 25"
             />
+          </div>
+
+          <div>
+            <Label>CA do EPI (PPP 15.8)</Label>
+            <Input
+              value={form.ca_epi ?? ""}
+              onChange={(e) => setField("ca_epi", e.target.value)}
+              placeholder="Ex: 41.234"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>EPC eficaz (15.6)</Label>
+              <Select
+                value={form.epc_eficaz ?? "NA"}
+                onValueChange={(v) => setField("epc_eficaz", v)}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="NA">NA</SelectItem>
+                  <SelectItem value="Sim">Sim</SelectItem>
+                  <SelectItem value="Não">Não</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>EPI eficaz (15.7)</Label>
+              <Select
+                value={form.epi_eficaz ?? "NA"}
+                onValueChange={(v) => setField("epi_eficaz", v)}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="NA">NA</SelectItem>
+                  <SelectItem value="Sim">Sim</SelectItem>
+                  <SelectItem value="Não">Não</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="md:col-span-2">
