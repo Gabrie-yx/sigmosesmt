@@ -99,7 +99,7 @@ const emptyExames: ExamesPorNatureza = {
   MUDANCA_RISCO: [], DEMISSIONAL: [], SEMESTRAL: [],
 };
 const empty: Partial<Role> = {
-  name: "", ativo: true, ghe: "", setor: "", cbo: "", cbo_titulo: "",
+  name: "", ativo: true, ghe: "", setor: "", cbo: "", cbo_titulo: "", descricao_atividades: "",
   req_aso: true, req_integra: true,
   periodicidade_integracao_meses: null,
   req_nrs: [], req_exames: [], req_vacinas: [], risco_biologico: false, riscos: emptyRiscos,
@@ -127,6 +127,7 @@ function RolesPage() {
         setor: r.setor ?? "",
         cbo: r.cbo ?? "",
         cbo_titulo: r.cbo_titulo ?? "",
+        descricao_atividades: r.descricao_atividades ?? r.atividades ?? "",
         req_aso: r.req_aso ?? true,
         req_integra: r.req_integra ?? true,
         periodicidade_integracao_meses: r.periodicidade_integracao_meses ?? null,
@@ -168,6 +169,7 @@ function RolesPage() {
         setor: v.setor || null,
         cbo: v.cbo || null,
         cbo_titulo: v.cbo_titulo || null,
+        descricao_atividades: v.descricao_atividades?.trim() || null,
         req_aso: !!v.req_aso,
         req_integra: !!v.req_integra,
         periodicidade_integracao_meses:
