@@ -298,7 +298,26 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
         return pacoteId;
       }
       const { data: row, error } = await supabase.from("desligamento_pacotes" as any).insert(payload).select("id").single();
-      if (error) throw error;
+      if (error) {
+        // Já existe pacote para este funcionário (reemissão): atualiza em vez de duplicar
+        if ((error as any).code === "23505" || /duplicate key/i.test(error.message ?? "")) {
+          const { data: existente } = await supabase
+            .from("desligamento_pacotes" as any)
+            .select("id")
+            .eq("employee_id", emp.id)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          const exId = (existente as any)?.id as string | undefined;
+          if (exId) {
+            const { error: upErr } = await supabase.from("desligamento_pacotes" as any).update(payload).eq("id", exId);
+            if (upErr) throw upErr;
+            setPacoteId(exId);
+            return exId;
+          }
+        }
+        throw error;
+      }
       setPacoteId((row as any).id);
       return (row as any).id as string;
     },
