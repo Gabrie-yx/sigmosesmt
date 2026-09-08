@@ -91,10 +91,25 @@ export function PPPEditorDialog({
         .limit(1)
         .maybeSingle();
       if (rasc) {
+        const salvo = { ...emptyPPPDados(), ...((rasc as any).dados as PPPDados) };
+        // Rascunhos antigos podem ter sido salvos sem cargo/profissiografia.
+        // Completa com os defaults do cargo para o PPP nunca sair em branco.
+        const defaults = await buildDefaults(employee, company, role);
+        const semProfissio =
+          !salvo.profissiografias?.length ||
+          salvo.profissiografias.every((p) => !String(p?.descricao ?? "").trim());
+        if (semProfissio) salvo.profissiografias = defaults.profissiografias;
+        salvo.lotacoes = (salvo.lotacoes?.length ? salvo.lotacoes : defaults.lotacoes).map((l, i) => ({
+          ...l,
+          cargo: String(l.cargo ?? "").trim() || defaults.lotacoes[i]?.cargo || defaults.lotacoes[0]?.cargo || "",
+          funcao: String(l.funcao ?? "").trim() || defaults.lotacoes[i]?.funcao || defaults.lotacoes[0]?.funcao || "",
+          cbo: String(l.cbo ?? "").trim() || defaults.lotacoes[i]?.cbo || defaults.lotacoes[0]?.cbo || "",
+          setor: String(l.setor ?? "").trim() || defaults.lotacoes[i]?.setor || defaults.lotacoes[0]?.setor || "",
+        }));
         setPppId((rasc as any).id);
         setStatus("RASCUNHO");
         setNumero(null);
-        setDados({ ...emptyPPPDados(), ...((rasc as any).dados as PPPDados) });
+        setDados(salvo);
         return rasc;
       }
       const defaults = await buildDefaults(employee, company, role);
