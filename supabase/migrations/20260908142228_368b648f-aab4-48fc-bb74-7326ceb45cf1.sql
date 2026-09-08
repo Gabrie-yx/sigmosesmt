@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.desativar_empresa(uuid, text);

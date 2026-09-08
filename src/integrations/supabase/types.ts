@@ -13956,16 +13956,14 @@ export type Database = {
         Returns: undefined
       }
       desarquivar_rc: { Args: { _rc_id: string }; Returns: undefined }
-      desativar_empresa:
-        | { Args: { _company_id: string; _motivo: string }; Returns: undefined }
-        | {
-            Args: {
-              _company_id: string
-              _desligar_funcionarios?: boolean
-              _motivo: string
-            }
-            Returns: undefined
-          }
+      desativar_empresa: {
+        Args: {
+          _company_id: string
+          _desligar_funcionarios?: boolean
+          _motivo: string
+        }
+        Returns: undefined
+      }
       desmarcar_funcionario_sabado: {
         Args: { _row_id: string }
         Returns: undefined
