@@ -32,6 +32,18 @@ DESTRUTIVO='(^|[^-[:alnum:]_])(delete[[:space:]]+from|truncate|drop[[:space:]]+s
 
 APLICADAS=0; PULADAS=0; BLOQUEADAS=0; FALHAS=0
 
+# Modo baseline: apenas REGISTRA todas as migrations como aplicadas, sem executar nada.
+# Use depois de restaurar um backup: BASELINE=1 bash scripts/migrate-safe.sh
+if [ "${BASELINE:-0}" = "1" ]; then
+  say "Modo BASELINE — registrando migrations existentes SEM executar"
+  for f in $(ls -1 "$DIR"/*.sql 2>/dev/null | sort); do
+    base=$(basename "$f")
+    psql_c -q -c "INSERT INTO public.sigmo_migrations_aplicadas(arquivo) VALUES ('$base') ON CONFLICT DO NOTHING;" >/dev/null 2>&1
+  done
+  ok "todas as migrations atuais foram marcadas como aplicadas"
+  exit 0
+fi
+
 say "Aplicando migrations novas"
 for f in $(ls -1 "$DIR"/*.sql 2>/dev/null | sort); do
   base=$(basename "$f")
