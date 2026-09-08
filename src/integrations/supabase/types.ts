@@ -14055,6 +14055,7 @@ export type Database = {
         Args: { _conv_id: string; _user_id: string }
         Returns: boolean
       }
+      is_almoxarife: { Args: { _user_id: string }; Returns: boolean }
       is_editor: { Args: { _user_id: string }; Returns: boolean }
       is_lider_extra: { Args: { _user_id: string }; Returns: boolean }
       is_moderator: { Args: { _user_id: string }; Returns: boolean }
