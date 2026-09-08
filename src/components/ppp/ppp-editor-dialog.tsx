@@ -79,7 +79,7 @@ export function PPPEditorDialog({
   const isFinal = status === "EMITIDO";
 
   useQuery({
-    queryKey: ["ppp-load", empId, open],
+    queryKey: ["ppp-load", empId, open, employee?.data_desligamento ?? null],
     enabled: !!empId && open,
     queryFn: async () => {
       const { data: rasc } = await supabase
@@ -106,10 +106,24 @@ export function PPPEditorDialog({
           cbo: String(l.cbo ?? "").trim() || defaults.lotacoes[i]?.cbo || defaults.lotacoes[0]?.cbo || "",
           setor: String(l.setor ?? "").trim() || defaults.lotacoes[i]?.setor || defaults.lotacoes[0]?.setor || "",
         }));
+        // Se o funcionário já tem data de desligamento, o período NUNCA pode ficar "atual"
+        const periodoAtualizado = defaults.lotacoes?.[0]?.periodo;
+        if (employee?.data_desligamento && periodoAtualizado) {
+          const precisaFechar = (p: any) => {
+            const s = String(p ?? "").trim();
+            return !s || /atual|—\s*$/i.test(s);
+          };
+          salvo.lotacoes = salvo.lotacoes.map((l) => (precisaFechar(l.periodo) ? { ...l, periodo: periodoAtualizado } : l));
+          salvo.riscos = (salvo.riscos ?? []).map((r: any) => (precisaFechar(r.periodo) ? { ...r, periodo: periodoAtualizado } : r));
+          salvo.profissiografias = (salvo.profissiografias ?? []).map((p: any) =>
+            "periodo" in (p ?? {}) && precisaFechar(p.periodo) ? { ...p, periodo: periodoAtualizado } : p,
+          );
+        }
         setPppId((rasc as any).id);
         setStatus("RASCUNHO");
         setNumero(null);
         setDados(salvo);
+
         return rasc;
       }
       const defaults = await buildDefaults(employee, company, role);
