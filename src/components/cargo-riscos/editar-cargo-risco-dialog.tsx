@@ -29,6 +29,9 @@ type Row = {
   aposentadoria_especial_anos: number | null;
   data_avaliacao: string | null;
   observacao: string | null;
+  ca_epi: string | null;
+  epc_eficaz: string | null;
+  epi_eficaz: string | null;
   catalogo_riscos: { nome: string; categoria: string } | null;
   roles: { name: string } | null;
 };
