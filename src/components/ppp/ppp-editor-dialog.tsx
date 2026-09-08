@@ -91,10 +91,25 @@ export function PPPEditorDialog({
         .limit(1)
         .maybeSingle();
       if (rasc) {
+        const salvo = { ...emptyPPPDados(), ...((rasc as any).dados as PPPDados) };
+        // Rascunhos antigos podem ter sido salvos sem cargo/profissiografia.
+        // Completa com os defaults do cargo para o PPP nunca sair em branco.
+        const defaults = await buildDefaults(employee, company, role);
+        const semProfissio =
+          !salvo.profissiografias?.length ||
+          salvo.profissiografias.every((p) => !String(p?.descricao ?? "").trim());
+        if (semProfissio) salvo.profissiografias = defaults.profissiografias;
+        salvo.lotacoes = (salvo.lotacoes?.length ? salvo.lotacoes : defaults.lotacoes).map((l, i) => ({
+          ...l,
+          cargo: String(l.cargo ?? "").trim() || defaults.lotacoes[i]?.cargo || defaults.lotacoes[0]?.cargo || "",
+          funcao: String(l.funcao ?? "").trim() || defaults.lotacoes[i]?.funcao || defaults.lotacoes[0]?.funcao || "",
+          cbo: String(l.cbo ?? "").trim() || defaults.lotacoes[i]?.cbo || defaults.lotacoes[0]?.cbo || "",
+          setor: String(l.setor ?? "").trim() || defaults.lotacoes[i]?.setor || defaults.lotacoes[0]?.setor || "",
+        }));
         setPppId((rasc as any).id);
         setStatus("RASCUNHO");
         setNumero(null);
-        setDados({ ...emptyPPPDados(), ...((rasc as any).dados as PPPDados) });
+        setDados(salvo);
         return rasc;
       }
       const defaults = await buildDefaults(employee, company, role);
@@ -735,7 +750,7 @@ async function buildDefaults(emp: AnyRow, company: AnyRow | null, role: AnyRow |
   }
 
   // Profissiografia (14.2) — cadeia de fallback para nunca sair em branco
-  let descricao = atividadesToTexto(role?.atividades) || atividadesToTexto(role?.descricao_atividades);
+  let descricao = atividadesToTexto(role?.descricao_atividades) || atividadesToTexto(role?.atividades);
   if (!descricao && (emp?.ghe_id ?? role?.ghe_id)) {
     // 3º nível: ambiente/atividade descritos no GHE do PGR
     const { data: ghe } = await supabase

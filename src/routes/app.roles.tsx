@@ -75,6 +75,7 @@ type ExamesPorNatureza = Record<Natureza, string[]>;
 type Role = {
   id: string; name: string; ativo: boolean;
   ghe: string | null; setor: string | null; cbo: string | null; cbo_titulo: string | null;
+  descricao_atividades: string | null;
   req_aso: boolean; req_integra: boolean;
   periodicidade_integracao_meses: number | null;
   req_nrs: string[]; req_exames: string[]; req_vacinas: string[];
@@ -98,7 +99,7 @@ const emptyExames: ExamesPorNatureza = {
   MUDANCA_RISCO: [], DEMISSIONAL: [], SEMESTRAL: [],
 };
 const empty: Partial<Role> = {
-  name: "", ativo: true, ghe: "", setor: "", cbo: "", cbo_titulo: "",
+  name: "", ativo: true, ghe: "", setor: "", cbo: "", cbo_titulo: "", descricao_atividades: "",
   req_aso: true, req_integra: true,
   periodicidade_integracao_meses: null,
   req_nrs: [], req_exames: [], req_vacinas: [], risco_biologico: false, riscos: emptyRiscos,
@@ -126,6 +127,7 @@ function RolesPage() {
         setor: r.setor ?? "",
         cbo: r.cbo ?? "",
         cbo_titulo: r.cbo_titulo ?? "",
+        descricao_atividades: r.descricao_atividades ?? r.atividades ?? "",
         req_aso: r.req_aso ?? true,
         req_integra: r.req_integra ?? true,
         periodicidade_integracao_meses: r.periodicidade_integracao_meses ?? null,
@@ -167,6 +169,7 @@ function RolesPage() {
         setor: v.setor || null,
         cbo: v.cbo || null,
         cbo_titulo: v.cbo_titulo || null,
+        descricao_atividades: v.descricao_atividades?.trim() || null,
         req_aso: !!v.req_aso,
         req_integra: !!v.req_integra,
         periodicidade_integracao_meses:
@@ -568,6 +571,19 @@ function RolesPage() {
                       placeholder="Ex: Administrativo, Produção, Almoxarifado..."
                       disabled={!isEditor}
                       className="w-full bg-white border border-rose-100 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 focus:border-[#991b1b] focus:ring-2 focus:ring-rose-200/40 outline-none transition-all placeholder:text-slate-300 placeholder:font-normal disabled:opacity-60 shadow-sm"
+                    />
+                  </div>
+                  <div className="lg:col-span-12">
+                    <label className="block text-xs font-black text-[#991b1b] uppercase mb-2 tracking-widest">
+                      Descrição das atividades (usada no PPP)
+                    </label>
+                    <textarea
+                      rows={5}
+                      value={editing.descricao_atividades ?? ""}
+                      onChange={(e) => setEditing({ ...editing, descricao_atividades: e.target.value })}
+                      placeholder="Descreva as atividades exercidas no cargo, equipamentos utilizados e ambiente de trabalho. Este texto sai no campo 14.2 (Profissiografia) do PPP."
+                      disabled={!isEditor}
+                      className="w-full bg-white border border-rose-100 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 focus:border-[#991b1b] focus:ring-2 focus:ring-rose-200/40 outline-none transition-all placeholder:text-slate-300 placeholder:font-normal disabled:opacity-60 shadow-sm resize-y"
                     />
                   </div>
                 </div>
