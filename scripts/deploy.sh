@@ -22,7 +22,8 @@ health(){ curl -s -o /dev/null -w "%{http_code}" --max-time 5 "http://127.0.0.1:
 kill_app(){ pkill -f "vite.*--port ${PORT}" 2>/dev/null || pkill -f "$APP/node_modules/.bin/vite" 2>/dev/null || true; sleep 3; }
 
 start_app(){
-  setsid nohup bun run dev -- --host 0.0.0.0 --port "$PORT" > "$LOG" 2>&1 < /dev/null &
+  # 9>&- fecha o descritor da trava: senão o app segura o lock do deploy pra sempre
+  setsid nohup bun run dev -- --host 0.0.0.0 --port "$PORT" > "$LOG" 2>&1 < /dev/null 9>&- &
   disown
 }
 
