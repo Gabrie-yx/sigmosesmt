@@ -782,8 +782,13 @@ async function buildDefaults(emp: AnyRow, company: AnyRow | null, role: AnyRow |
         intensidade,
         tecnica: r.tecnica_medicao ?? "NA",
         epc_eficaz: r.epc_eficaz || (r.meios_controle ? "Sim" : "NA"),
-        epi_eficaz: r.epi_eficaz || (r.epi_atenuacao_db != null || r.ca_epi ? "Sim" : "NA"),
-        ca_epi: r.ca_epi ?? "",
+        epi_eficaz:
+          r.epi_eficaz && r.epi_eficaz !== "NA"
+            ? r.epi_eficaz
+            : casFicha.length || r.epi_atenuacao_db != null || r.ca_epi
+              ? "Sim"
+              : "NA",
+        ca_epi: casFicha.length ? casFicha.join("; ") : (r.ca_epi ?? ""),
       } as PPPRisco;
     });
     nomesRiscos = Array.from(new Set(d.riscos.map((r) => r.fator_risco).filter((n) => n && n !== "—")));
