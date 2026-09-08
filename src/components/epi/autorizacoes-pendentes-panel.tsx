@@ -72,7 +72,7 @@ export function useAutorizacoesPendentes() {
 
 
 export function AutorizacoesPendentesPanel({ compact = false }: { compact?: boolean }) {
-  const { data: rows = [], isLoading } = useAutorizacoesPendentes();
+  const { data: rows = [], isLoading, error } = useAutorizacoesPendentes();
   const [entregar, setEntregar] = useState<Row | null>(null);
 
   const grupos = useMemo(() => {
@@ -86,6 +86,20 @@ export function AutorizacoesPendentesPanel({ compact = false }: { compact?: bool
 
 
   if (isLoading) return null;
+  if (error) {
+    return (
+      <Card className="p-4 flex items-start gap-3 text-sm border-destructive/40 bg-destructive/5">
+        <AlertTriangle className="h-4 w-4 text-destructive mt-0.5" />
+        <div>
+          <div className="font-semibold text-foreground">Não foi possível carregar a fila de entregas</div>
+          <div className="text-muted-foreground text-xs mt-0.5">
+            Seu usuário pode não ter permissão de acesso. Peça ao administrador para liberar o acesso ao EPI.
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
   if (!rows.length) {
     if (compact) return null;
     return (
