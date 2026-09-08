@@ -150,17 +150,7 @@ function LinhaAutorizacao({ row, onEntregar }: { row: Row; onEntregar: () => voi
 
   return (
     <div className="rounded-xl border bg-background p-3 flex flex-wrap items-center gap-3">
-      <div className="min-w-[180px] flex-1">
-        <div className="flex items-center gap-1.5 font-bold text-sm">
-          <User className="h-3.5 w-3.5 text-muted-foreground" />
-          {row.employees?.nome ?? "Funcionário"}
-        </div>
-        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-          <Building2 className="h-3 w-3" />
-          {row.employees?.companies?.name ?? "—"}
-        </div>
-      </div>
-      <div className="min-w-[180px] flex-1">
+      <div className="min-w-[200px] flex-1">
         <div className="text-sm font-semibold">{row.epi_descricao}</div>
         <div className="text-[11px] text-muted-foreground">
           QTD {row.quantidade}
