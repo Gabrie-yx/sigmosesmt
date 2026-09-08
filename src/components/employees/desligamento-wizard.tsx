@@ -254,7 +254,25 @@ export function DesligamentoWizard({ emp, company, role, open, onClose, modo = "
     },
   });
 
+  // Pacote já existente deste funcionário (rascunho ou emitido) — evita duplicar
+  useQuery({
+    queryKey: ["desl-pacote-existente", emp?.id],
+    enabled: !!emp?.id && open,
+    queryFn: async () => {
+      const { data: row } = await supabase
+        .from("desligamento_pacotes" as any)
+        .select("id, status")
+        .eq("employee_id", emp.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (row) setPacoteId((row as any).id);
+      return row ?? null;
+    },
+  });
+
   const motivoFinal = motivo === "Outro" ? (motivoOutro.trim() || "Outro") : motivo;
+
 
   const salvarRascunho = useMutation({
     mutationFn: async () => {
