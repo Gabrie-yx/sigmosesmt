@@ -67,6 +67,9 @@ export function EditarCargoRiscoDialog({
           periculosidade: !!form.periculosidade,
           aposentadoria_especial_anos: form.aposentadoria_especial_anos ?? null,
           observacao: form.observacao?.trim() || null,
+          ca_epi: form.ca_epi?.trim() || null,
+          epc_eficaz: form.epc_eficaz || "NA",
+          epi_eficaz: form.epi_eficaz || "NA",
           data_avaliacao: dataAvaliacao,
         })
         .eq("id", row.id);
