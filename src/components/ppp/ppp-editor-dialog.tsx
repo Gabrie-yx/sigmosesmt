@@ -741,8 +741,8 @@ async function buildDefaults(emp: AnyRow, company: AnyRow | null, role: AnyRow |
         fator_risco: nome,
         intensidade,
         tecnica: r.tecnica_medicao ?? "NA",
-        epc_eficaz: "NA",
-        epi_eficaz: r.epi_atenuacao_db != null ? "Sim" : "NA",
+        epc_eficaz: r.epc_eficaz || (r.meios_controle ? "Sim" : "NA"),
+        epi_eficaz: r.epi_eficaz || (r.epi_atenuacao_db != null || r.ca_epi ? "Sim" : "NA"),
         ca_epi: r.ca_epi ?? "",
       } as PPPRisco;
     });
