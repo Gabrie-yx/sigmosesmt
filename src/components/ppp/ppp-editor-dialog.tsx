@@ -763,6 +763,7 @@ async function buildDefaults(emp: AnyRow, company: AnyRow | null, role: AnyRow |
 
   // Riscos do cargo
   let nomesRiscos: string[] = [];
+  const fichaEpi = await casDaFichaEpi(emp?.id);
   if (emp?.role_id) {
     const { data: rs } = await supabase
       .from("cargo_riscos")
