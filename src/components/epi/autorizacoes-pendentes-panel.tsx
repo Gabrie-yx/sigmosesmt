@@ -69,6 +69,16 @@ export function AutorizacoesPendentesPanel({ compact = false }: { compact?: bool
   const { data: rows = [], isLoading } = useAutorizacoesPendentes();
   const [entregar, setEntregar] = useState<Row | null>(null);
 
+  const grupos = useMemo(() => {
+    const map = new Map<string, Row[]>();
+    for (const r of rows) {
+      const k = r.employee_id;
+      map.set(k, [...(map.get(k) ?? []), r]);
+    }
+    return Array.from(map.values());
+  }, [rows]);
+
+
   if (isLoading) return null;
   if (!rows.length) {
     if (compact) return null;
@@ -90,9 +100,28 @@ export function AutorizacoesPendentesPanel({ compact = false }: { compact?: bool
           </h3>
           <Badge className="bg-primary text-primary-foreground">{rows.length}</Badge>
         </div>
-        <div className="space-y-2">
-          {rows.map((r) => (
-            <LinhaAutorizacao key={r.id} row={r} onEntregar={() => setEntregar(r)} />
+        <div className="space-y-3">
+          {grupos.map((g) => (
+            <div key={g[0].employee_id} className="rounded-xl border bg-background/60 p-3 space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-1.5 font-bold text-sm">
+                  <User className="h-3.5 w-3.5 text-muted-foreground" />
+                  {g[0].employees?.nome ?? "Funcionário"}
+                </div>
+                <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                  <Building2 className="h-3 w-3" />
+                  {g[0].employees?.companies?.name ?? "—"}
+                </div>
+                <Badge variant="outline" className="text-[10px]">
+                  {g.length} {g.length === 1 ? "item" : "itens"}
+                </Badge>
+              </div>
+              <div className="space-y-2">
+                {g.map((r) => (
+                  <LinhaAutorizacao key={r.id} row={r} onEntregar={() => setEntregar(r)} />
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       </Card>
@@ -121,17 +150,7 @@ function LinhaAutorizacao({ row, onEntregar }: { row: Row; onEntregar: () => voi
 
   return (
     <div className="rounded-xl border bg-background p-3 flex flex-wrap items-center gap-3">
-      <div className="min-w-[180px] flex-1">
-        <div className="flex items-center gap-1.5 font-bold text-sm">
-          <User className="h-3.5 w-3.5 text-muted-foreground" />
-          {row.employees?.nome ?? "Funcionário"}
-        </div>
-        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-          <Building2 className="h-3 w-3" />
-          {row.employees?.companies?.name ?? "—"}
-        </div>
-      </div>
-      <div className="min-w-[180px] flex-1">
+      <div className="min-w-[200px] flex-1">
         <div className="text-sm font-semibold">{row.epi_descricao}</div>
         <div className="text-[11px] text-muted-foreground">
           QTD {row.quantidade}

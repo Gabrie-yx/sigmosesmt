@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
+import { uuid } from "@/lib/uuid";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +15,7 @@ import {
   Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
 } from "@/components/ui/select";
 import { EmployeePicker, type EmployeeOption } from "@/components/employee-picker";
-import { ShieldCheck, Info } from "lucide-react";
+import { ShieldCheck, Info, Plus, Trash2 } from "lucide-react";
 import {
   MOTIVO_EPI_OPCOES, expiraEmISO, type MotivoEntregaEpi,
 } from "@/lib/epi-autorizacoes";
@@ -26,9 +27,31 @@ type Props = {
   employee?: { id: string; nome: string; company_id?: string | null } | null;
 };
 
+type LinhaItem = {
+  key: string;
+  descricao: string;
+  estoqueId: string;
+  tamanho: string;
+  qtd: string;
+  motivo: MotivoEntregaEpi;
+  previsao: string;
+};
+
+function novaLinha(): LinhaItem {
+  return {
+    key: uuid(),
+    descricao: "",
+    estoqueId: "",
+    tamanho: "",
+    qtd: "1",
+    motivo: "TROCA_DESGASTE",
+    previsao: "",
+  };
+}
+
 /**
- * TST / Admin autoriza a entrega de um EPI.
- * Nada sai do estoque aqui — apenas entra na fila do almoxarifado.
+ * TST / Admin autoriza a entrega de um ou vários EPIs para o mesmo funcionário.
+ * Nada sai do estoque aqui — cada item entra na fila do almoxarifado.
  */
 export function AutorizarEpiDialog({ open, onOpenChange, employee }: Props) {
   const qc = useQueryClient();
@@ -37,19 +60,14 @@ export function AutorizarEpiDialog({ open, onOpenChange, employee }: Props) {
   const [emp, setEmp] = useState<{ id: string; nome: string; company_id?: string | null } | null>(
     employee ?? null,
   );
-  const [descricao, setDescricao] = useState("");
-  const [estoqueId, setEstoqueId] = useState<string>("");
-  const [tamanho, setTamanho] = useState("");
-  const [qtd, setQtd] = useState("1");
-  const [motivo, setMotivo] = useState<MotivoEntregaEpi>("TROCA_DESGASTE");
-  const [previsao, setPrevisao] = useState("");
+  const [linhas, setLinhas] = useState<LinhaItem[]>([novaLinha()]);
   const [obs, setObs] = useState("");
 
   useEffect(() => {
     if (open) {
       setEmp(employee ?? null);
-      setDescricao(""); setEstoqueId(""); setTamanho(""); setQtd("1");
-      setMotivo("TROCA_DESGASTE"); setPrevisao(""); setObs("");
+      setLinhas([novaLinha()]);
+      setObs("");
     }
   }, [open, employee]);
 
@@ -76,38 +94,52 @@ export function AutorizarEpiDialog({ open, onOpenChange, employee }: Props) {
     },
   });
 
-  const selecionado = useMemo(
-    () => itens.find((i: any) => i.id === estoqueId) ?? null,
-    [itens, estoqueId],
+  const setLinha = (key: string, patch: Partial<LinhaItem>) =>
+    setLinhas((ls) => ls.map((l) => (l.key === key ? { ...l, ...patch } : l)));
+
+  const validas = useMemo(
+    () => linhas.filter((l) => (l.descricao || itens.find((i: any) => i.id === l.estoqueId)?.nome_material || "").trim()),
+    [linhas, itens],
   );
 
   const salvar = useMutation({
     mutationFn: async () => {
       if (!emp?.id) throw new Error("Selecione o funcionário");
-      const desc = (descricao || selecionado?.nome_material || "").trim();
-      if (!desc) throw new Error("Informe o EPI autorizado");
-      const q = Math.max(1, Number(qtd) || 1);
-      const { error } = await (supabase as any).from("epi_autorizacoes").insert({
+      const payload = linhas.map((l) => {
+        const it: any = itens.find((i: any) => i.id === l.estoqueId);
+        const desc = (l.descricao || it?.nome_material || "").trim();
+        return { l, desc };
+      }).filter((x) => x.desc);
+      if (!payload.length) throw new Error("Informe ao menos um EPI autorizado");
+
+      const rows = payload.map(({ l, desc }) => ({
         employee_id: emp.id,
         company_id: emp.company_id ?? null,
         epi_descricao: desc,
-        estoque_epi_id: estoqueId || null,
-        tamanho: tamanho || null,
-        quantidade: q,
-        motivo,
-        previsao_devolucao: motivo === "EMPRESTIMO" && previsao ? previsao : null,
-        gera_termo: motivo === "PERDA_EXTRAVIO",
+        estoque_epi_id: l.estoqueId || null,
+        tamanho: l.tamanho || null,
+        quantidade: Math.max(1, Number(l.qtd) || 1),
+        motivo: l.motivo,
+        previsao_devolucao: l.motivo === "EMPRESTIMO" && l.previsao ? l.previsao : null,
+        gera_termo: l.motivo === "PERDA_EXTRAVIO",
         observacoes: obs || null,
         autorizado_por: user?.id ?? null,
         autorizado_por_nome: profile?.full_name || profile?.email || user?.email || null,
         status: "PENDENTE",
         expira_em: expiraEmISO(),
-      });
+      }));
+
+      const { error } = await (supabase as any).from("epi_autorizacoes").insert(rows);
       if (error) throw error;
+      return rows.length;
     },
-    onSuccess: () => {
+    onSuccess: (n) => {
       qc.invalidateQueries({ queryKey: ["epi_autorizacoes"] });
-      toast.success("Entrega autorizada — enviada ao almoxarifado");
+      toast.success(
+        n === 1
+          ? "Entrega autorizada — enviada ao almoxarifado"
+          : `${n} itens autorizados — enviados ao almoxarifado`,
+      );
       onOpenChange(false);
     },
     onError: (e: any) => toast.error(e.message),
@@ -115,15 +147,16 @@ export function AutorizarEpiDialog({ open, onOpenChange, employee }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ShieldCheck className="h-5 w-5 text-primary" />
             Autorizar entrega de EPI
           </DialogTitle>
           <DialogDescription>
-            A autorização vai para a fila do almoxarifado. O estoque só é baixado quando o
-            almoxarifado registrar a entrega. Validade da autorização: <strong>2 dias</strong>.
+            Você pode autorizar <strong>vários EPIs de uma vez</strong> para o mesmo funcionário.
+            O estoque só é baixado quando o almoxarifado registrar cada entrega.
+            Validade da autorização: <strong>2 dias</strong>.
           </DialogDescription>
         </DialogHeader>
 
@@ -146,111 +179,152 @@ export function AutorizarEpiDialog({ open, onOpenChange, employee }: Props) {
             )}
           </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-              Motivo da entrega
-            </Label>
-            <Select value={motivo} onValueChange={(v) => setMotivo(v as MotivoEntregaEpi)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {MOTIVO_EPI_OPCOES.map((m) => (
-                  <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                EPIs autorizados ({validas.length})
+              </Label>
+              <Button
+                type="button" size="sm" variant="outline"
+                onClick={() => setLinhas((ls) => [...ls, novaLinha()])}
+              >
+                <Plus className="h-3.5 w-3.5 mr-1" /> Adicionar EPI
+              </Button>
+            </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-              EPI autorizado (tipo)
-            </Label>
-            <Input
-              value={descricao}
-              onChange={(e) => setDescricao(e.target.value)}
-              placeholder="Ex.: Bota de segurança, Óculos de proteção, Luva de raspa…"
-            />
+            {linhas.map((l, idx) => (
+              <div key={l.key} className="rounded-xl border bg-muted/20 p-3 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    Item {idx + 1}
+                  </span>
+                  {linhas.length > 1 && (
+                    <Button
+                      type="button" size="sm" variant="ghost"
+                      className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => setLinhas((ls) => ls.filter((x) => x.key !== l.key))}
+                    >
+                      <Trash2 className="h-3.5 w-3.5 mr-1" /> Remover
+                    </Button>
+                  )}
+                </div>
+
+                <Input
+                  value={l.descricao}
+                  onChange={(e) => setLinha(l.key, { descricao: e.target.value })}
+                  placeholder="EPI (tipo). Ex.: Protetor auditivo, Luva de raspa, Bota de segurança…"
+                />
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="md:col-span-2 space-y-1.5">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                      Item específico do estoque (opcional)
+                    </Label>
+                    <Select
+                      value={l.estoqueId || "__none"}
+                      onValueChange={(v) => {
+                        const id = v === "__none" ? "" : v;
+                        const it: any = itens.find((i: any) => i.id === id);
+                        setLinha(l.key, {
+                          estoqueId: id,
+                          descricao: l.descricao || (it?.nome_material ?? ""),
+                        });
+                      }}
+                    >
+                      <SelectTrigger><SelectValue placeholder="Deixar a critério do almoxarifado" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none">Deixar a critério do almoxarifado</SelectItem>
+                        {itens.map((i: any) => (
+                          <SelectItem key={i.id} value={i.id}>
+                            {i.nome_material} · saldo {i.quantidade_atual ?? 0}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                      Quantidade
+                    </Label>
+                    <Input
+                      type="number" min={1} value={l.qtd}
+                      onChange={(e) => setLinha(l.key, { qtd: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="md:col-span-2 space-y-1.5">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                      Motivo da entrega
+                    </Label>
+                    <Select
+                      value={l.motivo}
+                      onValueChange={(v) => setLinha(l.key, { motivo: v as MotivoEntregaEpi })}
+                    >
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {MOTIVO_EPI_OPCOES.map((m) => (
+                          <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                      Tamanho / variação
+                    </Label>
+                    <Input
+                      value={l.tamanho}
+                      onChange={(e) => setLinha(l.key, { tamanho: e.target.value })}
+                      placeholder="Ex.: 41, GG"
+                    />
+                  </div>
+                </div>
+
+                {l.motivo === "EMPRESTIMO" && (
+                  <div className="space-y-1.5 md:max-w-[240px]">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                      Previsão de devolução
+                    </Label>
+                    <Input
+                      type="date" value={l.previsao}
+                      onChange={(e) => setLinha(l.key, { previsao: e.target.value })}
+                    />
+                  </div>
+                )}
+
+                {l.motivo === "PERDA_EXTRAVIO" && (
+                  <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-2.5 text-[11px] text-foreground">
+                    Este item gera <strong>termo de responsabilidade</strong> na entrega.
+                  </div>
+                )}
+              </div>
+            ))}
+
             <p className="text-[11px] text-muted-foreground flex items-start gap-1.5">
               <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-              Você pode autorizar o tipo genérico e deixar o almoxarifado escolher marca/tamanho
-              conforme o que houver em estoque — ou já apontar o item exato abaixo.
+              O almoxarifado dá baixa item por item da lista — cada entrega gera sua própria
+              assinatura na ficha do colaborador (FOR-SEG_02).
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="md:col-span-2 space-y-1.5">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                Item específico do estoque (opcional)
-              </Label>
-              <Select
-                value={estoqueId || "__none"}
-                onValueChange={(v) => {
-                  const id = v === "__none" ? "" : v;
-                  setEstoqueId(id);
-                  const it: any = itens.find((i: any) => i.id === id);
-                  if (it && !descricao) setDescricao(it.nome_material);
-                }}
-              >
-                <SelectTrigger><SelectValue placeholder="Deixar a critério do almoxarifado" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none">Deixar a critério do almoxarifado</SelectItem>
-                  {itens.map((i: any) => (
-                    <SelectItem key={i.id} value={i.id}>
-                      {i.nome_material} · saldo {i.quantidade_atual ?? 0}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                Quantidade
-              </Label>
-              <Input type="number" min={1} value={qtd} onChange={(e) => setQtd(e.target.value)} />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                Tamanho / variação (opcional)
-              </Label>
-              <Input
-                value={tamanho}
-                onChange={(e) => setTamanho(e.target.value)}
-                placeholder="Ex.: 41, GG, lente escura"
-              />
-            </div>
-            {motivo === "EMPRESTIMO" && (
-              <div className="space-y-1.5">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                  Previsão de devolução
-                </Label>
-                <Input type="date" value={previsao} onChange={(e) => setPrevisao(e.target.value)} />
-              </div>
-            )}
-          </div>
-
           <div className="space-y-1.5">
             <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-              Observações {motivo === "PERDA_EXTRAVIO" && "(serão impressas no termo de responsabilidade)"}
+              Observações (aplicam-se a todos os itens)
             </Label>
             <Textarea value={obs} onChange={(e) => setObs(e.target.value)} rows={3}
               placeholder="Condição do EPI apresentado, contexto da troca, etc." />
           </div>
-
-          {motivo === "PERDA_EXTRAVIO" && (
-            <div className="rounded-lg border-2 border-rose-300 bg-rose-50 p-3 text-xs text-rose-900">
-              Esta autorização gera <strong>termo de responsabilidade</strong> no momento da entrega
-              pelo almoxarifado.
-            </div>
-          )}
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={() => salvar.mutate()} disabled={salvar.isPending}>
+          <Button onClick={() => salvar.mutate()} disabled={salvar.isPending || !validas.length}>
             <ShieldCheck className="h-4 w-4 mr-2" />
-            {salvar.isPending ? "Autorizando…" : "Autorizar entrega"}
+            {salvar.isPending
+              ? "Autorizando…"
+              : `Autorizar ${validas.length > 1 ? `${validas.length} itens` : "entrega"}`}
           </Button>
         </DialogFooter>
       </DialogContent>
