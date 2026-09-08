@@ -69,6 +69,16 @@ export function AutorizacoesPendentesPanel({ compact = false }: { compact?: bool
   const { data: rows = [], isLoading } = useAutorizacoesPendentes();
   const [entregar, setEntregar] = useState<Row | null>(null);
 
+  const grupos = useMemo(() => {
+    const map = new Map<string, Row[]>();
+    for (const r of rows) {
+      const k = r.employee_id;
+      map.set(k, [...(map.get(k) ?? []), r]);
+    }
+    return Array.from(map.values());
+  }, [rows]);
+
+
   if (isLoading) return null;
   if (!rows.length) {
     if (compact) return null;
