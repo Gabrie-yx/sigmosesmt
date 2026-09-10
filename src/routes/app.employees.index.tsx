@@ -172,6 +172,21 @@ function EmployeesPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [emps, q, statusFilter, companyFilter, roleFilter, vinculoFilter, complianceFilter, asoMap]);
 
+  // Se o filtro salvo apontar para empresa/cargo que não existe mais
+  // (ex.: empresa excluída), volta para "todos" em vez de zerar a lista.
+  useEffect(() => {
+    if (!companies) return;
+    if (companyFilter !== "TODAS" && !companies.some((c: any) => c.id === companyFilter)) {
+      setCompanyFilter("TODAS");
+    }
+  }, [companies, companyFilter]);
+  useEffect(() => {
+    if (!roles) return;
+    if (roleFilter !== "TODOS" && !roles.some((r: any) => r.id === roleFilter)) {
+      setRoleFilter("TODOS");
+    }
+  }, [roles, roleFilter]);
+
   const cMap = new Map((companies ?? []).map((c: any) => [c.id, c.name]));
   const cTypeMap = new Map((companies ?? []).map((c: any) => [c.id, c.type]));
   const rMap = new Map((roles ?? []).map((r: any) => [r.id, r.name]));
