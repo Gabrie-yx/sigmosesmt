@@ -8,6 +8,7 @@ Padrão **Modal-First**: ações novas abrem como modal/sheet/drawer sobre a tel
 MB51: Base MP vence, mas OUTROS é residual saneado por descrição; classificacao_mb51 nunca reforça material cadastrado — ver mem://features/mb51-classificacao-base-mp.
 RBAC: módulo/papel/menu precisa bater em UI, validação server-side, enum/funções do Supabase e guards; nunca divergir.
 Tema escuro: telas/overlays/modais SEMPRE em tokens semânticos. PROIBIDO texto escuro/bg-white/bg-red-50 sobre fundo escuro. Ver mem://constraints/nada-de-cores-hardcoded.
+Identidade separada: novo logo SIGMO/texto SESMT somente na nuvem; servidor interno preserva marca DMN após deploy. Ver mem://constraints/identidade-nuvem-servidor.
 Scrollbar SEMPRE glassmorph fina com flares (global em src/styles.css). PROIBIDO scrollbar padrão do SO/cinza, grossa ou hardcoded. Ver mem://constraints/scrollbar-glassmorph.
 Horas extras pertencem ao módulo de origem; não usar SESMT como caixa geral nem mexer no painel SESMT para esse fluxo.
 Aline Farias saiu; TST atual é Francisco Bandeira Almeida. Todo import (CAL/PGR/matriz) deve substituir "aline farias" por ele antes de gravar. Ver mem://constraints/aline-farias-fora.
@@ -35,6 +36,7 @@ PRIORIDADE MÁXIMA pendente: correções do PPP (numerador, razão social, CNAE,
 - [Auditoria RBAC / usuários](mem://features/rbac-auditoria-usuarios.md) — Levantamento 03/07: 4 de 5 usuários são admin; sem segregação por empresa; proposta de roles finas + MFA obrigatório em debate. Não codar sem OK.
 - [RBAC com fonte única](mem://preferences/rbac-fonte-unica.md) — Nunca exibir módulo/papel na tela se backend/banco/guards não aceitarem; revisar tudo junto ao criar módulo.
 - [Nada de cores hardcoded no tema escuro](mem://constraints/nada-de-cores-hardcoded.md) — Regra dura contra bg-white/text-slate/text-black/bg-red-50 em telas, modais, popovers, drawers e dropdowns.
+- [Identidade nuvem x servidor DMN](mem://constraints/identidade-nuvem-servidor.md) — Novo logo SIGMO e texto SESMT só na nuvem; servidor interno mantém a identidade DMN em todo deploy.
 - [Scrollbar glassmorph global](mem://constraints/scrollbar-glassmorph.md) — Regra global de scrollbar fina estilo vidro com flares aplicada em `*::-webkit-scrollbar*`. Proibido scrollbar padrão.
 - [Onda 1 - Blindagem](mem://features/onda1-blindagem-seguranca.md) — Bloco 1 do parecer CONCLUÍDO ✅: endpoints IA fechados, bucket avatars privado + URLs assinadas, RPCs públicos auditados (REVOKE anon + is_supervisor_geral).
 - [Parecer Auditoria SIGMO 2026-07-14](mem://features/parecer-auditoria-2026-07-14.md) — Fonte oficial: 117 achados em 6 ondas. Consultar sempre que falar em "onda X do parecer", C-XX ou G-XX.
