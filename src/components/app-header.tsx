@@ -78,10 +78,7 @@ export function AppHeader() {
             alt="SIGMO — Sistema Integrado de Gestão Modulado"
             className="h-9 w-auto object-contain shrink-0 sm:hidden"
           />
-          <div className="flex items-baseline gap-2 whitespace-nowrap hidden sm:flex">
-            <h1 className="text-[15px] font-black uppercase tracking-tight text-white">
-              SIGMO
-            </h1>
+          <div className="flex items-baseline whitespace-nowrap hidden sm:flex">
             <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/80">
               (Sistema Integrado de Gestão Modular)
             </p>
