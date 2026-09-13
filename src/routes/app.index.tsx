@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Anchor, Compass, Gem, ShieldCheck, Leaf, Building2, Award, ArrowRight, Waves, Factory, CalendarCheck2 } from "lucide-react";
 import shipyardImg from "@/assets/dmn-shipyard.jpg";
 import isoSeal from "@/assets/iso-9001.png";
-import dmnLogoBranco from "@/assets/dmn-logo-branco-v2.png";
+import sigmoHomeLogo from "@/assets/sigmo-home-logo.png.asset.json";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/app/")({
@@ -28,14 +28,14 @@ function HomePage() {
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-sm mb-6">
                 <Waves className="h-3.5 w-3.5 text-red-200" />
                 <span className="text-[10px] font-black uppercase tracking-[0.25em] text-white/90">
-                  Construção Naval · Amazônia
+                  Sistema de Gestão SESMT
                 </span>
               </div>
               <h1 className="mb-6">
                 <img
-                  src={dmnLogoBranco}
-                  alt="Estaleiro DMN"
-                  className="w-[280px] md:w-[420px] lg:w-[500px] max-w-full h-auto object-contain drop-shadow-[0_4px_20px_rgba(0,0,0,0.35)]"
+                  src={sigmoHomeLogo.url}
+                  alt="SIGMO — Sistema de Gestão SESMT"
+                  className="w-[210px] md:w-[260px] lg:w-[300px] max-w-full h-auto object-contain drop-shadow-[0_4px_20px_rgba(0,0,0,0.35)]"
                 />
               </h1>
               <p className="text-base md:text-lg text-white/85 max-w-2xl leading-relaxed font-light mb-8">
