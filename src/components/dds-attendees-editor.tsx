@@ -28,7 +28,7 @@ export function DDSAttendeesEditor({
   onSaved?: () => void;
   autoSave?: boolean;
 }) {
-  const { data: attendees = [], refetch, isLoading } = useQuery({
+  const { data, refetch, isLoading } = useQuery({
     queryKey: ["dds-att-edit", ddsId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -39,14 +39,24 @@ export function DDSAttendeesEditor({
       if (error) throw error;
       const rows = (data ?? []) as { id: string; employee_id: string; status: string }[];
       const empIds = Array.from(new Set(rows.map((r) => r.employee_id)));
-      let nomeMap: Record<string, string> = {};
+      let infoMap: Record<string, { nome: string; status: string }> = {};
       if (empIds.length > 0) {
-        const { data: emps } = await supabase.from("employees").select("id, nome").in("id", empIds);
-        nomeMap = Object.fromEntries((emps ?? []).map((e: any) => [e.id, e.nome]));
+        const { data: emps } = await supabase.from("employees").select("id, nome, status").in("id", empIds);
+        infoMap = Object.fromEntries((emps ?? []).map((e: any) => [e.id, { nome: e.nome, status: e.status }]));
       }
-      return rows.map((r) => ({ ...r, employees: { nome: nomeMap[r.employee_id] ?? "—" } })) as Att[];
+      // Funcionários desligados não entram na lista de presença do DDS.
+      const ativos = rows
+        .filter((r) => infoMap[r.employee_id]?.status === "ATIVO")
+        .map((r) => ({ ...r, employees: { nome: infoMap[r.employee_id]?.nome ?? "—" } })) as Att[];
+      const desligadosIds = rows
+        .filter((r) => infoMap[r.employee_id]?.status !== "ATIVO")
+        .map((r) => r.id);
+      return { ativos, desligadosIds };
     },
   });
+
+  const attendees = data?.ativos ?? [];
+  const desligadosIds = data?.desligadosIds ?? [];
 
   const [presentes, setPresentes] = useState<Set<string>>(new Set());
   const [busca, setBusca] = useState("");
@@ -56,6 +66,7 @@ export function DDSAttendeesEditor({
   useEffect(() => {
     setPresentes(new Set(attendees.filter((a) => a.status === "PRESENTE").map((a) => a.id)));
   }, [attendees]);
+
 
   const filtrados = useMemo(() => {
     const q = busca.toLowerCase().trim();
