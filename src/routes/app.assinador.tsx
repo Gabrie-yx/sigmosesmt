@@ -79,6 +79,7 @@ function AssinadorPage() {
     }
 
     setUploading(true);
+    setProgresso(0);
     try {
       const { data: userData } = await supabase.auth.getUser();
       const uid = userData.user?.id ?? "anon";
@@ -86,8 +87,9 @@ function AssinadorPage() {
       const safeName = f.name.replace(/[^\w.\-]+/g, "_");
       const path = `assinador/pendentes/${uid}/${ts}_${safeName}`;
 
-      const { error: upErr } = await supabase.storage.from("sesmt-docs").upload(path, f);
-      if (upErr) throw upErr;
+      await uploadArquivo("sesmt-docs", path, f, {
+        onProgress: (p) => setProgresso(p),
+      });
 
       const { error: insErr } = await (supabase as any).from("documentos_assinados").insert({
         nome_arquivo: f.name,
