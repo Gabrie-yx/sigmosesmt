@@ -165,7 +165,17 @@ function AssinadorPage() {
                 onChange={handleFile} 
                 disabled={uploading}
               />
-              {uploading && <p className="text-sm text-blue-600 animate-pulse">Enviando arquivo...</p>}
+              {uploading && (
+                <div className="space-y-1">
+                  <p className="text-sm text-primary">Enviando arquivo... {progresso}%</p>
+                  <div className="h-2 w-full rounded bg-muted overflow-hidden">
+                    <div
+                      className="h-full bg-primary transition-all"
+                      style={{ width: `${progresso}%` }}
+                    />
+                  </div>
+                </div>
+              )}
               
               <div className="rounded-md border bg-slate-50 p-4 text-sm space-y-2">
                 <p className="font-semibold">Como funciona o novo fluxo:</p>
