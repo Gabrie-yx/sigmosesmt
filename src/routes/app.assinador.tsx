@@ -44,6 +44,7 @@ type DocAssinado = {
 function AssinadorPage() {
   const qc = useQueryClient();
   const [uploading, setUploading] = useState(false);
+  const [progresso, setProgresso] = useState(0);
   const [editingDoc, setEditingDoc] = useState<DocAssinado | null>(null);
   const [viewingDoc, setViewingDoc] = useState<DocAssinado | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
