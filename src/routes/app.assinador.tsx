@@ -10,6 +10,7 @@ import { PDFViewerDialog } from "@/components/pdf-viewer-dialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { uploadArquivo } from "@/lib/upload-grande";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { 
@@ -43,6 +44,7 @@ type DocAssinado = {
 function AssinadorPage() {
   const qc = useQueryClient();
   const [uploading, setUploading] = useState(false);
+  const [progresso, setProgresso] = useState(0);
   const [editingDoc, setEditingDoc] = useState<DocAssinado | null>(null);
   const [viewingDoc, setViewingDoc] = useState<DocAssinado | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -79,6 +81,7 @@ function AssinadorPage() {
     }
 
     setUploading(true);
+    setProgresso(0);
     try {
       const { data: userData } = await supabase.auth.getUser();
       const uid = userData.user?.id ?? "anon";
@@ -86,8 +89,9 @@ function AssinadorPage() {
       const safeName = f.name.replace(/[^\w.\-]+/g, "_");
       const path = `assinador/pendentes/${uid}/${ts}_${safeName}`;
 
-      const { error: upErr } = await supabase.storage.from("sesmt-docs").upload(path, f);
-      if (upErr) throw upErr;
+      await uploadArquivo("sesmt-docs", path, f, {
+        onProgress: (p) => setProgresso(p),
+      });
 
       const { error: insErr } = await (supabase as any).from("documentos_assinados").insert({
         nome_arquivo: f.name,
@@ -161,7 +165,17 @@ function AssinadorPage() {
                 onChange={handleFile} 
                 disabled={uploading}
               />
-              {uploading && <p className="text-sm text-blue-600 animate-pulse">Enviando arquivo...</p>}
+              {uploading && (
+                <div className="space-y-1">
+                  <p className="text-sm text-primary">Enviando arquivo... {progresso}%</p>
+                  <div className="h-2 w-full rounded bg-muted overflow-hidden">
+                    <div
+                      className="h-full bg-primary transition-all"
+                      style={{ width: `${progresso}%` }}
+                    />
+                  </div>
+                </div>
+              )}
               
               <div className="rounded-md border bg-slate-50 p-4 text-sm space-y-2">
                 <p className="font-semibold">Como funciona o novo fluxo:</p>
