@@ -313,10 +313,12 @@ function DDSDetail({ dds, temaMap, gestorMap }: { dds: DDS; temaMap: any; gestor
   const ids = (dds.temas_ids && dds.temas_ids.length > 0) ? dds.temas_ids : (dds.tema_id ? [dds.tema_id] : []);
   const livres = (dds.temas_livres && dds.temas_livres.length > 0) ? dds.temas_livres : (dds.tema_livre ? [dds.tema_livre] : []);
 
-  const { data: attendees = [] } = useQuery({
+  const { data: attendeesRaw = [] } = useQuery({
     queryKey: ["dds-att", dds.id],
     queryFn: async () => (await supabase.from("dds_attendees").select("*, employees(nome, status)").eq("dds_id", dds.id)).data ?? [],
   });
+  // Funcionários desligados não aparecem na lista de presença do DDS.
+  const attendees = (attendeesRaw as any[]).filter((a: any) => a.employees?.status === "ATIVO");
 
   const { data: ddsFull } = useQuery({
     queryKey: ["dds-full", dds.id],
