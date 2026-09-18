@@ -92,7 +92,8 @@ export function DDSAttendeesEditor({
     setSaving(true);
     try {
       const presIds = Array.from(presentes);
-      const ausIds = attendees.map((a) => a.id).filter((id) => !presentes.has(id));
+      // desligados nunca contam como presentes
+      const ausIds = [...attendees.map((a) => a.id).filter((id) => !presentes.has(id)), ...desligadosIds];
       if (presIds.length > 0) {
         const { error } = await supabase.from("dds_attendees").update({ status: "PRESENTE" }).in("id", presIds);
         if (error) throw error;
