@@ -113,6 +113,11 @@
   --status-alerta: oklch(0.78 0.16 75);
   --status-bloqueado: oklch(0.62 0.22 27);
   --status-inativo: oklch(0.7 0.02 260);
+  /* Flares decorativos da tela de login (vinho DMN) */
+  --flare-1: rgba(220, 38, 38, 0.30);
+  --flare-2: rgba(249, 115, 22, 0.20);
+  --flare-3: rgba(239, 68, 68, 0.10);
+  --brand-glow: rgba(200, 16, 46, 0.35);
 }
 
 /* ============================================================
@@ -148,6 +153,11 @@
   --chart-3: oklch(0.828 0.189 84.429);
   --chart-4: oklch(0.6 0.118 184.704);
   --chart-5: oklch(0.769 0.188 70.08);
+  /* Flares da tela de login: azul + verde-lima */
+  --flare-1: rgba(20, 152, 214, 0.32);
+  --flare-2: rgba(141, 198, 63, 0.20);
+  --flare-3: rgba(141, 198, 63, 0.10);
+  --brand-glow: rgba(20, 152, 214, 0.45);
 }
 
 .dark {
