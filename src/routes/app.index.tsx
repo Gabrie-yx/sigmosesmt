@@ -1,5 +1,30 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Anchor, Compass, Gem, ShieldCheck, Leaf, Building2, Award, ArrowRight, Waves, Factory, CalendarCheck2 } from "lucide-react";
+import {
+  Activity,
+  Anchor,
+  ArrowRight,
+  Award,
+  BarChart3,
+  Building2,
+  CalendarCheck2,
+  CheckCircle2,
+  ClipboardCheck,
+  Compass,
+  FileCheck2,
+  Factory,
+  Gem,
+  GraduationCap,
+  HardHat,
+  HeartPulse,
+  Leaf,
+  PackageCheck,
+  ShieldCheck,
+  Sparkles,
+  TriangleAlert,
+  Users,
+  Waves,
+  WifiOff,
+} from "lucide-react";
 import shipyardImg from "@/assets/dmn-shipyard.jpg";
 import isoSeal from "@/assets/iso-9001.png";
 import sigmoHomeLogo from "@/assets/sigmo-home-logo.png.asset.json";
@@ -8,11 +33,173 @@ import { useAuth } from "@/hooks/use-auth";
 import { IS_BACKEND_LOCAL } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/app/")({
+  head: () => ({
+    meta: [
+      { title: "SIGMO | Sistema Integrado de Gestão Modular" },
+      { name: "description", content: "Gestão integrada de Segurança e Saúde do Trabalho, documentos, pessoas, riscos e rotinas do SESMT." },
+      { property: "og:title", content: "SIGMO | Gestão integrada de SST" },
+      { property: "og:description", content: "Centralize pessoas, riscos, documentos e rotinas do SESMT em um único sistema." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: HomePage,
 });
 
 function HomePage() {
   const { isModerator } = useAuth();
+  return IS_BACKEND_LOCAL ? <DmnHome isModerator={isModerator} /> : <CloudHome isModerator={isModerator} />;
+}
+
+type HomeProps = { isModerator: boolean };
+
+const cloudFeatures = [
+  { icon: Users, title: "Pessoas e empresas", text: "Cadastros, vínculos, cargos, documentos e histórico reunidos em uma ficha completa.", to: "/app/employees" as const },
+  { icon: TriangleAlert, title: "PGR e matriz de riscos", text: "Inventário de riscos por função, medidas de controle e planejamento conectado à operação.", to: "/app/pgr" as const },
+  { icon: ClipboardCheck, title: "APR, PT e OSS", text: "Emissão, aprovação, assinaturas e rastreabilidade dos documentos de trabalho seguro.", to: "/app/aprs" as const },
+  { icon: PackageCheck, title: "Gestão de EPI", text: "Estoque, autorizações, entregas assinadas, CAs, fichas e histórico por trabalhador.", to: "/app/estoque/epi" as const },
+  { icon: HeartPulse, title: "Saúde ocupacional", text: "ASOs, convocações, vencimentos e alertas para agir antes de um bloqueio.", to: "/app/sesmt/medicina-ocupacional" as const },
+  { icon: GraduationCap, title: "Treinamentos", text: "Matriz por função, turmas, certificados, validades e pendências em uma só visão.", to: "/app/matriz-treinamento" as const },
+  { icon: HardHat, title: "DDS e inspeções", text: "Presenças, evidências, temas, checklists e acompanhamento das ações encontradas.", to: "/app/dds" as const },
+  { icon: Activity, title: "Incidentes e ações", text: "Investigação, não conformidades, plano 5W2H, responsáveis, prazos e eficácia.", to: "/app/incidentes" as const },
+  { icon: FileCheck2, title: "Documentos e assinaturas", text: "Assinatura de PDFs, versões, registros de uso e consulta dentro do próprio SIGMO.", to: "/app/assinador" as const },
+];
+
+function CloudHome({ isModerator }: HomeProps) {
+  return (
+    <div className="h-full overflow-y-auto custom-scrollbar bg-background text-foreground">
+      <section className="relative overflow-hidden border-b border-border/60">
+        <div className="absolute inset-0 [background:var(--hero-grad)]" />
+        <div className="absolute inset-0 [background:var(--hero-flare)]" />
+        <div className="relative mx-auto grid min-h-[560px] max-w-7xl items-center gap-12 px-6 py-16 md:px-14 lg:grid-cols-[0.92fr_1.08fr] lg:py-20">
+          <div className="max-w-xl">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/35 bg-background/20 px-3 py-1.5 backdrop-blur-md">
+              <Sparkles className="h-3.5 w-3.5 text-primary" />
+              <span className="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/90">Sistema de Gestão SESMT</span>
+            </div>
+            <img src={sigmoHomeLogo.url} alt="SIGMO — Sistema Integrado de Gestão Modular" className="mb-7 h-auto w-[250px] max-w-full object-contain md:w-[310px]" />
+            <h1 className="heading-display text-3xl font-semibold leading-tight text-foreground md:text-5xl">
+              Segurança do trabalho organizada para qualquer operação.
+            </h1>
+            <p className="mt-5 max-w-lg text-base leading-relaxed text-foreground/75 md:text-lg">
+              O SIGMO reúne pessoas, riscos, documentos e rotinas do SESMT. Você enxerga pendências, registra evidências e acompanha a prevenção sem depender de controles espalhados.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link to="/app/painel" className="inline-flex items-center gap-2 rounded-md bg-primary px-6 py-3 text-sm font-black text-primary-foreground shadow-lg transition-transform hover:-translate-y-0.5">
+                <BarChart3 className="h-4 w-4" /> Abrir painel <ArrowRight className="h-4 w-4" />
+              </Link>
+              {isModerator && (
+                <Link to="/app/hoje" className="inline-flex items-center gap-2 rounded-md border border-border bg-background/50 px-6 py-3 text-sm font-bold text-foreground backdrop-blur-md transition-colors hover:bg-accent">
+                  <CalendarCheck2 className="h-4 w-4 text-primary" /> O que fazer hoje?
+                </Link>
+              )}
+            </div>
+          </div>
+
+          <div className="relative mx-auto w-full max-w-2xl" aria-label="Visão original do painel SIGMO">
+            <div className="absolute -inset-4 rounded-2xl bg-primary/10 blur-2xl" />
+            <div className="relative overflow-hidden rounded-lg border border-border/70 bg-card/95 shadow-2xl backdrop-blur-xl">
+              <div className="flex h-11 items-center justify-between border-b border-border/70 px-4">
+                <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-primary" /><span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">Painel SESMT</span></div>
+                <span className="text-[10px] font-semibold text-muted-foreground">Visão geral</span>
+              </div>
+              <div className="grid gap-3 p-4 sm:grid-cols-3">
+                {[
+                  [ShieldCheck, "Status geral", "Aptidão e alertas"],
+                  [CalendarCheck2, "Vencimentos", "ASO e treinamentos"],
+                  [BarChart3, "Indicadores", "Acompanhamento mensal"],
+                ].map(([Icon, title, text]) => {
+                  const PreviewIcon = Icon as typeof ShieldCheck;
+                  return <div key={String(title)} className="rounded-md border border-border bg-background/60 p-3"><PreviewIcon className="mb-6 h-5 w-5 text-primary" /><div className="text-xs font-bold">{String(title)}</div><div className="mt-1 text-[10px] text-muted-foreground">{String(text)}</div></div>;
+                })}
+              </div>
+              <div className="grid gap-3 px-4 pb-4 sm:grid-cols-[1.35fr_0.65fr]">
+                <div className="rounded-md border border-border bg-background/60 p-4">
+                  <div className="mb-5 flex items-center justify-between"><span className="text-[11px] font-bold">Evolução da conformidade</span><span className="text-[9px] text-muted-foreground">Últimos meses</span></div>
+                  <div className="flex h-28 items-end gap-2 border-b border-l border-border/70 px-2">
+                    {[38, 52, 46, 68, 62, 82, 76, 92].map((height, index) => <div key={index} className="flex-1 rounded-t-sm bg-primary/80" style={{ height: `${height}%`, opacity: 0.45 + index * 0.06 }} />)}
+                  </div>
+                </div>
+                <div className="rounded-md border border-border bg-background/60 p-4">
+                  <div className="text-[11px] font-bold">Próximas ações</div>
+                  <div className="mt-4 space-y-3">
+                    {["Exames ocupacionais", "Treinamentos", "Inspeções"].map((label, index) => <div key={label} className="flex items-center gap-2"><CheckCircle2 className={`h-3.5 w-3.5 ${index === 0 ? "text-primary" : "text-muted-foreground"}`} /><span className="text-[10px] text-foreground/75">{label}</span></div>)}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="border-b border-border bg-card/45">
+        <div className="mx-auto grid max-w-7xl gap-px px-6 py-8 md:grid-cols-4 md:px-14">
+          {[
+            [Building2, "Um só lugar", "Empresas, pessoas e histórico conectados"],
+            [ShieldCheck, "Rastreabilidade", "Registros, responsáveis e evidências"],
+            [WifiOff, "Continuidade", "Rotinas essenciais disponíveis mesmo offline"],
+            [FileCheck2, "Menos papel", "Documentos gerados e consultados no sistema"],
+          ].map(([Icon, title, text]) => {
+            const BenefitIcon = Icon as typeof Building2;
+            return <div key={String(title)} className="flex gap-3 px-4 py-4"><BenefitIcon className="mt-0.5 h-5 w-5 shrink-0 text-primary" /><div><div className="text-sm font-bold">{String(title)}</div><p className="mt-1 text-xs leading-relaxed text-muted-foreground">{String(text)}</p></div></div>;
+          })}
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-6 py-20 md:px-14">
+        <div className="max-w-2xl">
+          <div className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Rotina com clareza</div>
+          <h2 className="heading-display mt-3 text-3xl font-semibold md:text-4xl">O sistema mostra o que exige atenção.</h2>
+          <p className="mt-4 text-sm leading-relaxed text-muted-foreground md:text-base">Alertas deixam de ficar escondidos em planilhas. O painel diário organiza o trabalho por prioridade e leva cada responsável direto à pendência.</p>
+        </div>
+        <div className="mt-10 grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="overflow-hidden rounded-lg border border-border bg-card shadow-xl">
+            <div className="flex items-center justify-between border-b border-border px-5 py-4"><div><div className="text-sm font-black">O que fazer hoje?</div><div className="mt-1 text-[10px] text-muted-foreground">Prioridades organizadas automaticamente</div></div><CalendarCheck2 className="h-5 w-5 text-primary" /></div>
+            <div className="grid gap-3 p-5 sm:grid-cols-2">
+              {["Exames e ASOs", "Documentos de terceiros", "DDS e integrações", "EPI e autorizações"].map((title, index) => <div key={title} className="flex min-h-20 items-start gap-3 rounded-md border border-border bg-background/50 p-3"><div className={`mt-0.5 h-2.5 w-2.5 rounded-full ${index < 2 ? "bg-destructive" : "bg-primary"}`} /><div><div className="text-xs font-bold">{title}</div><div className="mt-1 text-[10px] leading-relaxed text-muted-foreground">Pendências, prazos e acesso à ação necessária</div></div></div>)}
+            </div>
+          </div>
+          <div className="space-y-6">
+            {["Prioriza o dia", "Evita vencimentos", "Distribui responsabilidades"].map((title, index) => <div key={title} className="flex gap-4"><div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-primary/30 bg-primary/10 text-sm font-black text-primary">0{index + 1}</div><div><h3 className="font-bold">{title}</h3><p className="mt-1 text-sm leading-relaxed text-muted-foreground">{index === 0 ? "Reúne as tarefas críticas para começar o expediente sabendo onde agir." : index === 1 ? "Antecipa ASOs, treinamentos, documentos e inspeções antes do prazo." : "Cada registro guarda responsável, andamento, evidência e conclusão."}</p></div></div>)}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-y border-border bg-card/35">
+        <div className="mx-auto max-w-7xl px-6 py-20 md:px-14">
+          <div className="text-center"><div className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Do campo à gestão</div><h2 className="heading-display mt-3 text-3xl font-semibold md:text-4xl">Uma plataforma, várias rotinas de SST.</h2></div>
+          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {cloudFeatures.map(({ icon: Icon, title, text, to }) => (
+              <Link key={title} to={to} className="group rounded-lg border border-border bg-background/45 p-5 transition-colors hover:border-primary/55 hover:bg-accent/40">
+                <div className="flex items-start justify-between gap-4"><div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary"><Icon className="h-5 w-5" /></div><ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" /></div>
+                <h3 className="mt-5 text-sm font-black">{title}</h3><p className="mt-2 text-xs leading-relaxed text-muted-foreground">{text}</p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-6 py-20 md:px-14">
+        <div className="grid items-center gap-10 lg:grid-cols-[0.82fr_1.18fr]">
+          <div><div className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Capacitação sob controle</div><h2 className="heading-display mt-3 text-3xl font-semibold md:text-4xl">Treinamentos ligados à função e aos riscos.</h2><p className="mt-4 text-sm leading-relaxed text-muted-foreground md:text-base">A matriz mostra o que cada pessoa precisa realizar, o que está válido, a vencer, vencido ou programado. Os filtros ajudam a agir por empresa, função e situação.</p><Link to="/app/matriz-treinamento" className="mt-6 inline-flex items-center gap-2 text-sm font-black text-primary">Abrir matriz de treinamento <ArrowRight className="h-4 w-4" /></Link></div>
+          <div className="overflow-hidden rounded-lg border border-border bg-card shadow-xl">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3"><div className="flex items-center gap-2 text-xs font-black"><GraduationCap className="h-4 w-4 text-primary" /> Matriz de Treinamento</div><div className="flex gap-2"><span className="rounded-sm border border-border px-2 py-1 text-[9px] text-muted-foreground">Empresa</span><span className="rounded-sm border border-border px-2 py-1 text-[9px] text-muted-foreground">Situação</span></div></div>
+            <div className="overflow-x-auto p-4"><div className="min-w-[520px]"><div className="grid grid-cols-[1.4fr_repeat(5,1fr)] gap-1 text-center text-[9px] font-bold text-muted-foreground"><div className="text-left">FUNÇÃO</div>{["NR-01", "NR-06", "NR-10", "NR-33", "NR-35"].map((nr) => <div key={nr}>{nr}</div>)}</div>{["Técnico de segurança", "Eletricista", "Operador", "Supervisor"].map((role, row) => <div key={role} className="mt-1 grid grid-cols-[1.4fr_repeat(5,1fr)] gap-1"><div className="flex min-h-9 items-center rounded-sm bg-muted/50 px-2 text-[9px] font-semibold">{role}</div>{Array.from({ length: 5 }, (_, col) => { const state = (row + col) % 4; return <div key={col} className={`min-h-9 rounded-sm ${state === 0 ? "bg-primary/80" : state === 1 ? "bg-chart-3/70" : state === 2 ? "bg-destructive/70" : "bg-chart-2/70"}`} />; })}</div>)}</div></div>
+          </div>
+        </div>
+      </section>
+
+      <section className="border-t border-border [background:var(--cta-grad)]">
+        <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-6 px-6 py-12 md:flex-row md:items-center md:px-14">
+          <div><div className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">SIGMO</div><h2 className="heading-display mt-2 text-2xl font-semibold text-foreground md:text-3xl">Informação certa para prevenir, decidir e comprovar.</h2></div>
+          <Link to="/app/painel" className="inline-flex shrink-0 items-center gap-2 rounded-md bg-primary px-6 py-3 text-sm font-black text-primary-foreground">Entrar no painel <ArrowRight className="h-4 w-4" /></Link>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function DmnHome({ isModerator }: HomeProps) {
   return (
     <div className="h-full overflow-y-auto custom-scrollbar bg-[#f1f5f9]">
       {/* HERO */}
