@@ -101,21 +101,18 @@ function CascosPage() {
     <div className="container mx-auto p-4 md:p-6 max-w-7xl">
       <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-red-700 to-red-900 text-white flex items-center justify-center shadow-md">
+          <div className="h-10 w-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-md">
             <Ship className="h-5 w-5" />
           </div>
           <div>
             <h1 className="text-xl font-black tracking-tight">{rotuloCascos}</h1>
             <p className="text-xs text-muted-foreground">
-              Cadastro de cascos para uso em PTE, APR e demais documentos.
+              Cadastro usado em PT, APR, inspeções e demais documentos.
             </p>
           </div>
         </div>
-        <Button
-          onClick={() => { setEditing(null); setOpen(true); }}
-          className="bg-red-700 hover:bg-red-800 text-white"
-        >
-          <Plus className="h-4 w-4 mr-1" /> Novo Casco
+        <Button onClick={() => { setEditing(null); setOpen(true); }}>
+          <Plus className="h-4 w-4 mr-1" /> {novo} {rotuloSingular}
         </Button>
       </div>
 
