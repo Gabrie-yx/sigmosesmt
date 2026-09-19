@@ -310,7 +310,7 @@ export function AplicarModeloLoteDialog({
           <div className="flex gap-2">
             <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={aplicar.isPending}>Cancelar</Button>
             <Button
-              className="bg-[#991b1b] hover:bg-[#7f1d1d]"
+              className="bg-[color:var(--btn-brand)] hover:bg-[color:var(--btn-brand-hover)]"
               disabled={!modeloId || cascoIds.length === 0 || aplicar.isPending}
               onClick={() => aplicar.mutate()}
             >

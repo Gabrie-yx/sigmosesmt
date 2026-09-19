@@ -118,6 +118,19 @@
   --flare-2: rgba(249, 115, 22, 0.20);
   --flare-3: rgba(239, 68, 68, 0.10);
   --brand-glow: rgba(200, 16, 46, 0.35);
+  /* Casco do app (sidebar, fundo, barra do topo) — vinho DMN */
+  --shell-grad: linear-gradient(180deg, #5a0f22 0%, #3a0a18 45%, #1f0610 100%);
+  --shell-radial: radial-gradient(ellipse at top, #5a0f22 0%, #3a0a18 40%, #1f0610 100%);
+  --topbar-grad: linear-gradient(180deg, #a01818 0%, #7f1212 100%);
+  --hero-grad: linear-gradient(135deg, rgba(11,18,32,0.95) 0%, rgba(127,29,29,0.85) 50%, rgba(11,18,32,0.95) 100%);
+  --hero-flare: radial-gradient(ellipse at top right, rgba(220,38,38,0.25), transparent 60%);
+  --section-grad: linear-gradient(135deg, #3b0a14 0%, #5b0f1c 50%, #2a060d 100%);
+  --section-grad-alt: linear-gradient(135deg, #2a060d 0%, #5b0f1c 50%, #3b0a14 100%);
+  --cta-grad: linear-gradient(90deg, #0b1220 0%, #7f1d1d 50%, #0b1220 100%);
+  --on-light-brand: #7f1d1d;
+  --btn-brand: #991b1b;
+  --btn-brand-hover: #7f1d1d;
+  --edge-brand: rgba(160,24,24,0.7);
 }
 
 /* ============================================================
@@ -158,6 +171,19 @@
   --flare-2: rgba(141, 198, 63, 0.20);
   --flare-3: rgba(141, 198, 63, 0.10);
   --brand-glow: rgba(20, 152, 214, 0.45);
+  /* Casco do app — azul profundo + verde-lima EnviCorp */
+  --shell-grad: linear-gradient(180deg, #0d4d6e 0%, #08293c 45%, #03131c 100%);
+  --shell-radial: radial-gradient(ellipse at top, #0d4d6e 0%, #08293c 40%, #03131c 100%);
+  --topbar-grad: linear-gradient(180deg, #1498d6 0%, #0d6fa0 100%);
+  --hero-grad: linear-gradient(135deg, rgba(3,19,28,0.95) 0%, rgba(20,152,214,0.75) 50%, rgba(3,19,28,0.95) 100%);
+  --hero-flare: radial-gradient(ellipse at top right, rgba(141,198,63,0.28), transparent 60%);
+  --section-grad: linear-gradient(135deg, #062534 0%, #0d4d6e 50%, #03131c 100%);
+  --section-grad-alt: linear-gradient(135deg, #03131c 0%, #0d4d6e 50%, #062534 100%);
+  --cta-grad: linear-gradient(90deg, #03131c 0%, #1498d6 50%, #03131c 100%);
+  --on-light-brand: #0d6fa0;
+  --btn-brand: #1498d6;
+  --btn-brand-hover: #0d6fa0;
+  --edge-brand: rgba(20,152,214,0.7);
 }
 
 .dark {
@@ -1703,3 +1729,9 @@ body:where(.theme-cloud *) { color-scheme: dark; }
   0%, 100% { box-shadow: 0 0 0 0 rgba(141,198,63,0.0), 0 8px 24px -10px rgba(20,152,214,0.45); }
   50%      { box-shadow: 0 0 0 4px rgba(141,198,63,0.18), 0 12px 32px -8px rgba(20,152,214,0.70); }
 }
+
+/* Casco do app: fundo, barra do topo e faixa da sidebar seguem o tema ativo */
+.app-shell { background: var(--shell-radial); }
+.app-shell::before { background: var(--topbar-grad); }
+.app-topbar { background: var(--topbar-grad); }
+.app-topbar::before { background: var(--topbar-grad); }

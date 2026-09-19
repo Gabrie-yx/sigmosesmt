@@ -1144,7 +1144,7 @@ function CompanyForm({
             <Input value={maskCNPJ(editing?.matriz_cnpj ?? "")} onChange={(e) => setEditing({ ...editing, matriz_cnpj: maskCNPJ(e.target.value) })} placeholder="00.000.000/0001-00" maxLength={18} inputMode="numeric" className="bg-slate-50 mt-1" />
           </div>
         </div>
-        <Button type="submit" disabled={saving} className="mt-4 bg-[#991b1b] hover:bg-[#7f1d1d] text-white text-xs font-black uppercase tracking-widest px-8 py-4 h-auto rounded-xl shadow-lg">
+        <Button type="submit" disabled={saving} className="mt-4 bg-[color:var(--btn-brand)] hover:bg-[color:var(--btn-brand-hover)] text-white text-xs font-black uppercase tracking-widest px-8 py-4 h-auto rounded-xl shadow-lg">
           Salvar Dados da Empresa
         </Button>
       </form>

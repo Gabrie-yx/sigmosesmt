@@ -21,8 +21,8 @@ function HomePage() {
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: `url(${shipyardImg})` }}
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0b1220]/95 via-[#7f1d1d]/85 to-[#0b1220]/95" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(220,38,38,0.25),transparent_60%)]" />
+        <div className="absolute inset-0 [background:var(--hero-grad)]" />
+        <div className="absolute inset-0 [background:var(--hero-flare)]" />
 
         <div className="relative px-6 md:px-14 py-16 md:py-24 max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-[1.4fr_1fr] gap-12 items-center">
@@ -54,7 +54,7 @@ function HomePage() {
                 {isModerator && (
                   <Link
                     to="/app/hoje"
-                    className="group inline-flex items-center gap-2 px-7 py-4 rounded-xl bg-white text-[#7f1d1d] text-sm font-black uppercase tracking-widest shadow-2xl hover:-translate-y-0.5 transition-all"
+                    className="group inline-flex items-center gap-2 px-7 py-4 rounded-xl bg-white text-[color:var(--on-light-brand)] text-sm font-black uppercase tracking-widest shadow-2xl hover:-translate-y-0.5 transition-all"
                   >
                     <CalendarCheck2 className="h-5 w-5" />
                     O que fazer hoje?
@@ -112,7 +112,7 @@ function HomePage() {
       {/* MISSÃO · VISÃO · VALORES */}
       <section className="relative overflow-hidden">
         {/* fundo vermelho/vinho com brilhos */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#3b0a14] via-[#5b0f1c] to-[#2a060d]" />
+        <div className="absolute inset-0 [background:var(--section-grad)]" />
         <div className="absolute inset-0 opacity-40 pointer-events-none">
           <div className="absolute -top-32 -left-20 w-96 h-96 rounded-full bg-red-600/30 blur-3xl" />
           <div className="absolute -bottom-32 -right-20 w-96 h-96 rounded-full bg-amber-500/20 blur-3xl" />
@@ -188,7 +188,7 @@ function HomePage() {
 
       {/* SOBRE NÓS */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#2a060d] via-[#5b0f1c] to-[#3b0a14]" />
+        <div className="absolute inset-0 [background:var(--section-grad-alt)]" />
         <div className="absolute inset-0 opacity-50 pointer-events-none">
           <div className="absolute -top-24 right-1/4 w-[28rem] h-[28rem] rounded-full bg-red-600/30 blur-3xl" />
           <div className="absolute -bottom-24 left-1/4 w-[28rem] h-[28rem] rounded-full bg-amber-500/20 blur-3xl" />
@@ -254,7 +254,7 @@ function HomePage() {
 
       {/* FOOTER STRIP */}
       <section className="px-6 md:px-14 pb-12 max-w-7xl mx-auto">
-        <div className="bg-gradient-to-r from-[#0b1220] via-[#7f1d1d] to-[#0b1220] rounded-2xl p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
+        <div className="[background:var(--cta-grad)] rounded-2xl p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
           <div>
             <div className="text-[10px] font-black uppercase tracking-[0.3em] text-red-200 mb-2">
               Sistema Integrado de Gestão Modular
@@ -265,7 +265,7 @@ function HomePage() {
           </div>
           <Link
             to="/app/painel"
-            className="group inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-white text-[#7f1d1d] text-xs font-black uppercase tracking-widest shadow-xl hover:-translate-y-0.5 transition-all"
+            className="group inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-white text-[color:var(--on-light-brand)] text-xs font-black uppercase tracking-widest shadow-xl hover:-translate-y-0.5 transition-all"
           >
             Entrar no Painel
             <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />

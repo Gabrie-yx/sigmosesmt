@@ -57,7 +57,7 @@ function AppLayout() {
         className="flex min-h-screen items-center justify-center text-sm text-rose-100/80"
         style={{
           background:
-            "linear-gradient(180deg, #5a0f22 0%, #3a0a18 45%, #1f0610 100%)",
+            "var(--shell-grad)",
         }}
       >
         Carregando…
@@ -70,7 +70,7 @@ function AppLayout() {
     return (
       <div
         className="min-h-screen flex items-center justify-center px-6 text-slate-100"
-        style={{ background: "linear-gradient(180deg, #5a0f22 0%, #3a0a18 45%, #1f0610 100%)" }}
+        style={{ background: "var(--shell-grad)" }}
       >
         <div className="max-w-sm text-center space-y-4">
           <ShieldAlert className="h-12 w-12 text-amber-400 mx-auto" />
@@ -90,7 +90,7 @@ function AppLayout() {
     return (
       <div
         className="min-h-screen flex items-center justify-center px-6 text-slate-100"
-        style={{ background: "linear-gradient(180deg, #5a0f22 0%, #3a0a18 45%, #1f0610 100%)" }}
+        style={{ background: "var(--shell-grad)" }}
       >
         <div className="max-w-sm text-center space-y-4">
           <ShieldAlert className="h-12 w-12 text-amber-400 mx-auto" />
@@ -120,7 +120,7 @@ function AppLayout() {
     return (
       <div
         className="min-h-screen flex items-center justify-center px-6 text-slate-100"
-        style={{ background: "linear-gradient(180deg, #5a0f22 0%, #3a0a18 45%, #1f0610 100%)" }}
+        style={{ background: "var(--shell-grad)" }}
       >
         <div className="max-w-md text-center space-y-4">
           <ShieldAlert className="h-12 w-12 text-amber-400 mx-auto" />
@@ -154,7 +154,7 @@ function AppLayout() {
 
   return (
     <SidebarProvider defaultOpen={false}>
-      <div className="app-glass-scope relative min-h-screen flex w-full bg-[radial-gradient(ellipse_at_top,_#5a0f22_0%,_#3a0a18_40%,_#1f0610_100%)] before:pointer-events-none before:fixed before:inset-x-0 before:top-0 before:z-20 before:h-14 before:bg-gradient-to-b before:from-[#a01818] before:to-[#7f1212] before:content-['']">
+      <div className="app-glass-scope app-shell relative min-h-screen flex w-full before:pointer-events-none before:fixed before:inset-x-0 before:top-0 before:z-20 before:h-14 before:content-['']">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <AppHeader />

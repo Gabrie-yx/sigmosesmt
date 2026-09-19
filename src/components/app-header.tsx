@@ -53,7 +53,7 @@ export function AppHeader() {
   }
 
   return (
-    <header className="bg-header sticky top-0 z-30 shadow-md bg-gradient-to-b from-[#a01818] to-[#7f1212] relative overflow-visible before:absolute before:inset-y-0 before:right-full before:w-[var(--sidebar-width-icon,3rem)] before:bg-gradient-to-b before:from-[#a01818] before:to-[#7f1212] before:content-['']">
+    <header className="app-topbar sticky top-0 z-30 shadow-md relative overflow-visible before:absolute before:inset-y-0 before:right-full before:w-[var(--sidebar-width-icon,3rem)] before:content-['']">
       <div className="flex h-14 items-center gap-2 px-2 md:gap-3 md:px-4">
         {/* Hambúrguer mobile — abre a sidebar como drawer */}
         <button

@@ -101,7 +101,7 @@ function PgrPage() {
     <div className="h-full flex flex-col bg-slate-50">
       <header className="px-6 pt-5 pb-3 border-b border-rose-100 bg-gradient-to-r from-rose-50 via-white to-amber-50 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-gradient-to-br from-rose-600 to-[#7f1212] text-white shadow">
+          <div className="p-2 rounded-lg [background:var(--topbar-grad)] text-white shadow">
             <ShieldAlert className="h-5 w-5" />
           </div>
           <div>

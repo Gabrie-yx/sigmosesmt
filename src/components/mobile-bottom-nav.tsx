@@ -42,7 +42,7 @@ export function MobileBottomNav() {
   return (
     <nav
       aria-label="Navegação rápida"
-      className="md:hidden fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-gradient-to-b from-[#7f1212] to-[#5a0d0d] shadow-[0_-8px_24px_-8px_rgba(0,0,0,0.5)] backdrop-blur-md"
+      className="md:hidden fixed inset-x-0 bottom-0 z-40 border-t border-white/10 [background:var(--topbar-grad)] shadow-[0_-8px_24px_-8px_rgba(0,0,0,0.5)] backdrop-blur-md"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
       <div className="flex items-stretch">

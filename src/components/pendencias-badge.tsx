@@ -128,7 +128,7 @@ export function PendenciasBadge() {
         <Bell className="h-4 w-4" />
         {totalGeral > 0 && (
           <span className={cn(
-            "absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-black flex items-center justify-center shadow-md ring-2 ring-[#7f1212] text-white",
+            "absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-black flex items-center justify-center shadow-md ring-2 ring-[color:var(--btn-brand-hover)] text-white",
             cor,
             temCritico && "animate-pulse",
           )}>

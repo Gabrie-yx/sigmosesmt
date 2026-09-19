@@ -272,7 +272,7 @@ function ExtraSabadoMobilePage() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 pb-20">
       {/* Header sticky */}
-      <header className="sticky top-0 z-20 bg-gradient-to-b from-[#7f1212] to-[#5a0f22] px-4 py-3 shadow-lg">
+      <header className="sticky top-0 z-20 [background:var(--topbar-grad)] px-4 py-3 shadow-lg">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <div className="text-[10px] font-black uppercase tracking-widest text-rose-200/80">{tipoLabel}</div>
