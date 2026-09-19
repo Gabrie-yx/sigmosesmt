@@ -104,7 +104,26 @@ function CentroConfiguracao() {
           <TabsTrigger value="ramo" className="gap-2">
             <Sparkles className="h-4 w-4" /> Ramo
           </TabsTrigger>
+          <TabsTrigger value="campos" className="gap-2">
+            <ListPlus className="h-4 w-4" /> Campos das Unidades
+          </TabsTrigger>
         </TabsList>
+
+        {/* ----------------- CAMPOS DAS UNIDADES ----------------- */}
+        <TabsContent value="campos" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Monte o formulário das suas unidades</CardTitle>
+              <CardDescription>
+                Identificação, empresa, status e datas são fixos (o resto do sistema depende
+                deles). Todo o resto você cria aqui: tipo, máscara, obrigatoriedade, aba e ordem.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CamposBuilder rotuloPlural={rotuloUnidades} />
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {/* ----------------- VOCABULÁRIO ----------------- */}
         <TabsContent value="vocabulario" className="mt-4 space-y-4">
