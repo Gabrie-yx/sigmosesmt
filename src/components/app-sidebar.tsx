@@ -77,6 +77,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
+import { IS_BACKEND_LOCAL } from "@/integrations/supabase/client";
 
 type LeafItem = { to: string; label: string; icon?: typeof CalendarCheck2; children?: LeafItem[] };
 type LockedItem = { key: string; label: string; icon?: typeof CalendarCheck2 };
@@ -307,14 +308,17 @@ export function AppSidebar() {
   const esconderHoraExtraDuplicada = isExtraSabadoMarcador && !isAdmin;
   const semHoraExtraDuplicada = (item: LeafItem) =>
     !esconderHoraExtraDuplicada || !item.to.includes("/hora-extra");
+  // Na NUVEM os módulos operacionais do estaleiro ficam ocultos (código intacto).
+  // No servidor DMN (IS_BACKEND_LOCAL) tudo continua aparecendo normalmente.
+  const moduloOcultoNaNuvem = !IS_BACKEND_LOCAL;
   const canSesmt = isAdmin || hasModule("sesmt");
   const canEstoque = isAdmin || hasModule("estoque");
-  const canProducao = isAdmin || hasModule("producao");
-  const canCompras = isAdmin || hasModule("compras") || roles.includes("compras");
+  const canProducao = !moduloOcultoNaNuvem && (isAdmin || hasModule("producao"));
+  const canCompras = !moduloOcultoNaNuvem && (isAdmin || hasModule("compras") || roles.includes("compras"));
   const canUsuarios = isAdmin || hasModule("usuarios");
-  const canAdministrativo = isAdmin || hasModule("administrativo" as any);
+  const canAdministrativo = !moduloOcultoNaNuvem && (isAdmin || hasModule("administrativo" as any));
   const canAlmoxarifado = isAdmin || hasModule("almoxarifado" as any);
-  const canPortaria = isAdmin || hasModule("portaria" as any);
+  const canPortaria = !moduloOcultoNaNuvem && (isAdmin || hasModule("portaria" as any));
 
   // Filtra grupos/itens pelo controle granular de menus
   const visibleSesmtGroups = SESMT_GROUPS
@@ -334,7 +338,9 @@ export function AppSidebar() {
   const visibleCompras = COMPRAS_ITEMS.filter((i) => hasMenu(i.to) && semHoraExtraDuplicada(i));
   const visibleAdministrativo = ADMINISTRATIVO_ITEMS.filter((i) => hasMenu(i.to));
   const visibleAlmoxarifado = ALMOXARIFADO_ITEMS.filter((i) => hasMenu(i.to) && semHoraExtraDuplicada(i));
-  const visibleManutencao = MANUTENCAO_ITEMS.filter((i) => hasMenu(i.to) && semHoraExtraDuplicada(i));
+  const visibleManutencao = moduloOcultoNaNuvem
+    ? []
+    : MANUTENCAO_ITEMS.filter((i) => hasMenu(i.to) && semHoraExtraDuplicada(i));
   const visiblePortaria = PORTARIA_ITEMS.filter((i) => hasMenu(i.to));
 
   // Todos os grupos iniciam RECOLHIDOS e abrem apenas ao passar o mouse
@@ -758,7 +764,7 @@ export function AppSidebar() {
         )}
 
         {/* COZINHA — item solto, abaixo de Portaria, liberação via user_menu_access */}
-        {(isAdmin || hasMenu("/app/cozinha")) && (
+        {!moduloOcultoNaNuvem && (isAdmin || hasMenu("/app/cozinha")) && (
           <SidebarGroup>
             <SidebarGroupContent>
               <SidebarMenu>
