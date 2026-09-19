@@ -63,11 +63,12 @@ export function useConfigSistema() {
       try {
         const { data: u } = await supabase.auth.getUser();
         await supabase.from("audit_logs").insert({
+          table_name: "empresa_config",
           action: "UPDATE",
-          entity: "empresa_config",
-          entity_id: atual.id ?? null,
+          record_id: atual.id ?? null,
           user_id: u?.user?.id ?? null,
-          detalhes: novo,
+          user_email: u?.user?.email ?? null,
+          new_data: novo as never,
         } as never);
       } catch {
         /* auditoria best-effort */
