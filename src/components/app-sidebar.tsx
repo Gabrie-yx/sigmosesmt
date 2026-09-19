@@ -308,17 +308,18 @@ export function AppSidebar() {
   const esconderHoraExtraDuplicada = isExtraSabadoMarcador && !isAdmin;
   const semHoraExtraDuplicada = (item: LeafItem) =>
     !esconderHoraExtraDuplicada || !item.to.includes("/hora-extra");
-  // Na NUVEM os módulos operacionais do estaleiro ficam ocultos (código intacto).
+  // Na NUVEM quem manda é o Centro de Configuração (tabela empresa_config).
   // No servidor DMN (IS_BACKEND_LOCAL) tudo continua aparecendo normalmente.
+  const ligado = (m: string) => moduloAtivo(m as any);
   const moduloOcultoNaNuvem = !IS_BACKEND_LOCAL;
   const canSesmt = isAdmin || hasModule("sesmt");
-  const canEstoque = isAdmin || hasModule("estoque");
-  const canProducao = !moduloOcultoNaNuvem && (isAdmin || hasModule("producao"));
-  const canCompras = !moduloOcultoNaNuvem && (isAdmin || hasModule("compras") || roles.includes("compras"));
+  const canEstoque = ligado("estoque") && (isAdmin || hasModule("estoque"));
+  const canProducao = ligado("producao") && (isAdmin || hasModule("producao"));
+  const canCompras = ligado("compras") && (isAdmin || hasModule("compras") || roles.includes("compras"));
   const canUsuarios = isAdmin || hasModule("usuarios");
-  const canAdministrativo = !moduloOcultoNaNuvem && (isAdmin || hasModule("administrativo" as any));
-  const canAlmoxarifado = isAdmin || hasModule("almoxarifado" as any);
-  const canPortaria = !moduloOcultoNaNuvem && (isAdmin || hasModule("portaria" as any));
+  const canAdministrativo = ligado("administrativo") && (isAdmin || hasModule("administrativo" as any));
+  const canAlmoxarifado = ligado("almoxarifado") && (isAdmin || hasModule("almoxarifado" as any));
+  const canPortaria = ligado("portaria") && (isAdmin || hasModule("portaria" as any));
 
   // Filtra grupos/itens pelo controle granular de menus
   const visibleSesmtGroups = SESMT_GROUPS
