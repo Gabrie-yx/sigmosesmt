@@ -94,8 +94,6 @@ function CascosPage() {
 
   const empresaName = (id: string | null) =>
     companies.find((c: any) => c.id === id)?.name ?? "—";
-  const encarregadoName = (id: string | null) =>
-    employees.find((e: any) => e.id === id)?.nome ?? "—";
 
   return (
     <div className="container mx-auto p-4 md:p-6 max-w-7xl">
