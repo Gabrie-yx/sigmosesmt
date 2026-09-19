@@ -141,7 +141,7 @@ function CloudHome({ isModerator }: HomeProps) {
             [FileCheck2, "Menos papel", "Documentos gerados e consultados no sistema"],
           ].map(([Icon, title, text]) => {
             const BenefitIcon = Icon as typeof Building2;
-            return <div key={String(title)} className="flex gap-3 px-4 py-4"><BenefitIcon className="mt-0.5 h-5 w-5 shrink-0 text-primary" /><div><div className="text-sm font-bold">{String(title)}</div><p className="mt-1 text-xs leading-relaxed text-muted-foreground">{String(text)}</p></div></div>;
+            return <div key={String(title)} className="flex gap-3 px-4 py-4"><BenefitIcon className="mt-0.5 h-6 w-6 shrink-0 text-primary" /><div><div className="text-base font-bold">{String(title)}</div><p className="mt-1 text-sm leading-relaxed text-muted-foreground">{String(text)}</p></div></div>;
           })}
         </div>
       </section>
