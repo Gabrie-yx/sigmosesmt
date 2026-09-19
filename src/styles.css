@@ -115,6 +115,41 @@
   --status-inativo: oklch(0.7 0.02 260);
 }
 
+/* ============================================================
+   TEMA CLOUD (multissegmento) — paleta EnviCorp
+   Verde-lima #8DC63F + Azul #1498D6 extraídos do logotipo.
+   Aplicado SOMENTE na nuvem: o html raiz recebe theme-cloud
+   quando IS_BACKEND_LOCAL é false. O servidor DMN mantém
+   :root (vinho) intacto via theme-dmn.
+   ============================================================ */
+.theme-cloud {
+  --primary: oklch(0.79 0.20 131);           /* verde-lima EnviCorp */
+  --primary-foreground: oklch(0.16 0.05 131);
+  --ring: oklch(0.79 0.20 131);
+  --accent: oklch(0.30 0.10 228 / 0.55);     /* vidro azulado */
+  --accent-foreground: oklch(0.97 0.01 228);
+  --secondary: oklch(0.24 0.06 228 / 0.55);
+  --secondary-foreground: oklch(0.95 0.01 228);
+  /* Marca: verde como cor principal, azul como apoio */
+  --brand: oklch(0.79 0.20 131);
+  --brand-dark: oklch(0.66 0.17 131);
+  --brand-foreground: oklch(0.16 0.05 131);
+  --brand-soft: oklch(0.94 0.06 131);
+  --brand-text: oklch(0.85 0.15 131);
+  --header: oklch(0.55 0.13 228);            /* azul EnviCorp no header */
+  --header-foreground: oklch(0.99 0 0);
+  --sidebar-primary: oklch(0.79 0.20 131);
+  --sidebar-primary-foreground: oklch(0.16 0.05 131);
+  --sidebar-accent: oklch(0.30 0.10 228 / 0.45);
+  --sidebar-ring: oklch(0.79 0.20 131);
+  /* Gráficos: abre com verde/azul da marca */
+  --chart-1: oklch(0.79 0.20 131);
+  --chart-2: oklch(0.66 0.145 228);
+  --chart-3: oklch(0.828 0.189 84.429);
+  --chart-4: oklch(0.6 0.118 184.704);
+  --chart-5: oklch(0.769 0.188 70.08);
+}
+
 .dark {
   --background: oklch(0.129 0.042 264.695);
   --foreground: oklch(0.984 0.003 247.858);
