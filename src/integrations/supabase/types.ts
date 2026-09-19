@@ -1997,6 +1997,7 @@ export type Database = {
       cascos: {
         Row: {
           armador: string | null
+          campos_extras: Json
           comprimento_total: number | null
           created_at: string
           data_fim: string | null
@@ -2016,6 +2017,7 @@ export type Database = {
         }
         Insert: {
           armador?: string | null
+          campos_extras?: Json
           comprimento_total?: number | null
           created_at?: string
           data_fim?: string | null
@@ -2035,6 +2037,7 @@ export type Database = {
         }
         Update: {
           armador?: string | null
+          campos_extras?: Json
           comprimento_total?: number | null
           created_at?: string
           data_fim?: string | null
@@ -13474,6 +13477,75 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "training_matrix_courses"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      unidade_campos: {
+        Row: {
+          aba: string
+          aba_ordem: number
+          ajuda: string | null
+          ativo: boolean
+          chave: string
+          company_id: string | null
+          created_at: string
+          id: string
+          label: string
+          mostrar_lista: boolean
+          obrigatorio: boolean
+          opcoes: Json
+          ordem: number
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          aba?: string
+          aba_ordem?: number
+          ajuda?: string | null
+          ativo?: boolean
+          chave: string
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          label: string
+          mostrar_lista?: boolean
+          obrigatorio?: boolean
+          opcoes?: Json
+          ordem?: number
+          tipo?: string
+          updated_at?: string
+        }
+        Update: {
+          aba?: string
+          aba_ordem?: number
+          ajuda?: string | null
+          ativo?: boolean
+          chave?: string
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          label?: string
+          mostrar_lista?: boolean
+          obrigatorio?: boolean
+          opcoes?: Json
+          ordem?: number
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "unidade_campos_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unidade_campos_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "v_contratada_dossie_status"
+            referencedColumns: ["company_id"]
           },
         ]
       }

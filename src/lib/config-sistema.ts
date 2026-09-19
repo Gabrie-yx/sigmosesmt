@@ -56,7 +56,10 @@ export const ROTULOS_PADRAO: RotuloDef[] = [
   },
 ];
 
-export type RotulosMap = Partial<Record<RotuloKey, { singular?: string; plural?: string }>>;
+export type Genero = "o" | "a";
+export type RotulosMap = Partial<
+  Record<RotuloKey, { singular?: string; plural?: string; genero?: Genero }>
+>;
 export type ModulosMap = Partial<Record<AppModule, boolean>>;
 
 export type EmpresaConfig = {
@@ -83,6 +86,16 @@ export function rotuloDe(
   const custom = cfg.rotulos?.[key]?.[forma];
   const txt = (custom ?? "").trim();
   return txt || padrao[forma];
+}
+
+/** Gênero do rótulo, para escrever "Nova Obra" / "Novo Casco". */
+export function generoDe(cfg: Pick<EmpresaConfig, "rotulos">, key: RotuloKey): Genero {
+  return cfg.rotulos?.[key]?.genero ?? "o";
+}
+
+/** "Novo"/"Nova" conforme o gênero. */
+export function artigoNovo(g: Genero): string {
+  return g === "a" ? "Nova" : "Novo";
 }
 
 // ---- Módulos que podem ser ligados/desligados na nuvem ----

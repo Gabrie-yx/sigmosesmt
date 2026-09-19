@@ -1,5 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useRotulo } from "@/hooks/use-config-sistema";
+import { useConfigSistema } from "@/hooks/use-config-sistema";
+import { useUnidadeCampos } from "@/hooks/use-unidade-campos";
+import { artigoNovo } from "@/lib/config-sistema";
+import { formatarValor } from "@/lib/campos-dinamicos";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,7 +25,12 @@ export const Route = createFileRoute("/app/cascos")({
 });
 
 function CascosPage() {
-  const rotuloCascos = useRotulo("casco", "plural");
+  const { rotulo, genero } = useConfigSistema();
+  const rotuloCascos = rotulo("casco", "plural");
+  const rotuloSingular = rotulo("casco", "singular");
+  const novo = artigoNovo(genero("casco"));
+  const { campos } = useUnidadeCampos(null);
+  const colunasExtras = campos.filter((c) => c.ativo && c.mostrar_lista).slice(0, 4);
   const qc = useQueryClient();
   const { isAdmin } = useAuth();
   const [open, setOpen] = useState(false);
@@ -70,7 +78,7 @@ function CascosPage() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["cascos"] });
-      toast.success("Casco excluído");
+      toast.success(`${rotuloSingular} excluído`);
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -86,28 +94,23 @@ function CascosPage() {
 
   const empresaName = (id: string | null) =>
     companies.find((c: any) => c.id === id)?.name ?? "—";
-  const encarregadoName = (id: string | null) =>
-    employees.find((e: any) => e.id === id)?.nome ?? "—";
 
   return (
     <div className="container mx-auto p-4 md:p-6 max-w-7xl">
       <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-red-700 to-red-900 text-white flex items-center justify-center shadow-md">
+          <div className="h-10 w-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-md">
             <Ship className="h-5 w-5" />
           </div>
           <div>
             <h1 className="text-xl font-black tracking-tight">{rotuloCascos}</h1>
             <p className="text-xs text-muted-foreground">
-              Cadastro de cascos para uso em PTE, APR e demais documentos.
+              Cadastro usado em PT, APR, inspeções e demais documentos.
             </p>
           </div>
         </div>
-        <Button
-          onClick={() => { setEditing(null); setOpen(true); }}
-          className="bg-red-700 hover:bg-red-800 text-white"
-        >
-          <Plus className="h-4 w-4 mr-1" /> Novo Casco
+        <Button onClick={() => { setEditing(null); setOpen(true); }}>
+          <Plus className="h-4 w-4 mr-1" /> {novo} {rotuloSingular}
         </Button>
       </div>
 
@@ -132,7 +135,9 @@ function CascosPage() {
                 <TableHead className="w-28">Número</TableHead>
                 <TableHead>Nome</TableHead>
                 <TableHead>Empresa Responsável</TableHead>
-                <TableHead>Encarregado</TableHead>
+                {colunasExtras.map((col) => (
+                  <TableHead key={col.id}>{col.label}</TableHead>
+                ))}
                 <TableHead className="w-28">Início</TableHead>
                 <TableHead className="w-28">Fim Previsto</TableHead>
                 <TableHead className="w-24">Status</TableHead>
@@ -142,15 +147,15 @@ function CascosPage() {
             <TableBody>
               {isLoading && (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-6 text-muted-foreground text-xs">
+                  <TableCell colSpan={7 + colunasExtras.length} className="text-center py-6 text-muted-foreground text-xs">
                     Carregando…
                   </TableCell>
                 </TableRow>
               )}
               {!isLoading && filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground text-xs">
-                    Nenhum casco cadastrado.
+                  <TableCell colSpan={7 + colunasExtras.length} className="text-center py-8 text-muted-foreground text-xs">
+                    Nenhum registro cadastrado.
                   </TableCell>
                 </TableRow>
               )}
@@ -159,7 +164,11 @@ function CascosPage() {
                   <TableCell className="font-bold">{c.numero}</TableCell>
                   <TableCell>{c.nome ?? "—"}</TableCell>
                   <TableCell className="text-xs">{empresaName(c.empresa_responsavel_id)}</TableCell>
-                  <TableCell className="text-xs">{encarregadoName(c.encarregado_id)}</TableCell>
+                  {colunasExtras.map((col) => (
+                    <TableCell key={col.id} className="text-xs">
+                      {formatarValor(col, (c.campos_extras as any)?.[col.chave])}
+                    </TableCell>
+                  ))}
                   <TableCell className="text-xs">
                     {c.data_inicio ? formatDateBR(c.data_inicio) : "—"}
                   </TableCell>
@@ -194,9 +203,9 @@ function CascosPage() {
                         size="icon"
                         variant="ghost"
                         onClick={() => {
-                          if (confirm(`Excluir casco ${c.numero}?`)) del.mutate(c.id);
+                          if (confirm(`Excluir ${rotuloSingular} ${c.numero}?`)) del.mutate(c.id);
                         }}
-                        className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                        className="h-8 w-8 text-destructive hover:bg-destructive/10"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
@@ -210,14 +219,19 @@ function CascosPage() {
       </Card>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-3xl max-h-[88vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editing ? `Editar Casco ${editing.numero}` : "Novo Casco"}</DialogTitle>
+            <DialogTitle>
+              {editing
+                ? `Editar ${rotuloSingular} ${editing.numero}`
+                : `${novo} ${rotuloSingular}`}
+            </DialogTitle>
           </DialogHeader>
           <CascoForm
             initial={editing}
             companies={companies as any}
             employees={employees as any}
+            rotuloSingular={rotuloSingular}
             onDone={() => {
               setOpen(false);
               qc.invalidateQueries({ queryKey: ["cascos"] });

@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Settings2, Tags, LayoutGrid, Sparkles, Lock } from "lucide-react";
+import { Settings2, Tags, LayoutGrid, Sparkles, Lock, ListPlus } from "lucide-react";
+import { CamposBuilder } from "@/components/config/campos-builder";
 import { useAuth } from "@/hooks/use-auth";
 import { useConfigSistema } from "@/hooks/use-config-sistema";
 import {
@@ -42,7 +43,8 @@ export const Route = createFileRoute("/app/configuracoes/sistema")({
 
 function CentroConfiguracao() {
   const { isAdmin } = useAuth();
-  const { config, carregando, salvar } = useConfigSistema();
+  const { config, carregando, salvar, rotulo } = useConfigSistema();
+  const rotuloUnidades = rotulo("casco", "plural");
 
   const [rotulos, setRotulos] = useState<RotulosMap>({});
   const [modulos, setModulos] = useState<ModulosMap>({});
@@ -104,7 +106,26 @@ function CentroConfiguracao() {
           <TabsTrigger value="ramo" className="gap-2">
             <Sparkles className="h-4 w-4" /> Ramo
           </TabsTrigger>
+          <TabsTrigger value="campos" className="gap-2">
+            <ListPlus className="h-4 w-4" /> Campos das Unidades
+          </TabsTrigger>
         </TabsList>
+
+        {/* ----------------- CAMPOS DAS UNIDADES ----------------- */}
+        <TabsContent value="campos" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Monte o formulário das suas unidades</CardTitle>
+              <CardDescription>
+                Identificação, empresa, status e datas são fixos (o resto do sistema depende
+                deles). Todo o resto você cria aqui: tipo, máscara, obrigatoriedade, aba e ordem.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CamposBuilder rotuloPlural={rotuloUnidades} />
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {/* ----------------- VOCABULÁRIO ----------------- */}
         <TabsContent value="vocabulario" className="mt-4 space-y-4">
@@ -118,7 +139,7 @@ function CentroConfiguracao() {
             </CardHeader>
             <CardContent className="space-y-5">
               {ROTULOS_PADRAO.map((r) => (
-                <div key={r.key} className="grid gap-3 md:grid-cols-[1fr_1fr_1fr] md:items-end">
+                <div key={r.key} className="grid gap-3 md:grid-cols-[1.4fr_1fr_1fr_0.9fr] md:items-end">
                   <div>
                     <p className="text-sm font-bold">{r.descricao}</p>
                     <p className="text-xs text-muted-foreground">
@@ -150,6 +171,22 @@ function CentroConfiguracao() {
                         }))
                       }
                     />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Gênero (Novo / Nova)</Label>
+                    <select
+                      className="h-9 w-full rounded-md border bg-background px-2 text-sm"
+                      value={rotulos[r.key]?.genero ?? "o"}
+                      onChange={(e) =>
+                        setRotulos((p) => ({
+                          ...p,
+                          [r.key]: { ...p[r.key], genero: e.target.value as "o" | "a" },
+                        }))
+                      }
+                    >
+                      <option value="o">Masculino — "Novo"</option>
+                      <option value="a">Feminino — "Nova"</option>
+                    </select>
                   </div>
                 </div>
               ))}

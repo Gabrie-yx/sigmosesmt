@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase, IS_BACKEND_LOCAL } from "@/integrations/supabase/client";
 import {
   CONFIG_VAZIA,
+  generoDe,
   moduloLigado,
   rotuloDe,
   type EmpresaConfig,
@@ -85,6 +86,7 @@ export function useConfigSistema() {
     carregando: q.isLoading,
     salvar,
     rotulo: (k: RotuloKey, forma: "singular" | "plural" = "singular") => rotuloDe(cfg, k, forma),
+    genero: (k: RotuloKey) => generoDe(cfg, k),
     // No servidor DMN nada é desligado por configuração: tudo continua ligado.
     moduloAtivo: (m: AppModule) => (IS_BACKEND_LOCAL ? true : moduloLigado(cfg, m)),
   };
