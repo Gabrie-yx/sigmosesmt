@@ -327,7 +327,7 @@ export function AppSidebar() {
         .filter((i) => hasMenu(i.to))
         .map((i) => ({
           ...i,
-          label: i.to === "/app/cascos" ? rotulo("casco", "plural") : i.label,
+          label: i.label,
           children: i.children?.filter((c) => hasMenu(c.to)),
         })),
     }))
@@ -338,7 +338,7 @@ export function AppSidebar() {
   const visibleCompras = COMPRAS_ITEMS.filter((i) => hasMenu(i.to) && semHoraExtraDuplicada(i));
   const visibleAdministrativo = ADMINISTRATIVO_ITEMS.filter((i) => hasMenu(i.to));
   const visibleAlmoxarifado = ALMOXARIFADO_ITEMS.filter((i) => hasMenu(i.to) && semHoraExtraDuplicada(i));
-  const visibleManutencao = !ligado("manutencao")
+  const visibleManutencao = moduloOcultoNaNuvem
     ? []
     : MANUTENCAO_ITEMS.filter((i) => hasMenu(i.to) && semHoraExtraDuplicada(i));
   const visiblePortaria = PORTARIA_ITEMS.filter((i) => hasMenu(i.to));
@@ -764,7 +764,7 @@ export function AppSidebar() {
         )}
 
         {/* COZINHA — item solto, abaixo de Portaria, liberação via user_menu_access */}
-        {ligado("cozinha") && (isAdmin || hasMenu("/app/cozinha")) && (
+        {!moduloOcultoNaNuvem && (isAdmin || hasMenu("/app/cozinha")) && (
           <SidebarGroup>
             <SidebarGroupContent>
               <SidebarMenu>
