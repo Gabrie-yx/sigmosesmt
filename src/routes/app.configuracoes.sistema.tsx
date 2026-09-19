@@ -43,7 +43,8 @@ export const Route = createFileRoute("/app/configuracoes/sistema")({
 
 function CentroConfiguracao() {
   const { isAdmin } = useAuth();
-  const { config, carregando, salvar } = useConfigSistema();
+  const { config, carregando, salvar, rotulo } = useConfigSistema();
+  const rotuloUnidades = rotulo("casco", "plural");
 
   const [rotulos, setRotulos] = useState<RotulosMap>({});
   const [modulos, setModulos] = useState<ModulosMap>({});
