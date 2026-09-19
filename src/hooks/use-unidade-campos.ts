@@ -40,7 +40,10 @@ export function useUnidadeCampos(companyId?: string | null) {
     staleTime: 30_000,
   });
 
-  const invalidar = () => qc.invalidateQueries({ queryKey: ["unidade-campos"] });
+  const invalidar = () => {
+    qc.invalidateQueries({ queryKey: ["unidade-campos"] });
+    qc.invalidateQueries({ queryKey: ["unidade-campos-admin"] });
+  };
 
   const salvar = useMutation({
     mutationFn: async (campo: Partial<CampoDef> & { id?: string }) => {
@@ -99,6 +102,27 @@ export function useUnidadeCampos(companyId?: string | null) {
     onSuccess: invalidar,
   });
 
+  /** Exclusão definitiva de um campo (some da lista de vez). */
+  const excluir = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("unidade_campos").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: invalidar,
+  });
+
+  /** Apaga TODOS os campos (globais e por empresa). */
+  const excluirTodos = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("unidade_campos")
+        .delete()
+        .not("id", "is", null);
+      if (error) throw error;
+    },
+    onSuccess: invalidar,
+  });
+
   return {
     campos: q.data ?? [],
     carregando: q.isLoading,
@@ -106,6 +130,8 @@ export function useUnidadeCampos(companyId?: string | null) {
     reordenar,
     remover,
     reativar,
+    excluir,
+    excluirTodos,
   };
 }
 
