@@ -2,7 +2,6 @@ import { useLocation, Link } from "@tanstack/react-router";
 import { useAuth, type AppModule, type AppRole } from "@/hooks/use-auth";
 import { Lock } from "lucide-react";
 import { menuKeyForPath, MENU_BY_KEY } from "@/lib/menu-catalog";
-import { useConfigSistema } from "@/hooks/use-config-sistema";
 
 const PATH_TO_MODULE: { prefix: string; module: AppModule }[] = [
   { prefix: "/app/painel", module: "sesmt" },
