@@ -832,6 +832,16 @@ export function AppSidebar() {
                   Configurações
                 </div>
                 <nav className="flex flex-col gap-0.5">
+                  {isAdmin && (
+                    <Link
+                      to="/app/configuracoes/sistema"
+                      className="flex items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-muted data-[active=true]:bg-amber-100 data-[active=true]:text-red-900"
+                      data-active={isActive("/app/configuracoes/sistema") || undefined}
+                    >
+                      <Sparkles className="h-4 w-4 text-red-700" />
+                      <span>Centro de Configuração</span>
+                    </Link>
+                  )}
                   {showUsers && (
                     <Link
                       to="/app/users"
