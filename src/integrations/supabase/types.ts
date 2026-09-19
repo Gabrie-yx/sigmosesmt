@@ -5644,6 +5644,51 @@ export type Database = {
           },
         ]
       }
+      empresa_config: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          id: string
+          modulos: Json
+          ramo: string | null
+          rotulos: Json
+          updated_at: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          modulos?: Json
+          ramo?: string | null
+          rotulos?: Json
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          modulos?: Json
+          ramo?: string | null
+          rotulos?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "empresa_config_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "empresa_config_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "v_contratada_dossie_status"
+            referencedColumns: ["company_id"]
+          },
+        ]
+      }
       empresas_terceiras: {
         Row: {
           ativo: boolean
