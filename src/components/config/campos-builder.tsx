@@ -144,11 +144,19 @@ export function CamposBuilder({ rotuloPlural }: { rotuloPlural: string }) {
           <h3 className="text-sm font-black uppercase">Campos de {rotuloPlural}</h3>
           <p className="text-xs text-muted-foreground">
             Crie os campos do formulário, organize em abas e arraste para reordenar.
+            Marque "Mostrar na listagem" para o campo virar coluna da tabela.
           </p>
         </div>
-        <Button size="sm" onClick={abrirNovo}>
-          <Plus className="h-4 w-4 mr-1" /> Novo campo
-        </Button>
+        <div className="flex items-center gap-2">
+          {campos.length > 0 && (
+            <Button size="sm" variant="outline" className="text-destructive" onClick={() => setLimparTudo(true)}>
+              <Trash2 className="h-4 w-4 mr-1" /> Apagar todos
+            </Button>
+          )}
+          <Button size="sm" onClick={abrirNovo}>
+            <Plus className="h-4 w-4 mr-1" /> Novo campo
+          </Button>
+        </div>
       </div>
 
       {carregando && <p className="text-xs text-muted-foreground">Carregando…</p>}
