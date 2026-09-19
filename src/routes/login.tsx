@@ -124,14 +124,14 @@ function LoginPage() {
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-black px-4 py-10">
       {/* Glows */}
-      <div className="pointer-events-none absolute -top-32 -left-32 h-96 w-96 rounded-full bg-red-600/30 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-orange-500/20 blur-3xl" />
-      <div className="pointer-events-none absolute top-1/2 left-1/2 h-[28rem] w-[28rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-red-500/10 blur-3xl" />
+      <div className="pointer-events-none absolute -top-32 -left-32 h-96 w-96 rounded-full blur-3xl" style={{ background: "var(--flare-1)" }} />
+      <div className="pointer-events-none absolute -bottom-32 -right-32 h-96 w-96 rounded-full blur-3xl" style={{ background: "var(--flare-2)" }} />
+      <div className="pointer-events-none absolute top-1/2 left-1/2 h-[28rem] w-[28rem] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl" style={{ background: "var(--flare-3)" }} />
 
       <Card className="relative w-full max-w-md border border-white/15 bg-white/10 text-white shadow-2xl shadow-red-900/30 backdrop-blur-xl">
         <CardHeader className="text-center space-y-3 pb-4">
           <div className="mx-auto relative h-36 w-36">
-            <img src={sigmoLogo} alt="SIGMO" className="h-36 w-36 object-contain drop-shadow-[0_0_20px_rgba(239,68,68,0.35)]" />
+            <img src={sigmoLogo} alt="SIGMO" className="h-36 w-36 object-contain" style={{ filter: "drop-shadow(0 0 20px var(--brand-glow))" }} />
           </div>
           <CardDescription className="text-[11px] font-bold uppercase tracking-widest text-slate-300">
             Sistema Integrado de Gestão Modular
@@ -146,10 +146,10 @@ function LoginPage() {
               <div className="space-y-2">
                 <Label className="text-slate-200">Código MFA (6 dígitos)</Label>
                 <Input value={mfaCode} onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                  className="font-mono text-lg tracking-widest bg-white/10 border-white/20 text-white placeholder:text-slate-400 focus-visible:ring-red-500/60"
+                  className="font-mono text-lg tracking-widest bg-white/10 border-white/20 text-white placeholder:text-slate-400 focus-visible:ring-ring/60"
                   placeholder="000000" maxLength={6} autoFocus />
               </div>
-              <Button type="submit" className="w-full bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-900/50" disabled={loading || mfaCode.length !== 6}>
+              <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-black/40" disabled={loading || mfaCode.length !== 6}>
                 {loading ? "Verificando..." : "Confirmar"}
               </Button>
               <button type="button" onClick={() => { setMfaChallengeId(null); setMfaFactorId(null); setMfaCode(""); supabase.auth.signOut(); }}
@@ -162,14 +162,14 @@ function LoginPage() {
             <div className="space-y-2">
               <Label htmlFor="email" className="text-slate-200">Email</Label>
               <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required
-                className="bg-white/10 border-white/20 text-white placeholder:text-slate-400 focus-visible:ring-red-500/60" />
+                className="bg-white/10 border-white/20 text-white placeholder:text-slate-400 focus-visible:ring-ring/60" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password" className="text-slate-200">Senha</Label>
               <PasswordInput id="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6}
-                className="bg-white/10 border-white/20 text-white placeholder:text-slate-400 focus-visible:ring-red-500/60" />
+                className="bg-white/10 border-white/20 text-white placeholder:text-slate-400 focus-visible:ring-ring/60" />
             </div>
-            <Button type="submit" className="w-full bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-900/50" disabled={loading}>
+            <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-black/40" disabled={loading}>
               {loading ? "Aguarde..." : "Entrar"}
             </Button>
             <div className="text-center">
