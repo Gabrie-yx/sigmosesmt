@@ -56,7 +56,10 @@ export const ROTULOS_PADRAO: RotuloDef[] = [
   },
 ];
 
-export type RotulosMap = Partial<Record<RotuloKey, { singular?: string; plural?: string }>>;
+export type Genero = "o" | "a";
+export type RotulosMap = Partial<
+  Record<RotuloKey, { singular?: string; plural?: string; genero?: Genero }>
+>;
 export type ModulosMap = Partial<Record<AppModule, boolean>>;
 
 export type EmpresaConfig = {
