@@ -100,11 +100,23 @@ export const MODULOS_CONFIGURAVEIS: { key: AppModule; label: string; descricao: 
   { key: "cozinha", label: "Cozinha", descricao: "Refeições e controle da cozinha" },
 ];
 
+// Enquanto ninguém configurar nada, vale este padrão (estado atual da nuvem).
+export const MODULOS_PADRAO: ModulosMap = {
+  estoque: true,
+  almoxarifado: true,
+  producao: false,
+  compras: false,
+  administrativo: false,
+  manutencao: false,
+  portaria: false,
+  cozinha: false,
+};
+
 export function moduloLigado(cfg: Pick<EmpresaConfig, "modulos">, m: AppModule): boolean {
   if (MODULOS_FIXOS.includes(m)) return true;
   const v = cfg.modulos?.[m];
-  // Sem configuração = desligado na nuvem, para não reabrir o que já foi escondido.
-  return v === true;
+  if (typeof v === "boolean") return v;
+  return MODULOS_PADRAO[m] === true;
 }
 
 // ---- Pacotes de ramo (semente: só sugere, nunca sobrescreve sozinho) ----

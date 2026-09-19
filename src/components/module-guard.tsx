@@ -31,13 +31,15 @@ const MODULE_ROLE_BYPASS: Partial<Record<AppModule, AppRole[]>> = {
 
 export function ModuleRouteGuard({ children }: { children: React.ReactNode }) {
   const { hasModule, hasMenu, isAdmin, roles, loading, isExtraSabadoMarcador } = useAuth();
-  const { moduloAtivo } = useConfigSistema();
+  const { moduloAtivo, carregando: cfgCarregando } = useConfigSistema();
   const location = useLocation();
 
   // Módulo desligado no Centro de Configuração: ninguém entra, nem por URL.
-  const desligado = PATH_TO_MODULE.find(
-    (m) => location.pathname.startsWith(m.prefix) && !moduloAtivo(m.module),
-  );
+  const desligado = cfgCarregando
+    ? undefined
+    : PATH_TO_MODULE.find(
+        (m) => location.pathname.startsWith(m.prefix) && !moduloAtivo(m.module),
+      );
   if (desligado) {
     return (
       <div className="max-w-xl mx-auto mt-16 rounded-lg border bg-card p-8 text-center shadow-sm">
