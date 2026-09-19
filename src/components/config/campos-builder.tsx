@@ -32,12 +32,14 @@ const vazio = {
 };
 
 export function CamposBuilder({ rotuloPlural }: { rotuloPlural: string }) {
-  const { salvar, remover, reativar, reordenar } = useUnidadeCampos(null);
+  const { salvar, reativar, reordenar, excluir, excluirTodos } = useUnidadeCampos(null);
   const { campos, carregando } = useUnidadeCamposAdmin();
   const [open, setOpen] = useState(false);
   const [editando, setEditando] = useState<CampoDef | null>(null);
   const [form, setForm] = useState({ ...vazio });
   const [arrastando, setArrastando] = useState<string | null>(null);
+  const [aExcluir, setAExcluir] = useState<CampoDef | null>(null);
+  const [limparTudo, setLimparTudo] = useState(false);
 
   const abas = useMemo(() => {
     const m = new Map<string, CampoDef[]>();
