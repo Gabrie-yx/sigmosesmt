@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ShieldCheck, ShieldAlert, Trash2, KeyRound, LogOut, PenTool, Image as ImageIcon, Check, LayoutGrid } from "lucide-react";
+import { ShieldCheck, ShieldAlert, Trash2, KeyRound, LogOut, PenTool, Image as ImageIcon, Check, LayoutGrid, FileSignature } from "lucide-react";
 import { SignatureGallery } from "@/components/signature-gallery";
 import { toast } from "sonner";
 
