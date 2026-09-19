@@ -78,7 +78,7 @@ function CascosPage() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["cascos"] });
-      toast.success("Casco excluído");
+      toast.success(`${rotuloSingular} excluído`);
     },
     onError: (e: any) => toast.error(e.message),
   });
