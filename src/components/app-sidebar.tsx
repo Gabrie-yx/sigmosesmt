@@ -337,7 +337,9 @@ export function AppSidebar() {
   const visibleCompras = COMPRAS_ITEMS.filter((i) => hasMenu(i.to) && semHoraExtraDuplicada(i));
   const visibleAdministrativo = ADMINISTRATIVO_ITEMS.filter((i) => hasMenu(i.to));
   const visibleAlmoxarifado = ALMOXARIFADO_ITEMS.filter((i) => hasMenu(i.to) && semHoraExtraDuplicada(i));
-  const visibleManutencao = MANUTENCAO_ITEMS.filter((i) => hasMenu(i.to) && semHoraExtraDuplicada(i));
+  const visibleManutencao = moduloOcultoNaNuvem
+    ? []
+    : MANUTENCAO_ITEMS.filter((i) => hasMenu(i.to) && semHoraExtraDuplicada(i));
   const visiblePortaria = PORTARIA_ITEMS.filter((i) => hasMenu(i.to));
 
   // Todos os grupos iniciam RECOLHIDOS e abrem apenas ao passar o mouse
