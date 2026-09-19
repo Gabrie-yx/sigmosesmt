@@ -767,7 +767,7 @@ export function AppSidebar() {
         )}
 
         {/* COZINHA — item solto, abaixo de Portaria, liberação via user_menu_access */}
-        {!moduloOcultoNaNuvem && (isAdmin || hasMenu("/app/cozinha")) && (
+        {ligado("cozinha") && (isAdmin || hasMenu("/app/cozinha")) && (
           <SidebarGroup>
             <SidebarGroupContent>
               <SidebarMenu>
