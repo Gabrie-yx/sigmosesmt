@@ -221,12 +221,17 @@ function CascosPage() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{editing ? `Editar Casco ${editing.numero}` : "Novo Casco"}</DialogTitle>
+            <DialogTitle>
+              {editing
+                ? `Editar ${rotuloSingular} ${editing.numero}`
+                : `${novo} ${rotuloSingular}`}
+            </DialogTitle>
           </DialogHeader>
           <CascoForm
             initial={editing}
             companies={companies as any}
             employees={employees as any}
+            rotuloSingular={rotuloSingular}
             onDone={() => {
               setOpen(false);
               qc.invalidateQueries({ queryKey: ["cascos"] });
