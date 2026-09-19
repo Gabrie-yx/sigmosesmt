@@ -310,6 +310,62 @@ export function CamposBuilder({ rotuloPlural }: { rotuloPlural: string }) {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!aExcluir} onOpenChange={(v) => !v && setAExcluir(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir o campo "{aExcluir?.label}"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O campo some do formulário e da listagem. Essa ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                if (!aExcluir) return;
+                try {
+                  await excluir.mutateAsync(aExcluir.id);
+                  toast.success("Campo excluído");
+                } catch (e: any) {
+                  toast.error(e.message ?? "Erro ao excluir");
+                }
+                setAExcluir(null);
+              }}
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={limparTudo} onOpenChange={setLimparTudo}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Apagar todos os campos?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Todos os {campos.length} campos serão removidos e o formulário fica em branco
+              para você montar do zero.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                try {
+                  await excluirTodos.mutateAsync();
+                  toast.success("Campos apagados");
+                } catch (e: any) {
+                  toast.error(e.message ?? "Erro ao apagar");
+                }
+                setLimparTudo(false);
+              }}
+            >
+              Apagar tudo
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
