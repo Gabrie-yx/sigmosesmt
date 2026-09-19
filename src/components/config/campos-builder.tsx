@@ -10,6 +10,10 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { GripVertical, Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useUnidadeCampos, useUnidadeCamposAdmin } from "@/hooks/use-unidade-campos";
@@ -28,12 +32,14 @@ const vazio = {
 };
 
 export function CamposBuilder({ rotuloPlural }: { rotuloPlural: string }) {
-  const { salvar, remover, reativar, reordenar } = useUnidadeCampos(null);
+  const { salvar, reativar, reordenar, excluir, excluirTodos } = useUnidadeCampos(null);
   const { campos, carregando } = useUnidadeCamposAdmin();
   const [open, setOpen] = useState(false);
   const [editando, setEditando] = useState<CampoDef | null>(null);
   const [form, setForm] = useState({ ...vazio });
   const [arrastando, setArrastando] = useState<string | null>(null);
+  const [aExcluir, setAExcluir] = useState<CampoDef | null>(null);
+  const [limparTudo, setLimparTudo] = useState(false);
 
   const abas = useMemo(() => {
     const m = new Map<string, CampoDef[]>();
@@ -138,11 +144,19 @@ export function CamposBuilder({ rotuloPlural }: { rotuloPlural: string }) {
           <h3 className="text-sm font-black uppercase">Campos de {rotuloPlural}</h3>
           <p className="text-xs text-muted-foreground">
             Crie os campos do formulário, organize em abas e arraste para reordenar.
+            Marque "Mostrar na listagem" para o campo virar coluna da tabela.
           </p>
         </div>
-        <Button size="sm" onClick={abrirNovo}>
-          <Plus className="h-4 w-4 mr-1" /> Novo campo
-        </Button>
+        <div className="flex items-center gap-2">
+          {campos.length > 0 && (
+            <Button size="sm" variant="outline" className="text-destructive" onClick={() => setLimparTudo(true)}>
+              <Trash2 className="h-4 w-4 mr-1" /> Apagar todos
+            </Button>
+          )}
+          <Button size="sm" onClick={abrirNovo}>
+            <Plus className="h-4 w-4 mr-1" /> Novo campo
+          </Button>
+        </div>
       </div>
 
       {carregando && <p className="text-xs text-muted-foreground">Carregando…</p>}
@@ -183,24 +197,19 @@ export function CamposBuilder({ rotuloPlural }: { rotuloPlural: string }) {
               <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => abrirEdicao(c)}>
                 <Pencil className="h-3.5 w-3.5" />
               </Button>
-              {c.ativo ? (
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-8 w-8 text-destructive"
-                  onClick={() => {
-                    if (confirm(`Remover o campo "${c.label}"? Os valores já preenchidos ficam guardados.`)) {
-                      remover.mutate(c.id);
-                    }
-                  }}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              ) : (
+              {!c.ativo && (
                 <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => reativar.mutate(c.id)}>
                   <RotateCcw className="h-3.5 w-3.5" />
                 </Button>
               )}
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8 text-destructive"
+                onClick={() => setAExcluir(c)}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
             </div>
           ))}
         </Card>
@@ -301,6 +310,62 @@ export function CamposBuilder({ rotuloPlural }: { rotuloPlural: string }) {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!aExcluir} onOpenChange={(v) => !v && setAExcluir(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir o campo "{aExcluir?.label}"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O campo some do formulário e da listagem. Essa ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                if (!aExcluir) return;
+                try {
+                  await excluir.mutateAsync(aExcluir.id);
+                  toast.success("Campo excluído");
+                } catch (e: any) {
+                  toast.error(e.message ?? "Erro ao excluir");
+                }
+                setAExcluir(null);
+              }}
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={limparTudo} onOpenChange={setLimparTudo}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Apagar todos os campos?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Todos os {campos.length} campos serão removidos e o formulário fica em branco
+              para você montar do zero.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                try {
+                  await excluirTodos.mutateAsync();
+                  toast.success("Campos apagados");
+                } catch (e: any) {
+                  toast.error(e.message ?? "Erro ao apagar");
+                }
+                setLimparTudo(false);
+              }}
+            >
+              Apagar tudo
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
