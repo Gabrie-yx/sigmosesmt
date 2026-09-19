@@ -128,6 +128,9 @@
   --section-grad-alt: linear-gradient(135deg, #2a060d 0%, #5b0f1c 50%, #3b0a14 100%);
   --cta-grad: linear-gradient(90deg, #0b1220 0%, #7f1d1d 50%, #0b1220 100%);
   --on-light-brand: #7f1d1d;
+  --btn-brand: #991b1b;
+  --btn-brand-hover: #7f1d1d;
+  --edge-brand: rgba(160,24,24,0.7);
 }
 
 /* ============================================================
@@ -178,6 +181,9 @@
   --section-grad-alt: linear-gradient(135deg, #03131c 0%, #0d4d6e 50%, #062534 100%);
   --cta-grad: linear-gradient(90deg, #03131c 0%, #1498d6 50%, #03131c 100%);
   --on-light-brand: #0d6fa0;
+  --btn-brand: #1498d6;
+  --btn-brand-hover: #0d6fa0;
+  --edge-brand: rgba(20,152,214,0.7);
 }
 
 .dark {

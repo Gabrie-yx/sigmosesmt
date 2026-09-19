@@ -385,7 +385,7 @@ function TrainingsPage() {
                 <p className="text-[10px] text-slate-500 mt-1">PNG transparente recomendado — aparece no campo "ASSINATURA" da lista de presença.</p>
               </div>
 
-              <Button type="submit" disabled={save.isPending} className="w-full bg-[#991b1b] hover:bg-[#7f1d1d] text-xs font-black uppercase tracking-widest h-auto py-4 rounded-xl">
+              <Button type="submit" disabled={save.isPending} className="w-full bg-[color:var(--btn-brand)] hover:bg-[color:var(--btn-brand-hover)] text-xs font-black uppercase tracking-widest h-auto py-4 rounded-xl">
                 {editingId ? "Salvar Alterações" : "Cadastrar Treinamento"}
               </Button>
             </form>

@@ -1027,7 +1027,7 @@ function NovaTurmaForm({ courseId, course, turma, onClose, onSaved }: { courseId
 
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="ghost" onClick={onClose}>Cancelar</Button>
-            <Button type="submit" disabled={save.isPending} className="bg-[#991b1b] hover:bg-[#7f1d1d]">
+            <Button type="submit" disabled={save.isPending} className="bg-[color:var(--btn-brand)] hover:bg-[color:var(--btn-brand-hover)]">
               {isEdit ? <Pencil className="h-4 w-4 mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
               {isEdit ? "Salvar alterações" : "Cadastrar Turma"}
             </Button>
