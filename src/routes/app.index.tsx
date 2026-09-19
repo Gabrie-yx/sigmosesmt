@@ -100,8 +100,8 @@ function CloudHome({ isModerator }: HomeProps) {
             <div className="absolute -inset-4 rounded-2xl bg-primary/10 blur-2xl" />
             <div className="relative overflow-hidden rounded-lg border border-border/70 bg-card/95 shadow-2xl backdrop-blur-xl">
               <div className="flex h-11 items-center justify-between border-b border-border/70 px-4">
-                <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-primary" /><span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">Painel SESMT</span></div>
-                <span className="text-[10px] font-semibold text-muted-foreground">Visão geral</span>
+                <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-primary" /><span className="text-xs font-black uppercase tracking-[0.16em] text-muted-foreground">Painel SESMT</span></div>
+                <span className="text-xs font-semibold text-muted-foreground">Visão geral</span>
               </div>
               <div className="grid gap-3 p-4 sm:grid-cols-3">
                 {[
@@ -110,20 +110,20 @@ function CloudHome({ isModerator }: HomeProps) {
                   [BarChart3, "Indicadores", "Acompanhamento mensal"],
                 ].map(([Icon, title, text]) => {
                   const PreviewIcon = Icon as typeof ShieldCheck;
-                  return <div key={String(title)} className="rounded-md border border-border bg-background/60 p-3"><PreviewIcon className="mb-6 h-5 w-5 text-primary" /><div className="text-xs font-bold">{String(title)}</div><div className="mt-1 text-[10px] text-muted-foreground">{String(text)}</div></div>;
+                  return <div key={String(title)} className="rounded-md border border-border bg-background/60 p-4"><PreviewIcon className="mb-6 h-7 w-7 text-primary" /><div className="text-sm font-bold">{String(title)}</div><div className="mt-1.5 text-xs text-muted-foreground">{String(text)}</div></div>;
                 })}
               </div>
               <div className="grid gap-3 px-4 pb-4 sm:grid-cols-[1.35fr_0.65fr]">
                 <div className="rounded-md border border-border bg-background/60 p-4">
-                  <div className="mb-5 flex items-center justify-between"><span className="text-[11px] font-bold">Evolução da conformidade</span><span className="text-[9px] text-muted-foreground">Últimos meses</span></div>
+                  <div className="mb-5 flex items-center justify-between"><span className="text-sm font-bold">Evolução da conformidade</span><span className="text-xs text-muted-foreground">Últimos meses</span></div>
                   <div className="flex h-28 items-end gap-2 border-b border-l border-border/70 px-2">
                     {[38, 52, 46, 68, 62, 82, 76, 92].map((height, index) => <div key={index} className="flex-1 rounded-t-sm bg-primary/80" style={{ height: `${height}%`, opacity: 0.45 + index * 0.06 }} />)}
                   </div>
                 </div>
                 <div className="rounded-md border border-border bg-background/60 p-4">
-                  <div className="text-[11px] font-bold">Próximas ações</div>
+                  <div className="text-sm font-bold">Próximas ações</div>
                   <div className="mt-4 space-y-3">
-                    {["Exames ocupacionais", "Treinamentos", "Inspeções"].map((label, index) => <div key={label} className="flex items-center gap-2"><CheckCircle2 className={`h-3.5 w-3.5 ${index === 0 ? "text-primary" : "text-muted-foreground"}`} /><span className="text-[10px] text-foreground/75">{label}</span></div>)}
+                    {["Exames ocupacionais", "Treinamentos", "Inspeções"].map((label, index) => <div key={label} className="flex items-center gap-2"><CheckCircle2 className={`h-4 w-4 ${index === 0 ? "text-primary" : "text-muted-foreground"}`} /><span className="text-xs text-foreground/75">{label}</span></div>)}
                   </div>
                 </div>
               </div>
@@ -154,9 +154,9 @@ function CloudHome({ isModerator }: HomeProps) {
         </div>
         <div className="mt-10 grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="overflow-hidden rounded-lg border border-border bg-card shadow-xl">
-            <div className="flex items-center justify-between border-b border-border px-5 py-4"><div><div className="text-sm font-black">O que fazer hoje?</div><div className="mt-1 text-[10px] text-muted-foreground">Prioridades organizadas automaticamente</div></div><CalendarCheck2 className="h-5 w-5 text-primary" /></div>
+            <div className="flex items-center justify-between border-b border-border px-5 py-4"><div><div className="text-base font-black">O que fazer hoje?</div><div className="mt-1 text-xs text-muted-foreground">Prioridades organizadas automaticamente</div></div><CalendarCheck2 className="h-6 w-6 text-primary" /></div>
             <div className="grid gap-3 p-5 sm:grid-cols-2">
-              {["Exames e ASOs", "Documentos de terceiros", "DDS e integrações", "EPI e autorizações"].map((title, index) => <div key={title} className="flex min-h-20 items-start gap-3 rounded-md border border-border bg-background/50 p-3"><div className={`mt-0.5 h-2.5 w-2.5 rounded-full ${index < 2 ? "bg-destructive" : "bg-primary"}`} /><div><div className="text-xs font-bold">{title}</div><div className="mt-1 text-[10px] leading-relaxed text-muted-foreground">Pendências, prazos e acesso à ação necessária</div></div></div>)}
+              {["Exames e ASOs", "Documentos de terceiros", "DDS e integrações", "EPI e autorizações"].map((title, index) => <div key={title} className="flex min-h-20 items-start gap-3 rounded-md border border-border bg-background/50 p-3"><div className={`mt-0.5 h-3 w-3 rounded-full ${index < 2 ? "bg-destructive" : "bg-primary"}`} /><div><div className="text-sm font-bold">{title}</div><div className="mt-1 text-xs leading-relaxed text-muted-foreground">Pendências, prazos e acesso à ação necessária</div></div></div>)}
             </div>
           </div>
           <div className="space-y-6">
@@ -170,9 +170,9 @@ function CloudHome({ isModerator }: HomeProps) {
           <div className="text-center"><div className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Do campo à gestão</div><h2 className="heading-display mt-3 text-3xl font-semibold md:text-4xl">Uma plataforma, várias rotinas de SST.</h2></div>
           <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {cloudFeatures.map(({ icon: Icon, title, text, to }) => (
-              <Link key={title} to={to} className="group rounded-lg border border-border bg-background/45 p-5 transition-colors hover:border-primary/55 hover:bg-accent/40">
-                <div className="flex items-start justify-between gap-4"><div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary"><Icon className="h-5 w-5" /></div><ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" /></div>
-                <h3 className="mt-5 text-sm font-black">{title}</h3><p className="mt-2 text-xs leading-relaxed text-muted-foreground">{text}</p>
+              <Link key={title} to={to} className="group rounded-lg border border-border bg-background/45 p-6 transition-colors hover:border-primary/55 hover:bg-accent/40">
+                <div className="flex items-start justify-between gap-4"><div className="flex h-12 w-12 items-center justify-center rounded-md bg-primary/10 text-primary"><Icon className="h-7 w-7" /></div><ArrowRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" /></div>
+                <h3 className="mt-5 text-lg font-black">{title}</h3><p className="mt-2 text-sm leading-relaxed text-muted-foreground">{text}</p>
               </Link>
             ))}
           </div>
