@@ -284,6 +284,24 @@ function SecurityPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
+              <FileSignature className="h-5 w-5 text-slate-700" />
+              <CardTitle>Assinador de PDFs</CardTitle>
+            </div>
+            <CardDescription>
+              Assine documentos em PDF com a sua assinatura cadastrada e consulte o histórico de documentos assinados.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button variant="outline" onClick={() => navigate({ to: "/app/assinador" })}>
+              <FileSignature className="h-4 w-4 mr-2" />
+              Abrir assinador
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
               <KeyRound className="h-5 w-5 text-slate-700" />
               <CardTitle>Alterar senha</CardTitle>
             </div>
