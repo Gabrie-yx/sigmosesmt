@@ -1,8 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useConfigSistema } from "@/hooks/use-config-sistema";
-import { useUnidadeCampos } from "@/hooks/use-unidade-campos";
-import { artigoNovo } from "@/lib/config-sistema";
-import { formatarValor } from "@/lib/campos-dinamicos";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,12 +21,6 @@ export const Route = createFileRoute("/app/cascos")({
 });
 
 function CascosPage() {
-  const { rotulo, genero } = useConfigSistema();
-  const rotuloCascos = rotulo("casco", "plural");
-  const rotuloSingular = rotulo("casco", "singular");
-  const novo = artigoNovo(genero("casco"));
-  const { campos } = useUnidadeCampos(null);
-  const colunasExtras = campos.filter((c) => c.ativo && c.mostrar_lista).slice(0, 4);
   const qc = useQueryClient();
   const { isAdmin } = useAuth();
   const [open, setOpen] = useState(false);
@@ -78,7 +68,7 @@ function CascosPage() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["cascos"] });
-      toast.success(`${rotuloSingular} excluído`);
+      toast.success("Casco excluído");
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -103,14 +93,14 @@ function CascosPage() {
             <Ship className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-xl font-black tracking-tight">{rotuloCascos}</h1>
+            <h1 className="text-xl font-black tracking-tight">Cascos</h1>
             <p className="text-xs text-muted-foreground">
               Cadastro usado em PT, APR, inspeções e demais documentos.
             </p>
           </div>
         </div>
         <Button onClick={() => { setEditing(null); setOpen(true); }}>
-          <Plus className="h-4 w-4 mr-1" /> {novo} {rotuloSingular}
+          <Plus className="h-4 w-4 mr-1" /> Novo Casco
         </Button>
       </div>
 
@@ -135,9 +125,6 @@ function CascosPage() {
                 <TableHead className="w-28">Número</TableHead>
                 <TableHead>Nome</TableHead>
                 <TableHead>Empresa Responsável</TableHead>
-                {colunasExtras.map((col) => (
-                  <TableHead key={col.id}>{col.label}</TableHead>
-                ))}
                 <TableHead className="w-28">Início</TableHead>
                 <TableHead className="w-28">Fim Previsto</TableHead>
                 <TableHead className="w-24">Status</TableHead>
@@ -147,14 +134,14 @@ function CascosPage() {
             <TableBody>
               {isLoading && (
                 <TableRow>
-                  <TableCell colSpan={7 + colunasExtras.length} className="text-center py-6 text-muted-foreground text-xs">
+                  <TableCell colSpan={7} className="text-center py-6 text-muted-foreground text-xs">
                     Carregando…
                   </TableCell>
                 </TableRow>
               )}
               {!isLoading && filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7 + colunasExtras.length} className="text-center py-8 text-muted-foreground text-xs">
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground text-xs">
                     Nenhum registro cadastrado.
                   </TableCell>
                 </TableRow>
@@ -164,11 +151,6 @@ function CascosPage() {
                   <TableCell className="font-bold">{c.numero}</TableCell>
                   <TableCell>{c.nome ?? "—"}</TableCell>
                   <TableCell className="text-xs">{empresaName(c.empresa_responsavel_id)}</TableCell>
-                  {colunasExtras.map((col) => (
-                    <TableCell key={col.id} className="text-xs">
-                      {formatarValor(col, (c.campos_extras as any)?.[col.chave])}
-                    </TableCell>
-                  ))}
                   <TableCell className="text-xs">
                     {c.data_inicio ? formatDateBR(c.data_inicio) : "—"}
                   </TableCell>
@@ -203,7 +185,7 @@ function CascosPage() {
                         size="icon"
                         variant="ghost"
                         onClick={() => {
-                          if (confirm(`Excluir ${rotuloSingular} ${c.numero}?`)) del.mutate(c.id);
+                          if (confirm(`Excluir casco ${c.numero}?`)) del.mutate(c.id);
                         }}
                         className="h-8 w-8 text-destructive hover:bg-destructive/10"
                       >
@@ -222,16 +204,13 @@ function CascosPage() {
         <DialogContent className="max-w-3xl max-h-[88vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editing
-                ? `Editar ${rotuloSingular} ${editing.numero}`
-                : `${novo} ${rotuloSingular}`}
+              {editing ? `Editar Casco ${editing.numero}` : "Novo Casco"}
             </DialogTitle>
           </DialogHeader>
           <CascoForm
             initial={editing}
             companies={companies as any}
             employees={employees as any}
-            rotuloSingular={rotuloSingular}
             onDone={() => {
               setOpen(false);
               qc.invalidateQueries({ queryKey: ["cascos"] });
