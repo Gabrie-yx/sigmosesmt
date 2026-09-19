@@ -25,7 +25,12 @@ export const Route = createFileRoute("/app/cascos")({
 });
 
 function CascosPage() {
-  const rotuloCascos = useRotulo("casco", "plural");
+  const { rotulo, genero } = useConfigSistema();
+  const rotuloCascos = rotulo("casco", "plural");
+  const rotuloSingular = rotulo("casco", "singular");
+  const novo = artigoNovo(genero("casco"));
+  const { campos } = useUnidadeCampos(null);
+  const colunasExtras = campos.filter((c) => c.ativo && c.mostrar_lista).slice(0, 4);
   const qc = useQueryClient();
   const { isAdmin } = useAuth();
   const [open, setOpen] = useState(false);
