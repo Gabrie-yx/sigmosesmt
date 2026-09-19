@@ -30,7 +30,29 @@ const MODULE_ROLE_BYPASS: Partial<Record<AppModule, AppRole[]>> = {
 
 export function ModuleRouteGuard({ children }: { children: React.ReactNode }) {
   const { hasModule, hasMenu, isAdmin, roles, loading, isExtraSabadoMarcador } = useAuth();
+  const { moduloAtivo } = useConfigSistema();
   const location = useLocation();
+
+  // Módulo desligado no Centro de Configuração: ninguém entra, nem por URL.
+  const desligado = PATH_TO_MODULE.find(
+    (m) => location.pathname.startsWith(m.prefix) && !moduloAtivo(m.module),
+  );
+  if (desligado) {
+    return (
+      <div className="max-w-xl mx-auto mt-16 rounded-lg border bg-card p-8 text-center shadow-sm">
+        <Lock className="h-10 w-10 mx-auto text-amber-600 mb-3" />
+        <h2 className="text-lg font-bold mb-2">Módulo desligado</h2>
+        <p className="text-sm text-muted-foreground mb-4">
+          O módulo <span className="font-semibold">{desligado.module}</span> está desligado nas
+          configurações do sistema. Um administrador pode ligá-lo de novo no Centro de
+          Configuração — nada foi apagado.
+        </p>
+        <Link to="/app" className="text-sm font-bold underline">
+          Voltar ao início
+        </Link>
+      </div>
+    );
+  }
 
   // Always allow account/security and dashboard root
   const allowAlways = ["/app/conta", "/app"].some(
