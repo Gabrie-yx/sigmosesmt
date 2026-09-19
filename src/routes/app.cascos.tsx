@@ -137,7 +137,9 @@ function CascosPage() {
                 <TableHead className="w-28">Número</TableHead>
                 <TableHead>Nome</TableHead>
                 <TableHead>Empresa Responsável</TableHead>
-                <TableHead>Encarregado</TableHead>
+                {colunasExtras.map((col) => (
+                  <TableHead key={col.id}>{col.label}</TableHead>
+                ))}
                 <TableHead className="w-28">Início</TableHead>
                 <TableHead className="w-28">Fim Previsto</TableHead>
                 <TableHead className="w-24">Status</TableHead>
