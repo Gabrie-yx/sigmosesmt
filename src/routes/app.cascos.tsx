@@ -1,5 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useRotulo } from "@/hooks/use-config-sistema";
+import { useConfigSistema } from "@/hooks/use-config-sistema";
+import { useUnidadeCampos } from "@/hooks/use-unidade-campos";
+import { artigoNovo } from "@/lib/config-sistema";
+import { formatarValor } from "@/lib/campos-dinamicos";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
