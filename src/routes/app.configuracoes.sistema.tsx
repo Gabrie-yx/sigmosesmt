@@ -118,7 +118,7 @@ function CentroConfiguracao() {
             </CardHeader>
             <CardContent className="space-y-5">
               {ROTULOS_PADRAO.map((r) => (
-                <div key={r.key} className="grid gap-3 md:grid-cols-[1fr_1fr_1fr] md:items-end">
+                <div key={r.key} className="grid gap-3 md:grid-cols-[1.4fr_1fr_1fr_0.9fr] md:items-end">
                   <div>
                     <p className="text-sm font-bold">{r.descricao}</p>
                     <p className="text-xs text-muted-foreground">
