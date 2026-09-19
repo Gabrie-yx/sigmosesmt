@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase, IS_BACKEND_LOCAL } from "@/integrations/supabase/client";
 import {
   CONFIG_VAZIA,
+  generoDe,
   moduloLigado,
   rotuloDe,
   type EmpresaConfig,
