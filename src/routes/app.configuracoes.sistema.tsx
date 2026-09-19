@@ -151,6 +151,22 @@ function CentroConfiguracao() {
                       }
                     />
                   </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Gênero (Novo / Nova)</Label>
+                    <select
+                      className="h-9 w-full rounded-md border bg-background px-2 text-sm"
+                      value={rotulos[r.key]?.genero ?? "o"}
+                      onChange={(e) =>
+                        setRotulos((p) => ({
+                          ...p,
+                          [r.key]: { ...p[r.key], genero: e.target.value as "o" | "a" },
+                        }))
+                      }
+                    >
+                      <option value="o">Masculino — "Novo"</option>
+                      <option value="a">Feminino — "Nova"</option>
+                    </select>
+                  </div>
                 </div>
               ))}
               <div className="flex gap-2">
