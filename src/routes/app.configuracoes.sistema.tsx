@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Settings2, Tags, LayoutGrid, Sparkles, Lock } from "lucide-react";
+import { Settings2, Tags, LayoutGrid, Sparkles, Lock, ListPlus } from "lucide-react";
+import { CamposBuilder } from "@/components/config/campos-builder";
 import { useAuth } from "@/hooks/use-auth";
 import { useConfigSistema } from "@/hooks/use-config-sistema";
 import {
