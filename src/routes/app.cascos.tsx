@@ -203,9 +203,9 @@ function CascosPage() {
                         size="icon"
                         variant="ghost"
                         onClick={() => {
-                          if (confirm(`Excluir casco ${c.numero}?`)) del.mutate(c.id);
+                          if (confirm(`Excluir ${rotuloSingular} ${c.numero}?`)) del.mutate(c.id);
                         }}
-                        className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                        className="h-8 w-8 text-destructive hover:bg-destructive/10"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
