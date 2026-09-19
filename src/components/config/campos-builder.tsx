@@ -197,24 +197,19 @@ export function CamposBuilder({ rotuloPlural }: { rotuloPlural: string }) {
               <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => abrirEdicao(c)}>
                 <Pencil className="h-3.5 w-3.5" />
               </Button>
-              {c.ativo ? (
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-8 w-8 text-destructive"
-                  onClick={() => {
-                    if (confirm(`Remover o campo "${c.label}"? Os valores já preenchidos ficam guardados.`)) {
-                      remover.mutate(c.id);
-                    }
-                  }}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              ) : (
+              {!c.ativo && (
                 <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => reativar.mutate(c.id)}>
                   <RotateCcw className="h-3.5 w-3.5" />
                 </Button>
               )}
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8 text-destructive"
+                onClick={() => setAExcluir(c)}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
             </div>
           ))}
         </Card>
