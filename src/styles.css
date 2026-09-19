@@ -1655,3 +1655,41 @@
   .ss-row { gap: 10px; }
   .ss-row-date { gap: 18px; }
 }
+
+/* ============================================================
+   TEMA CLOUD — overrides de superfície (só na nuvem)
+   Substitui os flares vinho/vermelho da DMN por azul/verde.
+   ============================================================ */
+.theme-cloud body,
+body:where(.theme-cloud *) { color-scheme: dark; }
+.theme-cloud body {
+  background:
+    radial-gradient(1600px 900px at 15% 0%, rgba(20, 152, 214, 0.35), transparent 55%),
+    radial-gradient(1400px 900px at 95% 10%, rgba(141, 198, 63, 0.16), transparent 60%),
+    radial-gradient(1200px 800px at 50% 110%, rgba(6, 26, 30, 0.85), transparent 70%),
+    linear-gradient(160deg, #08202e 0%, #061826 40%, #04121c 70%, #020a10 100%);
+  background-attachment: fixed;
+}
+.theme-cloud .page-canvas {
+  background:
+    radial-gradient(1200px 600px at -10% -20%, rgba(20, 152, 214, 0.12), transparent 60%),
+    radial-gradient(900px 500px at 110% 10%, rgba(141, 198, 63, 0.10), transparent 60%);
+}
+.theme-cloud .surface-elevated-dark {
+  background: linear-gradient(160deg, #1498d6 0%, #0e6fa0 55%, #0a4f74 100%);
+  box-shadow:
+    0 1px 0 0 rgba(255,255,255,0.18) inset,
+    0 10px 30px -12px rgba(20,152,214,0.55),
+    0 2px 6px rgba(15,23,42,0.18);
+}
+.theme-cloud .avatar-ring {
+  background: conic-gradient(from 220deg, #8dc63f, #1498d6, #8dc63f);
+  box-shadow: 0 6px 16px -8px rgba(20,152,214,0.5);
+}
+.theme-cloud .nav-pill {
+  animation: nav-pill-glow-cloud 3.2s ease-in-out infinite;
+}
+@keyframes nav-pill-glow-cloud {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(141,198,63,0.0), 0 8px 24px -10px rgba(20,152,214,0.45); }
+  50%      { box-shadow: 0 0 0 4px rgba(141,198,63,0.18), 0 12px 32px -8px rgba(20,152,214,0.70); }
+}
