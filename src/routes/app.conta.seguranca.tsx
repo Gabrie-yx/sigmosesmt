@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ShieldCheck, ShieldAlert, Trash2, KeyRound, LogOut, PenTool, Image as ImageIcon, Check, LayoutGrid } from "lucide-react";
+import { ShieldCheck, ShieldAlert, Trash2, KeyRound, LogOut, PenTool, Image as ImageIcon, Check, LayoutGrid, FileSignature } from "lucide-react";
 import { SignatureGallery } from "@/components/signature-gallery";
 import { toast } from "sonner";
 
@@ -281,6 +281,24 @@ function SecurityPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <FileSignature className="h-5 w-5 text-slate-700" />
+              <CardTitle>Assinador de PDFs</CardTitle>
+            </div>
+            <CardDescription>
+              Assine documentos em PDF com a sua assinatura cadastrada e consulte o histórico de documentos assinados.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button variant="outline" onClick={() => navigate({ to: "/app/assinador" })}>
+              <FileSignature className="h-4 w-4 mr-2" />
+              Abrir assinador
+            </Button>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">

@@ -56,7 +56,6 @@ import { Route as AppOssIndexRouteImport } from './routes/app.oss.index'
 import { Route as AppEstoqueIndexRouteImport } from './routes/app.estoque.index'
 import { Route as AppEmployeesIndexRouteImport } from './routes/app.employees.index'
 import { Route as AppDdsIndexRouteImport } from './routes/app.dds.index'
-import { Route as AppCalIndexRouteImport } from './routes/app.cal.index'
 import { Route as AppSesmtVincularUsuariosRouteImport } from './routes/app.sesmt.vincular-usuarios'
 import { Route as AppSesmtTerceirosRouteImport } from './routes/app.sesmt.terceiros'
 import { Route as AppSesmtTemplatesDocumentosRouteImport } from './routes/app.sesmt.templates-documentos'
@@ -109,8 +108,6 @@ import { Route as AppConfiguracoesProdutividadeRouteImport } from './routes/app.
 import { Route as AppComprasRequisicoesRecebidasRouteImport } from './routes/app.compras.requisicoes-recebidas'
 import { Route as AppComprasFornecedoresRouteImport } from './routes/app.compras.fornecedores'
 import { Route as AppComprasDashboardRouteImport } from './routes/app.compras.dashboard'
-import { Route as AppCalPlanosRouteImport } from './routes/app.cal.planos'
-import { Route as AppCalIdRouteImport } from './routes/app.cal.$id'
 import { Route as AppAlmoxarifadoRequisicaoComprasRouteImport } from './routes/app.almoxarifado.requisicao-compras'
 import { Route as AppAdministrativoRequisicoesRecebidasRouteImport } from './routes/app.administrativo.requisicoes-recebidas'
 import { Route as AppAdministrativoMarcadoresHoraExtraRouteImport } from './routes/app.administrativo.marcadores-hora-extra'
@@ -375,11 +372,6 @@ const AppEmployeesIndexRoute = AppEmployeesIndexRouteImport.update({
 const AppDdsIndexRoute = AppDdsIndexRouteImport.update({
   id: '/dds/',
   path: '/dds/',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppCalIndexRoute = AppCalIndexRouteImport.update({
-  id: '/cal/',
-  path: '/cal/',
   getParentRoute: () => AppRoute,
 } as any)
 const AppSesmtVincularUsuariosRoute =
@@ -657,16 +649,6 @@ const AppComprasDashboardRoute = AppComprasDashboardRouteImport.update({
   path: '/compras/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
-const AppCalPlanosRoute = AppCalPlanosRouteImport.update({
-  id: '/cal/planos',
-  path: '/cal/planos',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppCalIdRoute = AppCalIdRouteImport.update({
-  id: '/cal/$id',
-  path: '/cal/$id',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppAlmoxarifadoRequisicaoComprasRoute =
   AppAlmoxarifadoRequisicaoComprasRouteImport.update({
     id: '/almoxarifado/requisicao-compras',
@@ -868,8 +850,6 @@ export interface FileRoutesByFullPath {
   '/app/administrativo/marcadores-hora-extra': typeof AppAdministrativoMarcadoresHoraExtraRoute
   '/app/administrativo/requisicoes-recebidas': typeof AppAdministrativoRequisicoesRecebidasRoute
   '/app/almoxarifado/requisicao-compras': typeof AppAlmoxarifadoRequisicaoComprasRoute
-  '/app/cal/$id': typeof AppCalIdRoute
-  '/app/cal/planos': typeof AppCalPlanosRoute
   '/app/compras/dashboard': typeof AppComprasDashboardRoute
   '/app/compras/fornecedores': typeof AppComprasFornecedoresRoute
   '/app/compras/requisicoes-recebidas': typeof AppComprasRequisicoesRecebidasRoute
@@ -922,7 +902,6 @@ export interface FileRoutesByFullPath {
   '/app/sesmt/templates-documentos': typeof AppSesmtTemplatesDocumentosRoute
   '/app/sesmt/terceiros': typeof AppSesmtTerceirosRoute
   '/app/sesmt/vincular-usuarios': typeof AppSesmtVincularUsuariosRoute
-  '/app/cal/': typeof AppCalIndexRoute
   '/app/dds/': typeof AppDdsIndexRoute
   '/app/employees/': typeof AppEmployeesIndexRoute
   '/app/estoque/': typeof AppEstoqueIndexRoute
@@ -995,8 +974,6 @@ export interface FileRoutesByTo {
   '/app/administrativo/marcadores-hora-extra': typeof AppAdministrativoMarcadoresHoraExtraRoute
   '/app/administrativo/requisicoes-recebidas': typeof AppAdministrativoRequisicoesRecebidasRoute
   '/app/almoxarifado/requisicao-compras': typeof AppAlmoxarifadoRequisicaoComprasRoute
-  '/app/cal/$id': typeof AppCalIdRoute
-  '/app/cal/planos': typeof AppCalPlanosRoute
   '/app/compras/dashboard': typeof AppComprasDashboardRoute
   '/app/compras/fornecedores': typeof AppComprasFornecedoresRoute
   '/app/compras/requisicoes-recebidas': typeof AppComprasRequisicoesRecebidasRoute
@@ -1048,7 +1025,6 @@ export interface FileRoutesByTo {
   '/app/sesmt/templates-documentos': typeof AppSesmtTemplatesDocumentosRoute
   '/app/sesmt/terceiros': typeof AppSesmtTerceirosRoute
   '/app/sesmt/vincular-usuarios': typeof AppSesmtVincularUsuariosRoute
-  '/app/cal': typeof AppCalIndexRoute
   '/app/dds': typeof AppDdsIndexRoute
   '/app/employees': typeof AppEmployeesIndexRoute
   '/app/estoque': typeof AppEstoqueIndexRoute
@@ -1126,8 +1102,6 @@ export interface FileRoutesById {
   '/app/administrativo/marcadores-hora-extra': typeof AppAdministrativoMarcadoresHoraExtraRoute
   '/app/administrativo/requisicoes-recebidas': typeof AppAdministrativoRequisicoesRecebidasRoute
   '/app/almoxarifado/requisicao-compras': typeof AppAlmoxarifadoRequisicaoComprasRoute
-  '/app/cal/$id': typeof AppCalIdRoute
-  '/app/cal/planos': typeof AppCalPlanosRoute
   '/app/compras/dashboard': typeof AppComprasDashboardRoute
   '/app/compras/fornecedores': typeof AppComprasFornecedoresRoute
   '/app/compras/requisicoes-recebidas': typeof AppComprasRequisicoesRecebidasRoute
@@ -1180,7 +1154,6 @@ export interface FileRoutesById {
   '/app/sesmt/templates-documentos': typeof AppSesmtTemplatesDocumentosRoute
   '/app/sesmt/terceiros': typeof AppSesmtTerceirosRoute
   '/app/sesmt/vincular-usuarios': typeof AppSesmtVincularUsuariosRoute
-  '/app/cal/': typeof AppCalIndexRoute
   '/app/dds/': typeof AppDdsIndexRoute
   '/app/employees/': typeof AppEmployeesIndexRoute
   '/app/estoque/': typeof AppEstoqueIndexRoute
@@ -1259,8 +1232,6 @@ export interface FileRouteTypes {
     | '/app/administrativo/marcadores-hora-extra'
     | '/app/administrativo/requisicoes-recebidas'
     | '/app/almoxarifado/requisicao-compras'
-    | '/app/cal/$id'
-    | '/app/cal/planos'
     | '/app/compras/dashboard'
     | '/app/compras/fornecedores'
     | '/app/compras/requisicoes-recebidas'
@@ -1313,7 +1284,6 @@ export interface FileRouteTypes {
     | '/app/sesmt/templates-documentos'
     | '/app/sesmt/terceiros'
     | '/app/sesmt/vincular-usuarios'
-    | '/app/cal/'
     | '/app/dds/'
     | '/app/employees/'
     | '/app/estoque/'
@@ -1386,8 +1356,6 @@ export interface FileRouteTypes {
     | '/app/administrativo/marcadores-hora-extra'
     | '/app/administrativo/requisicoes-recebidas'
     | '/app/almoxarifado/requisicao-compras'
-    | '/app/cal/$id'
-    | '/app/cal/planos'
     | '/app/compras/dashboard'
     | '/app/compras/fornecedores'
     | '/app/compras/requisicoes-recebidas'
@@ -1439,7 +1407,6 @@ export interface FileRouteTypes {
     | '/app/sesmt/templates-documentos'
     | '/app/sesmt/terceiros'
     | '/app/sesmt/vincular-usuarios'
-    | '/app/cal'
     | '/app/dds'
     | '/app/employees'
     | '/app/estoque'
@@ -1516,8 +1483,6 @@ export interface FileRouteTypes {
     | '/app/administrativo/marcadores-hora-extra'
     | '/app/administrativo/requisicoes-recebidas'
     | '/app/almoxarifado/requisicao-compras'
-    | '/app/cal/$id'
-    | '/app/cal/planos'
     | '/app/compras/dashboard'
     | '/app/compras/fornecedores'
     | '/app/compras/requisicoes-recebidas'
@@ -1570,7 +1535,6 @@ export interface FileRouteTypes {
     | '/app/sesmt/templates-documentos'
     | '/app/sesmt/terceiros'
     | '/app/sesmt/vincular-usuarios'
-    | '/app/cal/'
     | '/app/dds/'
     | '/app/employees/'
     | '/app/estoque/'
@@ -1948,13 +1912,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDdsIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/cal/': {
-      id: '/app/cal/'
-      path: '/cal'
-      fullPath: '/app/cal/'
-      preLoaderRoute: typeof AppCalIndexRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/app/sesmt/vincular-usuarios': {
       id: '/app/sesmt/vincular-usuarios'
       path: '/sesmt/vincular-usuarios'
@@ -2319,20 +2276,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppComprasDashboardRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/cal/planos': {
-      id: '/app/cal/planos'
-      path: '/cal/planos'
-      fullPath: '/app/cal/planos'
-      preLoaderRoute: typeof AppCalPlanosRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/cal/$id': {
-      id: '/app/cal/$id'
-      path: '/cal/$id'
-      fullPath: '/app/cal/$id'
-      preLoaderRoute: typeof AppCalIdRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/app/almoxarifado/requisicao-compras': {
       id: '/app/almoxarifado/requisicao-compras'
       path: '/almoxarifado/requisicao-compras'
@@ -2658,8 +2601,6 @@ interface AppRouteChildren {
   AppUsersRoute: typeof AppUsersRoute
   AppIndexRoute: typeof AppIndexRoute
   AppAlmoxarifadoRequisicaoComprasRoute: typeof AppAlmoxarifadoRequisicaoComprasRoute
-  AppCalIdRoute: typeof AppCalIdRoute
-  AppCalPlanosRoute: typeof AppCalPlanosRoute
   AppComprasDashboardRoute: typeof AppComprasDashboardRoute
   AppComprasFornecedoresRoute: typeof AppComprasFornecedoresRoute
   AppComprasRequisicoesRecebidasRoute: typeof AppComprasRequisicoesRecebidasRoute
@@ -2705,7 +2646,6 @@ interface AppRouteChildren {
   AppSesmtTemplatesDocumentosRoute: typeof AppSesmtTemplatesDocumentosRoute
   AppSesmtTerceirosRoute: typeof AppSesmtTerceirosRoute
   AppSesmtVincularUsuariosRoute: typeof AppSesmtVincularUsuariosRoute
-  AppCalIndexRoute: typeof AppCalIndexRoute
   AppDdsIndexRoute: typeof AppDdsIndexRoute
   AppEstoqueIndexRoute: typeof AppEstoqueIndexRoute
   AppPortariaIndexRoute: typeof AppPortariaIndexRoute
@@ -2757,8 +2697,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppUsersRoute: AppUsersRoute,
   AppIndexRoute: AppIndexRoute,
   AppAlmoxarifadoRequisicaoComprasRoute: AppAlmoxarifadoRequisicaoComprasRoute,
-  AppCalIdRoute: AppCalIdRoute,
-  AppCalPlanosRoute: AppCalPlanosRoute,
   AppComprasDashboardRoute: AppComprasDashboardRoute,
   AppComprasFornecedoresRoute: AppComprasFornecedoresRoute,
   AppComprasRequisicoesRecebidasRoute: AppComprasRequisicoesRecebidasRoute,
@@ -2804,7 +2742,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppSesmtTemplatesDocumentosRoute: AppSesmtTemplatesDocumentosRoute,
   AppSesmtTerceirosRoute: AppSesmtTerceirosRoute,
   AppSesmtVincularUsuariosRoute: AppSesmtVincularUsuariosRoute,
-  AppCalIndexRoute: AppCalIndexRoute,
   AppDdsIndexRoute: AppDdsIndexRoute,
   AppEstoqueIndexRoute: AppEstoqueIndexRoute,
   AppPortariaIndexRoute: AppPortariaIndexRoute,
