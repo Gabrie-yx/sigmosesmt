@@ -16,6 +16,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { useEffect, useMemo } from "react";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 import { PWARegister } from "@/components/pwa-register";
+import { IS_BACKEND_LOCAL } from "@/integrations/supabase/client";
 
 function NotFoundComponent() {
   return (
@@ -135,7 +136,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="theme-dmn">
+    <html lang="en" className={IS_BACKEND_LOCAL ? "theme-dmn" : "theme-cloud"}>
       <head>
         <HeadContent />
       </head>
