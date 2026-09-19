@@ -78,6 +78,7 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { IS_BACKEND_LOCAL } from "@/integrations/supabase/client";
+import { useConfigSistema } from "@/hooks/use-config-sistema";
 
 type LeafItem = { to: string; label: string; icon?: typeof CalendarCheck2; children?: LeafItem[] };
 type LockedItem = { key: string; label: string; icon?: typeof CalendarCheck2 };
