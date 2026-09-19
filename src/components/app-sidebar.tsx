@@ -279,6 +279,7 @@ const PORTARIA_ITEMS: LeafItem[] = [
 export function AppSidebar() {
   const location = useLocation();
   const { roles, hasModule, hasMenu, isExtraSabadoMarcador } = useAuth();
+  const { moduloAtivo } = useConfigSistema();
   const { setOpen, isMobile, openMobile, setOpenMobile } = useSidebar();
 
   // Fecha o drawer mobile automaticamente ao navegar
