@@ -280,7 +280,7 @@ const PORTARIA_ITEMS: LeafItem[] = [
 export function AppSidebar() {
   const location = useLocation();
   const { roles, hasModule, hasMenu, isExtraSabadoMarcador } = useAuth();
-  const { moduloAtivo } = useConfigSistema();
+  const { moduloAtivo, rotulo } = useConfigSistema();
   const { setOpen, isMobile, openMobile, setOpenMobile } = useSidebar();
 
   // Fecha o drawer mobile automaticamente ao navegar
@@ -331,6 +331,7 @@ export function AppSidebar() {
         .filter((i) => hasMenu(i.to))
         .map((i) => ({
           ...i,
+          label: i.to === "/app/cascos" ? rotulo("casco", "plural") : i.label,
           children: i.children?.filter((c) => hasMenu(c.to)),
         })),
     }))

@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useRotulo } from "@/hooks/use-config-sistema";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +22,7 @@ export const Route = createFileRoute("/app/cascos")({
 });
 
 function CascosPage() {
+  const rotuloCascos = useRotulo("casco", "plural");
   const qc = useQueryClient();
   const { isAdmin } = useAuth();
   const [open, setOpen] = useState(false);
@@ -95,7 +97,7 @@ function CascosPage() {
             <Ship className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-xl font-black tracking-tight">Cascos / Embarcações</h1>
+            <h1 className="text-xl font-black tracking-tight">{rotuloCascos}</h1>
             <p className="text-xs text-muted-foreground">
               Cadastro de cascos para uso em PTE, APR e demais documentos.
             </p>
