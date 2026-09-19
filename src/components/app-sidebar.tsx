@@ -67,7 +67,6 @@ import {
   Warehouse,
   DoorOpen,
   Clock,
-  Scale,
   CalendarClock,
   Library,
   Sparkles,
