@@ -1723,3 +1723,9 @@ body:where(.theme-cloud *) { color-scheme: dark; }
   0%, 100% { box-shadow: 0 0 0 0 rgba(141,198,63,0.0), 0 8px 24px -10px rgba(20,152,214,0.45); }
   50%      { box-shadow: 0 0 0 4px rgba(141,198,63,0.18), 0 12px 32px -8px rgba(20,152,214,0.70); }
 }
+
+/* Casco do app: fundo, barra do topo e faixa da sidebar seguem o tema ativo */
+.app-shell { background: var(--shell-radial); }
+.app-shell::before { background: var(--topbar-grad); }
+.app-topbar { background: var(--topbar-grad); }
+.app-topbar::before { background: var(--topbar-grad); }
