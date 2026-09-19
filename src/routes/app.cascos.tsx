@@ -149,15 +149,15 @@ function CascosPage() {
             <TableBody>
               {isLoading && (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-6 text-muted-foreground text-xs">
+                  <TableCell colSpan={7 + colunasExtras.length} className="text-center py-6 text-muted-foreground text-xs">
                     Carregando…
                   </TableCell>
                 </TableRow>
               )}
               {!isLoading && filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground text-xs">
-                    Nenhum casco cadastrado.
+                  <TableCell colSpan={7 + colunasExtras.length} className="text-center py-8 text-muted-foreground text-xs">
+                    Nenhum registro cadastrado.
                   </TableCell>
                 </TableRow>
               )}
@@ -166,7 +166,11 @@ function CascosPage() {
                   <TableCell className="font-bold">{c.numero}</TableCell>
                   <TableCell>{c.nome ?? "—"}</TableCell>
                   <TableCell className="text-xs">{empresaName(c.empresa_responsavel_id)}</TableCell>
-                  <TableCell className="text-xs">{encarregadoName(c.encarregado_id)}</TableCell>
+                  {colunasExtras.map((col) => (
+                    <TableCell key={col.id} className="text-xs">
+                      {formatarValor(col, (c.campos_extras as any)?.[col.chave])}
+                    </TableCell>
+                  ))}
                   <TableCell className="text-xs">
                     {c.data_inicio ? formatDateBR(c.data_inicio) : "—"}
                   </TableCell>
