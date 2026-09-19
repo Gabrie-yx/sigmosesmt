@@ -77,6 +77,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
+import { IS_BACKEND_LOCAL } from "@/integrations/supabase/client";
 
 type LeafItem = { to: string; label: string; icon?: typeof CalendarCheck2; children?: LeafItem[] };
 type LockedItem = { key: string; label: string; icon?: typeof CalendarCheck2 };
