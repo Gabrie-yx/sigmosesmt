@@ -86,6 +86,7 @@ export function useConfigSistema() {
     carregando: q.isLoading,
     salvar,
     rotulo: (k: RotuloKey, forma: "singular" | "plural" = "singular") => rotuloDe(cfg, k, forma),
+    genero: (k: RotuloKey) => generoDe(cfg, k),
     // No servidor DMN nada é desligado por configuração: tudo continua ligado.
     moduloAtivo: (m: AppModule) => (IS_BACKEND_LOCAL ? true : moduloLigado(cfg, m)),
   };
