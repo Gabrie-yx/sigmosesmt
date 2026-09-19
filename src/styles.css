@@ -168,6 +168,16 @@
   --flare-2: rgba(141, 198, 63, 0.20);
   --flare-3: rgba(141, 198, 63, 0.10);
   --brand-glow: rgba(20, 152, 214, 0.45);
+  /* Casco do app — azul profundo + verde-lima EnviCorp */
+  --shell-grad: linear-gradient(180deg, #0d4d6e 0%, #08293c 45%, #03131c 100%);
+  --shell-radial: radial-gradient(ellipse at top, #0d4d6e 0%, #08293c 40%, #03131c 100%);
+  --topbar-grad: linear-gradient(180deg, #1498d6 0%, #0d6fa0 100%);
+  --hero-grad: linear-gradient(135deg, rgba(3,19,28,0.95) 0%, rgba(20,152,214,0.75) 50%, rgba(3,19,28,0.95) 100%);
+  --hero-flare: radial-gradient(ellipse at top right, rgba(141,198,63,0.28), transparent 60%);
+  --section-grad: linear-gradient(135deg, #062534 0%, #0d4d6e 50%, #03131c 100%);
+  --section-grad-alt: linear-gradient(135deg, #03131c 0%, #0d4d6e 50%, #062534 100%);
+  --cta-grad: linear-gradient(90deg, #03131c 0%, #1498d6 50%, #03131c 100%);
+  --on-light-brand: #0d6fa0;
 }
 
 .dark {
