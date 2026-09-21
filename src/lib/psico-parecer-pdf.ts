@@ -1,28 +1,27 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { drawPdfHeader } from "./pdf-header";
-import { DIMENSAO_LABEL, DIMENSAO_TIPO, INSTRUMENTO_CITACAO } from "./psico-instrument";
+import {
+  DIMENSAO_LABEL,
+  DIMENSAO_TIPO,
+  INSTRUMENTO_CITACAO,
+  avaliarRiscoPsico,
+  RGB_NIVEL,
+} from "./psico-instrument";
 
-/* Paleta Matriz 5x5 DMN (mesmas cores do dashboard) */
-const COR_BAIXO: [number, number, number] = [0x2e, 0xcc, 0x71];   // verde
-const COR_MOD: [number, number, number]   = [0xf7, 0xd8, 0x42];   // amarelo
-const COR_ALTO: [number, number, number]  = [0xf3, 0x9c, 0x12];   // laranja
-const COR_CRIT: [number, number, number]  = [0xe7, 0x4c, 0x3c];   // vermelho
+/* Paleta Matriz 5x5 (mesmas cores do dashboard) */
+const COR_BAIXO: [number, number, number] = RGB_NIVEL.BAIXO;
+const COR_MOD: [number, number, number]   = RGB_NIVEL.MODERADO;
+const COR_ALTO: [number, number, number]  = RGB_NIVEL.ALTO;
+const COR_CRIT: [number, number, number]  = RGB_NIVEL.CRITICO;
 
+/* Classificação idêntica à do diagnóstico: matriz 5×5 probabilidade × severidade. */
 function corMedia(media: number, dimensao: string): [number, number, number] {
-  if (dimensao === "VIOLENCIA" && media >= 1.5) return COR_CRIT;
-  if (media < 2.0) return COR_BAIXO;
-  if (media < 3.0) return COR_MOD;
-  if (media < 4.0) return COR_ALTO;
-  return COR_CRIT;
+  return avaliarRiscoPsico(media, dimensao).rgb;
 }
 
 function labelNivel(media: number, dimensao: string): string {
-  if (dimensao === "VIOLENCIA" && media >= 1.5) return "Crítico";
-  if (media < 2.0) return "Baixo";
-  if (media < 3.0) return "Moderado";
-  if (media < 4.0) return "Alto";
-  return "Crítico";
+  return avaliarRiscoPsico(media, dimensao).label;
 }
 
 export type AgregadoLinha = {

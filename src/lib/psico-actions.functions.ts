@@ -195,8 +195,8 @@ export const cruzarSinaisPsico = createServerFn({ method: "POST" })
       const g = psicoPorGhe[l.ghe_id] ??= { soma: 0, n: 0, criticas: 0 };
       g.soma += Number(l.media);
       g.n += 1;
-      const cl = classificar(Number(l.media), l.dimensao);
-      if (cl === "ALTO" || cl === "MUITO_ALTO") g.criticas += 1;
+      const cl = avaliarRiscoPsico(Number(l.media), l.dimensao).nivel;
+      if (cl === "ALTO" || cl === "CRITICO") g.criticas += 1;
     }
 
     // 2) Atestados CID F* nos últimos 180 dias (só count por GHE não é trivial — usa employees.ghe_id se existir)
