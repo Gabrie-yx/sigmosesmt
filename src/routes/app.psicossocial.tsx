@@ -23,7 +23,11 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { DIMENSAO_LABEL, DIMENSAO_TIPO, PSICO_ITEMS, classifyByTercis, type TercisMap } from "@/lib/psico-instrument";
+import {
+  DIMENSAO_LABEL, DIMENSAO_TIPO, PSICO_ITEMS, type TercisMap,
+  avaliarRiscoPsico, MATRIZ_5X5, COR_NIVEL, LABEL_NIVEL, PRAZO_POR_NIVEL, ACAO_POR_NIVEL,
+  PROBABILIDADE_LABEL, SEVERIDADE_LABEL,
+} from "@/lib/psico-instrument";
 import { gerarParecerPsicossocialPdf } from "@/lib/psico-parecer-pdf";
 import { useServerFn } from "@tanstack/react-start";
 import { computarTercisPsico } from "@/lib/psico-actions.functions";
@@ -1381,7 +1385,7 @@ function EstratificacaoDemografica({ linhas }: { linhas: any[] }) {
 function statusColor(s: string) {
   switch (s) {
     case "ATIVA": return "bg-emerald-500/20 text-emerald-200 border-emerald-500/30";
-    case "ENCERRADA": return "bg-rose-950/200/20 text-rose-100/30 border-slate-500/30";
+    case "ENCERRADA": return "bg-slate-500/20 text-slate-200 border-slate-500/30";
     case "CANCELADA": return "bg-rose-500/20 text-rose-200 border-rose-500/30";
     default: return "bg-amber-500/20 text-amber-200 border-amber-500/30";
   }
