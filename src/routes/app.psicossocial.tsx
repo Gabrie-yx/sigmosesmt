@@ -993,7 +993,7 @@ function MatrizDiagnostico({ linhas, minRespondentes, tercis }: { linhas: any[];
                     <td
                       key={d}
                       className={`p-2 border-b text-center font-bold text-white ${st.cor} cursor-help`}
-                      title={`${media.toFixed(1)} — ${st.label} · corte ${st.fonte === "INTERNO" ? "empírico SIGMO" : "COPSOQ II PT"}`}
+                      title={`${media.toFixed(1)} — ${st.label} · matriz 5×5 NR-01`}
                     >
                       {media.toFixed(1)}
                     </td>
@@ -1018,16 +1018,19 @@ function MatrizDiagnostico({ linhas, minRespondentes, tercis }: { linhas: any[];
       </table>
 
       {/* Legenda enxuta — cores da Matriz 5x5 DMN */}
+      {/* Legenda — níveis da matriz 5×5 e prazos NR-01 */}
       <div className="mt-3 pt-3 border-t border-rose-500/20 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[10px] text-rose-100/70">
         <span className="font-semibold text-rose-100/80">Legenda:</span>
-        <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-[#2ecc71]" /> &lt; P33 · Baixo</span>
-        <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-[#f7d842]" /> P33–P66 · Moderado</span>
-        <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-[#f39c12]" /> ≥ P66 · Alto</span>
-        <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-[#e74c3c]" /> ≥ 4,25 <b>ou</b> violência ≥ 1,5 · Crítico</span>
+        {(["BAIXO", "MODERADO", "ALTO", "CRITICO"] as const).map((n) => (
+          <span key={n} className="inline-flex items-center gap-1.5">
+            <span className={`w-2.5 h-2.5 rounded-sm ${COR_NIVEL[n]}`} /> {LABEL_NIVEL[n]} · {PRAZO_POR_NIVEL[n]}d
+          </span>
+        ))}
         <span className="ml-auto text-rose-100/50">
-          Cortes: <b>{usaInterno ? "tercis empíricos SIGMO" : "tercis COPSOQ II PT (fallback)"}</b>
+          Classificação: <b>matriz 5×5 probabilidade × severidade</b>{usaInterno ? " · tercis empíricos disponíveis" : ""}
         </span>
       </div>
+
     </Card>
   );
 }
@@ -1232,7 +1235,7 @@ function OutcomesPanel({ linhas, minRespondentes, tercis }: { linhas: any[]; min
                     <td
                       key={d}
                       className={`p-2 border-b text-center font-bold text-white ${st.cor} cursor-help`}
-                      title={`${media.toFixed(1)} — ${st.label} · corte ${st.fonte === "INTERNO" ? "empírico SIGMO" : "COPSOQ II PT"}`}
+                      title={`${media.toFixed(1)} — ${st.label} · matriz 5×5 NR-01`}
                     >
                       {media.toFixed(1)}
                     </td>
