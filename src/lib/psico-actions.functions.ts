@@ -1,24 +1,23 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
-import { TERCIS_MANUAL_PT, TERCIS_N_MINIMO, type TercisMap } from "@/lib/psico-instrument";
+import {
+  TERCIS_MANUAL_PT,
+  TERCIS_N_MINIMO,
+  avaliarRiscoPsico,
+  type TercisMap,
+} from "@/lib/psico-instrument";
 
 /**
  * Módulo Psicossocial NR-01 — server functions "de trabalho":
  * geração automática de plano 5W2H, cronograma, ações realizadas,
  * assinatura do parecer e cruzamento de sinais de saúde/absenteísmo.
  *
- * Todas requerem sessão. RLS nas tabelas ainda vale — estes handlers
- * apenas orquestram o trabalho pesado no servidor.
+ * Classificação de risco: SEMPRE via avaliarRiscoPsico (matriz 5×5
+ * probabilidade × severidade), fonte única compartilhada com o
+ * diagnóstico e o parecer PDF.
  */
 
-function classificar(media: number, dimensao: string): "BAIXO" | "MODERADO" | "ALTO" | "MUITO_ALTO" {
-  if (dimensao === "VIOLENCIA" && media >= 1.5) return "MUITO_ALTO";
-  if (media < 2.0) return "BAIXO";
-  if (media < 3.0) return "MODERADO";
-  if (media < 4.0) return "ALTO";
-  return "MUITO_ALTO";
-}
 
 const dimensaoWhy: Record<string, string> = {
   DEMANDAS: "Sobrecarga e pressão de tempo detectadas — risco de esgotamento e afastamento por CID F (NR-01 1.5.3.2).",
