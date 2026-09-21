@@ -51,3 +51,12 @@ Escolhi **HSE Indicator Tool BR (uso livre)** em vez de COPSOQ III pra evitar zo
 - Guia MTE 2025 "Fatores de Riscos Psicossociais Relacionados ao Trabalho".
 - ISO 45003:2021.
 - LGPD Art. 5º II (dado sensível de saúde) — base legal: obrigação regulatória + consentimento.
+## Auditoria + correções (21/09/2026)
+- Classificação unificada: `avaliarRiscoPsico` em `psico-instrument.ts` (matriz 5×5 probabilidade × severidade, PRAZO_POR_NIVEL 90/60/30/7d, ACAO_POR_NIVEL). Antes havia 4 réguas divergentes (tercis, actions.functions, PDF, classifyDimensao morto).
+- Diagnóstico ganhou painel visual da matriz 5×5; plano 5W2H usa prazo por nível e rótulo real do GHE em `where_`.
+- Criação de campanha: valida datas/qtd e desfaz a campanha se a geração de tokens falhar; exclusão passa a confiar no CASCADE.
+- Submit público exige questionário completo, sem duplicados e só com códigos válidos; página pública trata resposta não-JSON.
+### Pendências conhecidas (não implementadas)
+- Nenhuma tabela psico_* tem company_id → qualquer usuário autenticado vê dados de todas as empresas (multi-tenant).
+- `catalogo_perigos_psicossociais`, campo `instrumento` da campanha e `psico_benchmark_cnae` estão desconectados do fluxo.
+- Denúncias não alimentam plano de ação/parecer; salt de hash IP/UA é estático; falta aba de evidências para fiscalização (registros de treinamento sobre assédio/saúde mental).
