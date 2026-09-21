@@ -1105,10 +1105,75 @@ function ComoLerMatrizSheet() {
   );
 }
 
-/* Status por média usando tercis dinâmicos (com fallback COPSOQ II PT). */
-function statusPorMedia(m: number, dimensao: string, tercis?: TercisMap): { label: string; cor: string; fonte: "INTERNO" | "MANUAL_PT" } {
-  const r = classifyByTercis(m, dimensao, tercis);
-  return { label: r.label, cor: r.cor, fonte: r.fonte };
+/* Fonte única de classificação: matriz 5×5 probabilidade × severidade (NR-01). */
+function statusPorMedia(m: number, dimensao: string, _tercis?: TercisMap): { label: string; cor: string; fonte: "MATRIZ" } {
+  const r = avaliarRiscoPsico(m, dimensao);
+  return { label: `${r.label} (P${r.probabilidade}×S${r.severidade})`, cor: r.cor, fonte: "MATRIZ" };
+}
+
+/* Painel: matriz 5×5 com as células ocupadas pelo diagnóstico da campanha. */
+function Matriz5x5Panel({ linhas }: { linhas: any[] }) {
+  const validas = linhas.filter((l) => !l.suprimido && l.media != null);
+  const celulas: Record<string, number> = {};
+  for (const l of validas) {
+    const r = avaliarRiscoPsico(Number(l.media), l.dimensao);
+    const k = `${r.probabilidade}-${r.severidade}`;
+    celulas[k] = (celulas[k] ?? 0) + 1;
+  }
+  const probs = [5, 4, 3, 2, 1];
+  return (
+    <Card className="p-4 overflow-x-auto border-rose-500/20 bg-gradient-to-br from-rose-950/40 to-slate-950/60">
+      <h3 className="font-bold text-rose-50">Matriz 5×5 — Probabilidade × Severidade (NR-01)</h3>
+      <p className="text-[10px] text-rose-100/60 mb-3">
+        Probabilidade vem da média das respostas; severidade é o agravo típico da dimensão (ISO 45003).
+        O número na célula é quantos recortes GHE × dimensão caíram ali.
+      </p>
+      <table className="text-xs">
+        <thead>
+          <tr>
+            <th className="p-2 text-left text-rose-100/60">Probabilidade \ Severidade</th>
+            {SEVERIDADE_LABEL.map((s) => (
+              <th key={s} className="p-2 text-center text-[10px] text-rose-100/70">{s}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {probs.map((p) => (
+            <tr key={p}>
+              <td className="p-2 text-rose-100/80 font-semibold">{PROBABILIDADE_LABEL[p - 1]}</td>
+              {SEVERIDADE_LABEL.map((_s, si) => {
+                const nivel = MATRIZ_5X5[p - 1][si];
+                const qtd = celulas[`${p}-${si + 1}`] ?? 0;
+                return (
+                  <td key={si} className="p-1 text-center">
+                    <span
+                      className={`inline-flex h-9 w-14 items-center justify-center rounded font-black text-white ${COR_NIVEL[nivel]} ${qtd ? "ring-2 ring-white/70" : "opacity-40"}`}
+                      title={`${LABEL_NIVEL[nivel]} · prazo ${PRAZO_POR_NIVEL[nivel]} dias · ${ACAO_POR_NIVEL[nivel]}`}
+                    >
+                      {qtd || ""}
+                    </span>
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div className="mt-3 pt-3 border-t border-rose-500/20 grid gap-1 text-[10px] text-rose-100/70">
+        {(["CRITICO", "ALTO", "MODERADO", "BAIXO"] as const).map((n) => (
+          <div key={n} className="flex items-start gap-2">
+            <span className={`mt-0.5 w-2.5 h-2.5 rounded-sm shrink-0 ${COR_NIVEL[n]}`} />
+            <span>
+              <b className="text-rose-100">{LABEL_NIVEL[n]} — prazo {PRAZO_POR_NIVEL[n]} dias:</b> {ACAO_POR_NIVEL[n]}
+            </span>
+          </div>
+        ))}
+        <p className="mt-1 text-rose-100/50">
+          Violência/assédio: tolerância zero — média ≥ 1,5 já classifica como Crítico (Lei 14.457/2022 · NR-01 1.5.4.4.6.1).
+        </p>
+      </div>
+    </Card>
+  );
 }
 
 /* ---- Painel dedicado a OUTCOMES (Burnout / Sono) ---- */
