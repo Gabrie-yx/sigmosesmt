@@ -358,10 +358,9 @@ function CampanhasTab() {
 
   const excluir = useMutation({
     mutationFn: async (id: string) => {
-      // remove tokens/respostas primeiro (FK)
-      await sb.from("psico_respostas").delete().eq("campanha_id", id);
-      await sb.from("psico_consentimentos").delete().eq("campanha_id", id);
-      await sb.from("psico_tokens").delete().eq("campanha_id", id);
+      // As tabelas dependentes (respostas, consentimentos, tokens, relatos,
+      // planos, cronograma, ações e assinatura) têm ON DELETE CASCADE:
+      // um único delete garante limpeza completa e atômica.
       const { error } = await sb.from("psico_campanhas").delete().eq("id", id);
       if (error) throw error;
     },
@@ -917,6 +916,10 @@ function DiagnosticoTab() {
         <Card className="p-6 text-center border-rose-500/20 bg-gradient-to-br from-rose-950/40 to-slate-950/60">
           <p className="text-sm text-rose-100/50">Ainda não há respostas suficientes para gerar diagnóstico.</p>
         </Card>
+      )}
+
+      {campanhaId && (agregado ?? []).length > 0 && (
+        <Matriz5x5Panel linhas={agregado ?? []} />
       )}
 
       {campanhaId && (agregado ?? []).length > 0 && (
