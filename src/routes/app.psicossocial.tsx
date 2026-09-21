@@ -264,6 +264,13 @@ function CampanhasTab() {
 
   const criar = useMutation({
     mutationFn: async () => {
+      // validações que antes só existiam como atributo do <input>
+      if (!titulo.trim()) throw new Error("Informe o título da campanha.");
+      if (!dataInicio || !dataFim) throw new Error("Informe início e fim da campanha.");
+      if (dataFim < dataInicio) throw new Error("A data de fim não pode ser anterior à de início.");
+      if (!Number.isInteger(qtdTokens) || qtdTokens < 1 || qtdTokens > 500)
+        throw new Error("Quantidade de links deve ser um número entre 1 e 500.");
+
       const { data, error } = await sb
         .from("psico_campanhas")
         .insert({
@@ -278,10 +285,7 @@ function CampanhasTab() {
         .select("id")
         .single();
       if (error) throw error;
-      return data as any;
-    },
-    onSuccess: async (c: any) => {
-      toast.success("Campanha criada.");
+
       // gera tokens — se múltiplos GHEs, qtdTokens por GHE; senão qtdTokens total
       const alvos: (string | null)[] = gheIds.length > 0 ? gheIds : [null];
       const pares: { raw: string; ghe: string | null }[] = [];
@@ -290,15 +294,22 @@ function CampanhasTab() {
       });
       const rows = await Promise.all(
         pares.map(async ({ raw, ghe }) => ({
-          campanha_id: c.id,
+          campanha_id: data.id,
           ghe_id: ghe,
           token_hash: await sha256Hex(raw),
           expira_em: new Date(dataFim + "T23:59:59").toISOString(),
         })),
       );
-      const { error } = await sb.from("psico_tokens").insert(rows);
-      if (error) { toast.error("Erro ao gerar tokens: " + error.message); return; }
-
+      const { error: tokErr } = await sb.from("psico_tokens").insert(rows);
+      if (tokErr) {
+        // desfaz a campanha para não deixar "campanha fantasma" sem nenhum link
+        await sb.from("psico_campanhas").delete().eq("id", data.id);
+        throw new Error("Falha ao gerar os links — campanha desfeita: " + tokErr.message);
+      }
+      return { id: data.id as string, pares };
+    },
+    onSuccess: ({ pares }) => {
+      toast.success("Campanha criada e links gerados.");
       const base = getPsicoPublicBase();
       setTokensGerados(pares.map((p) => ({ token: p.raw, url: `${base}/psico/${p.raw}` })));
       setTokensDialogOpen(true);
@@ -308,6 +319,7 @@ function CampanhasTab() {
     },
     onError: (e: Error) => toast.error("Erro: " + e.message),
   });
+
 
   const atualizar = useMutation({
     mutationFn: async (payload: any) => {
