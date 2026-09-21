@@ -1064,31 +1064,27 @@ function ComoLerMatrizSheet() {
 
         <div className="mt-5 space-y-6">
           <section>
-            <h4 className="text-sm font-bold mb-2 text-rose-50">Cores = nível de risco (Matriz 5x5 DMN)</h4>
+            <h4 className="text-sm font-bold mb-2 text-rose-50">Cores = nível de risco (matriz 5×5 NR-01)</h4>
+            <p className="text-[11px] text-rose-100/60 mb-2">
+              A média vira <b>probabilidade</b> (Rara → Muito alta) e cada dimensão tem uma <b>severidade</b> fixa
+              (Leve → Crítica, conforme o agravo da ISO 45003). O cruzamento dos dois na matriz define o nível e o prazo.
+            </p>
             <table className="w-full text-xs">
               <thead className="text-rose-100/60">
-                <tr><th className="text-left py-1.5">Cor</th><th className="text-left py-1.5">Faixa</th><th className="text-left py-1.5">Significado</th></tr>
+                <tr><th className="text-left py-1.5">Cor</th><th className="text-left py-1.5">Nível</th><th className="text-left py-1.5">Prazo e ação</th></tr>
               </thead>
               <tbody className="[&_td]:py-2 [&_td]:border-t [&_td]:border-rose-500/15">
-                <tr>
-                  <td><span className="inline-flex items-center gap-2"><span className="w-3 h-3 rounded-sm bg-[#2ecc71]" /> Verde</span></td>
-                  <td>&lt; 2,0</td><td><b>Baixo risco</b> — dimensão saudável</td>
-                </tr>
-                <tr>
-                  <td><span className="inline-flex items-center gap-2"><span className="w-3 h-3 rounded-sm bg-[#f7d842]" /> Amarelo</span></td>
-                  <td>2,0 – 2,9</td><td><b>Risco moderado</b> — monitorar</td>
-                </tr>
-                <tr>
-                  <td><span className="inline-flex items-center gap-2"><span className="w-3 h-3 rounded-sm bg-[#f39c12]" /> Laranja</span></td>
-                  <td>3,0 – 3,9</td><td><b>Alto risco</b> — plano de ação</td>
-                </tr>
-                <tr>
-                  <td><span className="inline-flex items-center gap-2"><span className="w-3 h-3 rounded-sm bg-[#e74c3c]" /> Vermelho</span></td>
-                  <td>≥ 4,0 <b>ou</b> violência ≥ 1,5</td><td><b>Risco crítico</b> — ação imediata</td>
-                </tr>
+                {(["BAIXO", "MODERADO", "ALTO", "CRITICO"] as const).map((n) => (
+                  <tr key={n}>
+                    <td><span className={`inline-block w-3 h-3 rounded-sm ${COR_NIVEL[n]}`} /></td>
+                    <td><b>{LABEL_NIVEL[n]}</b></td>
+                    <td>{PRAZO_POR_NIVEL[n]} dias — {ACAO_POR_NIVEL[n]}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </section>
+
 
           <section>
             <h4 className="text-sm font-bold mb-2 text-rose-50">Leitura das 8 dimensões</h4>
