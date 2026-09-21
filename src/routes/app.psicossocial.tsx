@@ -23,7 +23,11 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { DIMENSAO_LABEL, DIMENSAO_TIPO, PSICO_ITEMS, classifyByTercis, type TercisMap } from "@/lib/psico-instrument";
+import {
+  DIMENSAO_LABEL, DIMENSAO_TIPO, PSICO_ITEMS, type TercisMap,
+  avaliarRiscoPsico, MATRIZ_5X5, COR_NIVEL, LABEL_NIVEL, PRAZO_POR_NIVEL, ACAO_POR_NIVEL,
+  PROBABILIDADE_LABEL, SEVERIDADE_LABEL,
+} from "@/lib/psico-instrument";
 import { gerarParecerPsicossocialPdf } from "@/lib/psico-parecer-pdf";
 import { useServerFn } from "@tanstack/react-start";
 import { computarTercisPsico } from "@/lib/psico-actions.functions";
@@ -260,6 +264,13 @@ function CampanhasTab() {
 
   const criar = useMutation({
     mutationFn: async () => {
+      // validações que antes só existiam como atributo do <input>
+      if (!titulo.trim()) throw new Error("Informe o título da campanha.");
+      if (!dataInicio || !dataFim) throw new Error("Informe início e fim da campanha.");
+      if (dataFim < dataInicio) throw new Error("A data de fim não pode ser anterior à de início.");
+      if (!Number.isInteger(qtdTokens) || qtdTokens < 1 || qtdTokens > 500)
+        throw new Error("Quantidade de links deve ser um número entre 1 e 500.");
+
       const { data, error } = await sb
         .from("psico_campanhas")
         .insert({
@@ -274,10 +285,7 @@ function CampanhasTab() {
         .select("id")
         .single();
       if (error) throw error;
-      return data as any;
-    },
-    onSuccess: async (c: any) => {
-      toast.success("Campanha criada.");
+
       // gera tokens — se múltiplos GHEs, qtdTokens por GHE; senão qtdTokens total
       const alvos: (string | null)[] = gheIds.length > 0 ? gheIds : [null];
       const pares: { raw: string; ghe: string | null }[] = [];
@@ -286,15 +294,22 @@ function CampanhasTab() {
       });
       const rows = await Promise.all(
         pares.map(async ({ raw, ghe }) => ({
-          campanha_id: c.id,
+          campanha_id: data.id,
           ghe_id: ghe,
           token_hash: await sha256Hex(raw),
           expira_em: new Date(dataFim + "T23:59:59").toISOString(),
         })),
       );
-      const { error } = await sb.from("psico_tokens").insert(rows);
-      if (error) { toast.error("Erro ao gerar tokens: " + error.message); return; }
-
+      const { error: tokErr } = await sb.from("psico_tokens").insert(rows);
+      if (tokErr) {
+        // desfaz a campanha para não deixar "campanha fantasma" sem nenhum link
+        await sb.from("psico_campanhas").delete().eq("id", data.id);
+        throw new Error("Falha ao gerar os links — campanha desfeita: " + tokErr.message);
+      }
+      return { id: data.id as string, pares };
+    },
+    onSuccess: ({ pares }) => {
+      toast.success("Campanha criada e links gerados.");
       const base = getPsicoPublicBase();
       setTokensGerados(pares.map((p) => ({ token: p.raw, url: `${base}/psico/${p.raw}` })));
       setTokensDialogOpen(true);
@@ -304,6 +319,7 @@ function CampanhasTab() {
     },
     onError: (e: Error) => toast.error("Erro: " + e.message),
   });
+
 
   const atualizar = useMutation({
     mutationFn: async (payload: any) => {
@@ -342,10 +358,9 @@ function CampanhasTab() {
 
   const excluir = useMutation({
     mutationFn: async (id: string) => {
-      // remove tokens/respostas primeiro (FK)
-      await sb.from("psico_respostas").delete().eq("campanha_id", id);
-      await sb.from("psico_consentimentos").delete().eq("campanha_id", id);
-      await sb.from("psico_tokens").delete().eq("campanha_id", id);
+      // As tabelas dependentes (respostas, consentimentos, tokens, relatos,
+      // planos, cronograma, ações e assinatura) têm ON DELETE CASCADE:
+      // um único delete garante limpeza completa e atômica.
       const { error } = await sb.from("psico_campanhas").delete().eq("id", id);
       if (error) throw error;
     },
@@ -904,6 +919,10 @@ function DiagnosticoTab() {
       )}
 
       {campanhaId && (agregado ?? []).length > 0 && (
+        <Matriz5x5Panel linhas={agregado ?? []} />
+      )}
+
+      {campanhaId && (agregado ?? []).length > 0 && (
         <MatrizDiagnostico
           linhas={agregado ?? []}
           minRespondentes={(campanhas ?? []).find((c: any) => c.id === campanhaId)?.min_respondentes ?? 5}
@@ -989,7 +1008,7 @@ function MatrizDiagnostico({ linhas, minRespondentes, tercis }: { linhas: any[];
                     <td
                       key={d}
                       className={`p-2 border-b text-center font-bold text-white ${st.cor} cursor-help`}
-                      title={`${media.toFixed(1)} — ${st.label} · corte ${st.fonte === "INTERNO" ? "empírico SIGMO" : "COPSOQ II PT"}`}
+                      title={`${media.toFixed(1)} — ${st.label} · matriz 5×5 NR-01`}
                     >
                       {media.toFixed(1)}
                     </td>
@@ -1014,16 +1033,19 @@ function MatrizDiagnostico({ linhas, minRespondentes, tercis }: { linhas: any[];
       </table>
 
       {/* Legenda enxuta — cores da Matriz 5x5 DMN */}
+      {/* Legenda — níveis da matriz 5×5 e prazos NR-01 */}
       <div className="mt-3 pt-3 border-t border-rose-500/20 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[10px] text-rose-100/70">
         <span className="font-semibold text-rose-100/80">Legenda:</span>
-        <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-[#2ecc71]" /> &lt; P33 · Baixo</span>
-        <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-[#f7d842]" /> P33–P66 · Moderado</span>
-        <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-[#f39c12]" /> ≥ P66 · Alto</span>
-        <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-[#e74c3c]" /> ≥ 4,25 <b>ou</b> violência ≥ 1,5 · Crítico</span>
+        {(["BAIXO", "MODERADO", "ALTO", "CRITICO"] as const).map((n) => (
+          <span key={n} className="inline-flex items-center gap-1.5">
+            <span className={`w-2.5 h-2.5 rounded-sm ${COR_NIVEL[n]}`} /> {LABEL_NIVEL[n]} · {PRAZO_POR_NIVEL[n]}d
+          </span>
+        ))}
         <span className="ml-auto text-rose-100/50">
-          Cortes: <b>{usaInterno ? "tercis empíricos SIGMO" : "tercis COPSOQ II PT (fallback)"}</b>
+          Classificação: <b>matriz 5×5 probabilidade × severidade</b>{usaInterno ? " · tercis empíricos disponíveis" : ""}
         </span>
       </div>
+
     </Card>
   );
 }
@@ -1057,31 +1079,27 @@ function ComoLerMatrizSheet() {
 
         <div className="mt-5 space-y-6">
           <section>
-            <h4 className="text-sm font-bold mb-2 text-rose-50">Cores = nível de risco (Matriz 5x5 DMN)</h4>
+            <h4 className="text-sm font-bold mb-2 text-rose-50">Cores = nível de risco (matriz 5×5 NR-01)</h4>
+            <p className="text-[11px] text-rose-100/60 mb-2">
+              A média vira <b>probabilidade</b> (Rara → Muito alta) e cada dimensão tem uma <b>severidade</b> fixa
+              (Leve → Crítica, conforme o agravo da ISO 45003). O cruzamento dos dois na matriz define o nível e o prazo.
+            </p>
             <table className="w-full text-xs">
               <thead className="text-rose-100/60">
-                <tr><th className="text-left py-1.5">Cor</th><th className="text-left py-1.5">Faixa</th><th className="text-left py-1.5">Significado</th></tr>
+                <tr><th className="text-left py-1.5">Cor</th><th className="text-left py-1.5">Nível</th><th className="text-left py-1.5">Prazo e ação</th></tr>
               </thead>
               <tbody className="[&_td]:py-2 [&_td]:border-t [&_td]:border-rose-500/15">
-                <tr>
-                  <td><span className="inline-flex items-center gap-2"><span className="w-3 h-3 rounded-sm bg-[#2ecc71]" /> Verde</span></td>
-                  <td>&lt; 2,0</td><td><b>Baixo risco</b> — dimensão saudável</td>
-                </tr>
-                <tr>
-                  <td><span className="inline-flex items-center gap-2"><span className="w-3 h-3 rounded-sm bg-[#f7d842]" /> Amarelo</span></td>
-                  <td>2,0 – 2,9</td><td><b>Risco moderado</b> — monitorar</td>
-                </tr>
-                <tr>
-                  <td><span className="inline-flex items-center gap-2"><span className="w-3 h-3 rounded-sm bg-[#f39c12]" /> Laranja</span></td>
-                  <td>3,0 – 3,9</td><td><b>Alto risco</b> — plano de ação</td>
-                </tr>
-                <tr>
-                  <td><span className="inline-flex items-center gap-2"><span className="w-3 h-3 rounded-sm bg-[#e74c3c]" /> Vermelho</span></td>
-                  <td>≥ 4,0 <b>ou</b> violência ≥ 1,5</td><td><b>Risco crítico</b> — ação imediata</td>
-                </tr>
+                {(["BAIXO", "MODERADO", "ALTO", "CRITICO"] as const).map((n) => (
+                  <tr key={n}>
+                    <td><span className={`inline-block w-3 h-3 rounded-sm ${COR_NIVEL[n]}`} /></td>
+                    <td><b>{LABEL_NIVEL[n]}</b></td>
+                    <td>{PRAZO_POR_NIVEL[n]} dias — {ACAO_POR_NIVEL[n]}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </section>
+
 
           <section>
             <h4 className="text-sm font-bold mb-2 text-rose-50">Leitura das 8 dimensões</h4>
@@ -1105,10 +1123,75 @@ function ComoLerMatrizSheet() {
   );
 }
 
-/* Status por média usando tercis dinâmicos (com fallback COPSOQ II PT). */
-function statusPorMedia(m: number, dimensao: string, tercis?: TercisMap): { label: string; cor: string; fonte: "INTERNO" | "MANUAL_PT" } {
-  const r = classifyByTercis(m, dimensao, tercis);
-  return { label: r.label, cor: r.cor, fonte: r.fonte };
+/* Fonte única de classificação: matriz 5×5 probabilidade × severidade (NR-01). */
+function statusPorMedia(m: number, dimensao: string, _tercis?: TercisMap): { label: string; cor: string; fonte: "MATRIZ" } {
+  const r = avaliarRiscoPsico(m, dimensao);
+  return { label: `${r.label} (P${r.probabilidade}×S${r.severidade})`, cor: r.cor, fonte: "MATRIZ" };
+}
+
+/* Painel: matriz 5×5 com as células ocupadas pelo diagnóstico da campanha. */
+function Matriz5x5Panel({ linhas }: { linhas: any[] }) {
+  const validas = linhas.filter((l) => !l.suprimido && l.media != null);
+  const celulas: Record<string, number> = {};
+  for (const l of validas) {
+    const r = avaliarRiscoPsico(Number(l.media), l.dimensao);
+    const k = `${r.probabilidade}-${r.severidade}`;
+    celulas[k] = (celulas[k] ?? 0) + 1;
+  }
+  const probs = [5, 4, 3, 2, 1];
+  return (
+    <Card className="p-4 overflow-x-auto border-rose-500/20 bg-gradient-to-br from-rose-950/40 to-slate-950/60">
+      <h3 className="font-bold text-rose-50">Matriz 5×5 — Probabilidade × Severidade (NR-01)</h3>
+      <p className="text-[10px] text-rose-100/60 mb-3">
+        Probabilidade vem da média das respostas; severidade é o agravo típico da dimensão (ISO 45003).
+        O número na célula é quantos recortes GHE × dimensão caíram ali.
+      </p>
+      <table className="text-xs">
+        <thead>
+          <tr>
+            <th className="p-2 text-left text-rose-100/60">Probabilidade \ Severidade</th>
+            {SEVERIDADE_LABEL.map((s) => (
+              <th key={s} className="p-2 text-center text-[10px] text-rose-100/70">{s}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {probs.map((p) => (
+            <tr key={p}>
+              <td className="p-2 text-rose-100/80 font-semibold">{PROBABILIDADE_LABEL[p - 1]}</td>
+              {SEVERIDADE_LABEL.map((_s, si) => {
+                const nivel = MATRIZ_5X5[p - 1][si];
+                const qtd = celulas[`${p}-${si + 1}`] ?? 0;
+                return (
+                  <td key={si} className="p-1 text-center">
+                    <span
+                      className={`inline-flex h-9 w-14 items-center justify-center rounded font-black text-white ${COR_NIVEL[nivel]} ${qtd ? "ring-2 ring-white/70" : "opacity-40"}`}
+                      title={`${LABEL_NIVEL[nivel]} · prazo ${PRAZO_POR_NIVEL[nivel]} dias · ${ACAO_POR_NIVEL[nivel]}`}
+                    >
+                      {qtd || ""}
+                    </span>
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div className="mt-3 pt-3 border-t border-rose-500/20 grid gap-1 text-[10px] text-rose-100/70">
+        {(["CRITICO", "ALTO", "MODERADO", "BAIXO"] as const).map((n) => (
+          <div key={n} className="flex items-start gap-2">
+            <span className={`mt-0.5 w-2.5 h-2.5 rounded-sm shrink-0 ${COR_NIVEL[n]}`} />
+            <span>
+              <b className="text-rose-100">{LABEL_NIVEL[n]} — prazo {PRAZO_POR_NIVEL[n]} dias:</b> {ACAO_POR_NIVEL[n]}
+            </span>
+          </div>
+        ))}
+        <p className="mt-1 text-rose-100/50">
+          Violência/assédio: tolerância zero — média ≥ 1,5 já classifica como Crítico (Lei 14.457/2022 · NR-01 1.5.4.4.6.1).
+        </p>
+      </div>
+    </Card>
+  );
 }
 
 /* ---- Painel dedicado a OUTCOMES (Burnout / Sono) ---- */
@@ -1163,7 +1246,7 @@ function OutcomesPanel({ linhas, minRespondentes, tercis }: { linhas: any[]; min
                     <td
                       key={d}
                       className={`p-2 border-b text-center font-bold text-white ${st.cor} cursor-help`}
-                      title={`${media.toFixed(1)} — ${st.label} · corte ${st.fonte === "INTERNO" ? "empírico SIGMO" : "COPSOQ II PT"}`}
+                      title={`${media.toFixed(1)} — ${st.label} · matriz 5×5 NR-01`}
                     >
                       {media.toFixed(1)}
                     </td>
@@ -1316,7 +1399,7 @@ function EstratificacaoDemografica({ linhas }: { linhas: any[] }) {
 function statusColor(s: string) {
   switch (s) {
     case "ATIVA": return "bg-emerald-500/20 text-emerald-200 border-emerald-500/30";
-    case "ENCERRADA": return "bg-rose-950/200/20 text-rose-100/30 border-slate-500/30";
+    case "ENCERRADA": return "bg-slate-500/20 text-slate-200 border-slate-500/30";
     case "CANCELADA": return "bg-rose-500/20 text-rose-200 border-rose-500/30";
     default: return "bg-amber-500/20 text-amber-200 border-amber-500/30";
   }

@@ -1,10 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createHash } from "crypto";
 import { z } from "zod";
+import { PSICO_ITEMS } from "@/lib/psico-instrument";
 
 function sha256(s: string) {
   return createHash("sha256").update(s).digest("hex");
 }
+
+const CODIGOS_VALIDOS = new Set(PSICO_ITEMS.map((i) => i.codigo));
 
 const SubmitSchema = z.object({
   token: z.string().min(8).max(128),
@@ -23,8 +26,21 @@ const SubmitSchema = z.object({
       }),
     )
     .min(1)
-    .max(100),
+    .max(100)
+    // Integridade do questionário: sem duplicados, sem código inventado e
+    // com o instrumento completo (antes um POST direto aceitava 1 resposta
+    // solta e contaminava as médias agregadas).
+    .refine((r) => new Set(r.map((x) => x.item_codigo)).size === r.length, {
+      message: "respostas_duplicadas",
+    })
+    .refine((r) => r.every((x) => CODIGOS_VALIDOS.has(x.item_codigo)), {
+      message: "item_desconhecido",
+    })
+    .refine((r) => r.length === CODIGOS_VALIDOS.size, {
+      message: "questionario_incompleto",
+    }),
 });
+
 
 // POST /api/public/psico/submit — colaborador envia respostas anônimas.
 // Chave: NADA aqui identifica o respondente (sem user_id, sem cookie, sem IP em claro).

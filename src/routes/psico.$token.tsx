@@ -156,17 +156,24 @@ function PsicoPublicPage() {
         valor: respostas[it.codigo],
       })),
     };
-    const r = await fetch("/api/public/psico/submit", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    const j = await r.json();
-    if (j.ok) {
-      clearPersisted(token); // resposta enviada → limpa o cache local
-      setState("done");
-    } else {
-      setErroMotivo(j.error);
+    try {
+      const r = await fetch("/api/public/psico/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const j = r.headers.get("content-type")?.includes("application/json")
+        ? await r.json()
+        : { ok: false, error: r.status >= 500 ? "SERVIDOR" : "REDE" };
+      if (r.ok && j.ok) {
+        clearPersisted(token); // resposta enviada → limpa o cache local
+        setState("done");
+      } else {
+        setErroMotivo(j.error ?? "REDE");
+        setState("erro");
+      }
+    } catch {
+      setErroMotivo("REDE");
       setState("erro");
     }
   }
