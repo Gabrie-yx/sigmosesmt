@@ -583,10 +583,10 @@ function drawMatrizHeatmap(doc: jsPDF, startY: number, agregado: AgregadoLinha[]
 function legendaCores(doc: jsPDF, startY: number): number {
   const M = 12;
   const boxes: Array<{ cor: [number, number, number]; label: string }> = [
-    { cor: COR_BAIXO, label: "< 2,0 · Baixo" },
-    { cor: COR_MOD, label: "2,0-2,9 · Moderado" },
-    { cor: COR_ALTO, label: "3,0-3,9 · Alto" },
-    { cor: COR_CRIT, label: "≥ 4,0 · Crítico" },
+    { cor: COR_BAIXO, label: "Baixo · prazo 90 dias" },
+    { cor: COR_MOD, label: "Moderado · 60 dias" },
+    { cor: COR_ALTO, label: "Alto · 30 dias (NR-17)" },
+    { cor: COR_CRIT, label: "Crítico · 7 dias / PCMSO" },
   ];
   let x = M;
   const y = startY;
