@@ -202,14 +202,119 @@ export function scoreRisco(item: PsicoItem, valor: number): number {
   return item.invertido ? 6 - valor : valor;
 }
 
-/** Classificação AIHA-compatível baseada em score médio 1-5 da dimensão. */
-export function classifyDimensao(mediaScore: number): {
-  nivel: "TRIVIAL" | "BAIXO" | "MODERADO" | "ALTO" | "MUITO_ALTO";
+/* ============================================================================
+ * MATRIZ 5×5 PROBABILIDADE × SEVERIDADE (NR-01 / diretriz 2026)
+ * Fonte única de verdade do módulo psicossocial: diagnóstico, plano 5W2H e
+ * parecer PDF usam SOMENTE estas funções (antes havia 4 implementações
+ * divergentes de classificação).
+ * ==========================================================================*/
+
+export type NivelRisco = "BAIXO" | "MODERADO" | "ALTO" | "CRITICO";
+
+export const PROBABILIDADE_LABEL = ["Rara", "Baixa", "Média", "Alta", "Muito alta"];
+export const SEVERIDADE_LABEL = ["Leve", "Moderado", "Grave", "Muito grave", "Crítica"];
+
+/** Severidade (1-5) do agravo associado a cada dimensão — ISO 45003 + Guia MTE. */
+export const SEVERIDADE_DIMENSAO: Record<PsicoItem["dimensao"], number> = {
+  VIOLENCIA: 5,
+  BURNOUT: 4,
+  SONO: 4,
+  EMOCIONAIS: 4,
+  DEMANDAS: 4,
+  RELACOES: 4,
+  INTERFACE: 3,
+  APOIO: 3,
+  CONTROLE: 3,
+  PAPEL_MUDANCA: 3,
+  COGNITIVAS: 3,
+  RECOMPENSA: 2,
+  SIGNIFICADO: 2,
+};
+
+/** Matriz 5×5 — índice [probabilidade-1][severidade-1]. */
+export const MATRIZ_5X5: NivelRisco[][] = [
+  /* Rara       */ ["BAIXO", "BAIXO", "BAIXO", "MODERADO", "ALTO"],
+  /* Baixa      */ ["BAIXO", "BAIXO", "MODERADO", "ALTO", "ALTO"],
+  /* Média      */ ["BAIXO", "MODERADO", "MODERADO", "ALTO", "CRITICO"],
+  /* Alta       */ ["MODERADO", "MODERADO", "ALTO", "CRITICO", "CRITICO"],
+  /* Muito alta */ ["MODERADO", "ALTO", "ALTO", "CRITICO", "CRITICO"],
+];
+
+/** Prazo máximo de tratamento por nível (NR-01 1.5.5.2 — plano de ação). */
+export const PRAZO_POR_NIVEL: Record<NivelRisco, number> = {
+  BAIXO: 90,
+  MODERADO: 60,
+  ALTO: 30,
+  CRITICO: 7,
+};
+
+export const ACAO_POR_NIVEL: Record<NivelRisco, string> = {
+  BAIXO: "Manter canais internos de escuta e monitorar na próxima reavaliação.",
+  MODERADO: "Ajustar metas, reforçar treinamento e acompanhamento da liderança.",
+  ALTO: "Ajustar carga horária e pausas (NR-17), com acompanhamento formal.",
+  CRITICO: "Intervenção imediata, encaminhamento ao PCMSO e apuração formal.",
+};
+
+export const COR_NIVEL: Record<NivelRisco, string> = {
+  BAIXO: "bg-[#2ecc71]",
+  MODERADO: "bg-[#f7d842] !text-slate-900",
+  ALTO: "bg-[#f39c12]",
+  CRITICO: "bg-[#e74c3c]",
+};
+
+export const RGB_NIVEL: Record<NivelRisco, [number, number, number]> = {
+  BAIXO: [0x2e, 0xcc, 0x71],
+  MODERADO: [0xf7, 0xd8, 0x42],
+  ALTO: [0xf3, 0x9c, 0x12],
+  CRITICO: [0xe7, 0x4c, 0x3c],
+};
+
+export const LABEL_NIVEL: Record<NivelRisco, string> = {
+  BAIXO: "Baixo",
+  MODERADO: "Moderado",
+  ALTO: "Alto",
+  CRITICO: "Crítico",
+};
+
+/** Probabilidade (1-5) derivada da média Likert da dimensão. */
+export function probabilidadeDeMedia(media: number): number {
+  if (media < 1.8) return 1;
+  if (media < 2.6) return 2;
+  if (media < 3.4) return 3;
+  if (media < 4.2) return 4;
+  return 5;
+}
+
+export type AvaliacaoRisco = {
+  probabilidade: number;
+  severidade: number;
+  nivel: NivelRisco;
+  label: string;
   cor: string;
-} {
-  if (mediaScore < 2) return { nivel: "TRIVIAL", cor: "bg-emerald-500" };
-  if (mediaScore < 2.75) return { nivel: "BAIXO", cor: "bg-lime-500" };
-  if (mediaScore < 3.5) return { nivel: "MODERADO", cor: "bg-amber-500" };
-  if (mediaScore < 4.25) return { nivel: "ALTO", cor: "bg-orange-500" };
-  return { nivel: "MUITO_ALTO", cor: "bg-rose-600" };
+  rgb: [number, number, number];
+  prazoDias: number;
+  acao: string;
+};
+
+/**
+ * Avaliação oficial do risco psicossocial: cruza probabilidade (derivada da
+ * média das respostas) com a severidade do agravo da dimensão na matriz 5×5.
+ * Violência/assédio mantém tolerância zero (≥ 1,5 = crítico imediato).
+ */
+export function avaliarRiscoPsico(media: number, dimensao: string): AvaliacaoRisco {
+  const dim = dimensao as PsicoItem["dimensao"];
+  const severidade = SEVERIDADE_DIMENSAO[dim] ?? 3;
+  const probabilidade = probabilidadeDeMedia(media);
+  let nivel = MATRIZ_5X5[probabilidade - 1][severidade - 1];
+  if (dim === "VIOLENCIA" && media >= 1.5) nivel = "CRITICO";
+  return {
+    probabilidade,
+    severidade,
+    nivel,
+    label: LABEL_NIVEL[nivel],
+    cor: COR_NIVEL[nivel],
+    rgb: RGB_NIVEL[nivel],
+    prazoDias: PRAZO_POR_NIVEL[nivel],
+    acao: ACAO_POR_NIVEL[nivel],
+  };
 }
