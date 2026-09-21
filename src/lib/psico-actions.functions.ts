@@ -47,11 +47,13 @@ function nr01RefPor(dim: string): string {
   return "1.5.4.4.6";
 }
 
-/** Gera plano 5W2H automático para dimensões classificadas ALTO/MUITO_ALTO. */
+/** Gera plano 5W2H automático para dimensões ALTO/CRÍTICO na matriz 5×5.
+ *  O prazo (when_) passa a variar por nível: CRÍTICO 7d · ALTO 30d ·
+ *  MODERADO 60d · BAIXO 90d (NR-01 1.5.5.2). */
 export const gerarPlanoAcaoPsico = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: { campanhaId: string; prazoDias?: number }) =>
-    z.object({ campanhaId: z.string().uuid(), prazoDias: z.number().min(7).max(365).default(90) }).parse(i),
+    z.object({ campanhaId: z.string().uuid(), prazoDias: z.number().min(7).max(365).optional() }).parse(i),
   )
   .handler(async ({ data, context }) => {
     const supabase = context.supabase;
@@ -63,25 +65,35 @@ export const gerarPlanoAcaoPsico = createServerFn({ method: "POST" })
     if (agrErr) throw new Error("Falha ao ler agregado: " + agrErr.message);
 
     const alvos = (agr ?? []).filter((l: any) => !l.suprimido && l.media != null);
-    const prazo = new Date(Date.now() + data.prazoDias * 86400_000).toISOString().slice(0, 10);
+
+    // rótulo legível do GHE (antes saía o UUID cortado no campo "onde")
+    const gheIds = Array.from(new Set(alvos.map((l: any) => l.ghe_id).filter(Boolean)));
+    const gheLabel: Record<string, string> = {};
+    if (gheIds.length > 0) {
+      const { data: ghes } = await supabase.from("pgr_ghe").select("id, numero, setor").in("id", gheIds as string[]);
+      for (const g of (ghes ?? []) as any[]) gheLabel[g.id] = `GHE ${g.numero} — ${g.setor}`;
+    }
 
     const rows = alvos
       .map((l: any) => {
         const media = Number(l.media);
-        const classificacao = classificar(media, l.dimensao);
-        if (classificacao !== "ALTO" && classificacao !== "MUITO_ALTO") return null;
+        const risco = avaliarRiscoPsico(media, l.dimensao);
+        if (risco.nivel !== "ALTO" && risco.nivel !== "CRITICO") return null;
+        const prazoDias = data.prazoDias ?? risco.prazoDias;
+        const prazo = new Date(Date.now() + prazoDias * 86400_000).toISOString().slice(0, 10);
         return {
           campanha_id: data.campanhaId,
           ghe_id: l.ghe_id,
           dimensao: l.dimensao,
-          classificacao,
+          // banco aceita BAIXO/MODERADO/ALTO/MUITO_ALTO
+          classificacao: risco.nivel === "CRITICO" ? "MUITO_ALTO" : risco.nivel,
           score_medio: media,
-          what: `Reduzir risco psicossocial em ${l.dimensao} (média ${media.toFixed(2)})`,
+          what: `Reduzir risco psicossocial em ${l.dimensao} (média ${media.toFixed(2)} · P${risco.probabilidade}×S${risco.severidade} = ${risco.label})`,
           why: dimensaoWhy[l.dimensao] ?? "Risco identificado na avaliação psicossocial.",
-          where_: `GHE ${String(l.ghe_id).slice(0, 8)}`,
+          where_: gheLabel[l.ghe_id] ?? "Campanha geral (sem recorte por GHE)",
           who: "TST + Liderança do GHE + RH",
           when_: prazo,
-          how: dimensaoHow[l.dimensao] ?? "Ver plano detalhado.",
+          how: `${dimensaoHow[l.dimensao] ?? "Ver plano detalhado."} ${risco.acao}`,
           how_much: null as number | null,
           nr01_item_ref: nr01RefPor(l.dimensao),
           status: "PLANEJADO",
@@ -98,6 +110,7 @@ export const gerarPlanoAcaoPsico = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { criados: rows.length };
   });
+
 
 /** Cria/atualiza cronograma de reavaliação para cada GHE da campanha. */
 export const criarCronogramaPsico = createServerFn({ method: "POST" })
