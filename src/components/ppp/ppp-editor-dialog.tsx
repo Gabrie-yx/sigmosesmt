@@ -78,60 +78,57 @@ export function PPPEditorDialog({
 
   const isFinal = status === "EMITIDO";
 
+  const [carregando, setCarregando] = useState(true);
+
   useQuery({
     queryKey: ["ppp-load", empId, open, employee?.data_desligamento ?? null],
     enabled: !!empId && open,
     queryFn: async () => {
-      const { data: rasc } = await supabase
-        .from("ppp_emissoes" as any)
-        .select("*")
-        .eq("employee_id", empId)
-        .eq("status", "RASCUNHO")
-        .order("updated_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (rasc) {
-        const salvo = { ...emptyPPPDados(), ...((rasc as any).dados as PPPDados) };
-        // Rascunhos antigos podem ter sido salvos sem cargo/profissiografia.
-        // Completa com os defaults do cargo para o PPP nunca sair em branco.
+      setCarregando(true);
+      try {
         const defaults = await buildDefaults(employee, company, role);
-        const semProfissio =
-          !salvo.profissiografias?.length ||
-          salvo.profissiografias.every((p) => !String(p?.descricao ?? "").trim());
-        if (semProfissio) salvo.profissiografias = defaults.profissiografias;
-        salvo.lotacoes = (salvo.lotacoes?.length ? salvo.lotacoes : defaults.lotacoes).map((l, i) => ({
-          ...l,
-          cargo: String(l.cargo ?? "").trim() || defaults.lotacoes[i]?.cargo || defaults.lotacoes[0]?.cargo || "",
-          funcao: String(l.funcao ?? "").trim() || defaults.lotacoes[i]?.funcao || defaults.lotacoes[0]?.funcao || "",
-          cbo: String(l.cbo ?? "").trim() || defaults.lotacoes[i]?.cbo || defaults.lotacoes[0]?.cbo || "",
-          setor: String(l.setor ?? "").trim() || defaults.lotacoes[i]?.setor || defaults.lotacoes[0]?.setor || "",
-        }));
-        // Se o funcionário já tem data de desligamento, o período NUNCA pode ficar "atual"
-        const periodoAtualizado = defaults.lotacoes?.[0]?.periodo;
-        if (employee?.data_desligamento && periodoAtualizado) {
-          const precisaFechar = (p: any) => {
-            const s = String(p ?? "").trim();
-            return !s || /atual|—\s*$/i.test(s);
-          };
-          salvo.lotacoes = salvo.lotacoes.map((l) => (precisaFechar(l.periodo) ? { ...l, periodo: periodoAtualizado } : l));
-          salvo.riscos = (salvo.riscos ?? []).map((r: any) => (precisaFechar(r.periodo) ? { ...r, periodo: periodoAtualizado } : r));
-          salvo.profissiografias = (salvo.profissiografias ?? []).map((p: any) =>
-            "periodo" in (p ?? {}) && precisaFechar(p.periodo) ? { ...p, periodo: periodoAtualizado } : p,
-          );
+        const { data: rasc } = await supabase
+          .from("ppp_emissoes" as any)
+          .select("*")
+          .eq("employee_id", empId)
+          .eq("status", "RASCUNHO")
+          .order("updated_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (rasc) {
+          const salvo = mesclarComDefaults(((rasc as any).dados ?? {}) as Partial<PPPDados>, defaults);
+          // Se o funcionário já tem data de desligamento, o período NUNCA pode ficar "atual"
+          const periodoAtualizado = defaults.lotacoes?.[0]?.periodo;
+          if (employee?.data_desligamento && periodoAtualizado) {
+            const precisaFechar = (p: any) => {
+              const s = String(p ?? "").trim();
+              return !s || /atual|—\s*$/i.test(s);
+            };
+            salvo.lotacoes = salvo.lotacoes.map((l) => (precisaFechar(l.periodo) ? { ...l, periodo: periodoAtualizado } : l));
+            salvo.riscos = (salvo.riscos ?? []).map((r: any) => (precisaFechar(r.periodo) ? { ...r, periodo: periodoAtualizado } : r));
+            salvo.profissiografias = (salvo.profissiografias ?? []).map((p: any) =>
+              "periodo" in (p ?? {}) && precisaFechar(p.periodo) ? { ...p, periodo: periodoAtualizado } : p,
+            );
+            salvo.responsaveis = (salvo.responsaveis ?? []).map((r: any) =>
+              precisaFechar(r.periodo) ? { ...r, periodo: periodoAtualizado } : r,
+            );
+          }
+          setPppId((rasc as any).id);
+          setStatus("RASCUNHO");
+          setNumero(null);
+          setDados(salvo);
+          return rasc;
         }
-        setPppId((rasc as any).id);
+
+        setPppId(null);
         setStatus("RASCUNHO");
         setNumero(null);
-        setDados(salvo);
-
-        return rasc;
+        setDados(defaults);
+        return null;
+      } finally {
+        setCarregando(false);
       }
-      const defaults = await buildDefaults(employee, company, role);
-      setPppId(null);
-      setStatus("RASCUNHO");
-      setNumero(null);
-      setDados(defaults);
-      return null;
     },
   });
 
