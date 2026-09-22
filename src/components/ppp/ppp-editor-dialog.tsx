@@ -216,31 +216,43 @@ export function PPPEditorDialog({
         .ppp-form .cell { border: 1px solid #334155 !important; padding: 5px 7px; vertical-align: top; background: #fff !important; }
         .ppp-form .label { font-size: 9px; font-weight: 700; line-height: 1.2; display: block; }
         .ppp-form .val { font-size: 10.5px; min-height: 19px; padding: 3px 4px; color: #111827 !important; }
-        .ppp-editor-dialog .ppp-form .ppp-input {
+        html body .app-glass-scope .modal-glass-scope.ppp-editor-dialog .ppp-form input.ppp-input,
+        html body .modal-glass-scope.ppp-editor-dialog .ppp-form input.ppp-input {
           width: 100%; min-width: 0; min-height: 24px; border: 1px solid #cbd5e1 !important;
           border-radius: 3px; outline: 0; font-family: inherit; font-weight: 600;
           font-size: 10.5px; line-height: 1.3; padding: 4px 5px;
           color: #172033 !important;
-          background: color-mix(in oklab, var(--primary) 5%, white) !important;
+          -webkit-text-fill-color: #172033 !important;
+          caret-color: #172033 !important;
+          background-color: #f8fafc !important;
+          backdrop-filter: none !important;
           box-shadow: inset 0 1px 2px rgb(15 23 42 / 0.06);
         }
-        .ppp-form .ppp-input::placeholder { color: #64748b !important; opacity: 1; }
-        .ppp-editor-dialog .ppp-form .ppp-input:focus {
-          background: color-mix(in oklab, var(--primary) 10%, white) !important;
+        html body .modal-glass-scope.ppp-editor-dialog .ppp-form input.ppp-input::placeholder {
+          color: #64748b !important; -webkit-text-fill-color: #64748b !important; opacity: 1;
+        }
+        html body .modal-glass-scope.ppp-editor-dialog .ppp-form input.ppp-input:focus {
+          background-color: #fff7ed !important;
           border-color: var(--primary) !important;
           box-shadow: 0 0 0 2px color-mix(in oklab, var(--primary) 22%, transparent);
         }
-        .ppp-editor-dialog .ppp-form .ppp-textarea {
+        html body .app-glass-scope .modal-glass-scope.ppp-editor-dialog .ppp-form textarea.ppp-textarea,
+        html body .modal-glass-scope.ppp-editor-dialog .ppp-form textarea.ppp-textarea {
           width: 100%; min-width: 0; border: 1px solid #cbd5e1 !important;
           border-radius: 3px; outline: 0; font-family: inherit; font-weight: 500;
           font-size: 10.5px; line-height: 1.4; padding: 5px;
           color: #172033 !important;
-          background: color-mix(in oklab, var(--primary) 5%, white) !important;
+          -webkit-text-fill-color: #172033 !important;
+          caret-color: #172033 !important;
+          background-color: #f8fafc !important;
+          backdrop-filter: none !important;
           box-shadow: inset 0 1px 2px rgb(15 23 42 / 0.06); resize: vertical;
         }
-        .ppp-form .ppp-textarea::placeholder { color: #64748b !important; opacity: 1; }
-        .ppp-editor-dialog .ppp-form .ppp-textarea:focus {
-          background: color-mix(in oklab, var(--primary) 10%, white) !important;
+        html body .modal-glass-scope.ppp-editor-dialog .ppp-form textarea.ppp-textarea::placeholder {
+          color: #64748b !important; -webkit-text-fill-color: #64748b !important; opacity: 1;
+        }
+        html body .modal-glass-scope.ppp-editor-dialog .ppp-form textarea.ppp-textarea:focus {
+          background-color: #fff7ed !important;
           border-color: var(--primary) !important;
           box-shadow: 0 0 0 2px color-mix(in oklab, var(--primary) 22%, transparent);
         }
