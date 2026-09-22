@@ -80,3 +80,20 @@ for f in supabase/migrations/*.sql; do
   sudo docker exec -i supabase-db psql -U supabase_admin -d postgres < "$f"
 done
 ```
+
+## 6. App sempre no ar (fim do 502 Bad Gateway)
+O 502 do Nginx acontece quando o processo do app morre durante a noite
+(crash, falta de memória ou reboot) e ninguém o levanta de volta.
+
+Instalar o serviço UMA única vez:
+```
+bash /home/sigmo/app/scripts/sigmo-service.sh
+```
+A partir daí o systemd reinicia o app em até 5 segundos se ele cair, e sobe
+sozinho no boot. O deploy.sh detecta o serviço e passa a usá-lo.
+
+Diagnóstico:
+```
+sudo systemctl status sigmo
+tail -n 100 /home/sigmo/sigmo.log
+```

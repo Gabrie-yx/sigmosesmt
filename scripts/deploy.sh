@@ -18,10 +18,18 @@ err(){ printf "\033[1;31m    !! %s\033[0m\n" "$*"; }
 die(){ err "$*"; exit 1; }
 health(){ curl -s -o /dev/null -w "%{http_code}" --max-time 5 "http://127.0.0.1:${PORT}/" || echo 000; }
 
+# Se o serviço systemd estiver instalado (scripts/sigmo-service.sh), ele é quem
+# manda: o app reinicia sozinho se cair. Senão, cai no modo antigo (nohup).
+has_service(){ systemctl list-unit-files 2>/dev/null | grep -q '^sigmo\.service'; }
+
 # mata só o vite DESTE app, não qualquer vite da máquina
-kill_app(){ pkill -f "vite.*--port ${PORT}" 2>/dev/null || pkill -f "$APP/node_modules/.bin/vite" 2>/dev/null || true; sleep 3; }
+kill_app(){
+  if has_service; then sudo systemctl stop sigmo.service 2>/dev/null || systemctl stop sigmo.service 2>/dev/null || true; sleep 2; return; fi
+  pkill -f "vite.*--port ${PORT}" 2>/dev/null || pkill -f "$APP/node_modules/.bin/vite" 2>/dev/null || true; sleep 3;
+}
 
 start_app(){
+  if has_service; then sudo systemctl start sigmo.service 2>/dev/null || systemctl start sigmo.service; return; fi
   # 9>&- fecha o descritor da trava: senão o app segura o lock do deploy pra sempre
   setsid nohup bun run dev -- --host 0.0.0.0 --port "$PORT" > "$LOG" 2>&1 < /dev/null 9>&- &
   disown
