@@ -380,9 +380,7 @@ function PPPForm({
         <div style={{ fontSize: 13, fontWeight: 800, textTransform: "uppercase" }}>
           PERFIL PROFISSIOGRÁFICO PREVIDENCIÁRIO (PPP)
         </div>
-        {numero && (
-          <div style={{ fontSize: 9, marginTop: 2 }}>Nº {numero}</div>
-        )}
+        {/* Sem numerador no topo — leiaute oficial */}
       </div>
 
       {/* SEÇÃO I */}
