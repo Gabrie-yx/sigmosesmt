@@ -29,31 +29,25 @@ function onlyDigits(s: string) { return (s || "").replace(/\D/g, ""); }
 export function validarCNPJ(cnpj: string): boolean {
   const d = onlyDigits(cnpj);
   if (d.length !== 14) return false;
-  
+
   // Rejeita strings de dígitos repetidos
   if (/^(\d)\1+$/.test(d)) return false;
 
-  const t = d.length - 2;
-  const numbers = d.substring(0, t);
-  const digits = d.substring(t);
-  
-  const calc = (n: string) => {
-    let size = n.length - 7;
-    let numbersArr = n.split("");
-    let sum = 0;
-    let pos = size + 7;
-    for (let i = size + 7; i >= 1; i--) {
-      sum += Number(numbersArr[size + 7 - i]) * pos--;
-      if (pos < 2) pos = 9;
-    }
-    const result = sum % 11 < 2 ? 0 : 11 - (sum % 11);
-    return result;
+  const calcDV = (base: string): number => {
+    // Pesos oficiais da Receita: 5,4,3,2,9,8,7,6,5,4,3,2 (e 6 na frente para o 2º dígito)
+    const pesos = base.length === 12
+      ? [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+      : [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+    let soma = 0;
+    for (let i = 0; i < base.length; i++) soma += Number(base[i]) * (pesos[i] ?? 0);
+    const resto = soma % 11;
+    return resto < 2 ? 0 : 11 - resto;
   };
 
-  const digit1 = calc(numbers);
-  const digit2 = calc(numbers + digit1);
-
-  return digit1 === Number(digits[0]) && digit2 === Number(digits[1]);
+  const base = d.slice(0, 12);
+  const dv1 = calcDV(base);
+  const dv2 = calcDV(base + String(dv1));
+  return dv1 === Number(d[12]) && dv2 === Number(d[13]);
 }
 
 function fmtCnaeCode(code: number | string | null): string | null {
@@ -100,7 +94,16 @@ export async function consultarCNPJ(cnpj: string): Promise<ReceitaCNPJData> {
   if (digits.length !== 14) throw new Error("CNPJ deve ter 14 dígitos");
   if (!validarCNPJ(digits)) throw new Error("CNPJ inválido (dígito verificador incorreto)");
 
-  const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${digits}`);
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 20000);
+  let res: Response;
+  try {
+    res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${digits}`, { signal: ctrl.signal });
+  } catch {
+    throw new Error("Não foi possível falar com a Receita agora. Verifique a internet e tente novamente.");
+  } finally {
+    clearTimeout(timer);
+  }
   if (!res.ok) {
     if (res.status === 404) throw new Error("CNPJ não encontrado na Receita Federal");
     throw new Error(`Erro na consulta (HTTP ${res.status})`);
