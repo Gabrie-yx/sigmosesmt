@@ -789,17 +789,119 @@ function casParaRisco(nomeRisco: string, ficha: { item: string; ca: string }[]) 
   return Array.from(new Set(casados.map((e) => `${e.ca} (${e.item})`)));
 }
 
-async function buildDefaults(emp: AnyRow, company: AnyRow | null, role: AnyRow | null): Promise<PPPDados> {
+/** Mescla o rascunho salvo com os defaults do sistema: campo vazio recebe o default. */
+function mesclarComDefaults(salvoRaw: Partial<PPPDados>, defaults: PPPDados): PPPDados {
+  const salvo = { ...emptyPPPDados(), ...(salvoRaw ?? {}) } as PPPDados;
+  const txt = (a: any, b: any) => (String(a ?? "").trim() ? String(a) : String(b ?? ""));
+  const out: PPPDados = { ...salvo };
+
+  (["empresa_cnpj", "empresa_nome", "empresa_cnae", "trab_nome", "trab_cpf", "trab_nascimento",
+    "trab_sexo", "trab_matricula_esocial", "trab_admissao", "trab_br_pdh", "regime_revezamento",
+    "data_emissao"] as (keyof PPPDados)[]).forEach((k) => {
+    (out as any)[k] = txt((salvo as any)[k], (defaults as any)[k]);
+  });
+
+  const temTexto = (o: any) => Object.values(o ?? {}).some((v) => String(v ?? "").trim() && String(v).trim() !== "NA");
+
+  out.lotacoes = (salvo.lotacoes ?? []).filter(temTexto).length
+    ? (salvo.lotacoes ?? []).map((l, i) => ({
+        ...l,
+        periodo: txt(l.periodo, defaults.lotacoes[i]?.periodo ?? defaults.lotacoes[0]?.periodo),
+        cnpj: txt(l.cnpj, defaults.lotacoes[i]?.cnpj ?? defaults.lotacoes[0]?.cnpj),
+        setor: txt(l.setor, defaults.lotacoes[i]?.setor ?? defaults.lotacoes[0]?.setor),
+        cargo: txt(l.cargo, defaults.lotacoes[i]?.cargo ?? defaults.lotacoes[0]?.cargo),
+        funcao: txt(l.funcao, defaults.lotacoes[i]?.funcao ?? defaults.lotacoes[0]?.funcao),
+        cbo: txt(l.cbo, defaults.lotacoes[i]?.cbo ?? defaults.lotacoes[0]?.cbo),
+        gfip_esocial: txt(l.gfip_esocial, defaults.lotacoes[i]?.gfip_esocial ?? "00"),
+      }))
+    : defaults.lotacoes;
+
+  const profissioOk =
+    (salvo.profissiografias ?? []).some((p) => String(p?.descricao ?? "").trim());
+  out.profissiografias = profissioOk
+    ? salvo.profissiografias.map((p, i) => ({
+        periodo: txt(p.periodo, defaults.profissiografias[i]?.periodo ?? defaults.profissiografias[0]?.periodo),
+        descricao: p.descricao,
+      }))
+    : defaults.profissiografias;
+
+  out.riscos = (salvo.riscos ?? []).some((r) => String(r?.fator_risco ?? "").trim())
+    ? salvo.riscos
+    : defaults.riscos;
+
+  out.responsaveis = (salvo.responsaveis ?? []).some(
+    (r) => String(r?.nome ?? "").trim() || String(r?.cpf ?? "").trim() || String(r?.registro ?? "").trim(),
+  )
+    ? salvo.responsaveis.map((r, i) => ({
+        ...r,
+        periodo: txt(r.periodo, defaults.responsaveis[i]?.periodo ?? defaults.responsaveis[0]?.periodo),
+      }))
+    : defaults.responsaveis;
+
+  out.cats = salvo.cats ?? [];
+  return out;
+}
+
+/** 4731800 -> 47.31-8-00 (apenas o número do CNAE, sem a descrição). */
+function fmtCnae(v?: string | null): string {
+  const dig = String(v ?? "").replace(/\D/g, "");
+  if (dig.length !== 7) return String(v ?? "").trim().split(/\s+-\s+|\s{2,}/)[0] ?? "";
+  return `${dig.slice(0, 2)}.${dig.slice(2, 4)}-${dig.slice(4, 5)}-${dig.slice(5, 7)}`;
+}
+
+function fmtCnpj(v?: string | null): string {
+  const d = String(v ?? "").replace(/\D/g, "");
+  if (d.length !== 14) return String(v ?? "").trim();
+  return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8, 12)}-${d.slice(12)}`;
+}
+
+function fmtCpf(v?: string | null): string {
+  const d = String(v ?? "").replace(/\D/g, "");
+  if (d.length !== 11) return String(v ?? "").trim();
+  return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
+}
+
+function sexoPorExtenso(v?: string | null): string {
+  const s = String(v ?? "").trim().toUpperCase();
+  if (!s) return "";
+  if (s.startsWith("M")) return "Masculino";
+  if (s.startsWith("F")) return "Feminino";
+  return String(v);
+}
+
+async function buildDefaults(emp: AnyRow, companyProp: AnyRow | null, roleProp: AnyRow | null): Promise<PPPDados> {
   const d = emptyPPPDados();
-  // Empresa
-  d.empresa_cnpj = company?.cnpj ?? "";
-  d.empresa_nome = company?.name ?? "";
-  d.empresa_cnae = company?.cnae ?? "";
+
+  // Empresa — busca no banco quando a prop não veio (ou veio incompleta)
+  let company = companyProp;
+  if (emp?.company_id && (!company || !company.cnpj || !company.cnae_principal)) {
+    const { data } = await supabase
+      .from("companies")
+      .select("id, name, razao_social, cnpj, cnae_principal, cnae_descricao")
+      .eq("id", emp.company_id)
+      .maybeSingle();
+    if (data) company = { ...(company ?? {}), ...(data as any) };
+  }
+
+  // Cargo — idem
+  let role = roleProp;
+  if (emp?.role_id && (!role || !role.cbo)) {
+    const { data } = await supabase
+      .from("roles")
+      .select("*")
+      .eq("id", emp.role_id)
+      .maybeSingle();
+    if (data) role = { ...(role ?? {}), ...(data as any) };
+  }
+
+  d.empresa_cnpj = fmtCnpj(company?.cnpj);
+  d.empresa_nome = String(company?.razao_social ?? company?.name ?? "").trim();
+  d.empresa_cnae = fmtCnae(company?.cnae_principal);
   // Trabalhador
   d.trab_nome = emp?.nome ?? "";
-  d.trab_cpf = emp?.cpf ?? "";
+  d.trab_cpf = fmtCpf(emp?.cpf);
   d.trab_nascimento = fmtBR(emp?.data_nascimento);
-  d.trab_sexo = emp?.sexo ?? "";
+  d.trab_sexo = sexoPorExtenso(emp?.sexo);
   d.trab_matricula_esocial = emp?.pis ?? emp?.matricula ?? "";
   d.trab_admissao = fmtBR(emp?.admissao);
 
@@ -811,13 +913,17 @@ async function buildDefaults(emp: AnyRow, company: AnyRow | null, role: AnyRow |
   // Lotação — CBO vem do CARGO (role), não do funcionário
   d.lotacoes = [{
     periodo,
-    cnpj: company?.cnpj ?? "",
+    cnpj: fmtCnpj(company?.cnpj),
     setor: emp?.setor ?? role?.setor ?? "",
     cargo: role?.name ?? "",
     funcao: role?.name ?? "",
     cbo: role?.cbo ?? "",
     gfip_esocial: "00",
   }];
+
+  // 16 — Responsável pelos registros ambientais: 16.1 = mesmo período do 14.1;
+  // 16.2/16.3/16.4 ficam para preenchimento manual (variam por profissional).
+  d.responsaveis = [{ periodo, cpf: "", registro: "", nome: "" }];
 
   // Riscos do cargo
   let nomesRiscos: string[] = [];
