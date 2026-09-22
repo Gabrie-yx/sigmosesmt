@@ -57,14 +57,14 @@ export function PPPEditorDialog({
   const [saving, setSaving] = useState(false);
   const [previewDoc, setPreviewDoc] = useState<jsPDF | null>(null);
 
-  // Auto-ajuste: a folha A4 (190mm) encolhe pra caber na largura do modal
+  // Auto-ajuste: a folha A4 inteira (210mm) encolhe apenas quando necessário.
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [zoom, setZoom] = useState(1);
   useEffect(() => {
     if (!open) return;
     const el = scrollRef.current;
     if (!el) return;
-    const SHEET_PX = 190 * (96 / 25.4); // 190mm em px
+    const SHEET_PX = 210 * (96 / 25.4);
     const fit = () => {
       const avail = el.clientWidth - 32;
       setZoom(Math.min(1, Math.max(0.55, avail / SHEET_PX)));
@@ -210,43 +210,67 @@ export function PPPEditorDialog({
           .ppp-zoom { zoom: 1 !important; }
           .ppp-input { border: 0 !important; padding: 0 !important; box-shadow: none !important; background: transparent !important; }
         }
-        .ppp-print-area { color: #000 !important; background: #fff !important; }
+        .ppp-editor-dialog .ppp-print-area { color: #000 !important; background: #fff !important; }
         .ppp-form, .ppp-form * { color: #000 !important; }
         .ppp-form { font-family: Arial, Helvetica, sans-serif; background: #fff !important; }
-        .ppp-form .cell { border: 1px solid #000 !important; padding: 4px 6px; vertical-align: top; background: #fff !important; }
-        .ppp-form .label { font-size: 8.5px; font-weight: 700; line-height: 1.15; display: block; }
-        .ppp-form .val { font-size: 10px; min-height: 14px; padding: 1px 0; }
-        .ppp-form .ppp-input {
-          width: 100%; border: 0; outline: 0; font-family: inherit;
-          font-size: 10px; padding: 1px 2px; background: transparent;
+        .ppp-form .cell { border: 1px solid #334155 !important; padding: 5px 7px; vertical-align: top; background: #fff !important; }
+        .ppp-form .label { font-size: 9px; font-weight: 700; line-height: 1.2; display: block; }
+        .ppp-form .val { font-size: 10.5px; min-height: 19px; padding: 3px 4px; color: #111827 !important; }
+        .ppp-editor-dialog .ppp-form .ppp-input {
+          width: 100%; min-width: 0; min-height: 24px; border: 1px solid #cbd5e1 !important;
+          border-radius: 3px; outline: 0; font-family: inherit; font-weight: 600;
+          font-size: 10.5px; line-height: 1.3; padding: 4px 5px;
+          color: #172033 !important;
+          background: color-mix(in oklab, var(--primary) 5%, white) !important;
+          box-shadow: inset 0 1px 2px rgb(15 23 42 / 0.06);
         }
         .ppp-form .ppp-input::placeholder { color: #64748b !important; opacity: 1; }
-        .ppp-form .ppp-input:focus { background: #fffbe6 !important; outline: 1px dashed #c084fc; }
-        .ppp-form .ppp-textarea {
-          width: 100%; border: 0; outline: 0; font-family: inherit;
-          font-size: 10px; padding: 2px; background: transparent; resize: vertical;
+        .ppp-editor-dialog .ppp-form .ppp-input:focus {
+          background: color-mix(in oklab, var(--primary) 10%, white) !important;
+          border-color: var(--primary) !important;
+          box-shadow: 0 0 0 2px color-mix(in oklab, var(--primary) 22%, transparent);
+        }
+        .ppp-editor-dialog .ppp-form .ppp-textarea {
+          width: 100%; min-width: 0; border: 1px solid #cbd5e1 !important;
+          border-radius: 3px; outline: 0; font-family: inherit; font-weight: 500;
+          font-size: 10.5px; line-height: 1.4; padding: 5px;
+          color: #172033 !important;
+          background: color-mix(in oklab, var(--primary) 5%, white) !important;
+          box-shadow: inset 0 1px 2px rgb(15 23 42 / 0.06); resize: vertical;
         }
         .ppp-form .ppp-textarea::placeholder { color: #64748b !important; opacity: 1; }
-        .ppp-form .ppp-textarea:focus { background: #fffbe6 !important; outline: 1px dashed #c084fc; }
+        .ppp-editor-dialog .ppp-form .ppp-textarea:focus {
+          background: color-mix(in oklab, var(--primary) 10%, white) !important;
+          border-color: var(--primary) !important;
+          box-shadow: 0 0 0 2px color-mix(in oklab, var(--primary) 22%, transparent);
+        }
         .ppp-form .section-band {
           background: #000 !important; font-weight: 700; text-align: center;
           padding: 3px 0; font-size: 10.5px; letter-spacing: 0.5px; text-transform: uppercase;
         }
         .ppp-form .section-band, .ppp-form .section-band * { color: #fff !important; }
         .ppp-form .block-title {
-          background: #e6e6e6 !important; font-weight: 700; padding: 3px 6px; font-size: 10px;
+          background: color-mix(in oklab, var(--primary) 8%, #f8fafc) !important;
+          color: #111827 !important; font-weight: 700; padding: 4px 7px; font-size: 10.5px;
           border: 1px solid #000 !important; border-bottom: 0;
         }
         .ppp-form table { width: 100%; border-collapse: collapse; }
-        .ppp-form .head-th { background: #eee !important; font-size: 8.5px; font-weight: 700; text-align: center; }
+        .ppp-form .head-th { background: #eef1f5 !important; font-size: 9px; font-weight: 700; text-align: center; }
+        @media print {
+          .ppp-editor-dialog .ppp-form .ppp-input,
+          .ppp-editor-dialog .ppp-form .ppp-textarea {
+            min-height: 0; border: 0 !important; padding: 0 !important;
+            background: transparent !important; box-shadow: none !important;
+          }
+        }
       `}</style>
 
       <Dialog open={open} onOpenChange={(v) => { if (!saving) onOpenChange(v); }}>
-        <DialogContent className="w-[96vw] max-w-[1180px] h-[94vh] max-h-[94vh] overflow-hidden flex flex-col p-0 gap-0 [&>button]:hidden">
+        <DialogContent className="ppp-editor-dialog w-[98vw] max-w-[1440px] h-[96vh] max-h-[96vh] overflow-hidden flex flex-col p-0 gap-0 border-border bg-popover text-popover-foreground shadow-2xl [&>button]:hidden">
           {/* Toolbar (oculta na impressão) */}
           <div
             data-no-print="true"
-            className="no-print shrink-0 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 border-b bg-card"
+            className="no-print shrink-0 flex flex-wrap items-center justify-between gap-3 border-b border-border bg-card px-4 py-3 sm:px-5"
           >
             <div className="flex min-w-0 items-center gap-3">
               <FileSignature className="h-5 w-5 shrink-0 text-primary" />
@@ -267,7 +291,7 @@ export function PPPEditorDialog({
                 </div>
               </div>
             </div>
-            <div className="flex items-center justify-end gap-2">
+            <div className="flex flex-wrap items-center justify-end gap-2">
               {!isFinal && (
                 <Button size="sm" variant="secondary" onClick={() => handleSave("RASCUNHO")} disabled={saving} className="gap-1.5">
                   <Save className="h-3.5 w-3.5" /> <span className="hidden md:inline">Rascunho</span>
@@ -291,9 +315,9 @@ export function PPPEditorDialog({
           </div>
 
           {/* Área imprimível */}
-          <div ref={scrollRef} className="flex-1 min-h-0 overflow-auto bg-muted/40 p-4 sm:p-6">
-            <div className="ppp-zoom mx-auto" style={{ zoom }}>
-              <div className="ppp-print-area mx-auto bg-white shadow-lg rounded-sm" style={{ width: "190mm", padding: "8mm" }}>
+          <div ref={scrollRef} className="flex-1 min-h-0 overflow-auto bg-background/70 p-3 sm:p-5">
+            <div className="ppp-zoom mx-auto origin-top" style={{ zoom }}>
+              <div className="ppp-print-area light-paper mx-auto rounded-sm shadow-2xl" style={{ width: "210mm", padding: "10mm" }}>
                 <PPPForm dados={dados} isFinal={isFinal} numero={numero} set={set} upd={upd} setDados={setDados} employeeSig={employee?.assinatura_url ?? null} />
               </div>
             </div>
@@ -675,17 +699,17 @@ function BlockTitle({ title, right }: { title: string; right?: React.ReactNode }
 
 function SmallAddBtn({ onClick, label = "Adicionar" }: { onClick: () => void; label?: string }) {
   return (
-    <button type="button" onClick={onClick} className="no-print inline-flex items-center gap-1 text-[10px] font-bold text-violet-700 hover:text-violet-900">
+    <Button type="button" variant="ghost" size="sm" onClick={onClick} className="no-print h-6 px-2 text-[10px] font-bold text-primary hover:bg-primary/10 hover:text-primary">
       <Plus className="h-3 w-3" /> {label}
-    </button>
+    </Button>
   );
 }
 
 function RmBtn({ onClick }: { onClick: () => void }) {
   return (
-    <button type="button" onClick={onClick} className="no-print inline-flex items-center text-rose-600 hover:text-rose-800">
+    <Button type="button" variant="ghost" size="icon" title="Remover linha" aria-label="Remover linha" onClick={onClick} className="no-print h-7 w-7 text-destructive hover:bg-destructive/10 hover:text-destructive">
       <Trash2 className="h-3.5 w-3.5" />
-    </button>
+    </Button>
   );
 }
 
