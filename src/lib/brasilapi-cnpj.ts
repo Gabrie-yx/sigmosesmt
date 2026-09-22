@@ -94,7 +94,16 @@ export async function consultarCNPJ(cnpj: string): Promise<ReceitaCNPJData> {
   if (digits.length !== 14) throw new Error("CNPJ deve ter 14 dígitos");
   if (!validarCNPJ(digits)) throw new Error("CNPJ inválido (dígito verificador incorreto)");
 
-  const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${digits}`);
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 20000);
+  let res: Response;
+  try {
+    res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${digits}`, { signal: ctrl.signal });
+  } catch {
+    throw new Error("Não foi possível falar com a Receita agora. Verifique a internet e tente novamente.");
+  } finally {
+    clearTimeout(timer);
+  }
   if (!res.ok) {
     if (res.status === 404) throw new Error("CNPJ não encontrado na Receita Federal");
     throw new Error(`Erro na consulta (HTTP ${res.status})`);
