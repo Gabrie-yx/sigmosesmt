@@ -130,11 +130,7 @@ export function gerarPPPPdf(
   doc.setTextColor(TITLE_BLUE[0], TITLE_BLUE[1], TITLE_BLUE[2]);
   doc.text("PERFIL PROFISSIOGRÁFICO PREVIDENCIÁRIO (PPP)", margin + 26, y + headerH / 2 + 1.5);
   doc.setTextColor(0);
-  if (opts?.numero) {
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(7);
-    doc.text(`Nº ${opts.numero}`, pageW - margin - 2, y + 4, { align: "right" });
-  }
+  // Sem numerador no topo: o leiaute oficial do PPP não possui esse campo.
   y += headerH + 0.5;
 
   // ===================== DADOS ADMINISTRATIVOS =====================
