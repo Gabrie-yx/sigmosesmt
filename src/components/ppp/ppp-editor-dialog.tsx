@@ -163,9 +163,20 @@ export function PPPEditorDialog({
   }
 
   async function handleDownloadPdf() {
+    if (carregando) {
+      toast.info("Aguarde: os dados do PPP ainda estão sendo carregados.");
+      return;
+    }
     try {
+      // Rede de segurança: nunca emitir um PPP em branco.
+      let base = dados;
+      if (!String(base.trab_nome ?? "").trim() || !String(base.empresa_nome ?? "").trim()) {
+        const defaults = await buildDefaults(employee, company, role);
+        base = mesclarComDefaults(base, defaults);
+        setDados(base);
+      }
       const sig = await fetchSignatureAsCleanDataUrl(employee?.assinatura_url ?? null);
-      const doc = gerarPPPPdf(dados, { numero, assinaturaDataUrl: sig });
+      const doc = gerarPPPPdf(base, { numero, assinaturaDataUrl: sig });
       setPreviewDoc(doc);
     } catch (e: any) {
       console.error("[ppp-pdf]", e);
