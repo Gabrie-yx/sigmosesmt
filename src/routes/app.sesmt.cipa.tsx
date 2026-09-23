@@ -47,7 +47,6 @@ type Gestao = {
   status: "PLANEJAMENTO" | "ELEICAO" | "ATIVA" | "ENCERRADA";
   modo: "DESIGNADO" | "COMISSAO";
   grau_risco: number | null;
-  grupo_nr05: string | null;
   num_empregados: number | null;
   efetivos_empregador: number | null;
   suplentes_empregador: number | null;
@@ -300,7 +299,6 @@ function ResumoGestao({ gestao }: { gestao: Gestao }) {
           <div><span className="opacity-60">Fim:</span> {gestao.data_fim}</div>
           <div><span className="opacity-60">Grau de Risco:</span> {gestao.grau_risco ?? "—"}</div>
           <div><span className="opacity-60">Empregados:</span> {gestao.num_empregados ?? "—"}</div>
-          <div><span className="opacity-60">Grupo NR-05:</span> {gestao.grupo_nr05 ?? "—"}</div>
           <div className="col-span-2"><span className="opacity-60">Status:</span> <Badge variant="secondary">{statusLabel(gestao.status)}</Badge></div>
         </div>
         {sugestao && (
@@ -1127,7 +1125,6 @@ function NovaGestaoDialog({ open, onClose, onCreated, edit }: { open: boolean; o
   const [gestao, setGestao] = useState("");
   const [inicio, setInicio] = useState("");
   const [fim, setFim] = useState("");
-  const [grupo, setGrupo] = useState("");
   const [num, setNum] = useState("");
   const [gr, setGr] = useState("");
   const [modo, setModo] = useState<"COMISSAO" | "DESIGNADO">("COMISSAO");
@@ -1141,7 +1138,6 @@ function NovaGestaoDialog({ open, onClose, onCreated, edit }: { open: boolean; o
       setGestao(edit.gestao ?? "");
       setInicio(edit.data_inicio ?? "");
       setFim(edit.data_fim ?? "");
-      setGrupo(edit.grupo_nr05 ?? "");
       setNum(edit.num_empregados?.toString() ?? "");
       setGr(edit.grau_risco?.toString() ?? "");
       setModo(edit.modo);
@@ -1158,7 +1154,7 @@ function NovaGestaoDialog({ open, onClose, onCreated, edit }: { open: boolean; o
   );
 
   function resetar() {
-    setGestao(""); setInicio(""); setFim(""); setGrupo(""); setNum("");
+    setGestao(""); setInicio(""); setFim(""); setNum("");
     setGr(""); setModo("COMISSAO");
     setEfE(""); setSuE(""); setEfF(""); setSuF("");
   }
@@ -1197,7 +1193,6 @@ function NovaGestaoDialog({ open, onClose, onCreated, edit }: { open: boolean; o
         gestao, data_inicio: inicio, data_fim: fim,
         modo,
         grau_risco: gr ? Number(gr) : null,
-        grupo_nr05: grupo || null,
         num_empregados: num ? Number(num) : null,
         efetivos_empregador: efE ? Number(efE) : 0,
         suplentes_empregador: suE ? Number(suE) : 0,
@@ -1241,7 +1236,6 @@ function NovaGestaoDialog({ open, onClose, onCreated, edit }: { open: boolean; o
               </Select>
             </div>
             <div><Label>Nº empregados</Label><Input type="number" value={num} onChange={(e) => setNum(e.target.value)} /></div>
-            <div><Label>Grupo NR-05</Label><Input value={grupo} onChange={(e) => setGrupo(e.target.value)} placeholder="Ex.: C-18" /></div>
           </div>
           {sugestao && (
             <div className="rounded border border-border bg-muted/30 p-3 text-xs space-y-2">
