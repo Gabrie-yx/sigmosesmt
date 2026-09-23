@@ -15,6 +15,7 @@ import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CatalogoRiscosPanel } from "@/components/catalogo/catalogo-riscos-panel";
 import { CatalogoNrsPanel } from "@/components/catalogo/catalogo-nrs-panel";
 import { CargoRiscosPanel } from "@/components/cargo-riscos/cargo-riscos-panel";
@@ -74,7 +75,7 @@ type Natureza = "ADMISSIONAL" | "PERIODICO" | "RETORNO_TRABALHO" | "MUDANCA_RISC
 type ExamesPorNatureza = Record<Natureza, string[]>;
 type Role = {
   id: string; name: string; ativo: boolean;
-  ghe: string | null; setor: string | null; cbo: string | null; cbo_titulo: string | null;
+  ghe: string | null; ghe_id: string | null; setor: string | null; cbo: string | null; cbo_titulo: string | null;
   req_aso: boolean; req_integra: boolean;
   periodicidade_integracao_meses: number | null;
   req_nrs: string[]; req_exames: string[]; req_vacinas: string[];
@@ -98,7 +99,7 @@ const emptyExames: ExamesPorNatureza = {
   MUDANCA_RISCO: [], DEMISSIONAL: [], SEMESTRAL: [],
 };
 const empty: Partial<Role> = {
-  name: "", ativo: true, ghe: "", setor: "", cbo: "", cbo_titulo: "",
+  name: "", ativo: true, ghe: "", ghe_id: null, setor: "", cbo: "", cbo_titulo: "",
   req_aso: true, req_integra: true,
   periodicidade_integracao_meses: null,
   req_nrs: [], req_exames: [], req_vacinas: [], risco_biologico: false, riscos: emptyRiscos,
@@ -123,6 +124,7 @@ function RolesPage() {
         ...r,
         ativo: r.ativo ?? true,
         ghe: r.ghe ?? "",
+        ghe_id: r.ghe_id ?? null,
         setor: r.setor ?? "",
         cbo: r.cbo ?? "",
         cbo_titulo: r.cbo_titulo ?? "",
@@ -144,6 +146,16 @@ function RolesPage() {
   const rolesLoading = rolesQuery.isLoading || (rolesQuery.isFetching && roles.length === 0);
   const rolesError = rolesQuery.error instanceof Error ? rolesQuery.error.message : null;
 
+  const ghesQuery = useQuery({
+    queryKey: ["pgr_ghe"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("pgr_ghe").select("id, numero, setor").eq("ativo", true).order("numero");
+      if (error) throw error;
+      return (data ?? []) as { id: string; numero: number; setor: string | null }[];
+    },
+  });
+  const ghes = ghesQuery.data ?? [];
+
   const filtered = useMemo(() => {
     return roles.filter((r) => {
       if (!showInactive && !r.ativo) return false;
@@ -164,6 +176,7 @@ function RolesPage() {
         name: v.name!,
         ativo: v.ativo ?? true,
         ghe: v.ghe || null,
+        ghe_id: v.ghe_id || null,
         setor: v.setor || null,
         cbo: v.cbo || null,
         cbo_titulo: v.cbo_titulo || null,
@@ -540,14 +553,23 @@ function RolesPage() {
                     <label className="block text-xs font-black text-[#991b1b] uppercase mb-2 tracking-widest flex items-center gap-1">
                       <Layers className="h-3.5 w-3.5" /> GHE
                     </label>
-                    <input
-                      type="text"
-                      value={editing.ghe ?? ""}
-                      onChange={(e) => setEditing({ ...editing, ghe: e.target.value })}
-                      placeholder="Ex: GHE 01"
+                    <Select
+                      value={editing.ghe_id ?? "none"}
+                      onValueChange={(v) => setEditing({ ...editing, ghe_id: v === "none" ? null : v })}
                       disabled={!isEditor}
-                      className="w-full bg-white border-2 border-rose-100 rounded-2xl px-4 py-3.5 text-sm font-black uppercase text-slate-800 focus:border-[#991b1b] focus:ring-4 focus:ring-rose-200/40 outline-none transition-all placeholder:text-slate-300 placeholder:font-normal placeholder:normal-case disabled:opacity-60 shadow-sm"
-                    />
+                    >
+                      <SelectTrigger className="w-full bg-white border-2 border-rose-100 rounded-2xl px-4 py-3.5 h-auto text-sm font-black uppercase text-slate-800 focus:border-[#991b1b] focus:ring-4 focus:ring-rose-200/40 shadow-sm">
+                        <SelectValue placeholder="Selecione o GHE" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">— sem GHE —</SelectItem>
+                        {ghes.map((g) => (
+                          <SelectItem key={g.id} value={g.id}>
+                            GHE {g.numero}{g.setor ? ` · ${g.setor}` : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="lg:col-span-3">
                     <label className="block text-xs font-black text-[#991b1b] uppercase mb-2 tracking-widest">CBO</label>
