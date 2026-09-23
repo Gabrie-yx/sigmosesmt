@@ -1154,7 +1154,7 @@ function EmitirOssDialog({ open, onClose, onIssued, prefill }: {
     queryFn: async () => {
       const { data } = await supabase
         .from("employees")
-        .select("id, nome, cpf, matricula, admissao, status, role_id, company_id, roles(name, cbo, setor, descricao_atividades)")
+        .select("id, nome, cpf, matricula, admissao, status, role_id, company_id, roles(name, cbo, setor, descricao_atividades, riscos)")
         .eq("status", "ATIVO")
         .eq("company_id", companyId)
         .order("nome");
@@ -1164,10 +1164,12 @@ function EmitirOssDialog({ open, onClose, onIssued, prefill }: {
         cargoCbo: e.roles?.cbo ?? null,
         cargoSetor: e.roles?.setor ?? null,
         cargoDescricao: e.roles?.descricao_atividades ?? null,
+        cargoRiscosFicha: e.roles?.riscos ?? null,
       })) as Array<{
-        id: string; nome: string; cpf: string | null; matricula: string | null;
+        id: string; role_id: string | null; nome: string; cpf: string | null; matricula: string | null;
         admissao: string | null; cargo: string | null;
         cargoCbo: string | null; cargoSetor: string | null; cargoDescricao: string | null;
+        cargoRiscosFicha: any;
       }>;
     },
   });
