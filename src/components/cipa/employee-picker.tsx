@@ -8,6 +8,8 @@ export type CipaEmployee = {
   id: string;
   nome: string;
   admissao: string | null;
+  matricula?: string | null;
+  setor?: string | null;
   company_id: string | null;
   roles: { name: string } | null;
   companies: { name: string } | null;
@@ -19,7 +21,7 @@ export function useCipaEmployees(enabled = true) {
     queryFn: async (): Promise<CipaEmployee[]> => {
       const { data, error } = await supabase
         .from("employees")
-        .select("id, nome, admissao, company_id, roles(name), companies!employees_company_id_fkey(name)")
+        .select("id, nome, admissao, matricula, setor, company_id, roles(name), companies!employees_company_id_fkey(name)")
         .eq("status", "ATIVO")
         .order("nome")
         .limit(2000);
