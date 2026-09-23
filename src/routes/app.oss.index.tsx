@@ -1423,6 +1423,34 @@ function EmitirOssDialog({ open, onClose, onIssued, prefill }: {
             {autoSuggestedTemplate && !templateId && (
               <div className="text-[10px] text-emerald-700 mt-1">✓ Modelo sugerido pelo cargo do funcionário</div>
             )}
+            {selectedEmp?.cargo && effectiveTemplateId && (() => {
+              const tplSel = templates.find((t) => t.id === effectiveTemplateId);
+              const vazio =
+                !!tplSel &&
+                ![
+                  tplSel.descricao_atividades, tplSel.riscos_texto, tplSel.epis_obrigatorios,
+                  tplSel.risco_fisico, tplSel.risco_quimico, tplSel.risco_biologico,
+                  tplSel.risco_ergonomico, tplSel.risco_acidente, tplSel.risco_psicossocial,
+                ].some((v: any) => (v ?? "").toString().trim());
+              return (
+                <div className="mt-2 space-y-2">
+                  {vazio && (
+                    <div className="text-[11px] text-amber-700 dark:text-amber-300">
+                      ⚠ Este modelo está sem conteúdo — a OS sairá em branco. Atualize com os dados do cargo.
+                    </div>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-[11px]"
+                    onClick={() => sincronizarModelo.mutate()}
+                    disabled={sincronizarModelo.isPending}
+                  >
+                    Atualizar modelo com os dados do cargo "{selectedEmp.cargo}"
+                  </Button>
+                </div>
+              );
+            })()}
             {selectedEmp?.cargo && !autoSuggestedTemplate && !templateId && (
               <div className="mt-2 rounded-md border border-amber-400/40 bg-amber-500/10 p-2 space-y-2">
                 <div className="text-[11px] text-amber-700 dark:text-amber-300">
