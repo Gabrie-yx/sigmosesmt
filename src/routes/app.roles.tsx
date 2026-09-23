@@ -160,6 +160,17 @@ function RolesPage() {
   });
   const ghes = ghesQuery.data ?? [];
 
+  const episCatalogoQuery = useQuery({
+    queryKey: ["estoque_epi_catalogo_min"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("estoque_epi").select("nome_material, ca").order("nome_material");
+      if (error) throw error;
+      return (data ?? []) as { nome_material: string; ca: string | null }[];
+    },
+  });
+  const episCatalogo = episCatalogoQuery.data ?? [];
+
   const filtered = useMemo(() => {
     return roles.filter((r) => {
       if (!showInactive && !r.ativo) return false;
