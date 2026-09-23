@@ -1,0 +1,13 @@
+ALTER TABLE public.cipa_gestoes ADD COLUMN IF NOT EXISTS eleicao JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE public.cipa_membros ADD COLUMN IF NOT EXISTS inscricao_em DATE;
+ALTER TABLE public.cipa_membros ADD COLUMN IF NOT EXISTS ordem_suplencia INTEGER;
+ALTER TABLE public.cipa_membros ADD COLUMN IF NOT EXISTS treinamento_horas NUMERIC;
+ALTER TABLE public.cipa_membros ADD COLUMN IF NOT EXISTS treinamento_data DATE;
+ALTER TABLE public.cipa_membros ADD COLUMN IF NOT EXISTS ata_entregue BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE public.cipa_membros ADD COLUMN IF NOT EXISTS motivo_saida TEXT;
+ALTER TABLE public.cipa_reunioes ADD COLUMN IF NOT EXISTS ata_assinada BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE public.cipa_reunioes ADD COLUMN IF NOT EXISTS divulgada BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE public.cipa_reunioes ADD COLUMN IF NOT EXISTS motivo_extraordinaria TEXT;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.cipa_gestoes, public.cipa_membros, public.cipa_reunioes TO authenticated;
+GRANT ALL ON public.cipa_gestoes, public.cipa_membros, public.cipa_reunioes TO service_role;
+NOTIFY pgrst, 'reload schema';

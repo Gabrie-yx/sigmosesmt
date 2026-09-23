@@ -2709,6 +2709,7 @@ export type Database = {
           designado_treinamento_horas: number | null
           efetivos_empregador: number | null
           efetivos_empregados: number | null
+          eleicao: Json
           gestao: string
           grau_risco: number | null
           grupo_nr05: string | null
@@ -2739,6 +2740,7 @@ export type Database = {
           designado_treinamento_horas?: number | null
           efetivos_empregador?: number | null
           efetivos_empregados?: number | null
+          eleicao?: Json
           gestao: string
           grau_risco?: number | null
           grupo_nr05?: string | null
@@ -2769,6 +2771,7 @@ export type Database = {
           designado_treinamento_horas?: number | null
           efetivos_empregador?: number | null
           efetivos_empregados?: number | null
+          eleicao?: Json
           gestao?: string
           grau_risco?: number | null
           grupo_nr05?: string | null
@@ -2943,41 +2946,59 @@ export type Database = {
       }
       cipa_membros: {
         Row: {
+          ata_entregue: boolean
           created_at: string
           employee_id: string
           gestao_id: string
           id: string
+          inscricao_em: string | null
+          motivo_saida: string | null
           observacoes: string | null
+          ordem_suplencia: number | null
           papel: string
           posse_em: string | null
           representacao: string
           status: string
+          treinamento_data: string | null
+          treinamento_horas: number | null
           updated_at: string
           votos: number | null
         }
         Insert: {
+          ata_entregue?: boolean
           created_at?: string
           employee_id: string
           gestao_id: string
           id?: string
+          inscricao_em?: string | null
+          motivo_saida?: string | null
           observacoes?: string | null
+          ordem_suplencia?: number | null
           papel: string
           posse_em?: string | null
           representacao: string
           status?: string
+          treinamento_data?: string | null
+          treinamento_horas?: number | null
           updated_at?: string
           votos?: number | null
         }
         Update: {
+          ata_entregue?: boolean
           created_at?: string
           employee_id?: string
           gestao_id?: string
           id?: string
+          inscricao_em?: string | null
+          motivo_saida?: string | null
           observacoes?: string | null
+          ordem_suplencia?: number | null
           papel?: string
           posse_em?: string | null
           representacao?: string
           status?: string
+          treinamento_data?: string | null
+          treinamento_horas?: number | null
           updated_at?: string
           votos?: number | null
         }
@@ -3122,15 +3143,18 @@ export type Database = {
       }
       cipa_reunioes: {
         Row: {
+          ata_assinada: boolean
           ata_texto: string | null
           ata_url: string | null
           created_at: string
           created_by: string | null
           data: string
+          divulgada: boolean
           gestao_id: string
           hora: string | null
           id: string
           local: string | null
+          motivo_extraordinaria: string | null
           pauta: string | null
           presentes: Json
           status: string
@@ -3138,15 +3162,18 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          ata_assinada?: boolean
           ata_texto?: string | null
           ata_url?: string | null
           created_at?: string
           created_by?: string | null
           data: string
+          divulgada?: boolean
           gestao_id: string
           hora?: string | null
           id?: string
           local?: string | null
+          motivo_extraordinaria?: string | null
           pauta?: string | null
           presentes?: Json
           status?: string
@@ -3154,15 +3181,18 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          ata_assinada?: boolean
           ata_texto?: string | null
           ata_url?: string | null
           created_at?: string
           created_by?: string | null
           data?: string
+          divulgada?: boolean
           gestao_id?: string
           hora?: string | null
           id?: string
           local?: string | null
+          motivo_extraordinaria?: string | null
           pauta?: string | null
           presentes?: Json
           status?: string

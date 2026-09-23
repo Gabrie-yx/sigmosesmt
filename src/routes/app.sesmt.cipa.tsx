@@ -19,6 +19,9 @@ import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import { buildCipaCalendarioPdf, type CipaCalendarioLinha } from "@/lib/cipa-calendario-pdf";
 import { EMPRESA_INFO } from "@/lib/empresa-info";
 import { FileText } from "lucide-react";
+import { EleicaoTab } from "@/components/cipa/eleicao-tab";
+import { cargaCapacitacao } from "@/lib/cipa-dimensionamento";
+import { fimEstabilidade, fmt, diffDays } from "@/lib/cipa-eleicao";
 
 // CIPA — NR-05 (rev. Portaria MTP 4.219/2022) + Lei 14.457/2022 (Emprega + Mulher).
 // MVP: cadastro de gestão/mandato, membros, reuniões, plano anual e calendário eleitoral.
@@ -60,6 +63,7 @@ type Gestao = {
   designado_treinamento_data: string | null;
   assedio_canal_url: string | null;
   observacoes: string | null;
+  eleicao?: unknown;
 };
 
 // dimensionarCipa vive em src/lib/cipa-dimensionamento.ts (fora do route file
@@ -186,7 +190,7 @@ function CipaPage() {
           </TabsContent>
           {gestaoAtiva.modo === "COMISSAO" && (
             <TabsContent value="eleicao" className="mt-4">
-              <EleicaoTab key={gestaoAtiva.id} gestaoId={gestaoAtiva.id} />
+              <EleicaoTab key={gestaoAtiva.id} gestao={gestaoAtiva} />
             </TabsContent>
           )}
         </Tabs>
@@ -219,6 +223,8 @@ function GestaoActions({ gestao, onEdit, onChanged, onDeleted }: {
 }) {
   const setStatus = useMutation({
     mutationFn: async (status: Gestao["status"]) => {
+      const hoje = new Date().toISOString().slice(0, 10);
+      if (status === "ENCERRADA" && gestao.data_fim > hoje) throw new Error("A CIPA não pode ser desativada antes do término do mandato, mesmo com redução de empregados (NR-05 5.4.12)");
       const { error } = await supabase.from("cipa_gestoes").update({ status }).eq("id", gestao.id);
       if (error) throw error;
     },
@@ -227,6 +233,8 @@ function GestaoActions({ gestao, onEdit, onChanged, onDeleted }: {
   });
   const del = useMutation({
     mutationFn: async () => {
+      const limite = new Date(gestao.data_fim + "T00:00:00"); limite.setFullYear(limite.getFullYear() + 5);
+      if (limite > new Date() && gestao.status !== "PLANEJAMENTO") throw new Error(`Documentação da CIPA deve ser mantida por 5 anos (NR-05 5.4.14) — exclusão liberada após ${limite.toLocaleDateString("pt-BR")}. Use "Encerrada".`);
       const { error } = await supabase.from("cipa_gestoes").delete().eq("id", gestao.id);
       if (error) throw error;
     },
@@ -345,14 +353,14 @@ function DesignadoTab({ gestao, onSaved }: { gestao: Gestao; onSaved: () => void
   const { data: funcs } = useQuery({
     queryKey: ["cipa", "employees-lookup"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("employees").select("id, nome, cargo").eq("status", "ATIVO").order("nome").limit(500);
+      const { data, error } = await supabase.from("employees").select("id, nome, admissao, roles(name)").eq("status", "ATIVO").order("nome").limit(500);
       if (error) throw error;
       return data ?? [];
     },
   });
 
   const sugestao = dimensionarCipa(gestao.grau_risco, gestao.num_empregados);
-  const cargaMinima = sugestao?.cargaTreinamento ?? 20;
+  const cargaMinima = sugestao?.cargaTreinamento ?? cargaCapacitacao(gestao.grau_risco);
   const horasNum = Number(treinHoras || 0);
   const capacitado = horasNum >= cargaMinima && !!treinData;
 
@@ -395,10 +403,10 @@ function DesignadoTab({ gestao, onSaved }: { gestao: Gestao; onSaved: () => void
           <Select value={employeeId} onValueChange={setEmployeeId}>
             <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
             <SelectContent className="max-h-72">
-              {(funcs ?? []).map((f: any) => <SelectItem key={f.id} value={f.id}>{f.nome} — {f.cargo}</SelectItem>)}
+              {(funcs ?? []).map((f: any) => <SelectItem key={f.id} value={f.id}>{f.nome}{f.roles?.name ? ` — ${f.roles.name}` : ""}</SelectItem>)}
             </SelectContent>
           </Select>
-          {funcSel && <p className="text-[10px] text-muted-foreground mt-1">Cargo: {funcSel.cargo}</p>}
+          {funcSel && <p className="text-[10px] text-muted-foreground mt-1">Cargo: {funcSel.roles?.name ?? "—"}</p>}
         </div>
         <div>
           <Label>Data do Termo de Indicação</Label>
@@ -455,7 +463,7 @@ function MembrosTab({ gestaoId }: { gestaoId: string }) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("cipa_membros")
-        .select("*, employees:employee_id(id, nome, cargo)")
+        .select("*, employees:employee_id(id, nome, roles(name))")
         .eq("gestao_id", gestaoId)
         .order("representacao");
       if (error) throw error;
@@ -476,6 +484,7 @@ function MembrosTab({ gestaoId }: { gestaoId: string }) {
         <h3 className="font-bold">Composição</h3>
         <Button size="sm" onClick={() => setOpen(true)}><Plus className="h-4 w-4 mr-1" /> Adicionar membro</Button>
       </div>
+      <VacanciaAlertas gestaoId={gestaoId} membros={(data ?? []) as any[]} />
       {(data ?? []).length === 0 ? (
         <p className="text-sm text-muted-foreground">Nenhum membro cadastrado nesta gestão.</p>
       ) : (
@@ -487,7 +496,7 @@ function MembrosTab({ gestaoId }: { gestaoId: string }) {
             <tbody>
               {(data as any[]).map((m) => (
                 <tr key={m.id} className="border-t border-border">
-                  <td className="p-2">{m.employees?.nome ?? "—"}<div className="text-[10px] text-muted-foreground">{m.employees?.cargo}</div></td>
+                  <td className="p-2">{m.employees?.nome ?? "—"}<div className="text-[10px] text-muted-foreground">{m.employees?.roles?.name}</div></td>
                   <td className="p-2">{m.representacao === "EMPREGADOR" ? "Empregador (indicação)" : "Empregados (eleição)"}</td>
                   <td className="p-2">{m.papel}{m.votos ? ` · ${m.votos} votos` : ""}</td>
                   <td className="p-2">{m.posse_em ?? "—"}</td>
@@ -530,7 +539,13 @@ function NovoMembroDialog({ open, onClose, gestaoId, onSaved, edit }: { open: bo
   const [papel, setPapel] = useState<"EFETIVO" | "SUPLENTE">("EFETIVO");
   const [votos, setVotos] = useState("");
   const [posseEm, setPosseEm] = useState("");
-  const [status, setStatus] = useState<"ATIVO" | "INATIVO">("ATIVO");
+  const [status, setStatus] = useState<"ATIVO" | "AFASTADO" | "DESLIGADO">("ATIVO");
+  const [inscricaoEm, setInscricaoEm] = useState("");
+  const [ordemSup, setOrdemSup] = useState("");
+  const [treinH, setTreinH] = useState("");
+  const [treinD, setTreinD] = useState("");
+  const [ataEntregue, setAtaEntregue] = useState(false);
+  const [motivoSaida, setMotivoSaida] = useState("");
 
   useEffect(() => {
     if (open && edit) {
@@ -540,7 +555,11 @@ function NovoMembroDialog({ open, onClose, gestaoId, onSaved, edit }: { open: bo
       setVotos(edit.votos?.toString() ?? "");
       setPosseEm(edit.posse_em ?? "");
       setStatus(edit.status ?? "ATIVO");
+      setInscricaoEm(edit.inscricao_em ?? ""); setOrdemSup(edit.ordem_suplencia?.toString() ?? "");
+      setTreinH(edit.treinamento_horas?.toString() ?? ""); setTreinD(edit.treinamento_data ?? "");
+      setAtaEntregue(!!edit.ata_entregue); setMotivoSaida(edit.motivo_saida ?? "");
     } else if (open && !edit) {
+      setInscricaoEm(""); setOrdemSup(""); setTreinH(""); setTreinD(""); setAtaEntregue(false); setMotivoSaida("");
       setEmployeeId(""); setRepresentacao("EMPREGADOS"); setPapel("EFETIVO");
       setVotos(""); setPosseEm(""); setStatus("ATIVO");
     }
@@ -549,7 +568,7 @@ function NovoMembroDialog({ open, onClose, gestaoId, onSaved, edit }: { open: bo
   const { data: funcs } = useQuery({
     queryKey: ["cipa", "employees-lookup"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("employees").select("id, nome, cargo").eq("status", "ATIVO").order("nome").limit(500);
+      const { data, error } = await supabase.from("employees").select("id, nome, admissao, roles(name)").eq("status", "ATIVO").order("nome").limit(500);
       if (error) throw error;
       return data ?? [];
     },
@@ -559,7 +578,16 @@ function NovoMembroDialog({ open, onClose, gestaoId, onSaved, edit }: { open: bo
   const mut = useMutation({
     mutationFn: async () => {
       if (!employeeId) throw new Error("Selecione um funcionário");
+      if (status !== "ATIVO" && motivoSaida.trim().length < 5) throw new Error("Registre o motivo do afastamento/vacância — deve constar em ata (NR-05 5.4.10)");
+      if (posseEm && treinD && treinD > posseEm) toast.warning("Capacitação concluída após a posse: só é admitida no 1º mandato, em até 30 dias da posse (NR-05 5.7.2)");
+      if (representacao === "EMPREGADOS" && papel === "SUPLENTE" && !ordemSup) throw new Error("Informe a ordem de suplência (colocação na ata de eleição)");
       const payload = {
+        inscricao_em: inscricaoEm || null,
+        ordem_suplencia: ordemSup ? Number(ordemSup) : null,
+        treinamento_horas: treinH ? Number(treinH) : null,
+        treinamento_data: treinD || null,
+        ata_entregue: ataEntregue,
+        motivo_saida: status === "ATIVO" ? null : motivoSaida,
         gestao_id: gestaoId,
         employee_id: employeeId,
         representacao,
@@ -594,7 +622,7 @@ function NovoMembroDialog({ open, onClose, gestaoId, onSaved, edit }: { open: bo
             <Select value={employeeId} onValueChange={setEmployeeId}>
               <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
               <SelectContent className="max-h-72">
-                {(funcs ?? []).map((f: any) => <SelectItem key={f.id} value={f.id}>{f.nome} — {f.cargo}</SelectItem>)}
+                {(funcs ?? []).map((f: any) => <SelectItem key={f.id} value={f.id}>{f.nome}{f.roles?.name ? ` — ${f.roles.name}` : ""}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -630,10 +658,25 @@ function NovoMembroDialog({ open, onClose, gestaoId, onSaved, edit }: { open: bo
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="ATIVO">Ativo</SelectItem>
-                <SelectItem value="INATIVO">Inativo (afastado/renúncia)</SelectItem>
+                <SelectItem value="AFASTADO">Afastado (temporário)</SelectItem>
+                <SelectItem value="DESLIGADO">Vacância definitiva (renúncia/desligamento)</SelectItem>
               </SelectContent>
             </Select>
           </div>
+          {status !== "ATIVO" && (
+            <div><Label>Motivo (registrar em ata)</Label><Input value={motivoSaida} onChange={(e) => setMotivoSaida(e.target.value)} /></div>
+          )}
+          {representacao === "EMPREGADOS" && (
+            <div className="grid grid-cols-2 gap-2">
+              <div><Label>Inscrição da candidatura</Label><Input type="date" value={inscricaoEm} onChange={(e) => setInscricaoEm(e.target.value)} /></div>
+              <div><Label>Ordem de suplência</Label><Input type="number" min={1} value={ordemSup} onChange={(e) => setOrdemSup(e.target.value)} disabled={papel !== "SUPLENTE"} /></div>
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-2">
+            <div><Label>Capacitação (h)</Label><Input type="number" value={treinH} onChange={(e) => setTreinH(e.target.value)} /></div>
+            <div><Label>Concluída em</Label><Input type="date" value={treinD} onChange={(e) => setTreinD(e.target.value)} /></div>
+          </div>
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={ataEntregue} onChange={(e) => setAtaEntregue(e.target.checked)} /> Recebeu cópia das atas de eleição e posse (NR-05 5.5.6)</label>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>Cancelar</Button>
@@ -681,7 +724,6 @@ function ReunioesTab({ gestaoId }: { gestaoId: string }) {
     const mapStatus = (s?: string): CipaCalendarioLinha["status"] => {
       if (s === "REALIZADA") return "R";
       if (s === "CANCELADA") return "NC";
-      if (s === "ADIADA") return "RP";
       return "P";
     };
     const linhas: CipaCalendarioLinha[] = Array.from({ length: 12 }, (_, i) => {
@@ -713,7 +755,26 @@ function ReunioesTab({ gestaoId }: { gestaoId: string }) {
       <div className="flex items-center justify-between mb-3">
         <div>
           <h3 className="font-bold">Reuniões</h3>
-          <p className="text-[10px] text-muted-foreground">NR-05 item 5.7.1 exige reuniões ordinárias mensais.</p>
+          <p className="text-[10px] text-muted-foreground">NR-05 5.6.1: ordinárias mensais em calendário preestabelecido · atas assinadas e disponíveis a todos os integrantes · deliberações divulgadas aos empregados.</p>
+          {(() => {
+            const real = ((data ?? []) as any[]).filter((r) => r.status === "REALIZADA");
+            const semAss = real.filter((r) => !r.ata_assinada).length;
+            const semDiv = real.filter((r) => !r.divulgada).length;
+            const meses = new Set(((data ?? []) as any[]).filter((r) => r.tipo === "ORDINARIA" && r.status !== "CANCELADA").map((r) => String(r.data).slice(0, 7)));
+            const faltam: string[] = [];
+            if (gestao?.data_inicio && gestao?.data_fim) {
+              const d = new Date(gestao.data_inicio + "T00:00:00"); d.setDate(1);
+              const fim = new Date(gestao.data_fim + "T00:00:00");
+              while (d <= fim) { const k = d.toISOString().slice(0, 7); if (!meses.has(k)) faltam.push(k.split("-").reverse().join("/")); d.setMonth(d.getMonth() + 1); }
+            }
+            return (faltam.length || semAss || semDiv) ? (
+              <div className="text-[10px] text-amber-500 mt-1 space-y-0.5">
+                {faltam.length > 0 && <p>Meses sem reunião ordinária: {faltam.join(", ")}</p>}
+                {semAss > 0 && <p>{semAss} ata(s) sem assinatura dos presentes.</p>}
+                {semDiv > 0 && <p>{semDiv} reunião(ões) com deliberações não divulgadas.</p>}
+              </div>
+            ) : null;
+          })()}
         </div>
         <div className="flex gap-2">
           <Button size="sm" variant="outline" onClick={gerarCalendario}>
@@ -784,6 +845,9 @@ function NovaReuniaoDialog({ open, onClose, gestaoId, onSaved, edit }: { open: b
   const [status, setStatus] = useState("AGENDADA");
   const [ataTexto, setAtaTexto] = useState("");
   const [ataUrl, setAtaUrl] = useState("");
+  const [motivoExtra, setMotivoExtra] = useState("");
+  const [ataAssinada, setAtaAssinada] = useState(false);
+  const [divulgada, setDivulgada] = useState(false);
 
   useEffect(() => {
     if (open && edit) {
@@ -795,7 +859,9 @@ function NovaReuniaoDialog({ open, onClose, gestaoId, onSaved, edit }: { open: b
       setStatus(edit.status ?? "AGENDADA");
       setAtaTexto(edit.ata_texto ?? "");
       setAtaUrl(edit.ata_url ?? "");
+      setMotivoExtra(edit.motivo_extraordinaria ?? ""); setAtaAssinada(!!edit.ata_assinada); setDivulgada(!!edit.divulgada);
     } else if (open && !edit) {
+      setMotivoExtra(""); setAtaAssinada(false); setDivulgada(false);
       setTipo("ORDINARIA"); setData(""); setHora(""); setLocal(""); setPauta("");
       setStatus("AGENDADA"); setAtaTexto(""); setAtaUrl("");
     }
@@ -804,7 +870,9 @@ function NovaReuniaoDialog({ open, onClose, gestaoId, onSaved, edit }: { open: b
   const mut = useMutation({
     mutationFn: async () => {
       if (!data) throw new Error("Informe a data");
-      const payload = { gestao_id: gestaoId, tipo, data, hora: hora || null, local: local || null, pauta: pauta || null, status, ata_texto: ataTexto || null, ata_url: ataUrl || null };
+      if (tipo === "EXTRAORDINARIA" && !motivoExtra) throw new Error("Informe o motivo da reunião extraordinária (NR-05 5.6.3)");
+      if (status === "REALIZADA" && !ataTexto.trim() && !ataUrl.trim()) throw new Error("Reunião realizada exige ata (NR-05 5.6.4)");
+      const payload = { motivo_extraordinaria: tipo === "EXTRAORDINARIA" ? motivoExtra : null, ata_assinada: ataAssinada, divulgada, gestao_id: gestaoId, tipo, data, hora: hora || null, local: local || null, pauta: pauta || null, status, ata_texto: ataTexto || null, ata_url: ataUrl || null };
       if (isEdit) {
         const { error } = await supabase.from("cipa_reunioes").update(payload).eq("id", edit.id);
         if (error) throw error;
@@ -850,11 +918,26 @@ function NovaReuniaoDialog({ open, onClose, gestaoId, onSaved, edit }: { open: b
                   <SelectItem value="AGENDADA">Agendada</SelectItem>
                   <SelectItem value="REALIZADA">Realizada</SelectItem>
                   <SelectItem value="CANCELADA">Cancelada</SelectItem>
-                  <SelectItem value="ADIADA">Adiada</SelectItem>
-                </SelectContent>
+                                  </SelectContent>
               </Select>
             </div>
             <div><Label>URL da ata (PDF)</Label><Input value={ataUrl} onChange={(e) => setAtaUrl(e.target.value)} placeholder="https://..." /></div>
+          </div>
+          {tipo === "EXTRAORDINARIA" && (
+            <div>
+              <Label>Motivo da extraordinária</Label>
+              <Select value={motivoExtra} onValueChange={setMotivoExtra}>
+                <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ACIDENTE_GRAVE_FATAL">Acidente do trabalho grave ou fatal</SelectItem>
+                  <SelectItem value="SOLICITACAO_REPRESENTACAO">Solicitação expressa de uma das representações</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          <div className="flex flex-wrap gap-4 text-sm">
+            <label className="flex items-center gap-2"><input type="checkbox" checked={ataAssinada} onChange={(e) => setAtaAssinada(e.target.checked)} /> Ata assinada pelos presentes</label>
+            <label className="flex items-center gap-2"><input type="checkbox" checked={divulgada} onChange={(e) => setDivulgada(e.target.checked)} /> Deliberações divulgadas aos empregados</label>
           </div>
           <div><Label>Ata (texto)</Label><Textarea rows={4} value={ataTexto} onChange={(e) => setAtaTexto(e.target.value)} placeholder="Deliberações, presentes, encaminhamentos…" /></div>
         </div>
@@ -1038,89 +1121,6 @@ function NovoPlanoDialog({ open, onClose, gestaoId, onSaved, edit }: { open: boo
   );
 }
 
-/* -------------------- ELEIÇÃO -------------------- */
-const ETAPAS: Array<{ id: string; label: string }> = [
-  { id: "CONSTITUICAO_COMISSAO_ELEITORAL", label: "Constituição da comissão eleitoral" },
-  { id: "PUBLICACAO_EDITAL", label: "Publicação do edital" },
-  { id: "INSCRICAO_CANDIDATOS", label: "Inscrição de candidatos (mín. 15 dias)" },
-  { id: "CAMPANHA", label: "Campanha" },
-  { id: "VOTACAO", label: "Votação (mín. 30 dias antes do fim do mandato)" },
-  { id: "APURACAO", label: "Apuração" },
-  { id: "HOMOLOGACAO", label: "Homologação" },
-  { id: "POSSE", label: "Posse" },
-];
-
-function EleicaoTab({ gestaoId }: { gestaoId: string }) {
-  const qc = useQueryClient();
-  const { data } = useQuery({
-    queryKey: ["cipa", "eleicao", gestaoId],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("cipa_calendario_eleicao").select("*").eq("gestao_id", gestaoId);
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
-
-  const byEtapa = useMemo(() => Object.fromEntries((data as any[] ?? []).map((r) => [r.etapa, r])), [data]);
-
-  const upsert = useMutation({
-    mutationFn: async (payload: { etapa: string; data_inicio: string; data_fim?: string | null; status: string }) => {
-      const { error } = await supabase.from("cipa_calendario_eleicao").upsert({ gestao_id: gestaoId, ...payload }, { onConflict: "gestao_id,etapa" });
-      if (error) throw error;
-    },
-    onSuccess: () => { toast.success("Etapa salva"); qc.invalidateQueries({ queryKey: ["cipa", "eleicao", gestaoId] }); },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  return (
-    <Card className="p-4">
-      <h3 className="font-bold mb-1">Calendário eleitoral</h3>
-      <p className="text-[10px] text-muted-foreground mb-4">Prazos-referência da NR-05 (rev. 4.219/2022). Ajuste conforme o cronograma da comissão eleitoral.</p>
-      <div className="space-y-2">
-        {ETAPAS.map((e) => {
-          const row = byEtapa[e.id];
-          return (
-            <EtapaLinha
-              key={e.id}
-              etapa={e}
-              inicio={row?.data_inicio ?? ""}
-              fim={row?.data_fim ?? ""}
-              status={row?.status ?? "PLANEJADA"}
-              onSave={(v) => upsert.mutate({ etapa: e.id, data_inicio: v.inicio, data_fim: v.fim || null, status: v.status })}
-            />
-          );
-        })}
-      </div>
-    </Card>
-  );
-}
-
-function EtapaLinha({ etapa, inicio, fim, status, onSave }: { etapa: { id: string; label: string }; inicio: string; fim: string; status: string; onSave: (v: { inicio: string; fim: string; status: string }) => void }) {
-  const [ini, setIni] = useState(inicio);
-  const [fi, setFi] = useState(fim);
-  const [st, setSt] = useState(status);
-  return (
-    <div className="border border-border rounded p-3 grid grid-cols-1 md:grid-cols-[1fr_140px_140px_160px_100px] gap-2 items-end">
-      <div className="text-sm font-medium">{etapa.label}</div>
-      <div><Label className="text-[10px]">Início</Label><Input type="date" value={ini} onChange={(e) => setIni(e.target.value)} /></div>
-      <div><Label className="text-[10px]">Fim</Label><Input type="date" value={fi} onChange={(e) => setFi(e.target.value)} /></div>
-      <div>
-        <Label className="text-[10px]">Status</Label>
-        <Select value={st} onValueChange={setSt}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="PLANEJADA">Planejada</SelectItem>
-            <SelectItem value="EM_ANDAMENTO">Em andamento</SelectItem>
-            <SelectItem value="CONCLUIDA">Concluída</SelectItem>
-            <SelectItem value="ATRASADA">Atrasada</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <Button size="sm" disabled={!ini} onClick={() => onSave({ inicio: ini, fim: fi, status: st })}>Salvar</Button>
-    </div>
-  );
-}
-
 /* -------------------- NOVA GESTÃO -------------------- */
 function NovaGestaoDialog({ open, onClose, onCreated, edit }: { open: boolean; onClose: () => void; onCreated: (id: string) => void; edit?: Gestao | null }) {
   const isEdit = !!edit;
@@ -1184,6 +1184,12 @@ function NovaGestaoDialog({ open, onClose, onCreated, edit }: { open: boolean; o
     mutationFn: async () => {
       if (!gestao || !inicio || !fim) throw new Error("Preencha gestão, início e fim");
       if (new Date(fim) <= new Date(inicio)) throw new Error("A data fim deve ser posterior à data início");
+      if (diffDays(inicio, fim) > 366) throw new Error("Mandato da CIPA é de 1 ano (NR-05 5.4.6)");
+      if (isEdit && edit && edit.status === "ATIVA" && (
+        Number(efE || 0) < (edit.efetivos_empregador ?? 0) || Number(suE || 0) < (edit.suplentes_empregador ?? 0) ||
+        Number(efF || 0) < (edit.efetivos_empregados ?? 0) || Number(suF || 0) < (edit.suplentes_empregados ?? 0)
+      )) throw new Error("Não é permitido reduzir o número de representantes antes do fim do mandato (NR-05 5.4.12)");
+      if (modo === "COMISSAO" && (Number(efE || 0) !== Number(efF || 0) || Number(suE || 0) !== Number(suF || 0))) toast.warning("Composição não paritária — empregador e empregados devem ter o mesmo número (NR-05 5.4.1)");
       if (modo === "COMISSAO" && (Number(efF || 0) < 1 || Number(efE || 0) < 1)) {
         throw new Error("Comissão paritária exige ao menos 1 efetivo por bancada. Use 'Aplicar sugestão' ou mude para Designado.");
       }
@@ -1270,5 +1276,39 @@ function NovaGestaoDialog({ open, onClose, onCreated, edit }: { open: boolean; o
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+/* -------------------- VACÂNCIA / ESTABILIDADE (NR-05 5.4.10–5.4.11) -------------------- */
+function VacanciaAlertas({ gestaoId, membros }: { gestaoId: string; membros: any[] }) {
+  const { data: g } = useQuery({
+    queryKey: ["cipa", "gestao-info", gestaoId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("cipa_gestoes").select("gestao, data_inicio, data_fim, company_id").eq("id", gestaoId).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+  if (!g) return null;
+  const hoje = new Date().toISOString().slice(0, 10);
+  const msgs: string[] = [];
+  const emp = membros.filter((m) => m.representacao === "EMPREGADOS");
+  const vagos = emp.filter((m) => m.papel === "EFETIVO" && m.status === "DESLIGADO");
+  const suplentes = emp.filter((m) => m.papel === "SUPLENTE" && m.status === "ATIVO").sort((a, b) => (a.ordem_suplencia ?? 99) - (b.ordem_suplencia ?? 99));
+  vagos.forEach((v, i) => {
+    const s = suplentes[i];
+    if (s) msgs.push(`Vaga de ${v.employees?.nome ?? "titular"}: assume ${s.employees?.nome} (${s.ordem_suplencia ?? "?"}º suplente). Edite o suplente para "Efetivo" e registre em ata (5.4.10).`);
+    else if (diffDays(g.data_inicio, hoje) <= 182) msgs.push(`Vaga de ${v.employees?.nome ?? "titular"} sem suplente nos 6 primeiros meses: realizar ELEIÇÃO EXTRAORDINÁRIA com prazos pela metade (5.4.11).`);
+    else msgs.push(`Vaga de ${v.employees?.nome ?? "titular"} sem suplente após 6 meses do mandato: registrar em ata.`);
+  });
+  const semTrein = membros.filter((m) => m.status === "ATIVO" && !m.treinamento_data).length;
+  if (semTrein) msgs.push(`${semTrein} membro(s) sem capacitação registrada — obrigatória antes da posse (5.7.1).`);
+  const semAta = membros.filter((m) => m.status === "ATIVO" && !m.ata_entregue).length;
+  if (semAta) msgs.push(`${semAta} membro(s) sem recibo da cópia das atas de eleição e posse (5.5.6).`);
+  const est = fimEstabilidade(g.data_fim);
+  return (
+    <div className="mb-3 space-y-1 text-xs">
+      <p className="text-muted-foreground">Estabilidade dos eleitos (titulares e suplentes): do registro da candidatura até <b>{fmt(est)}</b>. É vedado alterar atividades que prejudiquem as atribuições ou transferir sem anuência (CLT art. 469 §§1º e 2º).</p>
+      {msgs.map((m, i) => <p key={i} className="text-amber-500">⚠ {m}</p>)}
+    </div>
   );
 }
