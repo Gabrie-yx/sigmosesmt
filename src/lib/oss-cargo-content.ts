@@ -44,6 +44,11 @@ function bullets(values: Iterable<string>) {
   return [...values].filter(Boolean).map((value) => `• ${value}`).join("\n");
 }
 
+/** Lista de riscos em linha, separados por vírgula — economiza espaço vertical na OS. */
+function commaList(values: Iterable<string>) {
+  return [...values].filter(Boolean).join(", ");
+}
+
 /**
  * Lê novamente o cargo no banco para que a emissão não dependa de um modelo
  * antigo nem do cache da tela. Esta é a fonte usada para criar, atualizar e
