@@ -1221,6 +1221,14 @@ function EmitirOssDialog({ open, onClose, onIssued, prefill }: {
     const medidasSet = new Set<string>();
     const episSet = new Set<string>();
 
+    // EPIs definidos direto no cadastro do cargo (prioritários)
+    for (const e of emp.cargoEpis ?? []) {
+      const nome = String(e?.nome ?? "").trim();
+      if (!nome) continue;
+      const ca = String(e?.ca ?? "").trim();
+      episSet.add(ca ? `${nome} - CA ${ca}` : nome);
+    }
+
     if (emp.role_id) {
       const { data: riscos, error } = await supabase
         .from("cargo_riscos")
