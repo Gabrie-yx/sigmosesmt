@@ -71,6 +71,7 @@ type Riscos = {
   biologicos: string[]; ergonomicos: string[]; psicossociais: string[];
   descricao: string;
 };
+type EpiCargo = { nome: string; ca: string };
 type Natureza = "ADMISSIONAL" | "PERIODICO" | "RETORNO_TRABALHO" | "MUDANCA_RISCO" | "DEMISSIONAL" | "SEMESTRAL";
 type ExamesPorNatureza = Record<Natureza, string[]>;
 type Role = {
@@ -79,7 +80,7 @@ type Role = {
   req_aso: boolean; req_integra: boolean;
   periodicidade_integracao_meses: number | null;
   req_nrs: string[]; req_exames: string[]; req_vacinas: string[];
-  risco_biologico: boolean; riscos: Riscos;
+  risco_biologico: boolean; riscos: Riscos; epis: EpiCargo[];
   exames_por_natureza: ExamesPorNatureza;
 };
 const emptyRiscos: Riscos = {
@@ -102,7 +103,7 @@ const empty: Partial<Role> = {
   name: "", ativo: true, ghe: "", ghe_id: null, setor: "", cbo: "", cbo_titulo: "",
   req_aso: true, req_integra: true,
   periodicidade_integracao_meses: null,
-  req_nrs: [], req_exames: [], req_vacinas: [], risco_biologico: false, riscos: emptyRiscos,
+  req_nrs: [], req_exames: [], req_vacinas: [], risco_biologico: false, riscos: emptyRiscos, epis: [],
   exames_por_natureza: emptyExames,
 };
 
@@ -136,6 +137,9 @@ function RolesPage() {
         req_vacinas: Array.isArray(r.req_vacinas) ? r.req_vacinas : [],
         risco_biologico: !!r.risco_biologico,
         riscos: r.riscos && typeof r.riscos === "object" ? { ...emptyRiscos, ...r.riscos } : emptyRiscos,
+        epis: Array.isArray(r.epis)
+          ? r.epis.map((e: any) => ({ nome: String(e?.nome ?? ""), ca: String(e?.ca ?? "") }))
+          : [],
         exames_por_natureza: r.exames_por_natureza && typeof r.exames_por_natureza === "object"
           ? { ...emptyExames, ...r.exames_por_natureza }
           : emptyExames,
@@ -155,6 +159,17 @@ function RolesPage() {
     },
   });
   const ghes = ghesQuery.data ?? [];
+
+  const episCatalogoQuery = useQuery({
+    queryKey: ["estoque_epi_catalogo_min"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("estoque_epi").select("nome_material, ca").order("nome_material");
+      if (error) throw error;
+      return (data ?? []) as { nome_material: string; ca: string | null }[];
+    },
+  });
+  const episCatalogo = episCatalogoQuery.data ?? [];
 
   const filtered = useMemo(() => {
     return roles.filter((r) => {
@@ -191,6 +206,7 @@ function RolesPage() {
         req_vacinas: v.req_vacinas ?? [],
         risco_biologico: !!v.risco_biologico,
         riscos: v.riscos ?? emptyRiscos,
+        epis: (v.epis ?? []).filter((e) => e.nome.trim()).map((e) => ({ nome: e.nome.trim(), ca: e.ca.trim() })),
         exames_por_natureza: v.exames_por_natureza ?? emptyExames,
       };
       if (v.id) {
@@ -292,6 +308,8 @@ function RolesPage() {
   const reqNRsSet = useMemo(() => new Set(editing?.req_nrs ?? []), [editing?.req_nrs]);
   const reqExamesSet = useMemo(() => new Set(editing?.req_exames ?? []), [editing?.req_exames]);
   const reqVacinasSet = useMemo(() => new Set(editing?.req_vacinas ?? []), [editing?.req_vacinas]);
+
+  const epis: EpiCargo[] = editing?.epis ?? [];
 
   const riscos: Riscos = editing?.riscos ?? emptyRiscos;
   const updateRiscos = (patch: Partial<Riscos>) =>
@@ -700,8 +718,18 @@ function RolesPage() {
                       </div>
                     </div>
                   </Section>
+
+                  <Section icon={<ShieldCheck className="h-4 w-4 text-emerald-600" />} title="EPIs Obrigatórios do Cargo (NR-06 · usados na OS)" full>
+                    <EpisEditor
+                      items={epis}
+                      onChange={(v) => setEditing({ ...editing!, epis: v })}
+                      disabled={!isEditor}
+                      catalogo={episCatalogo}
+                    />
+                  </Section>
                 </div>
               </div>
+
 
               {/* Footer Actions (secondary) */}
               {isEditor && (
@@ -973,6 +1001,72 @@ function ExamesMatrix({
           );
         })}
       </div>
+    </div>
+  );
+}
+
+function EpisEditor({
+  items, onChange, disabled, catalogo,
+}: {
+  items: EpiCargo[];
+  onChange: (v: EpiCargo[]) => void;
+  disabled?: boolean;
+  catalogo: { nome_material: string; ca: string | null }[];
+}) {
+  const update = (i: number, patch: Partial<EpiCargo>) =>
+    onChange(items.map((it, idx) => (idx === i ? { ...it, ...patch } : it)));
+  const remove = (i: number) => onChange(items.filter((_, idx) => idx !== i));
+  const add = () => onChange([...items, { nome: "", ca: "" }]);
+
+  const pick = (i: number, nome: string) => {
+    const hit = catalogo.find((c) => c.nome_material.toLowerCase() === nome.trim().toLowerCase());
+    update(i, { nome, ...(hit?.ca ? { ca: hit.ca } : {}) });
+  };
+
+  return (
+    <div className="space-y-3">
+      <datalist id="epis-catalogo-list">
+        {catalogo.map((c) => (
+          <option key={c.nome_material} value={c.nome_material} />
+        ))}
+      </datalist>
+
+      {items.length === 0 && (
+        <p className="text-xs text-slate-500">
+          Nenhum EPI definido para este cargo. Adicione os EPIs obrigatórios e seus CAs — a Ordem de Serviço usa exatamente esta lista.
+        </p>
+      )}
+
+      {items.map((it, i) => (
+        <div key={i} className="flex flex-col md:flex-row gap-2 md:items-center">
+          <input
+            value={it.nome}
+            onChange={(e) => pick(i, e.target.value)}
+            list="epis-catalogo-list"
+            disabled={disabled}
+            placeholder="EPI (ex.: Luva de raspa)"
+            className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 outline-none focus:border-[#991b1b] focus:bg-white disabled:opacity-60"
+          />
+          <input
+            value={it.ca}
+            onChange={(e) => update(i, { ca: e.target.value })}
+            disabled={disabled}
+            placeholder="CA"
+            className="md:w-40 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 outline-none focus:border-[#991b1b] focus:bg-white disabled:opacity-60"
+          />
+          {!disabled && (
+            <Button type="button" variant="ghost" size="sm" onClick={() => remove(i)} className="text-rose-600">
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      ))}
+
+      {!disabled && (
+        <Button type="button" variant="outline" size="sm" onClick={add} className="text-xs font-black uppercase tracking-wider">
+          <Plus className="h-4 w-4 mr-1.5" /> Adicionar EPI
+        </Button>
+      )}
     </div>
   );
 }

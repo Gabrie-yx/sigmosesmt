@@ -1,0 +1,1 @@
+ALTER TABLE public.roles ADD COLUMN IF NOT EXISTS epis jsonb NOT NULL DEFAULT '[]'::jsonb;
