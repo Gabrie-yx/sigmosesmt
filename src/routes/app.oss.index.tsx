@@ -1154,7 +1154,7 @@ function EmitirOssDialog({ open, onClose, onIssued, prefill }: {
     queryFn: async () => {
       const { data } = await supabase
         .from("employees")
-        .select("id, nome, cpf, matricula, admissao, status, role_id, company_id, roles(name, cbo, setor, descricao_atividades, riscos)")
+        .select("id, nome, cpf, matricula, admissao, status, role_id, company_id, roles(name, cbo, setor, descricao_atividades, riscos, epis)")
         .eq("status", "ATIVO")
         .eq("company_id", companyId)
         .order("nome");
