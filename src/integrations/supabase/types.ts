@@ -12517,6 +12517,7 @@ export type Database = {
           cbo_titulo: string | null
           created_at: string
           descricao_atividades: string | null
+          epis: Json
           exames_por_natureza: Json
           ghe: string | null
           ghe_id: string | null
@@ -12540,6 +12541,7 @@ export type Database = {
           cbo_titulo?: string | null
           created_at?: string
           descricao_atividades?: string | null
+          epis?: Json
           exames_por_natureza?: Json
           ghe?: string | null
           ghe_id?: string | null
@@ -12563,6 +12565,7 @@ export type Database = {
           cbo_titulo?: string | null
           created_at?: string
           descricao_atividades?: string | null
+          epis?: Json
           exames_por_natureza?: Json
           ghe?: string | null
           ghe_id?: string | null
