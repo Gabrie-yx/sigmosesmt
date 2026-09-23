@@ -1172,7 +1172,7 @@ function EmitirOssDialog({ open, onClose, onIssued, prefill }: {
     },
   });
 
-  const { data: templates = [] } = useQuery({
+  const { data: templates = [], refetch: refetchTemplates } = useQuery({
     queryKey: ["oss-emit-templates"],
     queryFn: async () => {
       const { data } = await supabase
@@ -1200,6 +1200,53 @@ function EmitirOssDialog({ open, onClose, onIssued, prefill }: {
   }, [selectedEmp, templates]);
 
   const effectiveTemplateId = templateId || autoSuggestedTemplate?.id || "";
+
+  // Cria na hora um modelo de OS para o cargo do funcionário (quando ainda não existe)
+  const criarModelo = useMutation({
+    mutationFn: async () => {
+      const emp = selectedEmp;
+      if (!emp?.cargo) throw new Error("Selecione um funcionário com cargo definido");
+
+      // Riscos já cadastrados para o cargo (Cargos e Funções → Riscos)
+      let riscosTexto = "";
+      let episTexto = "";
+      if ((emp as any).role_id) {
+        const { data: riscos } = await supabase
+          .from("cargo_riscos")
+          .select("risco, tipo, medidas_controle, epi_eficaz")
+          .eq("role_id", (emp as any).role_id);
+        riscosTexto = (riscos ?? [])
+          .map((r: any) => `• ${r.tipo ? r.tipo + ": " : ""}${r.risco ?? ""}`)
+          .join("\n");
+        episTexto = Array.from(
+          new Set((riscos ?? []).map((r: any) => r.epi_eficaz).filter(Boolean)),
+        ).map((e) => `• ${e}`).join("\n");
+      }
+
+      const { data, error } = await supabase
+        .from("oss_templates")
+        .insert({
+          cargo: emp.cargo.toUpperCase(),
+          titulo: emp.cargo,
+          setor: emp.cargoSetor ?? null,
+          cbo: emp.cargoCbo ?? null,
+          descricao_atividades: emp.cargoDescricao ?? "",
+          riscos_texto: riscosTexto,
+          epis_obrigatorios: episTexto,
+          ativo: true,
+        })
+        .select("id")
+        .single();
+      if (error) throw error;
+      return data.id as string;
+    },
+    onSuccess: async (id) => {
+      await refetchTemplates();
+      setTemplateId(id);
+      toast.success("Modelo criado para este cargo — revise o conteúdo em Modelos por Cargo");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
 
   const emit = useMutation({
     mutationFn: async () => {
