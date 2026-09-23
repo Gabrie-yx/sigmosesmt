@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet, useNavigate, useLocation, Link } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { AppHeader } from "@/components/app-header";
 import { ModuleRouteGuard } from "@/components/module-guard";
@@ -17,6 +17,46 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/app")({
   component: AppLayout,
 });
+
+function MfaCodeGate({ onDone }: { onDone: () => void }) {
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  async function verify() {
+    setBusy(true);
+    setErr(null);
+    try {
+      const { data: f } = await supabase.auth.mfa.listFactors();
+      const totp = (f?.totp ?? []).find((x) => x.status === "verified");
+      if (!totp) throw new Error("Nenhum autenticador verificado encontrado.");
+      const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId: totp.id, code: code.trim() });
+      if (error) throw new Error("Código inválido ou expirado. Use o código atual do app.");
+      await supabase.auth.refreshSession();
+      onDone();
+      window.location.reload();
+    } catch (e: any) {
+      setErr(e.message ?? "Erro ao verificar");
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); if (code.length === 6) verify(); }}>
+      <p className="text-sm text-rose-100/80">Digite o código de 6 dígitos do seu app autenticador.</p>
+      <input
+        autoFocus
+        inputMode="numeric"
+        maxLength={6}
+        value={code}
+        onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+        className="w-40 mx-auto block rounded-md bg-white px-3 py-2 text-center text-lg tracking-[0.4em] font-bold text-slate-900"
+        placeholder="000000"
+      />
+      {err && <p className="text-sm text-red-300">{err}</p>}
+      <Button type="submit" disabled={busy || code.length !== 6}>{busy ? "Verificando…" : "Entrar"}</Button>
+    </form>
+  );
+}
 
 function AppLayout() {
   const { session, loading, requiresMfa, mfaSatisfied, graceActive, graceDaysLeft, aal, isMarcadorPuro, isPorteiroPuro, roles, user, mfaHardBlock, authUnavailable, refetchPayload, mfaActive } = useAuth();
