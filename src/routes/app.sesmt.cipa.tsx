@@ -551,15 +551,7 @@ function NovoMembroDialog({ open, onClose, gestaoId, onSaved, edit }: { open: bo
     }
   }, [open, edit]);
 
-  const { data: funcs } = useQuery({
-    queryKey: ["cipa", "employees-lookup"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("employees").select("id, nome, admissao, roles(name)").eq("status", "ATIVO").order("nome").limit(500);
-      if (error) throw error;
-      return data ?? [];
-    },
-    enabled: open,
-  });
+  const { data: funcs } = useCipaEmployees(open);
 
   const mut = useMutation({
     mutationFn: async () => {
