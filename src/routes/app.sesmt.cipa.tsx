@@ -20,6 +20,7 @@ import { buildCipaCalendarioPdf, type CipaCalendarioLinha } from "@/lib/cipa-cal
 import { EMPRESA_INFO } from "@/lib/empresa-info";
 import { FileText } from "lucide-react";
 import { EleicaoTab } from "@/components/cipa/eleicao-tab";
+import { CipaEmployeePicker, useCipaEmployees } from "@/components/cipa/employee-picker";
 import { cargaCapacitacao } from "@/lib/cipa-dimensionamento";
 import { fimEstabilidade, fmt, diffDays } from "@/lib/cipa-eleicao";
 
@@ -348,14 +349,7 @@ function DesignadoTab({ gestao, onSaved }: { gestao: Gestao; onSaved: () => void
   const [treinData, setTreinData] = useState(gestao.designado_treinamento_data ?? "");
   const [canal, setCanal] = useState(gestao.assedio_canal_url ?? "");
 
-  const { data: funcs } = useQuery({
-    queryKey: ["cipa", "employees-lookup"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("employees").select("id, nome, admissao, roles(name)").eq("status", "ATIVO").order("nome").limit(500);
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
+  const { data: funcs } = useCipaEmployees();
 
   const sugestao = dimensionarCipa(gestao.grau_risco, gestao.num_empregados);
   const cargaMinima = sugestao?.cargaTreinamento ?? cargaCapacitacao(gestao.grau_risco);
@@ -397,13 +391,7 @@ function DesignadoTab({ gestao, onSaved }: { gestao: Gestao; onSaved: () => void
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
-          <Label>Funcionário indicado</Label>
-          <Select value={employeeId} onValueChange={setEmployeeId}>
-            <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
-            <SelectContent className="max-h-72">
-              {(funcs ?? []).map((f: any) => <SelectItem key={f.id} value={f.id}>{f.nome}{f.roles?.name ? ` — ${f.roles.name}` : ""}</SelectItem>)}
-            </SelectContent>
-          </Select>
+          <CipaEmployeePicker funcs={funcs} value={employeeId} onChange={setEmployeeId} label="Funcionário indicado" />
           {funcSel && <p className="text-[10px] text-muted-foreground mt-1">Cargo: {funcSel.roles?.name ?? "—"}</p>}
         </div>
         <div>
@@ -563,15 +551,7 @@ function NovoMembroDialog({ open, onClose, gestaoId, onSaved, edit }: { open: bo
     }
   }, [open, edit]);
 
-  const { data: funcs } = useQuery({
-    queryKey: ["cipa", "employees-lookup"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("employees").select("id, nome, admissao, roles(name)").eq("status", "ATIVO").order("nome").limit(500);
-      if (error) throw error;
-      return data ?? [];
-    },
-    enabled: open,
-  });
+  const { data: funcs } = useCipaEmployees(open);
 
   const mut = useMutation({
     mutationFn: async () => {
@@ -615,15 +595,7 @@ function NovoMembroDialog({ open, onClose, gestaoId, onSaved, edit }: { open: bo
       <DialogContent>
         <DialogHeader><DialogTitle>{isEdit ? "Editar membro da CIPA" : "Adicionar membro à CIPA"}</DialogTitle></DialogHeader>
         <div className="space-y-3">
-          <div>
-            <Label>Funcionário</Label>
-            <Select value={employeeId} onValueChange={setEmployeeId}>
-              <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
-              <SelectContent className="max-h-72">
-                {(funcs ?? []).map((f: any) => <SelectItem key={f.id} value={f.id}>{f.nome}{f.roles?.name ? ` — ${f.roles.name}` : ""}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
+          <CipaEmployeePicker funcs={funcs} value={employeeId} onChange={setEmployeeId} />
           <div className="grid grid-cols-2 gap-2">
             <div>
               <Label>Representação</Label>
