@@ -10,6 +10,16 @@ import { toast } from "sonner";
 import sigmoLogo from "@/assets/sigmo-logo-white.png";
 
 export const Route = createFileRoute("/login")({
+  head: () => ({
+    meta: [
+      { title: "Entrar | SIGMO" },
+      { name: "description", content: "Acesso seguro ao Sistema Integrado de Gestão Modular." },
+      { property: "og:title", content: "Entrar | SIGMO" },
+      { property: "og:description", content: "Acesso seguro ao Sistema Integrado de Gestão Modular." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: LoginPage,
 });
 
@@ -42,6 +52,12 @@ function LoginPage() {
   const [mfaCode, setMfaCode] = useState("");
   const [forgotOpen, setForgotOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
+
+  function clearMfaChallenge() {
+    setMfaChallengeId(null);
+    setMfaFactorId(null);
+    setMfaCode("");
+  }
 
   async function handleForgot(e: React.FormEvent) {
     e.preventDefault();
@@ -83,6 +99,31 @@ function LoginPage() {
       if (data.session) goPostLogin();
     });
   }, [nav]);
+
+  useEffect(() => {
+    if (!mfaChallengeId || !mfaFactorId) return;
+
+    let active = true;
+    const recoverRemovedFactor = async () => {
+      const { data, error } = await supabase.auth.mfa.listFactors();
+      if (!active || error) return;
+      const factorStillExists = (data?.totp ?? []).some(
+        (factor) => factor.id === mfaFactorId && factor.status === "verified",
+      );
+      if (factorStillExists) return;
+
+      clearMfaChallenge();
+      await supabase.auth.signOut({ scope: "local" });
+      toast.info("O autenticador antigo foi removido. Entre novamente para cadastrar o novo.");
+    };
+
+    void recoverRemovedFactor();
+    const timer = window.setInterval(recoverRemovedFactor, 5000);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, [mfaChallengeId, mfaFactorId]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -152,10 +193,10 @@ function LoginPage() {
               <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-black/40" disabled={loading || mfaCode.length !== 6}>
                 {loading ? "Verificando..." : "Confirmar"}
               </Button>
-              <button type="button" onClick={() => { setMfaChallengeId(null); setMfaFactorId(null); setMfaCode(""); supabase.auth.signOut(); }}
-                className="w-full text-sm text-slate-300 hover:text-white">
+              <Button type="button" variant="ghost" onClick={async () => { clearMfaChallenge(); await supabase.auth.signOut({ scope: "local" }); }}
+                className="w-full text-sm text-slate-300 hover:bg-transparent hover:text-white">
                 Cancelar
-              </button>
+              </Button>
             </form>
           ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
