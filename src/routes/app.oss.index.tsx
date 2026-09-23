@@ -1282,7 +1282,7 @@ function EmitirOssDialog({ open, onClose, onIssued, prefill }: {
       const { payload, total } = await montarConteudoDoCargo(emp);
       const { data, error } = await supabase
         .from("oss_templates")
-        .insert({ cargo: emp.cargo.toUpperCase(), titulo: emp.cargo, ativo: true, ...payload })
+        .insert({ cargo: emp.cargo.toUpperCase(), titulo: emp.cargo, ativo: true, ...payload } as any)
         .select("id")
         .single();
       if (error) throw error;
@@ -1309,7 +1309,7 @@ function EmitirOssDialog({ open, onClose, onIssued, prefill }: {
       const { payload, total } = await montarConteudoDoCargo(emp);
       const { error } = await supabase
         .from("oss_templates")
-        .update(payload)
+        .update(payload as any)
         .eq("id", effectiveTemplateId);
       if (error) throw error;
       return total;
