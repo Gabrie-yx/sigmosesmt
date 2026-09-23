@@ -19,7 +19,7 @@ export const Route = createFileRoute("/app")({
 });
 
 function AppLayout() {
-  const { session, loading, requiresMfa, mfaSatisfied, graceActive, graceDaysLeft, aal, isMarcadorPuro, isPorteiroPuro, roles, user, mfaHardBlock, authUnavailable, refetchPayload } = useAuth();
+  const { session, loading, requiresMfa, mfaSatisfied, graceActive, graceDaysLeft, aal, isMarcadorPuro, isPorteiroPuro, roles, user, mfaHardBlock, authUnavailable, refetchPayload, mfaActive } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -125,18 +125,29 @@ function AppLayout() {
         <div className="max-w-md text-center space-y-4">
           <ShieldAlert className="h-12 w-12 text-amber-400 mx-auto" />
           <h1 className="text-xl font-black">Verificação em duas etapas obrigatória</h1>
-          <p className="text-sm text-rose-100/80">
-            Sua conta ({user?.email}) é de domínio corporativo. Por política de segurança
-            do SIGMO, o acesso só é liberado com MFA (2FA) ativo e verificado nesta sessão —
-            sem período de carência.
-          </p>
+          {mfaActive ? (
+            <MfaCodeGate onDone={() => refetchPayload()} />
+          ) : (
+            <p className="text-sm text-rose-100/80">
+              Sua conta ({user?.email}) é de domínio corporativo. Por política de segurança
+              do SIGMO, o acesso só é liberado com MFA (2FA) ativo e verificado nesta sessão —
+              sem período de carência.
+            </p>
+          )}
           <div className="flex flex-col sm:flex-row gap-2 justify-center">
-            <Link
-              to="/app/conta/seguranca"
-              className="inline-flex items-center justify-center rounded-md bg-amber-400 px-4 py-2 text-sm font-bold text-amber-950"
-            >
-              Configurar MFA agora
-            </Link>
+            {!mfaActive && (
+              <Link
+                to="/app/conta/seguranca"
+                className="inline-flex items-center justify-center rounded-md bg-amber-400 px-4 py-2 text-sm font-bold text-amber-950"
+              >
+                Configurar MFA agora
+              </Link>
+            )}
+            {mfaActive && (
+              <Link to="/app/conta/seguranca" className="inline-flex items-center justify-center rounded-md px-4 py-2 text-sm text-rose-100/80 underline">
+                Perdi acesso ao autenticador
+              </Link>
+            )}
             <Button
               variant="secondary"
               onClick={async () => {
