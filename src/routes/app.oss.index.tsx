@@ -1154,7 +1154,7 @@ function EmitirOssDialog({ open, onClose, onIssued, prefill }: {
     queryFn: async () => {
       const { data } = await supabase
         .from("employees")
-        .select("id, nome, cpf, matricula, admissao, status, role_id, company_id, roles(name, cbo, setor, descricao_atividades)")
+        .select("id, nome, cpf, matricula, admissao, status, role_id, company_id, roles(name, cbo, setor, descricao_atividades, riscos)")
         .eq("status", "ATIVO")
         .eq("company_id", companyId)
         .order("nome");
@@ -1164,10 +1164,12 @@ function EmitirOssDialog({ open, onClose, onIssued, prefill }: {
         cargoCbo: e.roles?.cbo ?? null,
         cargoSetor: e.roles?.setor ?? null,
         cargoDescricao: e.roles?.descricao_atividades ?? null,
+        cargoRiscosFicha: e.roles?.riscos ?? null,
       })) as Array<{
-        id: string; nome: string; cpf: string | null; matricula: string | null;
+        id: string; role_id: string | null; nome: string; cpf: string | null; matricula: string | null;
         admissao: string | null; cargo: string | null;
         cargoCbo: string | null; cargoSetor: string | null; cargoDescricao: string | null;
+        cargoRiscosFicha: any;
       }>;
     },
   });
@@ -1202,48 +1204,123 @@ function EmitirOssDialog({ open, onClose, onIssued, prefill }: {
   const effectiveTemplateId = templateId || autoSuggestedTemplate?.id || "";
 
   // Cria na hora um modelo de OS para o cargo do funcionário (quando ainda não existe)
+  /** Monta o conteúdo do modelo a partir do cargo: matriz de riscos
+   *  (cargo_riscos + catálogo) com fallback na ficha do cargo (roles.riscos). */
+  async function montarConteudoDoCargo(emp: NonNullable<typeof selectedEmp>) {
+    const catMap: Record<string, string> = {
+      FISICO: "risco_fisico",
+      QUIMICO: "risco_quimico",
+      BIOLOGICO: "risco_biologico",
+      ERGONOMICO: "risco_ergonomico",
+      ACIDENTE_MECANICO: "risco_acidente",
+      PSICOSSOCIAL: "risco_psicossocial",
+    };
+    const buckets: Record<string, string[]> = {};
+    const medidasSet = new Set<string>();
+    const episSet = new Set<string>();
+
+    if (emp.role_id) {
+      const { data: riscos, error } = await supabase
+        .from("cargo_riscos")
+        .select("*, catalogo_riscos(nome, categoria, medidas_controle_padrao, epis_sugeridos)")
+        .eq("role_id", emp.role_id)
+        .eq("ativo", true);
+      if (error) throw error;
+      for (const r of (riscos ?? []) as any[]) {
+        const cat = (r.catalogo_riscos?.categoria ?? "").toUpperCase();
+        const nome = r.catalogo_riscos?.nome ?? "(risco)";
+        const intens = r.intensidade != null ? ` — ${r.intensidade}${r.unidade ?? ""}` : "";
+        const fonte = r.fonte_geradora ? ` (fonte: ${r.fonte_geradora})` : "";
+        (buckets[cat] ||= []).push(`${nome}${intens}${fonte}`);
+        for (const m of r.catalogo_riscos?.medidas_controle_padrao ?? []) medidasSet.add(String(m));
+        for (const m of [r.meios_controle, r.epc_eficaz].filter(Boolean)) medidasSet.add(String(m));
+        for (const e of r.catalogo_riscos?.epis_sugeridos ?? []) episSet.add(String(e));
+        if (r.epi_eficaz) episSet.add(String(r.epi_eficaz) + (r.ca_epi ? ` - CA ${r.ca_epi}` : ""));
+      }
+    }
+
+    // Fallback: riscos digitados na ficha do cargo (aba Riscos Ocupacionais)
+    const ficha = (emp.cargoRiscosFicha ?? {}) as Record<string, any>;
+    const fichaMap: Record<string, string> = {
+      FISICO: "fisicos",
+      QUIMICO: "quimicos",
+      BIOLOGICO: "biologicos",
+      ERGONOMICO: "ergonomicos",
+      ACIDENTE_MECANICO: "acidente_mecanico",
+      PSICOSSOCIAL: "psicossociais",
+    };
+    for (const [cat, key] of Object.entries(fichaMap)) {
+      if (buckets[cat]?.length) continue;
+      const raw = ficha[key];
+      const arr = Array.isArray(raw) ? raw : raw ? [String(raw)] : [];
+      const itens = arr
+        .map((v) => String(v).trim())
+        .filter((v) => v && !/^nenhum/i.test(v) && !/^n\/?a$/i.test(v));
+      if (itens.length) buckets[cat] = itens;
+    }
+
+    const bullets = (arr: string[]) => arr.map((v) => `• ${v}`).join("\n");
+    const payload: Record<string, any> = {
+      setor: emp.cargoSetor ?? null,
+      cbo: emp.cargoCbo ?? null,
+      descricao_atividades: (emp.cargoDescricao ?? "").trim() || (ficha.descricao ?? ""),
+      medidas_preventivas: bullets([...medidasSet]),
+      epis_obrigatorios: bullets([...episSet]),
+      riscos_texto: "",
+    };
+    for (const [cat, field] of Object.entries(catMap)) {
+      payload[field] = bullets(buckets[cat] ?? []);
+    }
+    const total = Object.values(buckets).reduce((a, b) => a + b.length, 0);
+    return { payload, total };
+  }
+
   const criarModelo = useMutation({
     mutationFn: async () => {
       const emp = selectedEmp;
       if (!emp?.cargo) throw new Error("Selecione um funcionário com cargo definido");
-
-      // Riscos já cadastrados para o cargo (Cargos e Funções → Riscos)
-      let riscosTexto = "";
-      let episTexto = "";
-      if ((emp as any).role_id) {
-        const { data: riscos } = await supabase
-          .from("cargo_riscos")
-          .select("risco, tipo, medidas_controle, epi_eficaz")
-          .eq("role_id", (emp as any).role_id);
-        riscosTexto = (riscos ?? [])
-          .map((r: any) => `• ${r.tipo ? r.tipo + ": " : ""}${r.risco ?? ""}`)
-          .join("\n");
-        episTexto = Array.from(
-          new Set((riscos ?? []).map((r: any) => r.epi_eficaz).filter(Boolean)),
-        ).map((e) => `• ${e}`).join("\n");
-      }
-
+      const { payload, total } = await montarConteudoDoCargo(emp);
       const { data, error } = await supabase
         .from("oss_templates")
-        .insert({
-          cargo: emp.cargo.toUpperCase(),
-          titulo: emp.cargo,
-          setor: emp.cargoSetor ?? null,
-          cbo: emp.cargoCbo ?? null,
-          descricao_atividades: emp.cargoDescricao ?? "",
-          riscos_texto: riscosTexto,
-          epis_obrigatorios: episTexto,
-          ativo: true,
-        })
+        .insert({ cargo: emp.cargo.toUpperCase(), titulo: emp.cargo, ativo: true, ...payload } as any)
         .select("id")
         .single();
       if (error) throw error;
-      return data.id as string;
+      return { id: data.id as string, total };
     },
-    onSuccess: async (id) => {
+    onSuccess: async ({ id, total }) => {
       await refetchTemplates();
       setTemplateId(id);
-      toast.success("Modelo criado para este cargo — revise o conteúdo em Modelos por Cargo");
+      toast.success(
+        total
+          ? `Modelo criado com ${total} risco(s) do cargo — revise em Modelos por Cargo`
+          : "Modelo criado, mas o cargo não tem riscos cadastrados — preencha em Cargos e Funções",
+      );
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  /** Atualiza um modelo já existente com os dados atuais do cargo. */
+  const sincronizarModelo = useMutation({
+    mutationFn: async () => {
+      const emp = selectedEmp;
+      if (!emp?.cargo) throw new Error("Selecione um funcionário com cargo definido");
+      if (!effectiveTemplateId) throw new Error("Selecione o modelo de OSS");
+      const { payload, total } = await montarConteudoDoCargo(emp);
+      const { error } = await supabase
+        .from("oss_templates")
+        .update(payload as any)
+        .eq("id", effectiveTemplateId);
+      if (error) throw error;
+      return total;
+    },
+    onSuccess: async (total) => {
+      await refetchTemplates();
+      toast.success(
+        total
+          ? `Modelo atualizado com ${total} risco(s) do cargo`
+          : "O cargo ainda não tem riscos cadastrados — preencha em Cargos e Funções",
+      );
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -1346,6 +1423,34 @@ function EmitirOssDialog({ open, onClose, onIssued, prefill }: {
             {autoSuggestedTemplate && !templateId && (
               <div className="text-[10px] text-emerald-700 mt-1">✓ Modelo sugerido pelo cargo do funcionário</div>
             )}
+            {selectedEmp?.cargo && effectiveTemplateId && (() => {
+              const tplSel = templates.find((t) => t.id === effectiveTemplateId);
+              const vazio =
+                !!tplSel &&
+                ![
+                  tplSel.descricao_atividades, tplSel.riscos_texto, tplSel.epis_obrigatorios,
+                  tplSel.risco_fisico, tplSel.risco_quimico, tplSel.risco_biologico,
+                  tplSel.risco_ergonomico, tplSel.risco_acidente, tplSel.risco_psicossocial,
+                ].some((v: any) => (v ?? "").toString().trim());
+              return (
+                <div className="mt-2 space-y-2">
+                  {vazio && (
+                    <div className="text-[11px] text-amber-700 dark:text-amber-300">
+                      ⚠ Este modelo está sem conteúdo — a OS sairá em branco. Atualize com os dados do cargo.
+                    </div>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-[11px]"
+                    onClick={() => sincronizarModelo.mutate()}
+                    disabled={sincronizarModelo.isPending}
+                  >
+                    Atualizar modelo com os dados do cargo "{selectedEmp.cargo}"
+                  </Button>
+                </div>
+              );
+            })()}
             {selectedEmp?.cargo && !autoSuggestedTemplate && !templateId && (
               <div className="mt-2 rounded-md border border-amber-400/40 bg-amber-500/10 p-2 space-y-2">
                 <div className="text-[11px] text-amber-700 dark:text-amber-300">
