@@ -391,13 +391,7 @@ function DesignadoTab({ gestao, onSaved }: { gestao: Gestao; onSaved: () => void
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
-          <Label>Funcionário indicado</Label>
-          <Select value={employeeId} onValueChange={setEmployeeId}>
-            <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
-            <SelectContent className="max-h-72">
-              {(funcs ?? []).map((f: any) => <SelectItem key={f.id} value={f.id}>{f.nome}{f.roles?.name ? ` — ${f.roles.name}` : ""}</SelectItem>)}
-            </SelectContent>
-          </Select>
+          <CipaEmployeePicker funcs={funcs} value={employeeId} onChange={setEmployeeId} label="Funcionário indicado" />
           {funcSel && <p className="text-[10px] text-muted-foreground mt-1">Cargo: {funcSel.roles?.name ?? "—"}</p>}
         </div>
         <div>
