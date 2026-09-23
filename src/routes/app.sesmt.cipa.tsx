@@ -595,15 +595,7 @@ function NovoMembroDialog({ open, onClose, gestaoId, onSaved, edit }: { open: bo
       <DialogContent>
         <DialogHeader><DialogTitle>{isEdit ? "Editar membro da CIPA" : "Adicionar membro à CIPA"}</DialogTitle></DialogHeader>
         <div className="space-y-3">
-          <div>
-            <Label>Funcionário</Label>
-            <Select value={employeeId} onValueChange={setEmployeeId}>
-              <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
-              <SelectContent className="max-h-72">
-                {(funcs ?? []).map((f: any) => <SelectItem key={f.id} value={f.id}>{f.nome}{f.roles?.name ? ` — ${f.roles.name}` : ""}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
+          <CipaEmployeePicker funcs={funcs} value={employeeId} onChange={setEmployeeId} />
           <div className="grid grid-cols-2 gap-2">
             <div>
               <Label>Representação</Label>
