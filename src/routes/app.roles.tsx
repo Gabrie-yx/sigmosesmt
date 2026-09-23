@@ -146,6 +146,16 @@ function RolesPage() {
   const rolesLoading = rolesQuery.isLoading || (rolesQuery.isFetching && roles.length === 0);
   const rolesError = rolesQuery.error instanceof Error ? rolesQuery.error.message : null;
 
+  const ghesQuery = useQuery({
+    queryKey: ["pgr_ghe"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("pgr_ghe").select("id, numero, setor").eq("ativo", true).order("numero");
+      if (error) throw error;
+      return (data ?? []) as { id: string; numero: number; setor: string | null }[];
+    },
+  });
+  const ghes = ghesQuery.data ?? [];
+
   const filtered = useMemo(() => {
     return roles.filter((r) => {
       if (!showInactive && !r.ativo) return false;
