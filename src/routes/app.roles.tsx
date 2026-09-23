@@ -80,7 +80,7 @@ type Role = {
   req_aso: boolean; req_integra: boolean;
   periodicidade_integracao_meses: number | null;
   req_nrs: string[]; req_exames: string[]; req_vacinas: string[];
-  risco_biologico: boolean; riscos: Riscos;
+  risco_biologico: boolean; riscos: Riscos; epis: EpiCargo[];
   exames_por_natureza: ExamesPorNatureza;
 };
 const emptyRiscos: Riscos = {
