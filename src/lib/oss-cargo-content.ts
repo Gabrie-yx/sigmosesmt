@@ -124,7 +124,7 @@ export async function getOssCargoContent(employeeId: string) {
   };
 
   for (const [category, field] of Object.entries(CATEGORY_FIELDS)) {
-    payload[field] = bullets(buckets[category] ?? []) as never;
+    payload[field] = commaList(buckets[category] ?? []) as never;
   }
 
   return {
