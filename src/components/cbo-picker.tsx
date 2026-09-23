@@ -1,6 +1,15 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Search, X, Check } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 type CboRow = { codigo: string; titulo: string; tipo: string };
 
@@ -23,21 +32,11 @@ export function CboPicker({ codigo, titulo, onChange, disabled, placeholder, cla
   const [q, setQ] = useState("");
   const [results, setResults] = useState<CboRow[]>([]);
   const [loading, setLoading] = useState(false);
-  const boxRef = useRef<HTMLDivElement>(null);
 
   const display = useMemo(() => {
     if (!codigo) return "";
     return titulo ? `${codigo} — ${titulo}` : codigo;
   }, [codigo, titulo]);
-
-  useEffect(() => {
-    if (!open) return;
-    const onDocClick = (e: MouseEvent) => {
-      if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
-  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -66,74 +65,92 @@ export function CboPicker({ codigo, titulo, onChange, disabled, placeholder, cla
     return () => clearTimeout(t);
   }, [q, open]);
 
+  const handleOpenChange = (nextOpen: boolean) => {
+    setOpen(nextOpen);
+    if (!nextOpen) setQ("");
+  };
+
   return (
-    <div ref={boxRef} className={`relative ${className ?? ""}`}>
+    <div className={className}>
       <div className="flex items-center gap-2">
-        <button
+        <Button
           type="button"
-          onClick={() => !disabled && setOpen(true)}
+          variant="outline"
+          onClick={() => setOpen(true)}
           disabled={disabled}
-          className="flex-1 text-left bg-white border-2 border-rose-100 rounded-2xl px-4 py-3.5 text-sm font-bold text-slate-800 focus:border-[#991b1b] focus:ring-4 focus:ring-rose-200/40 outline-none transition-all disabled:opacity-60 shadow-sm flex items-center gap-2"
+          className="h-12 min-w-0 flex-1 justify-start rounded-xl border-input bg-background px-4 text-left text-sm font-semibold"
         >
-          <Search className="h-4 w-4 text-rose-400 shrink-0" />
+          <Search className="shrink-0 text-primary" />
           {display ? (
             <span className="truncate">{display}</span>
           ) : (
-            <span className="text-slate-300 font-normal">{placeholder ?? "Buscar CBO por código ou nome…"}</span>
+            <span className="truncate font-normal text-muted-foreground">{placeholder ?? "Buscar CBO por código ou nome…"}</span>
           )}
-        </button>
+        </Button>
         {codigo && !disabled && (
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon"
             onClick={() => onChange(null, null)}
-            className="p-2 rounded-lg hover:bg-rose-50 text-rose-500"
             title="Limpar CBO"
+            aria-label="Limpar CBO"
           >
-            <X className="h-4 w-4" />
-          </button>
+            <X />
+          </Button>
         )}
       </div>
-      {open && !disabled && (
-        <div className="absolute z-50 mt-1 left-0 w-[min(560px,calc(100vw-2rem))] bg-white border border-rose-200 rounded-xl shadow-2xl max-h-80 overflow-hidden flex flex-col">
-          <div className="p-2 border-b border-rose-100">
-            <input
+
+      <Dialog open={open && !disabled} onOpenChange={handleOpenChange}>
+        <DialogContent className="cbo-picker-dialog w-[calc(100vw-2rem)] max-w-lg gap-0 overflow-hidden border-border p-0 text-popover-foreground shadow-2xl">
+          <DialogHeader className="border-b border-border px-5 py-4 pr-12">
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <Search className="h-4 w-4 text-primary" />
+              Selecionar CBO
+            </DialogTitle>
+            <DialogDescription>Busque pelo código ou pelo nome da ocupação.</DialogDescription>
+          </DialogHeader>
+
+          <div className="border-b border-border p-4">
+            <Input
               autoFocus
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Digite código (7244) ou nome (soldador)…"
-              className="w-full px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 border border-rose-100 rounded-lg outline-none focus:border-[#991b1b]"
+              className="h-11 bg-background text-foreground"
             />
           </div>
-          <div className="flex-1 overflow-y-auto">
-            {loading && <div className="p-4 text-center text-xs text-slate-400">Buscando…</div>}
+
+          <div className="max-h-80 overflow-y-auto p-2">
+            {loading && <div className="p-6 text-center text-sm text-muted-foreground">Buscando…</div>}
             {!loading && results.length === 0 && (
-              <div className="p-4 text-center text-xs text-slate-400">Nenhum CBO encontrado</div>
+              <div className="p-6 text-center text-sm text-muted-foreground">Nenhum CBO encontrado</div>
             )}
             {!loading && results.map((r) => {
               const sel = r.codigo === codigo && r.titulo === titulo;
               return (
-                <button
+                <Button
                   key={`${r.codigo}::${r.titulo}`}
                   type="button"
+                  variant="ghost"
                   onClick={() => {
                     onChange(r.codigo, r.titulo);
-                    setOpen(false);
-                    setQ("");
+                    handleOpenChange(false);
                   }}
-                  className={`w-full text-left px-3 py-2.5 text-sm hover:bg-rose-50 flex items-center gap-3 border-b border-rose-50 last:border-0 ${sel ? "bg-rose-50" : ""}`}
+                  className={`grid h-auto min-h-12 w-full grid-cols-[4.75rem_minmax(0,1fr)_auto] items-center gap-3 rounded-md px-3 py-2 text-left ${sel ? "bg-accent text-accent-foreground" : ""}`}
                 >
-                  <span className="font-mono font-bold text-rose-700 shrink-0 w-[4.5rem] whitespace-nowrap">{r.codigo}</span>
-                  <span className="flex-1 min-w-0 text-slate-700 truncate" title={r.titulo}>{r.titulo}</span>
-                  <span className={`text-[10px] font-black uppercase shrink-0 whitespace-nowrap ${r.tipo === "Ocupação" ? "text-emerald-600" : "text-slate-400"}`}>
+                  <span className="whitespace-nowrap font-mono text-sm font-bold text-primary">{r.codigo}</span>
+                  <span className="min-w-0 truncate text-sm text-foreground" title={r.titulo}>{r.titulo}</span>
+                  <span className="flex items-center gap-2 whitespace-nowrap text-[10px] font-bold uppercase text-muted-foreground">
                     {r.tipo === "Ocupação" ? "OFICIAL" : "sinônimo"}
+                    {sel && <Check className="h-4 w-4 text-primary" />}
                   </span>
-                  {sel && <Check className="h-4 w-4 text-emerald-600 shrink-0" />}
-                </button>
+                </Button>
               );
             })}
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

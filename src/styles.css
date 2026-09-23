@@ -34,6 +34,7 @@
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
+  --color-dialog-solid: var(--dialog-solid);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
@@ -74,6 +75,7 @@
   --card-foreground: oklch(0.97 0.01 20);
   --popover: oklch(0.16 0.06 20 / 0.72);
   --popover-foreground: oklch(0.97 0.01 20);
+  --dialog-solid: oklch(0.17 0.055 20);
   --primary: oklch(0.55 0.21 25);
   --primary-foreground: oklch(0.99 0 0);
   --secondary: oklch(0.22 0.05 18 / 0.55);
@@ -193,6 +195,7 @@
   --card-foreground: oklch(0.984 0.003 247.858);
   --popover: oklch(0.208 0.042 265.755);
   --popover-foreground: oklch(0.984 0.003 247.858);
+  --dialog-solid: oklch(0.18 0.04 264);
   --primary: oklch(0.929 0.013 255.508);
   --primary-foreground: oklch(0.208 0.042 265.755);
   --secondary: oklch(0.279 0.041 260.031);
@@ -222,6 +225,11 @@
 }
 
 @layer base {
+  .cbo-picker-dialog {
+    background: var(--dialog-solid) !important;
+    backdrop-filter: none !important;
+  }
+
   * {
     border-color: var(--color-border);
   }
