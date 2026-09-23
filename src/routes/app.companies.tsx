@@ -144,8 +144,11 @@ function CompaniesPage() {
 
   const save = useMutation({
     mutationFn: async (v: Partial<Company>) => {
+      const nome = (v.name ?? "").trim();
+      if (!nome) throw new Error("Informe o Nome Fantasia da empresa.");
+
       const payload = {
-        name: v.name!, type: v.type ?? "CLT",
+        name: nome, type: v.type ?? "CLT",
         cnpj: v.cnpj || null, email: v.email || null,
         encarregado1: v.encarregado1 || null, encarregado2: v.encarregado2 || null,
         data_entrada: (v as any).data_entrada || null,
@@ -172,20 +175,48 @@ function CompaniesPage() {
         cnpj_card_url: v.cnpj_card_url || null,
         receita_consultada_em: (v as any).receita_consultada_em || null,
       };
-      if (v.id) {
-        const { error } = await supabase.from("companies").update(payload).eq("id", v.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("companies").insert(payload);
-        if (error) throw error;
+
+      const detalhe = (error: any) =>
+        [error?.message, error?.details, error?.hint].filter(Boolean).join(" · ") || "Falha ao salvar";
+
+      // Evita duplicar: se não veio id mas já existe empresa com o mesmo CNPJ, atualiza aquela.
+      let alvoId = v.id ?? null;
+      const digitos = (payload.cnpj ?? "").replace(/\D/g, "");
+      if (!alvoId && digitos.length === 14) {
+        const existente = companies.find((c) => (c.cnpj ?? "").replace(/\D/g, "") === digitos);
+        if (existente) alvoId = existente.id;
       }
+
+      if (alvoId) {
+        const { data, error } = await supabase
+          .from("companies")
+          .update(payload)
+          .eq("id", alvoId)
+          .select("id");
+        if (error) throw new Error(detalhe(error));
+        if (!data || data.length === 0) {
+          throw new Error("O banco não gravou a empresa — seu usuário não tem permissão de edição ou a empresa não existe mais.");
+        }
+        return { id: alvoId };
+      }
+
+      const { data, error } = await supabase.from("companies").insert(payload).select("id").single();
+      if (error) throw new Error(detalhe(error));
+      if (!data?.id) throw new Error("O banco não gravou a empresa — verifique sua permissão de edição.");
+      return { id: data.id as string };
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["companies"] });
-      setEditing({ ...empty });
+    onSuccess: async (r) => {
+      await qc.invalidateQueries({ queryKey: ["companies"] });
+      if (r?.id) {
+        setSelectedId(r.id);
+        setShowForm(false);
+        setEditing(null);
+      } else {
+        setEditing({ ...empty });
+      }
       toast.success("Empresa salva");
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toast.error(e.message ?? "Falha ao salvar"),
   });
 
   // Atualização retroativa em lote via Receita Federal
