@@ -1154,16 +1154,20 @@ function EmitirOssDialog({ open, onClose, onIssued, prefill }: {
     queryFn: async () => {
       const { data } = await supabase
         .from("employees")
-        .select("id, nome, cpf, matricula, admissao, status, role_id, company_id, roles(name)")
+        .select("id, nome, cpf, matricula, admissao, status, role_id, company_id, roles(name, cbo, setor, descricao_atividades)")
         .eq("status", "ATIVO")
         .eq("company_id", companyId)
         .order("nome");
       return (data ?? []).map((e: any) => ({
         ...e,
         cargo: e.roles?.name ?? null,
+        cargoCbo: e.roles?.cbo ?? null,
+        cargoSetor: e.roles?.setor ?? null,
+        cargoDescricao: e.roles?.descricao_atividades ?? null,
       })) as Array<{
         id: string; nome: string; cpf: string | null; matricula: string | null;
         admissao: string | null; cargo: string | null;
+        cargoCbo: string | null; cargoSetor: string | null; cargoDescricao: string | null;
       }>;
     },
   });
