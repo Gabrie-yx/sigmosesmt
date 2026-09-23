@@ -1346,9 +1346,25 @@ function EmitirOssDialog({ open, onClose, onIssued, prefill }: {
             {autoSuggestedTemplate && !templateId && (
               <div className="text-[10px] text-emerald-700 mt-1">✓ Modelo sugerido pelo cargo do funcionário</div>
             )}
-            {selectedEmp?.cargo && !autoSuggestedTemplate && (
-              <div className="text-[10px] text-amber-700 mt-1">
-                ⚠ Nenhum modelo para o cargo "{selectedEmp.cargo}". <Link to="/app/oss/templates" className="underline">Criar modelo</Link>
+            {selectedEmp?.cargo && !autoSuggestedTemplate && !templateId && (
+              <div className="mt-2 rounded-md border border-amber-400/40 bg-amber-500/10 p-2 space-y-2">
+                <div className="text-[11px] text-amber-700 dark:text-amber-300">
+                  ⚠ Ainda não existe modelo de OS para o cargo "{selectedEmp.cargo}". Crie um agora
+                  (ele já vem com a descrição e os riscos cadastrados no cargo) ou escolha um modelo da lista acima.
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    className="h-7 text-[11px] bg-rose-600 hover:bg-rose-700"
+                    onClick={() => criarModelo.mutate()}
+                    disabled={criarModelo.isPending}
+                  >
+                    Criar modelo para "{selectedEmp.cargo}"
+                  </Button>
+                  <Button asChild size="sm" variant="outline" className="h-7 text-[11px]">
+                    <Link to="/app/oss/templates">Abrir Modelos por Cargo</Link>
+                  </Button>
+                </div>
               </div>
             )}
           </div>
