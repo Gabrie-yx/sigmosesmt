@@ -4191,6 +4191,11 @@ function OssTab({ empId, empNome }: { empId: string; empNome: string }) {
         Quando você clica em <em>Ver assinada</em>, o sistema abre o PDF dentro do próprio SIGMO
         com botões de impressão e download — sem precisar sair da ficha do funcionário.
       </Card>
+      {ossDoc && (
+        <Suspense fallback={null}>
+          <PDFPreviewDialog open={!!ossDoc} onClose={() => setOssDoc(null)} doc={ossDoc.doc} fileName={ossDoc.name} />
+        </Suspense>
+      )}
     </div>
   );
 }
