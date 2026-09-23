@@ -103,7 +103,7 @@ const empty: Partial<Role> = {
   name: "", ativo: true, ghe: "", ghe_id: null, setor: "", cbo: "", cbo_titulo: "",
   req_aso: true, req_integra: true,
   periodicidade_integracao_meses: null,
-  req_nrs: [], req_exames: [], req_vacinas: [], risco_biologico: false, riscos: emptyRiscos,
+  req_nrs: [], req_exames: [], req_vacinas: [], risco_biologico: false, riscos: emptyRiscos, epis: [],
   exames_por_natureza: emptyExames,
 };
 
