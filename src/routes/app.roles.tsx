@@ -293,6 +293,8 @@ function RolesPage() {
   const reqExamesSet = useMemo(() => new Set(editing?.req_exames ?? []), [editing?.req_exames]);
   const reqVacinasSet = useMemo(() => new Set(editing?.req_vacinas ?? []), [editing?.req_vacinas]);
 
+  const epis: EpiCargo[] = editing?.epis ?? [];
+
   const riscos: Riscos = editing?.riscos ?? emptyRiscos;
   const updateRiscos = (patch: Partial<Riscos>) =>
     editing && setEditing({ ...editing, riscos: { ...riscos, ...patch } });
