@@ -137,6 +137,9 @@ function RolesPage() {
         req_vacinas: Array.isArray(r.req_vacinas) ? r.req_vacinas : [],
         risco_biologico: !!r.risco_biologico,
         riscos: r.riscos && typeof r.riscos === "object" ? { ...emptyRiscos, ...r.riscos } : emptyRiscos,
+        epis: Array.isArray(r.epis)
+          ? r.epis.map((e: any) => ({ nome: String(e?.nome ?? ""), ca: String(e?.ca ?? "") }))
+          : [],
         exames_por_natureza: r.exames_por_natureza && typeof r.exames_por_natureza === "object"
           ? { ...emptyExames, ...r.exames_por_natureza }
           : emptyExames,
