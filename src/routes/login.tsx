@@ -8,6 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import sigmoLogo from "@/assets/sigmo-logo-white.png";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useServerFn } from "@tanstack/react-start";
+import { recoverMyMfa } from "@/lib/users.functions";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -25,6 +28,7 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const nav = useNavigate();
+  const recoverMfaFn = useServerFn(recoverMyMfa);
   function postLoginTarget(): string {
     try {
       const url = new URL(window.location.href);
@@ -52,6 +56,9 @@ function LoginPage() {
   const [mfaCode, setMfaCode] = useState("");
   const [forgotOpen, setForgotOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
+  const [recoverOpen, setRecoverOpen] = useState(false);
+  const [recoverPassword, setRecoverPassword] = useState("");
+  const [recoverBusy, setRecoverBusy] = useState(false);
 
   function clearMfaChallenge() {
     setMfaChallengeId(null);
@@ -92,6 +99,29 @@ function LoginPage() {
     } catch (e: any) {
       toast.error(e.message ?? "Código inválido");
     } finally { setLoading(false); }
+  }
+
+  async function handleMfaRecovery(e: React.FormEvent) {
+    e.preventDefault();
+    if (!recoverPassword) return;
+    setRecoverBusy(true);
+    try {
+      const result = await recoverMfaFn({ data: { password: recoverPassword } });
+      await supabase.auth.signOut({ scope: "local" });
+      clearMfaChallenge();
+      setRecoverOpen(false);
+      setRecoverPassword("");
+      toast.success(
+        result.removed > 0
+          ? "Autenticador antigo removido. Entre novamente e cadastre o novo."
+          : "Sua conta já estava liberada. Entre novamente para cadastrar o autenticador.",
+        { duration: 8000 },
+      );
+    } catch (err: any) {
+      toast.error(err.message ?? "Não foi possível recuperar o MFA");
+    } finally {
+      setRecoverBusy(false);
+    }
   }
 
   useEffect(() => {
@@ -197,6 +227,14 @@ function LoginPage() {
                 className="w-full text-sm text-slate-300 hover:bg-transparent hover:text-white">
                 Cancelar
               </Button>
+              <Button
+                type="button"
+                variant="link"
+                className="w-full text-sm text-amber-300 hover:text-amber-200"
+                onClick={() => setRecoverOpen(true)}
+              >
+                Perdi acesso ao autenticador
+              </Button>
             </form>
           ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -259,6 +297,37 @@ function LoginPage() {
           </Card>
         </div>
       )}
+      <Dialog open={recoverOpen} onOpenChange={(open) => !recoverBusy && setRecoverOpen(open)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Recuperar acesso ao MFA</DialogTitle>
+            <DialogDescription>
+              Confirme sua senha atual. O autenticador antigo será removido e todas as sessões vinculadas a ele serão encerradas.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleMfaRecovery} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="recover-password">Senha atual</Label>
+              <PasswordInput
+                id="recover-password"
+                value={recoverPassword}
+                onChange={(e) => setRecoverPassword(e.target.value)}
+                autoFocus
+                required
+              />
+            </div>
+            <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
+              Depois, entre novamente e abra Segurança da conta para ler o novo QR Code.
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="ghost" disabled={recoverBusy} onClick={() => setRecoverOpen(false)}>Cancelar</Button>
+              <Button type="submit" variant="destructive" disabled={recoverBusy || !recoverPassword}>
+                {recoverBusy ? "Confirmando..." : "Remover autenticador antigo"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

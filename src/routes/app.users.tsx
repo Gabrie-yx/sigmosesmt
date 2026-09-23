@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { ShieldCheck, ShieldAlert, Trash2, Plus, Mail, RotateCcw, X, Settings2, Ban, Play, History as HistoryIcon, KeyRound, LogOut, MoreVertical, MonitorSmartphone, UserCog } from "lucide-react";
+import { ShieldCheck, ShieldAlert, ShieldOff, Trash2, Plus, Mail, RotateCcw, X, Settings2, Ban, Play, History as HistoryIcon, KeyRound, LogOut, MoreVertical, MonitorSmartphone, UserCog } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -40,6 +40,7 @@ import {
   adminCountUserSessions,
   adminForceSignOutUser,
   updateUserProfile,
+  adminResetUserMfa,
 } from "@/lib/users.functions";
 import { createInvestorAccess } from "@/lib/temp-investors.functions";
 import { MENU_CATALOG, MENU_BY_KEY, menusForModule, AVAILABLE_MODULES } from "@/lib/menu-catalog";
@@ -91,6 +92,7 @@ function UsersPage() {
   const countSessionsFn = useServerFn(adminCountUserSessions);
   const signOutUserFn = useServerFn(adminForceSignOutUser);
   const updateProfileFn = useServerFn(updateUserProfile);
+  const resetMfaFn = useServerFn(adminResetUserMfa);
 
   const [inviteOpen, setInviteOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -497,6 +499,19 @@ function UsersPage() {
                         }}>
                           <LogOut className="h-4 w-4 mr-2" /> Desconectar todas as sessões
                         </DropdownMenuItem>
+                        {u.mfa_active && (
+                          <DropdownMenuItem onClick={async () => {
+                            if (!confirm(`Redefinir o MFA de ${u.email}? O autenticador atual será removido e as sessões serão encerradas.`)) return;
+                            try {
+                              const { removed } = await resetMfaFn({ data: { user_id: u.id } });
+                              toast.success(`${removed} autenticador(es) removido(s). O usuário poderá cadastrar um novo no próximo acesso.`);
+                              qc.invalidateQueries({ queryKey: ["users-admin"] });
+                              qc.invalidateQueries({ queryKey: ["users-audit-logs"] });
+                            } catch (e: any) { toast.error(e.message ?? "Falha ao redefinir MFA"); }
+                          }}>
+                            <ShieldOff className="h-4 w-4 mr-2" /> Redefinir MFA
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuSeparator />
                         {u.suspended ? (
                           <DropdownMenuItem onClick={async () => {
@@ -1003,6 +1018,8 @@ const ACTION_LABEL: Record<string, string> = {
   INSERT: "criou registro em",
   UPDATE: "atualizou registro em",
   DELETE: "apagou registro em",
+  MFA_SELF_RECOVERED: "recuperou o próprio MFA",
+  MFA_ADMIN_RESET: "redefiniu o MFA de",
 };
 
 function HistoryView({ logs, loading, users }: { logs: any[]; loading: boolean; users: any[] }) {

@@ -472,6 +472,76 @@ export const adminForceSignOutUser = createServerFn({ method: "POST" })
     return { count: (n as number) ?? 0 };
   });
 
+async function deleteUserMfaFactors(supabaseAdmin: any, userId: string) {
+  const { data, error } = await supabaseAdmin.auth.admin.mfa.listFactors({ userId });
+  if (error) throw new Error(`Não foi possível consultar o MFA: ${error.message}`);
+
+  const factors = data?.factors ?? [];
+  for (const factor of factors) {
+    const { error: deleteError } = await supabaseAdmin.auth.admin.mfa.deleteFactor({
+      userId,
+      id: factor.id,
+    });
+    if (deleteError) throw new Error(`Não foi possível remover o autenticador: ${deleteError.message}`);
+  }
+  return factors.length;
+}
+
+/**
+ * Recuperação autônoma: a sessão define o usuário e a senha atual confirma
+ * novamente sua identidade. Nunca aceita um user_id enviado pelo navegador.
+ */
+export const recoverMyMfa = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(z.object({ password: z.string().min(1).max(200) }))
+  .handler(async ({ data, context }) => {
+    const email = typeof context.claims.email === "string" ? context.claims.email : null;
+    if (!email) throw new Error("Não foi possível confirmar o e-mail desta conta");
+
+    const { createClient } = await import("@supabase/supabase-js");
+    const url = process.env["SUPABASE_URL"];
+    const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
+    if (!url || !key) throw new Error("Serviço de autenticação indisponível");
+
+    const verifier = createClient(url, key, {
+      auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
+    });
+    const { data: verified, error: passwordError } = await verifier.auth.signInWithPassword({
+      email,
+      password: data.password,
+    });
+    if (passwordError || verified.user?.id !== context.userId) {
+      throw new Error("Senha atual incorreta");
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const removed = await deleteUserMfaFactors(supabaseAdmin, context.userId);
+    await logAdminEvent(supabaseAdmin, {
+      action: "MFA_SELF_RECOVERED",
+      target_user_id: context.userId,
+      actor_user_id: context.userId,
+      payload: { factors_removed: removed },
+    });
+    return { ok: true, removed };
+  });
+
+/** Contingência: outro administrador pode liberar a conta bloqueada. */
+export const adminResetUserMfa = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(z.object({ user_id: z.string().uuid() }))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await assertAdmin(context.supabase, context.userId);
+    const removed = await deleteUserMfaFactors(supabaseAdmin, data.user_id);
+    await logAdminEvent(supabaseAdmin, {
+      action: "MFA_ADMIN_RESET",
+      target_user_id: data.user_id,
+      actor_user_id: context.userId,
+      payload: { factors_removed: removed },
+    });
+    return { ok: true, removed };
+  });
+
 export const listUsersAdmin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {

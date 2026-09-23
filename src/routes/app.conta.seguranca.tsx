@@ -10,6 +10,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { ShieldCheck, ShieldAlert, Trash2, KeyRound, LogOut, PenTool, Image as ImageIcon, Check, LayoutGrid, FileSignature } from "lucide-react";
 import { SignatureGallery } from "@/components/signature-gallery";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { recoverMyMfa } from "@/lib/users.functions";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/app/conta/seguranca")({
   component: SecurityPage,
@@ -17,6 +20,7 @@ export const Route = createFileRoute("/app/conta/seguranca")({
 
 function SecurityPage() {
   const navigate = useNavigate();
+  const recoverMfaFn = useServerFn(recoverMyMfa);
   const { user, requiresMfa, mfaActive, aal, loading } = useAuth();
   const [factorId, setFactorId] = useState<string | null>(null);
   const [qr, setQr] = useState<string | null>(null);
@@ -29,6 +33,9 @@ function SecurityPage() {
   const [pwdBusy, setPwdBusy] = useState(false);
   const [signOutBusy, setSignOutBusy] = useState(false);
   const [signature, setSignature] = useState<string | null>(() => localStorage.getItem("sigmo:last-user-signature"));
+  const [recoverOpen, setRecoverOpen] = useState(false);
+  const [recoverPassword, setRecoverPassword] = useState("");
+  const [recoverBusy, setRecoverBusy] = useState(false);
 
   useEffect(() => { refreshFactors(); }, []);
 
@@ -82,6 +89,10 @@ function SecurityPage() {
   }
 
   async function startEnroll() {
+    if (factors.some((factor) => factor.status === "verified") && aal !== "aal2") {
+      setRecoverOpen(true);
+      return;
+    }
     setBusy(true);
     try {
       // Limpa fatores não verificados antigos
@@ -102,6 +113,21 @@ function SecurityPage() {
     } catch (e: any) {
       toast.error(e.message);
     } finally { setBusy(false); }
+  }
+
+  async function recoverMfa(e: React.FormEvent) {
+    e.preventDefault();
+    setRecoverBusy(true);
+    try {
+      await recoverMfaFn({ data: { password: recoverPassword } });
+      await supabase.auth.signOut({ scope: "local" });
+      toast.success("MFA redefinido. Entre novamente para cadastrar o novo autenticador.", { duration: 8000 });
+      navigate({ to: "/login", replace: true });
+    } catch (e: any) {
+      toast.error(e.message ?? "Não foi possível redefinir o MFA");
+    } finally {
+      setRecoverBusy(false);
+    }
   }
 
   async function verifyEnroll() {
@@ -186,10 +212,17 @@ function SecurityPage() {
               )}
 
               {!qr && (
-                <Button onClick={startEnroll} disabled={busy}>
-                  <ShieldCheck className="h-4 w-4 mr-2" />
-                  {factors.some((f) => f.status === "verified") ? "Adicionar outro fator" : "Ativar MFA"}
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button onClick={startEnroll} disabled={busy}>
+                    <ShieldCheck className="h-4 w-4 mr-2" />
+                    {factors.some((f) => f.status === "verified") ? "Adicionar outro fator" : "Ativar MFA"}
+                  </Button>
+                  {factors.some((f) => f.status === "verified") && aal !== "aal2" && (
+                    <Button variant="outline" onClick={() => setRecoverOpen(true)}>
+                      <KeyRound className="h-4 w-4 mr-2" /> Perdi acesso ao autenticador
+                    </Button>
+                  )}
+                </div>
               )}
 
               {qr && (
@@ -344,6 +377,29 @@ function SecurityPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Dialog open={recoverOpen} onOpenChange={(open) => !recoverBusy && setRecoverOpen(open)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Redefinir meu MFA</DialogTitle>
+            <DialogDescription>
+              Digite sua senha atual. O fator antigo será removido e você entrará novamente para cadastrar um novo.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={recoverMfa} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="security-recover-password">Senha atual</Label>
+              <PasswordInput id="security-recover-password" value={recoverPassword} onChange={(e) => setRecoverPassword(e.target.value)} required autoFocus />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="ghost" disabled={recoverBusy} onClick={() => setRecoverOpen(false)}>Cancelar</Button>
+              <Button type="submit" variant="destructive" disabled={recoverBusy || !recoverPassword}>
+                {recoverBusy ? "Confirmando..." : "Remover MFA antigo"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
