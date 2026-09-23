@@ -1,13 +1,13 @@
 /**
- * Dimensionamento CIPA — NR-05 (Portaria MTP 4.219/2022), Quadro I resumido.
+ * Dimensionamento CIPA — NR-05 (Portaria SEPRT 422/2021, vigente desde 03/01/2022), Quadro I.
  *
- * Cruza Grau de Risco (1-4) × nº de empregados do estabelecimento e sugere:
- *  - `modo`: DESIGNADO (5.6.4) ou COMISSAO paritária.
- *  - Composição mínima (efetivos/suplentes) por bancada.
- *  - Carga horária mínima de capacitação (item 5.7 — 20 h para GR3/GR4, 8 h demais).
+ * O Quadro I da NR-05 é definido por GRAU DE RISCO (NR-04) × nº de empregados do
+ * estabelecimento e fornece o nº de EFETIVOS/SUPLENTES da representação dos
+ * EMPREGADOS. A representação do EMPREGADOR é paritária (mesmo número — item 5.4.1).
+ * Abaixo da primeira faixa com composição, aplica-se o designado (item 5.4.13).
  *
- * Isolado do route file para permitir reuso (PDF, dashboards) e evitar
- * warning de code-splitting do TanStack Router.
+ * Carga horária da capacitação (item 5.7.4.1):
+ *   GR1 = 8h · GR2 = 12h · GR3 = 16h · GR4 = 20h.
  */
 export type CipaSugestao = {
   modo: "DESIGNADO" | "COMISSAO";
@@ -19,44 +19,52 @@ export type CipaSugestao = {
   nota: string;
 };
 
+// Faixas do Quadro I (limite superior inclusivo).
+const FAIXAS = [19, 29, 50, 80, 100, 120, 140, 300, 500, 1000, 2500, 5000, 10000];
+type C = [number, number] | null;
+// [efetivos, suplentes] da representação dos empregados, por GR, por faixa.
+const QUADRO: Record<number, C[]> = {
+  1: [null, null, null, null, [1, 1], [1, 1], [1, 1], [1, 1], [2, 2], [4, 3], [5, 4], [6, 5], [8, 6]],
+  2: [null, null, null, [1, 1], [1, 1], [2, 1], [2, 1], [3, 2], [4, 3], [5, 4], [6, 5], [8, 6], [10, 8]],
+  3: [null, [1, 1], [1, 1], [2, 1], [2, 1], [2, 1], [2, 1], [3, 2], [4, 3], [5, 4], [6, 5], [8, 6], [10, 8]],
+  4: [null, [1, 1], [2, 1], [3, 2], [3, 2], [4, 2], [4, 3], [4, 3], [5, 4], [6, 4], [8, 6], [10, 8], [12, 8]],
+};
+// Acréscimo a cada grupo de 2.500 acima de 10.000.
+const ACRESCIMO: Record<number, [number, number]> = { 1: [1, 1], 2: [1, 1], 3: [2, 2], 4: [2, 2] };
+
+export const CARGA_CAPACITACAO: Record<number, number> = { 1: 8, 2: 12, 3: 16, 4: 20 };
+
+export function cargaCapacitacao(gr: number | null | undefined): number {
+  return CARGA_CAPACITACAO[gr ?? 4] ?? 20;
+}
+
 export function dimensionarCipa(gr: number | null, n: number | null): CipaSugestao | null {
-  if (!gr || !n || n <= 0) return null;
-  // Piso de eleição paritária por grau de risco (Quadro I NR-05).
-  // Valores conforme parâmetro adotado no SIGMO — o Quadro I completo depende
-  // do CNAE do estabelecimento; ajuste manual quando o grupo (C-XX) exigir.
-  //   GR1/GR2: comissão a partir de 51 empregados.
-  //   GR3    : comissão a partir de 20 empregados.
-  //   GR4    : comissão a partir de 30 empregados (20-29 = designado).
-  const piso = gr === 4 ? 30 : gr === 3 ? 20 : 51;
-  const carga = gr >= 3 ? 20 : 8;
-  if (n < piso) {
+  if (!gr || gr < 1 || gr > 4 || !n || n <= 0) return null;
+  const carga = cargaCapacitacao(gr);
+  let comp: C;
+  if (n > 10000) {
+    const base = QUADRO[gr][12] as [number, number];
+    const grupos = Math.ceil((n - 10000) / 2500);
+    comp = [base[0] + grupos * ACRESCIMO[gr][0], base[1] + grupos * ACRESCIMO[gr][1]];
+  } else {
+    const idx = FAIXAS.findIndex((lim) => n <= lim);
+    comp = QUADRO[gr][idx];
+  }
+  if (!comp) {
     return {
       modo: "DESIGNADO",
-      efetivosEmpregador: 0,
-      suplentesEmpregador: 0,
-      efetivosEmpregados: 0,
-      suplentesEmpregados: 0,
+      efetivosEmpregador: 0, suplentesEmpregador: 0,
+      efetivosEmpregados: 0, suplentesEmpregados: 0,
       cargaTreinamento: carga,
-      nota:
-        n < 20
-          ? `Estabelecimento com menos de 20 empregados: designado obrigatório (NR-05 item 5.6.3).`
-          : `Grau de Risco ${gr} com ${n} empregados: abaixo do Quadro I → designa 1 empregado (NR-05 item 5.6.4). Sem estabilidade do art. 10, II, "a" ADCT, salvo previsão em ACT/CCT.`,
+      nota: `GR ${gr} com ${n} empregados: fora do Quadro I → a organização nomeia 1 empregado (NR-05 item 5.4.13), capacitado com ${carga}h. O nomeado não tem a estabilidade do art. 10, II, "a" do ADCT, salvo ACT/CCT.`,
     };
   }
-  // Faixas simplificadas do Quadro I (composição mínima por bancada):
-  const faixa =
-    n <= 50 ? { ef: 1, su: 1 } :
-    n <= 100 ? { ef: 3, su: 3 } :
-    n <= 500 ? { ef: 4, su: 4 } :
-    n <= 1000 ? { ef: 6, su: 6 } :
-    { ef: 9, su: 7 };
+  const [ef, su] = comp;
   return {
     modo: "COMISSAO",
-    efetivosEmpregador: faixa.ef,
-    suplentesEmpregador: faixa.su,
-    efetivosEmpregados: faixa.ef,
-    suplentesEmpregados: faixa.su,
+    efetivosEmpregador: ef, suplentesEmpregador: su,
+    efetivosEmpregados: ef, suplentesEmpregados: su,
     cargaTreinamento: carga,
-    nota: `Comissão paritária: ${faixa.ef} efetivos + ${faixa.su} suplentes por bancada. Mandato 1 ano, permitida 1 reeleição. Estabilidade dos eleitos: art. 10, II, "a" ADCT.`,
+    nota: `Quadro I (GR ${gr}, ${n} empregados): ${ef} efetivo(s) + ${su} suplente(s) por representação (paritária). Mandato de 1 ano, permitida 1 reeleição. Estabilidade dos eleitos (titulares e suplentes) desde o registro da candidatura até 1 ano após o fim do mandato.`,
   };
 }
