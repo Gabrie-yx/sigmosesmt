@@ -18,3 +18,5 @@ Antes de criar rota nova, perguntar: "isso pode ser um modal/sheet/drawer sobre 
 **Por quê:** ISO 9001/45001 não exige telas separadas — exige rastreabilidade documentada. Modal mantém contexto, reduz cliques, evita explosão de rotas.
 
 **Não viola:** tema escuro oficial, Cargos/Funções, qualquer regra visual existente.
+
+**CBO na Matriz de Requisitos:** a busca deve abrir em modal pequeno, sólido e legível; nunca usar lista transparente sobre a matriz.
