@@ -1004,3 +1004,69 @@ function ExamesMatrix({
     </div>
   );
 }
+
+function EpisEditor({
+  items, onChange, disabled, catalogo,
+}: {
+  items: EpiCargo[];
+  onChange: (v: EpiCargo[]) => void;
+  disabled?: boolean;
+  catalogo: { nome_material: string; ca: string | null }[];
+}) {
+  const update = (i: number, patch: Partial<EpiCargo>) =>
+    onChange(items.map((it, idx) => (idx === i ? { ...it, ...patch } : it)));
+  const remove = (i: number) => onChange(items.filter((_, idx) => idx !== i));
+  const add = () => onChange([...items, { nome: "", ca: "" }]);
+
+  const pick = (i: number, nome: string) => {
+    const hit = catalogo.find((c) => c.nome_material.toLowerCase() === nome.trim().toLowerCase());
+    update(i, { nome, ...(hit?.ca ? { ca: hit.ca } : {}) });
+  };
+
+  return (
+    <div className="space-y-3">
+      <datalist id="epis-catalogo-list">
+        {catalogo.map((c) => (
+          <option key={c.nome_material} value={c.nome_material} />
+        ))}
+      </datalist>
+
+      {items.length === 0 && (
+        <p className="text-xs text-slate-500">
+          Nenhum EPI definido para este cargo. Adicione os EPIs obrigatórios e seus CAs — a Ordem de Serviço usa exatamente esta lista.
+        </p>
+      )}
+
+      {items.map((it, i) => (
+        <div key={i} className="flex flex-col md:flex-row gap-2 md:items-center">
+          <input
+            value={it.nome}
+            onChange={(e) => pick(i, e.target.value)}
+            list="epis-catalogo-list"
+            disabled={disabled}
+            placeholder="EPI (ex.: Luva de raspa)"
+            className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 outline-none focus:border-[#991b1b] focus:bg-white disabled:opacity-60"
+          />
+          <input
+            value={it.ca}
+            onChange={(e) => update(i, { ca: e.target.value })}
+            disabled={disabled}
+            placeholder="CA"
+            className="md:w-40 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 outline-none focus:border-[#991b1b] focus:bg-white disabled:opacity-60"
+          />
+          {!disabled && (
+            <Button type="button" variant="ghost" size="sm" onClick={() => remove(i)} className="text-rose-600">
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      ))}
+
+      {!disabled && (
+        <Button type="button" variant="outline" size="sm" onClick={add} className="text-xs font-black uppercase tracking-wider">
+          <Plus className="h-4 w-4 mr-1.5" /> Adicionar EPI
+        </Button>
+      )}
+    </div>
+  );
+}
