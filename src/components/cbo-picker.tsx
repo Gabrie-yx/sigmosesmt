@@ -94,14 +94,14 @@ export function CboPicker({ codigo, titulo, onChange, disabled, placeholder, cla
         )}
       </div>
       {open && !disabled && (
-        <div className="absolute z-50 mt-1 left-0 right-0 bg-white border border-rose-200 rounded-xl shadow-2xl max-h-96 overflow-hidden flex flex-col">
+        <div className="absolute z-50 mt-1 left-0 w-[min(560px,calc(100vw-2rem))] bg-white border border-rose-200 rounded-xl shadow-2xl max-h-80 overflow-hidden flex flex-col">
           <div className="p-2 border-b border-rose-100">
             <input
               autoFocus
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Digite código (7244) ou nome (soldador)…"
-              className="w-full px-3 py-2 text-sm border border-rose-100 rounded-lg outline-none focus:border-[#991b1b]"
+              className="w-full px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 border border-rose-100 rounded-lg outline-none focus:border-[#991b1b]"
             />
           </div>
           <div className="flex-1 overflow-y-auto">
@@ -120,14 +120,14 @@ export function CboPicker({ codigo, titulo, onChange, disabled, placeholder, cla
                     setOpen(false);
                     setQ("");
                   }}
-                  className={`w-full text-left px-3 py-2 text-sm hover:bg-rose-50 flex items-start gap-2 border-b border-rose-50 last:border-0 ${sel ? "bg-rose-50" : ""}`}
+                  className={`w-full text-left px-3 py-2.5 text-sm hover:bg-rose-50 flex items-center gap-3 border-b border-rose-50 last:border-0 ${sel ? "bg-rose-50" : ""}`}
                 >
-                  <span className="font-mono font-bold text-rose-700 shrink-0 w-16">{r.codigo}</span>
-                  <span className="flex-1 text-slate-700">{r.titulo}</span>
-                  <span className={`text-[10px] font-black uppercase shrink-0 ${r.tipo === "Ocupação" ? "text-emerald-600" : "text-slate-400"}`}>
+                  <span className="font-mono font-bold text-rose-700 shrink-0 w-[4.5rem] whitespace-nowrap">{r.codigo}</span>
+                  <span className="flex-1 min-w-0 text-slate-700 truncate" title={r.titulo}>{r.titulo}</span>
+                  <span className={`text-[10px] font-black uppercase shrink-0 whitespace-nowrap ${r.tipo === "Ocupação" ? "text-emerald-600" : "text-slate-400"}`}>
                     {r.tipo === "Ocupação" ? "OFICIAL" : "sinônimo"}
                   </span>
-                  {sel && <Check className="h-4 w-4 text-emerald-600" />}
+                  {sel && <Check className="h-4 w-4 text-emerald-600 shrink-0" />}
                 </button>
               );
             })}
