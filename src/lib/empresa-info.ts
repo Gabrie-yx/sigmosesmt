@@ -6,7 +6,7 @@
 export const EMPRESA_INFO = {
   razao_social: "DMN ESTALEIRO DA AMAZÔNIA LTDA",
   cnpj: "13.378.697/0001-80",
-  endereco: "Estrada do Brasileirinho, s/nº — Distrito Industrial II",
+  endereco: "Rua do Pajurazinho, 11299",
   cidade_uf_cep: "Manaus / AM — CEP 69.082-200",
   contato: "sesmt@dmnestaleiro.com.br",
 } as const;
