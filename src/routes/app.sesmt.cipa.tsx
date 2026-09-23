@@ -20,6 +20,7 @@ import { buildCipaCalendarioPdf, type CipaCalendarioLinha } from "@/lib/cipa-cal
 import { EMPRESA_INFO } from "@/lib/empresa-info";
 import { FileText } from "lucide-react";
 import { EleicaoTab } from "@/components/cipa/eleicao-tab";
+import { CipaEmployeePicker, useCipaEmployees } from "@/components/cipa/employee-picker";
 import { cargaCapacitacao } from "@/lib/cipa-dimensionamento";
 import { fimEstabilidade, fmt, diffDays } from "@/lib/cipa-eleicao";
 
@@ -348,14 +349,7 @@ function DesignadoTab({ gestao, onSaved }: { gestao: Gestao; onSaved: () => void
   const [treinData, setTreinData] = useState(gestao.designado_treinamento_data ?? "");
   const [canal, setCanal] = useState(gestao.assedio_canal_url ?? "");
 
-  const { data: funcs } = useQuery({
-    queryKey: ["cipa", "employees-lookup"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("employees").select("id, nome, admissao, roles(name)").eq("status", "ATIVO").order("nome").limit(500);
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
+  const { data: funcs } = useCipaEmployees();
 
   const sugestao = dimensionarCipa(gestao.grau_risco, gestao.num_empregados);
   const cargaMinima = sugestao?.cargaTreinamento ?? cargaCapacitacao(gestao.grau_risco);
