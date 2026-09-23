@@ -71,6 +71,7 @@ type Riscos = {
   biologicos: string[]; ergonomicos: string[]; psicossociais: string[];
   descricao: string;
 };
+type EpiCargo = { nome: string; ca: string };
 type Natureza = "ADMISSIONAL" | "PERIODICO" | "RETORNO_TRABALHO" | "MUDANCA_RISCO" | "DEMISSIONAL" | "SEMESTRAL";
 type ExamesPorNatureza = Record<Natureza, string[]>;
 type Role = {
