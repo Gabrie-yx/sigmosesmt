@@ -1165,11 +1165,13 @@ function EmitirOssDialog({ open, onClose, onIssued, prefill }: {
         cargoSetor: e.roles?.setor ?? null,
         cargoDescricao: e.roles?.descricao_atividades ?? null,
         cargoRiscosFicha: e.roles?.riscos ?? null,
+        cargoEpis: Array.isArray(e.roles?.epis) ? e.roles.epis : [],
       })) as Array<{
         id: string; role_id: string | null; nome: string; cpf: string | null; matricula: string | null;
         admissao: string | null; cargo: string | null;
         cargoCbo: string | null; cargoSetor: string | null; cargoDescricao: string | null;
         cargoRiscosFicha: any;
+        cargoEpis: Array<{ nome?: string; ca?: string }>;
       }>;
     },
   });
