@@ -19,6 +19,9 @@ import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import { buildCipaCalendarioPdf, type CipaCalendarioLinha } from "@/lib/cipa-calendario-pdf";
 import { EMPRESA_INFO } from "@/lib/empresa-info";
 import { FileText } from "lucide-react";
+import { EleicaoTab } from "@/components/cipa/eleicao-tab";
+import { cargaCapacitacao } from "@/lib/cipa-dimensionamento";
+import { fimEstabilidade, fmt, diffDays } from "@/lib/cipa-eleicao";
 
 // CIPA — NR-05 (rev. Portaria MTP 4.219/2022) + Lei 14.457/2022 (Emprega + Mulher).
 // MVP: cadastro de gestão/mandato, membros, reuniões, plano anual e calendário eleitoral.
@@ -60,6 +63,7 @@ type Gestao = {
   designado_treinamento_data: string | null;
   assedio_canal_url: string | null;
   observacoes: string | null;
+  eleicao?: unknown;
 };
 
 // dimensionarCipa vive em src/lib/cipa-dimensionamento.ts (fora do route file
@@ -186,7 +190,7 @@ function CipaPage() {
           </TabsContent>
           {gestaoAtiva.modo === "COMISSAO" && (
             <TabsContent value="eleicao" className="mt-4">
-              <EleicaoTab key={gestaoAtiva.id} gestaoId={gestaoAtiva.id} />
+              <EleicaoTab key={gestaoAtiva.id} gestao={gestaoAtiva} />
             </TabsContent>
           )}
         </Tabs>
@@ -345,14 +349,14 @@ function DesignadoTab({ gestao, onSaved }: { gestao: Gestao; onSaved: () => void
   const { data: funcs } = useQuery({
     queryKey: ["cipa", "employees-lookup"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("employees").select("id, nome, cargo").eq("status", "ATIVO").order("nome").limit(500);
+      const { data, error } = await supabase.from("employees").select("id, nome, admissao, roles(name)").eq("status", "ATIVO").order("nome").limit(500);
       if (error) throw error;
       return data ?? [];
     },
   });
 
   const sugestao = dimensionarCipa(gestao.grau_risco, gestao.num_empregados);
-  const cargaMinima = sugestao?.cargaTreinamento ?? 20;
+  const cargaMinima = sugestao?.cargaTreinamento ?? cargaCapacitacao(gestao.grau_risco);
   const horasNum = Number(treinHoras || 0);
   const capacitado = horasNum >= cargaMinima && !!treinData;
 
@@ -395,10 +399,10 @@ function DesignadoTab({ gestao, onSaved }: { gestao: Gestao; onSaved: () => void
           <Select value={employeeId} onValueChange={setEmployeeId}>
             <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
             <SelectContent className="max-h-72">
-              {(funcs ?? []).map((f: any) => <SelectItem key={f.id} value={f.id}>{f.nome} — {f.cargo}</SelectItem>)}
+              {(funcs ?? []).map((f: any) => <SelectItem key={f.id} value={f.id}>{f.nome}{f.roles?.name ? ` — ${f.roles.name}` : ""}</SelectItem>)}
             </SelectContent>
           </Select>
-          {funcSel && <p className="text-[10px] text-muted-foreground mt-1">Cargo: {funcSel.cargo}</p>}
+          {funcSel && <p className="text-[10px] text-muted-foreground mt-1">Cargo: {funcSel.roles?.name ?? "—"}</p>}
         </div>
         <div>
           <Label>Data do Termo de Indicação</Label>
@@ -455,7 +459,7 @@ function MembrosTab({ gestaoId }: { gestaoId: string }) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("cipa_membros")
-        .select("*, employees:employee_id(id, nome, cargo)")
+        .select("*, employees:employee_id(id, nome, roles(name))")
         .eq("gestao_id", gestaoId)
         .order("representacao");
       if (error) throw error;
@@ -487,7 +491,7 @@ function MembrosTab({ gestaoId }: { gestaoId: string }) {
             <tbody>
               {(data as any[]).map((m) => (
                 <tr key={m.id} className="border-t border-border">
-                  <td className="p-2">{m.employees?.nome ?? "—"}<div className="text-[10px] text-muted-foreground">{m.employees?.cargo}</div></td>
+                  <td className="p-2">{m.employees?.nome ?? "—"}<div className="text-[10px] text-muted-foreground">{m.employees?.roles?.name}</div></td>
                   <td className="p-2">{m.representacao === "EMPREGADOR" ? "Empregador (indicação)" : "Empregados (eleição)"}</td>
                   <td className="p-2">{m.papel}{m.votos ? ` · ${m.votos} votos` : ""}</td>
                   <td className="p-2">{m.posse_em ?? "—"}</td>
@@ -549,7 +553,7 @@ function NovoMembroDialog({ open, onClose, gestaoId, onSaved, edit }: { open: bo
   const { data: funcs } = useQuery({
     queryKey: ["cipa", "employees-lookup"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("employees").select("id, nome, cargo").eq("status", "ATIVO").order("nome").limit(500);
+      const { data, error } = await supabase.from("employees").select("id, nome, admissao, roles(name)").eq("status", "ATIVO").order("nome").limit(500);
       if (error) throw error;
       return data ?? [];
     },
@@ -594,7 +598,7 @@ function NovoMembroDialog({ open, onClose, gestaoId, onSaved, edit }: { open: bo
             <Select value={employeeId} onValueChange={setEmployeeId}>
               <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
               <SelectContent className="max-h-72">
-                {(funcs ?? []).map((f: any) => <SelectItem key={f.id} value={f.id}>{f.nome} — {f.cargo}</SelectItem>)}
+                {(funcs ?? []).map((f: any) => <SelectItem key={f.id} value={f.id}>{f.nome}{f.roles?.name ? ` — ${f.roles.name}` : ""}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -850,8 +854,7 @@ function NovaReuniaoDialog({ open, onClose, gestaoId, onSaved, edit }: { open: b
                   <SelectItem value="AGENDADA">Agendada</SelectItem>
                   <SelectItem value="REALIZADA">Realizada</SelectItem>
                   <SelectItem value="CANCELADA">Cancelada</SelectItem>
-                  <SelectItem value="ADIADA">Adiada</SelectItem>
-                </SelectContent>
+                                  </SelectContent>
               </Select>
             </div>
             <div><Label>URL da ata (PDF)</Label><Input value={ataUrl} onChange={(e) => setAtaUrl(e.target.value)} placeholder="https://..." /></div>
@@ -1035,89 +1038,6 @@ function NovoPlanoDialog({ open, onClose, gestaoId, onSaved, edit }: { open: boo
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
-}
-
-/* -------------------- ELEIÇÃO -------------------- */
-const ETAPAS: Array<{ id: string; label: string }> = [
-  { id: "CONSTITUICAO_COMISSAO_ELEITORAL", label: "Constituição da comissão eleitoral" },
-  { id: "PUBLICACAO_EDITAL", label: "Publicação do edital" },
-  { id: "INSCRICAO_CANDIDATOS", label: "Inscrição de candidatos (mín. 15 dias)" },
-  { id: "CAMPANHA", label: "Campanha" },
-  { id: "VOTACAO", label: "Votação (mín. 30 dias antes do fim do mandato)" },
-  { id: "APURACAO", label: "Apuração" },
-  { id: "HOMOLOGACAO", label: "Homologação" },
-  { id: "POSSE", label: "Posse" },
-];
-
-function EleicaoTab({ gestaoId }: { gestaoId: string }) {
-  const qc = useQueryClient();
-  const { data } = useQuery({
-    queryKey: ["cipa", "eleicao", gestaoId],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("cipa_calendario_eleicao").select("*").eq("gestao_id", gestaoId);
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
-
-  const byEtapa = useMemo(() => Object.fromEntries((data as any[] ?? []).map((r) => [r.etapa, r])), [data]);
-
-  const upsert = useMutation({
-    mutationFn: async (payload: { etapa: string; data_inicio: string; data_fim?: string | null; status: string }) => {
-      const { error } = await supabase.from("cipa_calendario_eleicao").upsert({ gestao_id: gestaoId, ...payload }, { onConflict: "gestao_id,etapa" });
-      if (error) throw error;
-    },
-    onSuccess: () => { toast.success("Etapa salva"); qc.invalidateQueries({ queryKey: ["cipa", "eleicao", gestaoId] }); },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  return (
-    <Card className="p-4">
-      <h3 className="font-bold mb-1">Calendário eleitoral</h3>
-      <p className="text-[10px] text-muted-foreground mb-4">Prazos-referência da NR-05 (rev. 4.219/2022). Ajuste conforme o cronograma da comissão eleitoral.</p>
-      <div className="space-y-2">
-        {ETAPAS.map((e) => {
-          const row = byEtapa[e.id];
-          return (
-            <EtapaLinha
-              key={e.id}
-              etapa={e}
-              inicio={row?.data_inicio ?? ""}
-              fim={row?.data_fim ?? ""}
-              status={row?.status ?? "PLANEJADA"}
-              onSave={(v) => upsert.mutate({ etapa: e.id, data_inicio: v.inicio, data_fim: v.fim || null, status: v.status })}
-            />
-          );
-        })}
-      </div>
-    </Card>
-  );
-}
-
-function EtapaLinha({ etapa, inicio, fim, status, onSave }: { etapa: { id: string; label: string }; inicio: string; fim: string; status: string; onSave: (v: { inicio: string; fim: string; status: string }) => void }) {
-  const [ini, setIni] = useState(inicio);
-  const [fi, setFi] = useState(fim);
-  const [st, setSt] = useState(status);
-  return (
-    <div className="border border-border rounded p-3 grid grid-cols-1 md:grid-cols-[1fr_140px_140px_160px_100px] gap-2 items-end">
-      <div className="text-sm font-medium">{etapa.label}</div>
-      <div><Label className="text-[10px]">Início</Label><Input type="date" value={ini} onChange={(e) => setIni(e.target.value)} /></div>
-      <div><Label className="text-[10px]">Fim</Label><Input type="date" value={fi} onChange={(e) => setFi(e.target.value)} /></div>
-      <div>
-        <Label className="text-[10px]">Status</Label>
-        <Select value={st} onValueChange={setSt}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="PLANEJADA">Planejada</SelectItem>
-            <SelectItem value="EM_ANDAMENTO">Em andamento</SelectItem>
-            <SelectItem value="CONCLUIDA">Concluída</SelectItem>
-            <SelectItem value="ATRASADA">Atrasada</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <Button size="sm" disabled={!ini} onClick={() => onSave({ inicio: ini, fim: fi, status: st })}>Salvar</Button>
-    </div>
   );
 }
 
