@@ -484,6 +484,7 @@ function MembrosTab({ gestaoId }: { gestaoId: string }) {
         <h3 className="font-bold">Composição</h3>
         <Button size="sm" onClick={() => setOpen(true)}><Plus className="h-4 w-4 mr-1" /> Adicionar membro</Button>
       </div>
+      <VacanciaAlertas gestaoId={gestaoId} membros={(data ?? []) as any[]} />
       {(data ?? []).length === 0 ? (
         <p className="text-sm text-muted-foreground">Nenhum membro cadastrado nesta gestão.</p>
       ) : (
@@ -1275,5 +1276,39 @@ function NovaGestaoDialog({ open, onClose, onCreated, edit }: { open: boolean; o
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+/* -------------------- VACÂNCIA / ESTABILIDADE (NR-05 5.4.10–5.4.11) -------------------- */
+function VacanciaAlertas({ gestaoId, membros }: { gestaoId: string; membros: any[] }) {
+  const { data: g } = useQuery({
+    queryKey: ["cipa", "gestao-info", gestaoId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("cipa_gestoes").select("gestao, data_inicio, data_fim, company_id").eq("id", gestaoId).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+  if (!g) return null;
+  const hoje = new Date().toISOString().slice(0, 10);
+  const msgs: string[] = [];
+  const emp = membros.filter((m) => m.representacao === "EMPREGADOS");
+  const vagos = emp.filter((m) => m.papel === "EFETIVO" && m.status === "DESLIGADO");
+  const suplentes = emp.filter((m) => m.papel === "SUPLENTE" && m.status === "ATIVO").sort((a, b) => (a.ordem_suplencia ?? 99) - (b.ordem_suplencia ?? 99));
+  vagos.forEach((v, i) => {
+    const s = suplentes[i];
+    if (s) msgs.push(`Vaga de ${v.employees?.nome ?? "titular"}: assume ${s.employees?.nome} (${s.ordem_suplencia ?? "?"}º suplente). Edite o suplente para "Efetivo" e registre em ata (5.4.10).`);
+    else if (diffDays(g.data_inicio, hoje) <= 182) msgs.push(`Vaga de ${v.employees?.nome ?? "titular"} sem suplente nos 6 primeiros meses: realizar ELEIÇÃO EXTRAORDINÁRIA com prazos pela metade (5.4.11).`);
+    else msgs.push(`Vaga de ${v.employees?.nome ?? "titular"} sem suplente após 6 meses do mandato: registrar em ata.`);
+  });
+  const semTrein = membros.filter((m) => m.status === "ATIVO" && !m.treinamento_data).length;
+  if (semTrein) msgs.push(`${semTrein} membro(s) sem capacitação registrada — obrigatória antes da posse (5.7.1).`);
+  const semAta = membros.filter((m) => m.status === "ATIVO" && !m.ata_entregue).length;
+  if (semAta) msgs.push(`${semAta} membro(s) sem recibo da cópia das atas de eleição e posse (5.5.6).`);
+  const est = fimEstabilidade(g.data_fim);
+  return (
+    <div className="mb-3 space-y-1 text-xs">
+      <p className="text-muted-foreground">Estabilidade dos eleitos (titulares e suplentes): do registro da candidatura até <b>{fmt(est)}</b>. É vedado alterar atividades que prejudiquem as atribuições ou transferir sem anuência (CLT art. 469 §§1º e 2º).</p>
+      {msgs.map((m, i) => <p key={i} className="text-amber-500">⚠ {m}</p>)}
+    </div>
   );
 }
