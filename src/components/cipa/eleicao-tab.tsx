@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { CipaEmployeePicker, useCipaEmployees } from "@/components/cipa/employee-picker";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,14 +29,7 @@ export function EleicaoTab({ gestao }: Props) {
   useEffect(() => { setE((gestao.eleicao as EleicaoDados) ?? {}); }, [gestao.id, gestao.eleicao]);
   const set = <K extends keyof EleicaoDados>(k: K, v: EleicaoDados[K]) => setE((p) => ({ ...p, [k]: v }));
 
-  const { data: funcs } = useQuery({
-    queryKey: ["cipa", "employees-lookup"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("employees").select("id, nome, admissao, roles(name)").eq("status", "ATIVO").order("nome").limit(2000);
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
+  const { data: funcs } = useCipaEmployees();
 
   const prazos = prazosEleicao(gestao.data_fim, !!e.extraordinaria);
   const checks = useMemo(() => checarEleicao(gestao.data_fim, e), [gestao.data_fim, e]);
@@ -157,14 +151,15 @@ export function EleicaoTab({ gestao }: Props) {
             <D k="inscritos_publicados_em" label="Publicação da relação de inscritos" />
           </div>
           <div className="mt-3 space-y-2">
-            <Select value="" onValueChange={addCandidato}>
-              <SelectTrigger className="md:w-96"><SelectValue placeholder="+ Registrar candidato inscrito…" /></SelectTrigger>
-              <SelectContent className="max-h-72">
-                {(funcs ?? []).filter((f: any) => !cands.some((c) => c.employee_id === f.id)).map((f: any) => (
-                  <SelectItem key={f.id} value={f.id}>{f.nome}{f.roles?.name ? ` — ${f.roles.name}` : ""}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <CipaEmployeePicker
+              funcs={funcs}
+              value=""
+              onChange={addCandidato}
+              excludeIds={cands.map((c) => c.employee_id)}
+              placeholder="+ Registrar candidato inscrito…"
+              label={null}
+              triggerClassName="md:w-96"
+            />
             {cands.length > 0 && (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
