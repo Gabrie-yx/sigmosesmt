@@ -20,10 +20,10 @@ export type CipaSugestao = {
 };
 
 // Faixas do Quadro I (limite superior inclusivo).
-const FAIXAS = [19, 29, 50, 80, 100, 120, 140, 300, 500, 1000, 2500, 5000, 10000];
+export const FAIXAS = [19, 29, 50, 80, 100, 120, 140, 300, 500, 1000, 2500, 5000, 10000];
 type C = [number, number] | null;
 // [efetivos, suplentes] da representação dos empregados, por GR, por faixa.
-const QUADRO: Record<number, C[]> = {
+export const QUADRO: Record<number, C[]> = {
   1: [null, null, null, null, [1, 1], [1, 1], [1, 1], [1, 1], [2, 2], [4, 3], [5, 4], [6, 5], [8, 6]],
   2: [null, null, null, [1, 1], [1, 1], [2, 1], [2, 1], [3, 2], [4, 3], [5, 4], [6, 5], [8, 6], [10, 8]],
   3: [null, [1, 1], [1, 1], [2, 1], [2, 1], [2, 1], [2, 1], [3, 2], [4, 3], [5, 4], [6, 5], [8, 6], [10, 8]],

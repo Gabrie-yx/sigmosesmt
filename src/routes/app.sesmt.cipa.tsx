@@ -20,6 +20,7 @@ import { buildCipaCalendarioPdf, type CipaCalendarioLinha } from "@/lib/cipa-cal
 import { EMPRESA_INFO } from "@/lib/empresa-info";
 import { FileText } from "lucide-react";
 import { EleicaoTab } from "@/components/cipa/eleicao-tab";
+import { DocumentosTab } from "@/components/cipa/documentos-tab";
 import { CipaEmployeePicker, useCipaEmployees } from "@/components/cipa/employee-picker";
 import { cargaCapacitacao } from "@/lib/cipa-dimensionamento";
 import { fimEstabilidade, fmt, diffDays } from "@/lib/cipa-eleicao";
@@ -168,6 +169,9 @@ function CipaPage() {
             {gestaoAtiva.modo === "COMISSAO" && (
               <TabsTrigger value="eleicao"><Vote className="h-4 w-4 mr-1" /> Eleição</TabsTrigger>
             )}
+            {gestaoAtiva.modo === "COMISSAO" && (
+              <TabsTrigger value="documentos"><ListChecks className="h-4 w-4 mr-1" /> Documentos</TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="resumo" className="mt-4">
@@ -191,6 +195,11 @@ function CipaPage() {
           {gestaoAtiva.modo === "COMISSAO" && (
             <TabsContent value="eleicao" className="mt-4">
               <EleicaoTab key={gestaoAtiva.id} gestao={gestaoAtiva} />
+            </TabsContent>
+          )}
+          {gestaoAtiva.modo === "COMISSAO" && (
+            <TabsContent value="documentos" className="mt-4">
+              <DocumentosTab key={gestaoAtiva.id} gestao={gestaoAtiva} />
             </TabsContent>
           )}
         </Tabs>
