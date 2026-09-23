@@ -15,6 +15,7 @@ import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CatalogoRiscosPanel } from "@/components/catalogo/catalogo-riscos-panel";
 import { CatalogoNrsPanel } from "@/components/catalogo/catalogo-nrs-panel";
 import { CargoRiscosPanel } from "@/components/cargo-riscos/cargo-riscos-panel";
@@ -74,7 +75,7 @@ type Natureza = "ADMISSIONAL" | "PERIODICO" | "RETORNO_TRABALHO" | "MUDANCA_RISC
 type ExamesPorNatureza = Record<Natureza, string[]>;
 type Role = {
   id: string; name: string; ativo: boolean;
-  ghe: string | null; setor: string | null; cbo: string | null; cbo_titulo: string | null;
+  ghe: string | null; ghe_id: string | null; setor: string | null; cbo: string | null; cbo_titulo: string | null;
   req_aso: boolean; req_integra: boolean;
   periodicidade_integracao_meses: number | null;
   req_nrs: string[]; req_exames: string[]; req_vacinas: string[];
@@ -98,7 +99,7 @@ const emptyExames: ExamesPorNatureza = {
   MUDANCA_RISCO: [], DEMISSIONAL: [], SEMESTRAL: [],
 };
 const empty: Partial<Role> = {
-  name: "", ativo: true, ghe: "", setor: "", cbo: "", cbo_titulo: "",
+  name: "", ativo: true, ghe: "", ghe_id: null, setor: "", cbo: "", cbo_titulo: "",
   req_aso: true, req_integra: true,
   periodicidade_integracao_meses: null,
   req_nrs: [], req_exames: [], req_vacinas: [], risco_biologico: false, riscos: emptyRiscos,
@@ -123,6 +124,7 @@ function RolesPage() {
         ...r,
         ativo: r.ativo ?? true,
         ghe: r.ghe ?? "",
+        ghe_id: r.ghe_id ?? null,
         setor: r.setor ?? "",
         cbo: r.cbo ?? "",
         cbo_titulo: r.cbo_titulo ?? "",
@@ -164,6 +166,7 @@ function RolesPage() {
         name: v.name!,
         ativo: v.ativo ?? true,
         ghe: v.ghe || null,
+        ghe_id: v.ghe_id || null,
         setor: v.setor || null,
         cbo: v.cbo || null,
         cbo_titulo: v.cbo_titulo || null,
