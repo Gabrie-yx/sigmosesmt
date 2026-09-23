@@ -700,8 +700,18 @@ function RolesPage() {
                       </div>
                     </div>
                   </Section>
+
+                  <Section icon={<ShieldCheck className="h-4 w-4 text-emerald-600" />} title="EPIs Obrigatórios do Cargo (NR-06 · usados na OS)" full>
+                    <EpisEditor
+                      items={epis}
+                      onChange={(v) => setEditing({ ...editing!, epis: v })}
+                      disabled={!isEditor}
+                      catalogo={episCatalogo}
+                    />
+                  </Section>
                 </div>
               </div>
+
 
               {/* Footer Actions (secondary) */}
               {isEditor && (
