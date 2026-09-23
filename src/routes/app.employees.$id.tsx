@@ -48,6 +48,7 @@ import { TermoConsentimentoDialog } from "@/components/employees/termo-consentim
 import type jsPDF from "jspdf";
 import { HardHat, Printer, FileSignature, AlertCircle, Clock, FileWarning, Ban, ChevronDown, MoreHorizontal } from "lucide-react";
 import { OssRowActions } from "@/components/oss/oss-row-actions";
+import { buildOssPdfDinamico } from "@/lib/oss-pdf-dinamico";
 import { GraduationCap } from "lucide-react";
 import { Save } from "lucide-react";
 import { requiredCourseIds, STATUS_OVERRIDE, CATEGORIA_COLOR, CATEGORIA_LABEL, type MatrizCourse, type MatrizEntry, type RoleCourse } from "@/lib/matriz-status";
@@ -4051,14 +4052,20 @@ function OssTab({ empId, empNome }: { empId: string; empNome: string }) {
     CANCELADO: { label: "Cancelado", cls: "bg-red-50 text-red-700 border-red-200 line-through" },
   };
 
-  function abrirPdf(em: any) {
-    const path = em.pdf_assinado_path ?? em.pdf_gerado_path;
-    if (!path) {
-      toast.error("Esta OS ainda não tem PDF salvo no Storage. Use o módulo SESMT → OSS para emitir/anexar.");
+  const [ossDoc, setOssDoc] = useState<{ doc: jsPDF; name: string } | null>(null);
+
+  async function abrirPdf(em: any) {
+    // Assinada = documento congelado (valor legal). Não assinada = sempre dinâmica pelo cargo atual.
+    if (em.pdf_assinado_path) {
+      openStorageFile("oss-pdfs", em.pdf_assinado_path, `OS-${em.cargo_snapshot}-${empNome}.pdf`);
       return;
     }
-    const fname = `OS-${em.cargo_snapshot}-${empNome}.pdf`;
-    openStorageFile("oss-pdfs", path, fname);
+    try {
+      setOssDoc(await buildOssPdfDinamico(em.id));
+      qc.invalidateQueries({ queryKey: ["oss-emissoes"] });
+    } catch (e: any) {
+      toast.error("Não foi possível gerar a OS: " + (e?.message ?? e));
+    }
   }
 
   const uploadAssinado = useMutation({
@@ -4184,6 +4191,11 @@ function OssTab({ empId, empNome }: { empId: string; empNome: string }) {
         Quando você clica em <em>Ver assinada</em>, o sistema abre o PDF dentro do próprio SIGMO
         com botões de impressão e download — sem precisar sair da ficha do funcionário.
       </Card>
+      {ossDoc && (
+        <Suspense fallback={null}>
+          <PDFPreviewDialog open={!!ossDoc} onClose={() => setOssDoc(null)} doc={ossDoc.doc} fileName={ossDoc.name} />
+        </Suspense>
+      )}
     </div>
   );
 }
