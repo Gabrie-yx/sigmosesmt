@@ -22,6 +22,7 @@ import {
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
 import { buildOssPdf } from "@/lib/oss-pdf";
+import { getOssCargoContent, mergeOssContent } from "@/lib/oss-cargo-content";
 import { gerarPdfFaltantesOss } from "@/lib/oss-faltantes-pdf";
 const PDFPreviewDialog = lazy(() =>
   import("@/components/pdf-preview-dialog").then((m) => ({ default: m.PDFPreviewDialog })),
@@ -418,7 +419,25 @@ function OssIndexPage() {
     const episCatalog = (epiRows ?? [])
       .filter((r: any) => r.nome_material && r.ca)
       .map((r: any) => ({ nome: r.nome_material as string, ca: r.ca as string }));
-    // Sempre regerar a partir do snapshot pra evitar dependência do storage
+    // Repara emissões antigas cujo snapshot foi criado antes do cargo receber
+    // riscos/EPIs. O documento sempre consulta o cargo atual antes de abrir.
+    let conteudo = em.conteudo_snapshot ?? {};
+    try {
+      const current = await getOssCargoContent(em.employee_id);
+      conteudo = mergeOssContent(conteudo, current.payload);
+      const changed = JSON.stringify(conteudo) !== JSON.stringify(em.conteudo_snapshot ?? {});
+      if (changed) {
+        const { error: repairError } = await supabase
+          .from("oss_emissoes")
+          .update({ conteudo_snapshot: conteudo } as any)
+          .eq("id", em.id);
+        if (repairError) throw repairError;
+        qc.invalidateQueries({ queryKey: ["oss-emissoes"] });
+      }
+    } catch (error) {
+      console.warn("[oss] não foi possível atualizar o snapshot pelo cargo:", error);
+    }
+    // Sempre regerar a partir do snapshot enriquecido pra evitar dependência do storage
     const doc = buildOssPdf({
       revisao: em.template_revisao,
       emitido_em: em.emitido_em,
@@ -432,11 +451,11 @@ function OssIndexPage() {
         rg: em.employees?.rg ?? null,
       },
       cargo: em.cargo_snapshot,
-      cbo: em.conteudo_snapshot?.cbo ?? em.employees?.roles?.cbo ?? null,
-      setor: em.oss_templates?.setor ?? null,
+      cbo: conteudo?.cbo ?? em.employees?.roles?.cbo ?? null,
+      setor: conteudo?.setor ?? em.oss_templates?.setor ?? null,
       empresa: em.employees?.companies?.name ?? null,
       empresa_cnpj: em.employees?.companies?.cnpj ?? null,
-      conteudo: em.conteudo_snapshot,
+      conteudo,
       episCatalog,
       assinaturaColaboradorDataUrl: (em.employees as any)?.assinatura_url ?? null,
     });
@@ -1206,90 +1225,12 @@ function EmitirOssDialog({ open, onClose, onIssued, prefill }: {
   const effectiveTemplateId = templateId || autoSuggestedTemplate?.id || "";
 
   // Cria na hora um modelo de OS para o cargo do funcionário (quando ainda não existe)
-  /** Monta o conteúdo do modelo a partir do cargo: matriz de riscos
-   *  (cargo_riscos + catálogo) com fallback na ficha do cargo (roles.riscos). */
-  async function montarConteudoDoCargo(emp: NonNullable<typeof selectedEmp>) {
-    const catMap: Record<string, string> = {
-      FISICO: "risco_fisico",
-      QUIMICO: "risco_quimico",
-      BIOLOGICO: "risco_biologico",
-      ERGONOMICO: "risco_ergonomico",
-      ACIDENTE_MECANICO: "risco_acidente",
-      PSICOSSOCIAL: "risco_psicossocial",
-    };
-    const buckets: Record<string, string[]> = {};
-    const medidasSet = new Set<string>();
-    const episSet = new Set<string>();
-
-    // EPIs definidos direto no cadastro do cargo (prioritários)
-    for (const e of emp.cargoEpis ?? []) {
-      const nome = String(e?.nome ?? "").trim();
-      if (!nome) continue;
-      const ca = String(e?.ca ?? "").trim();
-      episSet.add(ca ? `${nome} - CA ${ca}` : nome);
-    }
-
-    if (emp.role_id) {
-      const { data: riscos, error } = await supabase
-        .from("cargo_riscos")
-        .select("*, catalogo_riscos(nome, categoria, medidas_controle_padrao, epis_sugeridos)")
-        .eq("role_id", emp.role_id)
-        .eq("ativo", true);
-      if (error) throw error;
-      for (const r of (riscos ?? []) as any[]) {
-        const cat = (r.catalogo_riscos?.categoria ?? "").toUpperCase();
-        const nome = r.catalogo_riscos?.nome ?? "(risco)";
-        const intens = r.intensidade != null ? ` — ${r.intensidade}${r.unidade ?? ""}` : "";
-        const fonte = r.fonte_geradora ? ` (fonte: ${r.fonte_geradora})` : "";
-        (buckets[cat] ||= []).push(`${nome}${intens}${fonte}`);
-        for (const m of r.catalogo_riscos?.medidas_controle_padrao ?? []) medidasSet.add(String(m));
-        for (const m of [r.meios_controle, r.epc_eficaz].filter(Boolean)) medidasSet.add(String(m));
-        for (const e of r.catalogo_riscos?.epis_sugeridos ?? []) episSet.add(String(e));
-        if (r.epi_eficaz) episSet.add(String(r.epi_eficaz) + (r.ca_epi ? ` - CA ${r.ca_epi}` : ""));
-      }
-    }
-
-    // Fallback: riscos digitados na ficha do cargo (aba Riscos Ocupacionais)
-    const ficha = (emp.cargoRiscosFicha ?? {}) as Record<string, any>;
-    const fichaMap: Record<string, string> = {
-      FISICO: "fisicos",
-      QUIMICO: "quimicos",
-      BIOLOGICO: "biologicos",
-      ERGONOMICO: "ergonomicos",
-      ACIDENTE_MECANICO: "acidente_mecanico",
-      PSICOSSOCIAL: "psicossociais",
-    };
-    for (const [cat, key] of Object.entries(fichaMap)) {
-      if (buckets[cat]?.length) continue;
-      const raw = ficha[key];
-      const arr = Array.isArray(raw) ? raw : raw ? [String(raw)] : [];
-      const itens = arr
-        .map((v) => String(v).trim())
-        .filter((v) => v && !/^nenhum/i.test(v) && !/^n\/?a$/i.test(v));
-      if (itens.length) buckets[cat] = itens;
-    }
-
-    const bullets = (arr: string[]) => arr.map((v) => `• ${v}`).join("\n");
-    const payload: Record<string, any> = {
-      setor: emp.cargoSetor ?? null,
-      cbo: emp.cargoCbo ?? null,
-      descricao_atividades: (emp.cargoDescricao ?? "").trim() || (ficha.descricao ?? ""),
-      medidas_preventivas: bullets([...medidasSet]),
-      epis_obrigatorios: bullets([...episSet]),
-      riscos_texto: "",
-    };
-    for (const [cat, field] of Object.entries(catMap)) {
-      payload[field] = bullets(buckets[cat] ?? []);
-    }
-    const total = Object.values(buckets).reduce((a, b) => a + b.length, 0);
-    return { payload, total };
-  }
-
   const criarModelo = useMutation({
     mutationFn: async () => {
       const emp = selectedEmp;
       if (!emp?.cargo) throw new Error("Selecione um funcionário com cargo definido");
-      const { payload, total } = await montarConteudoDoCargo(emp);
+      const current = await getOssCargoContent(emp.id);
+      const { payload, riskCount: total } = current;
       const { data, error } = await supabase
         .from("oss_templates")
         .insert({ cargo: emp.cargo.toUpperCase(), titulo: emp.cargo, ativo: true, ...payload } as any)
@@ -1316,7 +1257,8 @@ function EmitirOssDialog({ open, onClose, onIssued, prefill }: {
       const emp = selectedEmp;
       if (!emp?.cargo) throw new Error("Selecione um funcionário com cargo definido");
       if (!effectiveTemplateId) throw new Error("Selecione o modelo de OSS");
-      const { payload, total } = await montarConteudoDoCargo(emp);
+      const current = await getOssCargoContent(emp.id);
+      const { payload, riskCount: total } = current;
       const { error } = await supabase
         .from("oss_templates")
         .update(payload as any)
@@ -1343,30 +1285,22 @@ function EmitirOssDialog({ open, onClose, onIssued, prefill }: {
       const emp = selectedEmp;
       if (!tpl || !emp) throw new Error("Dados inválidos");
 
+      // Fonte de verdade: cargo atual lido novamente no instante da emissão.
+      // O modelo fornece apenas os textos administrativos complementares.
+      const current = await getOssCargoContent(emp.id);
+      const conteudoSnapshot = mergeOssContent(tpl, current.payload);
+
+      if (!current.riskCount && !current.epiCount) {
+        throw new Error("O cargo do funcionário não possui riscos nem EPIs salvos. Volte ao cadastro do cargo e confira a gravação.");
+      }
+
       const { error } = await supabase.from("oss_emissoes").insert({
         employee_id: employeeId,
         template_id: tpl.id,
         template_revisao: tpl.revisao,
-        cargo_snapshot: emp.cargo ?? tpl.cargo,
+        cargo_snapshot: current.cargo || emp.cargo || tpl.cargo,
         motivo_emissao: motivo as any,
-        conteudo_snapshot: {
-          cbo: (tpl as any).cbo ?? null,
-          descricao_atividades: tpl.descricao_atividades,
-          riscos_texto: tpl.riscos_texto,
-          medidas_preventivas: tpl.medidas_preventivas,
-          epis_obrigatorios: tpl.epis_obrigatorios,
-          proibicoes: tpl.proibicoes,
-          penalidades: tpl.penalidades,
-          procedimentos_emergencia: tpl.procedimentos_emergencia,
-          riscos_categorias: {
-            fisico: (tpl as any).risco_fisico ?? null,
-            quimico: (tpl as any).risco_quimico ?? null,
-            biologico: (tpl as any).risco_biologico ?? null,
-            ergonomico: (tpl as any).risco_ergonomico ?? null,
-            acidente: (tpl as any).risco_acidente ?? null,
-            psicossocial: (tpl as any).risco_psicossocial ?? null,
-          },
-        },
+        conteudo_snapshot: conteudoSnapshot,
       });
       if (error) throw error;
     },

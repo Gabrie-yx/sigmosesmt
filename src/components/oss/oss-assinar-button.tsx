@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { PdfSignerDialog } from "@/components/pdf-signer-dialog";
 import { buildOssPdf } from "@/lib/oss-pdf";
+import { getOssCargoContent, mergeOssContent } from "@/lib/oss-cargo-content";
 import { PenTool, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -51,6 +52,18 @@ export function OssAssinarButton({ em }: { em: EmInput }) {
       const episCatalog = (epiRows ?? [])
         .filter((r: any) => r.nome_material && r.ca)
         .map((r: any) => ({ nome: r.nome_material as string, ca: r.ca as string }));
+      let conteudo = em.conteudo_snapshot ?? {};
+      try {
+        const current = await getOssCargoContent(em.employee_id);
+        conteudo = mergeOssContent(conteudo, current.payload);
+        const { error: repairError } = await supabase
+          .from("oss_emissoes")
+          .update({ conteudo_snapshot: conteudo } as any)
+          .eq("id", em.id);
+        if (repairError) throw repairError;
+      } catch (error) {
+        console.warn("[oss-assinar] não foi possível atualizar o snapshot pelo cargo:", error);
+      }
       const doc = buildOssPdf({
         revisao: em.template_revisao,
         emitido_em: em.emitido_em,
@@ -64,11 +77,11 @@ export function OssAssinarButton({ em }: { em: EmInput }) {
           rg: em.employees?.rg ?? null,
         },
         cargo: em.cargo_snapshot,
-        cbo: em.conteudo_snapshot?.cbo ?? em.employees?.roles?.cbo ?? null,
-        setor: em.oss_templates?.setor ?? null,
+        cbo: conteudo?.cbo ?? em.employees?.roles?.cbo ?? null,
+        setor: conteudo?.setor ?? em.oss_templates?.setor ?? null,
         empresa: em.employees?.companies?.name ?? null,
         empresa_cnpj: em.employees?.companies?.cnpj ?? null,
-        conteudo: em.conteudo_snapshot,
+        conteudo,
         episCatalog,
         assinaturaColaboradorDataUrl: em.employees?.assinatura_url ?? null,
       });
