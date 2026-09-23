@@ -1154,21 +1154,25 @@ function EmitirOssDialog({ open, onClose, onIssued, prefill }: {
     queryFn: async () => {
       const { data } = await supabase
         .from("employees")
-        .select("id, nome, cpf, matricula, admissao, status, role_id, company_id, roles(name)")
+        .select("id, nome, cpf, matricula, admissao, status, role_id, company_id, roles(name, cbo, setor, descricao_atividades)")
         .eq("status", "ATIVO")
         .eq("company_id", companyId)
         .order("nome");
       return (data ?? []).map((e: any) => ({
         ...e,
         cargo: e.roles?.name ?? null,
+        cargoCbo: e.roles?.cbo ?? null,
+        cargoSetor: e.roles?.setor ?? null,
+        cargoDescricao: e.roles?.descricao_atividades ?? null,
       })) as Array<{
         id: string; nome: string; cpf: string | null; matricula: string | null;
         admissao: string | null; cargo: string | null;
+        cargoCbo: string | null; cargoSetor: string | null; cargoDescricao: string | null;
       }>;
     },
   });
 
-  const { data: templates = [] } = useQuery({
+  const { data: templates = [], refetch: refetchTemplates } = useQuery({
     queryKey: ["oss-emit-templates"],
     queryFn: async () => {
       const { data } = await supabase
@@ -1196,6 +1200,53 @@ function EmitirOssDialog({ open, onClose, onIssued, prefill }: {
   }, [selectedEmp, templates]);
 
   const effectiveTemplateId = templateId || autoSuggestedTemplate?.id || "";
+
+  // Cria na hora um modelo de OS para o cargo do funcionário (quando ainda não existe)
+  const criarModelo = useMutation({
+    mutationFn: async () => {
+      const emp = selectedEmp;
+      if (!emp?.cargo) throw new Error("Selecione um funcionário com cargo definido");
+
+      // Riscos já cadastrados para o cargo (Cargos e Funções → Riscos)
+      let riscosTexto = "";
+      let episTexto = "";
+      if ((emp as any).role_id) {
+        const { data: riscos } = await supabase
+          .from("cargo_riscos")
+          .select("risco, tipo, medidas_controle, epi_eficaz")
+          .eq("role_id", (emp as any).role_id);
+        riscosTexto = (riscos ?? [])
+          .map((r: any) => `• ${r.tipo ? r.tipo + ": " : ""}${r.risco ?? ""}`)
+          .join("\n");
+        episTexto = Array.from(
+          new Set((riscos ?? []).map((r: any) => r.epi_eficaz).filter(Boolean)),
+        ).map((e) => `• ${e}`).join("\n");
+      }
+
+      const { data, error } = await supabase
+        .from("oss_templates")
+        .insert({
+          cargo: emp.cargo.toUpperCase(),
+          titulo: emp.cargo,
+          setor: emp.cargoSetor ?? null,
+          cbo: emp.cargoCbo ?? null,
+          descricao_atividades: emp.cargoDescricao ?? "",
+          riscos_texto: riscosTexto,
+          epis_obrigatorios: episTexto,
+          ativo: true,
+        })
+        .select("id")
+        .single();
+      if (error) throw error;
+      return data.id as string;
+    },
+    onSuccess: async (id) => {
+      await refetchTemplates();
+      setTemplateId(id);
+      toast.success("Modelo criado para este cargo — revise o conteúdo em Modelos por Cargo");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
 
   const emit = useMutation({
     mutationFn: async () => {
@@ -1295,9 +1346,25 @@ function EmitirOssDialog({ open, onClose, onIssued, prefill }: {
             {autoSuggestedTemplate && !templateId && (
               <div className="text-[10px] text-emerald-700 mt-1">✓ Modelo sugerido pelo cargo do funcionário</div>
             )}
-            {selectedEmp?.cargo && !autoSuggestedTemplate && (
-              <div className="text-[10px] text-amber-700 mt-1">
-                ⚠ Nenhum modelo para o cargo "{selectedEmp.cargo}". <Link to="/app/oss/templates" className="underline">Criar modelo</Link>
+            {selectedEmp?.cargo && !autoSuggestedTemplate && !templateId && (
+              <div className="mt-2 rounded-md border border-amber-400/40 bg-amber-500/10 p-2 space-y-2">
+                <div className="text-[11px] text-amber-700 dark:text-amber-300">
+                  ⚠ Ainda não existe modelo de OS para o cargo "{selectedEmp.cargo}". Crie um agora
+                  (ele já vem com a descrição e os riscos cadastrados no cargo) ou escolha um modelo da lista acima.
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    className="h-7 text-[11px] bg-rose-600 hover:bg-rose-700"
+                    onClick={() => criarModelo.mutate()}
+                    disabled={criarModelo.isPending}
+                  >
+                    Criar modelo para "{selectedEmp.cargo}"
+                  </Button>
+                  <Button asChild size="sm" variant="outline" className="h-7 text-[11px]">
+                    <Link to="/app/oss/templates">Abrir Modelos por Cargo</Link>
+                  </Button>
+                </div>
               </div>
             )}
           </div>
