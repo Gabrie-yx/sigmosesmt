@@ -553,14 +553,23 @@ function RolesPage() {
                     <label className="block text-xs font-black text-[#991b1b] uppercase mb-2 tracking-widest flex items-center gap-1">
                       <Layers className="h-3.5 w-3.5" /> GHE
                     </label>
-                    <input
-                      type="text"
-                      value={editing.ghe ?? ""}
-                      onChange={(e) => setEditing({ ...editing, ghe: e.target.value })}
-                      placeholder="Ex: GHE 01"
+                    <Select
+                      value={editing.ghe_id ?? "none"}
+                      onValueChange={(v) => setEditing({ ...editing, ghe_id: v === "none" ? null : v })}
                       disabled={!isEditor}
-                      className="w-full bg-white border-2 border-rose-100 rounded-2xl px-4 py-3.5 text-sm font-black uppercase text-slate-800 focus:border-[#991b1b] focus:ring-4 focus:ring-rose-200/40 outline-none transition-all placeholder:text-slate-300 placeholder:font-normal placeholder:normal-case disabled:opacity-60 shadow-sm"
-                    />
+                    >
+                      <SelectTrigger className="w-full bg-white border-2 border-rose-100 rounded-2xl px-4 py-3.5 h-auto text-sm font-black uppercase text-slate-800 focus:border-[#991b1b] focus:ring-4 focus:ring-rose-200/40 shadow-sm">
+                        <SelectValue placeholder="Selecione o GHE" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">— sem GHE —</SelectItem>
+                        {ghes.map((g) => (
+                          <SelectItem key={g.id} value={g.id}>
+                            GHE {g.numero}{g.setor ? ` · ${g.setor}` : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="lg:col-span-3">
                     <label className="block text-xs font-black text-[#991b1b] uppercase mb-2 tracking-widest">CBO</label>
