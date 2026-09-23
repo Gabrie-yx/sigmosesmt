@@ -195,6 +195,7 @@ function RolesPage() {
         req_vacinas: v.req_vacinas ?? [],
         risco_biologico: !!v.risco_biologico,
         riscos: v.riscos ?? emptyRiscos,
+        epis: (v.epis ?? []).filter((e) => e.nome.trim()).map((e) => ({ nome: e.nome.trim(), ca: e.ca.trim() })),
         exames_por_natureza: v.exames_por_natureza ?? emptyExames,
       };
       if (v.id) {
