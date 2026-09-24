@@ -25,9 +25,21 @@ type Props = {
 
 export function EleicaoTab({ gestao }: Props) {
   const qc = useQueryClient();
+  const draftKey = `sigmo:cipa-eleicao-draft:${gestao.id}`;
   const [e, setE] = useState<EleicaoDados>(() => ((gestao.eleicao as EleicaoDados) ?? {}));
-  useEffect(() => { setE((gestao.eleicao as EleicaoDados) ?? {}); }, [gestao.id, gestao.eleicao]);
-  const set = <K extends keyof EleicaoDados>(k: K, v: EleicaoDados[K]) => setE((p) => ({ ...p, [k]: v }));
+  const [dirty, setDirty] = useState(false);
+  useEffect(() => {
+    let draft: EleicaoDados | null = null;
+    try { const raw = localStorage.getItem(draftKey); if (raw) draft = JSON.parse(raw); } catch { /* ignora */ }
+    setE(draft ?? ((gestao.eleicao as EleicaoDados) ?? {}));
+    setDirty(!!draft);
+  }, [gestao.id, gestao.eleicao, draftKey]);
+  useEffect(() => {
+    if (!dirty) return;
+    try { localStorage.setItem(draftKey, JSON.stringify(e)); } catch { /* ignora */ }
+  }, [e, dirty, draftKey]);
+  const setEDirty: typeof setE = (v) => { setDirty(true); setE(v); };
+  const set = <K extends keyof EleicaoDados>(k: K, v: EleicaoDados[K]) => setEDirty((p) => ({ ...p, [k]: v }));
 
   const { data: funcs } = useCipaEmployees();
 
