@@ -13,6 +13,7 @@ import dmnLogo from "@/assets/dmn-logo-branco.png";
 import sigmoLogoFull from "@/assets/sigmo-logo-full-white.png";
 import sigmoHomeLogo from "@/assets/sigmo-home-logo.png.asset.json";
 import { PendenciasBadge } from "@/components/pendencias-badge";
+import { DocPrazoAlertas } from "@/components/doc-prazo-alertas";
 import { useSidebar } from "@/components/ui/sidebar";
 import {
   DropdownMenu,
@@ -98,6 +99,7 @@ export function AppHeader() {
         </span>
 
         <div className="flex items-center gap-1 md:gap-1.5 shrink-0 ml-auto">
+          <DocPrazoAlertas />
           <PendenciasBadge />
           <Link
             to="/app/ajuda"

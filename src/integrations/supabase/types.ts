@@ -3749,6 +3749,7 @@ export type Database = {
           codigo: string
           created_at: string
           criticidade_sugerida: string
+          dias_alerta_padrao: number | null
           id: string
           nome: string
           updated_at: string
@@ -3758,6 +3759,7 @@ export type Database = {
           codigo: string
           created_at?: string
           criticidade_sugerida?: string
+          dias_alerta_padrao?: number | null
           id?: string
           nome: string
           updated_at?: string
@@ -3767,6 +3769,7 @@ export type Database = {
           codigo?: string
           created_at?: string
           criticidade_sugerida?: string
+          dias_alerta_padrao?: number | null
           id?: string
           nome?: string
           updated_at?: string
@@ -3907,13 +3910,19 @@ export type Database = {
       }
       controle_documentos: {
         Row: {
+          alerta_adiado_ate: string | null
+          alerta_silenciado_em: string | null
+          alerta_silenciado_motivo: string | null
+          alerta_silenciado_por: string | null
           categoria_id: string | null
           created_at: string
           created_by: string | null
           criticidade: string
           data_recebimento: string
           data_resolucao: string | null
+          data_validade: string | null
           descricao: string | null
+          dias_alerta: number | null
           id: string
           numero: string
           observacao_fechamento: string | null
@@ -3932,13 +3941,19 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          alerta_adiado_ate?: string | null
+          alerta_silenciado_em?: string | null
+          alerta_silenciado_motivo?: string | null
+          alerta_silenciado_por?: string | null
           categoria_id?: string | null
           created_at?: string
           created_by?: string | null
           criticidade?: string
           data_recebimento?: string
           data_resolucao?: string | null
+          data_validade?: string | null
           descricao?: string | null
+          dias_alerta?: number | null
           id?: string
           numero: string
           observacao_fechamento?: string | null
@@ -3957,13 +3972,19 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          alerta_adiado_ate?: string | null
+          alerta_silenciado_em?: string | null
+          alerta_silenciado_motivo?: string | null
+          alerta_silenciado_por?: string | null
           categoria_id?: string | null
           created_at?: string
           created_by?: string | null
           criticidade?: string
           data_recebimento?: string
           data_resolucao?: string | null
+          data_validade?: string | null
           descricao?: string | null
+          dias_alerta?: number | null
           id?: string
           numero?: string
           observacao_fechamento?: string | null

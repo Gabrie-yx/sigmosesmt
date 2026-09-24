@@ -240,7 +240,7 @@ function ControleDocumentosPage() {
         categorias={categorias.data ?? []}
         employees={employees.data ?? []}
         userId={user?.id}
-        onCreated={() => { qc.invalidateQueries({ queryKey: ["controle-documentos"] }); }}
+        onCreated={() => { qc.invalidateQueries({ queryKey: ["controle-documentos"] }); qc.invalidateQueries({ queryKey: ["doc-prazo-alertas"] }); }}
       />
 
       <DetalheSheet
@@ -352,7 +352,7 @@ function KanbanView({ docs, onOpen }: { docs: Doc[]; onOpen: (id: string) => voi
 function NovaEntradaDialog({ open, onClose, categorias, employees, userId, onCreated }: any) {
   const [form, setForm] = useState({
     titulo: "", descricao: "", origem: "EMAIL", remetente_nome: "", remetente_contato: "",
-    data_recebimento: new Date().toISOString().slice(0, 10), prazo: "",
+    data_recebimento: new Date().toISOString().slice(0, 10), prazo: "", data_validade: "", dias_alerta: "",
     categoria_id: "", criticidade: "MEDIA", responsavel_id: "", tratativa: "", tags: "",
   });
   const [files, setFiles] = useState<File[]>([]);
@@ -360,7 +360,7 @@ function NovaEntradaDialog({ open, onClose, categorias, employees, userId, onCre
 
   function reset() {
     setForm({ titulo: "", descricao: "", origem: "EMAIL", remetente_nome: "", remetente_contato: "",
-      data_recebimento: new Date().toISOString().slice(0, 10), prazo: "",
+      data_recebimento: new Date().toISOString().slice(0, 10), prazo: "", data_validade: "", dias_alerta: "",
       categoria_id: "", criticidade: "MEDIA", responsavel_id: "", tratativa: "", tags: "" });
     setFiles([]);
   }
@@ -382,6 +382,8 @@ function NovaEntradaDialog({ open, onClose, categorias, employees, userId, onCre
         remetente_contato: form.remetente_contato.trim() || null,
         data_recebimento: form.data_recebimento,
         prazo: form.prazo || null,
+        data_validade: form.data_validade || null,
+        dias_alerta: form.dias_alerta ? Number(form.dias_alerta) : null,
         categoria_id: form.categoria_id || null,
         criticidade: form.criticidade,
         responsavel_id: form.responsavel_id || null,
@@ -444,6 +446,12 @@ function NovaEntradaDialog({ open, onClose, categorias, employees, userId, onCre
             </div>
             <div><Label>Prazo para resolução</Label>
               <Input type="date" value={form.prazo} onChange={(e) => setForm((f) => ({ ...f, prazo: e.target.value }))} />
+            </div>
+            <div><Label>Validade do documento <span className="text-[10px] text-muted-foreground">(ex.: vencimento do certificado)</span></Label>
+              <Input type="date" value={form.data_validade} onChange={(e) => setForm((f) => ({ ...f, data_validade: e.target.value }))} />
+            </div>
+            <div><Label>Avisar com quantos dias de antecedência</Label>
+              <Input type="number" min={0} placeholder="30 (padrão)" value={form.dias_alerta} onChange={(e) => setForm((f) => ({ ...f, dias_alerta: e.target.value }))} />
             </div>
             <div><Label>Criticidade {form.categoria_id && <span className="text-[10px] text-muted-foreground">(sugerida pela categoria)</span>}</Label>
               <Select value={form.criticidade} onValueChange={(v) => setForm((f) => ({ ...f, criticidade: v }))}>
@@ -522,6 +530,8 @@ function DetalheSheet({ id, onClose, categorias, employees }: { id: string | nul
   const [status, setStatus] = useState("");
   const [respId, setRespId] = useState("");
   const [prazo, setPrazo] = useState("");
+  const [validade, setValidade] = useState("");
+  const [diasAlerta, setDiasAlerta] = useState("");
   const [obsFech, setObsFech] = useState("");
   const [tercNome, setTercNome] = useState("");
   const [tercDate, setTercDate] = useState("");
@@ -535,6 +545,8 @@ function DetalheSheet({ id, onClose, categorias, employees }: { id: string | nul
       setStatus(doc.data.status);
       setRespId(doc.data.responsavel_id ?? "");
       setPrazo(doc.data.prazo ?? "");
+      setValidade((doc.data as any).data_validade ?? "");
+      setDiasAlerta((doc.data as any).dias_alerta != null ? String((doc.data as any).dias_alerta) : "");
       setObsFech(doc.data.observacao_fechamento ?? "");
       setTercNome(doc.data.terceiro_nome ?? "");
       setTercDate(doc.data.terceiro_followup_em ?? "");
@@ -559,6 +571,7 @@ function DetalheSheet({ id, onClose, categorias, employees }: { id: string | nul
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["controle-documentos"] });
+      qc.invalidateQueries({ queryKey: ["doc-prazo-alertas"] });
       qc.invalidateQueries({ queryKey: ["controle-doc", id] });
       qc.invalidateQueries({ queryKey: ["controle-doc-hist", id] });
       toast.success("Atualizado");
@@ -697,6 +710,10 @@ function DetalheSheet({ id, onClose, categorias, employees }: { id: string | nul
                   </Select>
                 </div>
                 <div><Label>Prazo</Label><Input type="date" value={prazo} onChange={(e) => setPrazo(e.target.value)} /></div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div><Label>Validade do documento</Label><Input type="date" value={validade} onChange={(e) => setValidade(e.target.value)} /></div>
+                  <div><Label>Avisar (dias antes)</Label><Input type="number" min={0} placeholder="30" value={diasAlerta} onChange={(e) => setDiasAlerta(e.target.value)} /></div>
+                </div>
                 <div><Label>Tratativa</Label><Textarea rows={4} value={tratativa} onChange={(e) => setTratativa(e.target.value)} /></div>
                 {status === "AGUARDANDO_TERCEIRO" && (
                   <div className="grid grid-cols-2 gap-2">
@@ -706,6 +723,8 @@ function DetalheSheet({ id, onClose, categorias, employees }: { id: string | nul
                 )}
                 <Button className="w-full" variant="outline" onClick={() => updateMut.mutate({
                   status, responsavel_id: respId || null, prazo: prazo || null, tratativa,
+                  data_validade: validade || null, dias_alerta: diasAlerta ? Number(diasAlerta) : null,
+                  alerta_adiado_ate: null,
                   terceiro_nome: tercNome || null, terceiro_followup_em: tercDate || null,
                 })}>Salvar alterações</Button>
 
