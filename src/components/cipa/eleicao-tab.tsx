@@ -205,8 +205,8 @@ export function EleicaoTab({ gestao }: Props) {
             </div>
             {N({k: "eleitores_aptos", label: "Empregados aptos a votar",})}
             {N({k: "votantes_dia1", label: "Votantes — 1º dia",})}
-            {(part.acao === "PRORROGAR_1" || e.votantes_dia2 != null) && {N({k: "votantes_dia2", label: "Votantes acumulados — 2º dia",})}}
-            {(part.acao === "PRORROGAR_2" || e.votantes_dia3 != null) && {N({k: "votantes_dia3", label: "Votantes acumulados — 3º dia",})}}
+            {(part.acao === "PRORROGAR_1" || e.votantes_dia2 != null) && N({k: "votantes_dia2", label: "Votantes acumulados — 2º dia",})}
+            {(part.acao === "PRORROGAR_2" || e.votantes_dia3 != null) && N({k: "votantes_dia3", label: "Votantes acumulados — 3º dia",})}
           </div>
           <p className={`text-xs mt-2 ${part.valida === false ? "text-destructive" : "text-muted-foreground"}`}>{part.texto}</p>
         </section>
