@@ -82,19 +82,15 @@ export function EleicaoTab({ gestao }: Props) {
     ok === false ? <XCircle className="h-4 w-4 text-destructive shrink-0" /> :
     <CircleDashed className="h-4 w-4 text-muted-foreground shrink-0" />;
 
-  const D = ({ k, label, hint }: { k: keyof EleicaoDados; label: string; hint?: string }) => (
-    <div>
-      <Label className="text-xs">{label}</Label>
-      <Input type="date" value={(e[k] as string) ?? ""} onChange={(ev) => set(k, ev.target.value as any)} />
-      {hint && <p className="text-[10px] text-muted-foreground mt-0.5">{hint}</p>}
-    </div>
-  );
-  const N = ({ k, label }: { k: keyof EleicaoDados; label: string }) => (
-    <div>
-      <Label className="text-xs">{label}</Label>
-      <Input type="number" min={0} value={(e[k] as number | null | undefined) ?? ""} onChange={(ev) => set(k, ev.target.value === "" ? null : Number(ev.target.value) as any)} />
-    </div>
-  );
+  const D = (p: { k: keyof EleicaoDados; label: string; hint?: string }) => <DateField {...p} e={e} set={set} />;
+  const N = (p: { k: keyof EleicaoDados; label: string; disabled?: boolean }) => <NumField {...p} e={e} set={set} />;
+  const ex = e as any;
+  const apurado = !!e.apuracao_data && cands.some((c) => c.votos != null);
+  const nomeDe = (id?: string) => (funcs ?? []).find((f: any) => f.id === id)?.nome ?? "";
+  function setComissao(pres?: string, vice?: string) {
+    const txt = [pres && `${nomeDe(pres)} (Presidente)`, vice && `${nomeDe(vice)} (Vice-presidente)`].filter(Boolean).join("; ");
+    setE((p) => ({ ...p, comissao_presidente_id: pres ?? null, comissao_vice_id: vice ?? null, comissao_eleitoral: txt } as any));
+  }
 
   const pendentes = checks.filter((c) => c.ok === false).length;
 
@@ -128,14 +124,18 @@ export function EleicaoTab({ gestao }: Props) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="md:col-span-3">
               <Label className="text-xs">Comissão eleitoral (Presidente e Vice da CIPA em curso)</Label>
-              <Input value={e.comissao_eleitoral ?? ""} onChange={(ev) => set("comissao_eleitoral", ev.target.value)} placeholder="Nomes dos integrantes" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-1">
+                <CipaEmployeePicker funcs={funcs as any} label="Presidente da CIPA em curso" value={ex.comissao_presidente_id ?? ""} excludeIds={ex.comissao_vice_id ? [ex.comissao_vice_id] : []} onChange={(id) => setComissao(id || undefined, ex.comissao_vice_id)} />
+                <CipaEmployeePicker funcs={funcs as any} label="Vice-presidente da CIPA em curso" value={ex.comissao_vice_id ?? ""} excludeIds={ex.comissao_presidente_id ? [ex.comissao_presidente_id] : []} onChange={(id) => setComissao(ex.comissao_presidente_id, id || undefined)} />
+              </div>
+              {e.comissao_eleitoral && <p className="text-[10px] text-muted-foreground mt-1">Comissão: {e.comissao_eleitoral}</p>}
             </div>
-            <D k="sindicato_comunicado_em" label="Comunicação ao sindicato" hint="Antes ou no dia do edital" />
+            {D({k: "sindicato_comunicado_em", label: "Comunicação ao sindicato", hint: "Antes ou no dia do edital",})}
             <div className="md:col-span-2">
               <Label className="text-xs">Comprovante de entrega ao sindicato</Label>
               <Input value={e.sindicato_comprovante ?? ""} onChange={(ev) => set("sindicato_comprovante", ev.target.value)} placeholder="Protocolo / e-mail com confirmação de leitura" />
             </div>
-            <D k="edital_publicado_em" label="Publicação do edital" hint={`Limite: ${fmt(prazos.editalAte)}`} />
+            {D({k: "edital_publicado_em", label: "Publicação do edital", hint: `Limite: ${fmt(prazos.editalAte)}`,})}
             <div className="md:col-span-2">
               <Label className="text-xs">Local de divulgação do edital</Label>
               <Input value={e.edital_local ?? ""} onChange={(ev) => set("edital_local", ev.target.value)} placeholder="Quadro de avisos, intranet, e-mail…" />
@@ -146,9 +146,9 @@ export function EleicaoTab({ gestao }: Props) {
         <section>
           <h4 className="font-semibold text-sm mb-2">2. Inscrições</h4>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <D k="inscricao_inicio" label="Início das inscrições" />
-            <D k="inscricao_fim" label="Fim das inscrições" hint={e.inscricao_inicio ? `Mínimo até ${fmt(addDays(e.inscricao_inicio, prazos.inscricaoMinDias - 1))}` : `Mínimo ${prazos.inscricaoMinDias} dias corridos`} />
-            <D k="inscritos_publicados_em" label="Publicação da relação de inscritos" />
+            {D({k: "inscricao_inicio", label: "Início das inscrições",})}
+            {D({k: "inscricao_fim", label: "Fim das inscrições", hint: e.inscricao_inicio ? `Mínimo até ${fmt(addDays(e.inscricao_inicio, prazos.inscricaoMinDias - 1))}` : `Mínimo ${prazos.inscricaoMinDias} dias corridos`,})}
+            {D({k: "inscritos_publicados_em", label: "Publicação da relação de inscritos",})}
           </div>
           <div className="mt-3 space-y-2">
             <CipaEmployeePicker
@@ -188,7 +188,7 @@ export function EleicaoTab({ gestao }: Props) {
         <section>
           <h4 className="font-semibold text-sm mb-2">3. Votação</h4>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <D k="votacao_data" label="Data da votação" hint={`Limite: ${fmt(prazos.votacaoAte)} · dia útil`} />
+            {D({k: "votacao_data", label: "Data da votação", hint: `Limite: ${fmt(prazos.votacaoAte)} · dia útil`,})}
             <div>
               <Label className="text-xs">Meio de votação</Label>
               <Select value={e.votacao_meio ?? ""} onValueChange={(v) => set("votacao_meio", v as any)}>
@@ -203,10 +203,10 @@ export function EleicaoTab({ gestao }: Props) {
               <label className="flex items-center gap-2 text-xs"><Checkbox checked={!!e.sigilo_garantido} onCheckedChange={(v) => set("sigilo_garantido", !!v)} />Voto secreto, seguro e com registro preciso</label>
               <label className="flex items-center gap-2 text-xs"><Checkbox checked={!!e.turnos_contemplados} onCheckedChange={(v) => set("turnos_contemplados", !!v)} />Todos os turnos puderam votar</label>
             </div>
-            <N k="eleitores_aptos" label="Empregados aptos a votar" />
-            <N k="votantes_dia1" label="Votantes — 1º dia" />
-            {(part.acao === "PRORROGAR_1" || e.votantes_dia2 != null) && <N k="votantes_dia2" label="Votantes acumulados — 2º dia" />}
-            {(part.acao === "PRORROGAR_2" || e.votantes_dia3 != null) && <N k="votantes_dia3" label="Votantes acumulados — 3º dia" />}
+            {N({k: "eleitores_aptos", label: "Empregados aptos a votar",})}
+            {N({k: "votantes_dia1", label: "Votantes — 1º dia",})}
+            {(part.acao === "PRORROGAR_1" || e.votantes_dia2 != null) && {N({k: "votantes_dia2", label: "Votantes acumulados — 2º dia",})}}
+            {(part.acao === "PRORROGAR_2" || e.votantes_dia3 != null) && {N({k: "votantes_dia3", label: "Votantes acumulados — 3º dia",})}}
           </div>
           <p className={`text-xs mt-2 ${part.valida === false ? "text-destructive" : "text-muted-foreground"}`}>{part.texto}</p>
         </section>
@@ -214,7 +214,9 @@ export function EleicaoTab({ gestao }: Props) {
         <section>
           <h4 className="font-semibold text-sm mb-2">4. Apuração, ata e posse</h4>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <D k="apuracao_data" label="Data da apuração" hint="Horário normal de trabalho" />
+            {N({k: "votos_brancos" as any, label: apurado ? "Votos brancos" : "Votos brancos (após a apuração)", disabled: !apurado,})}
+            {N({k: "votos_nulos" as any, label: apurado ? "Votos nulos" : "Votos nulos (após a apuração)", disabled: !apurado,})}
+            {D({k: "apuracao_data", label: "Data da apuração", hint: "Horário normal de trabalho",})}
             <div className="md:col-span-2">
               <Label className="text-xs">Acompanhantes da apuração</Label>
               <Input value={e.apuracao_acompanhantes ?? ""} onChange={(ev) => set("apuracao_acompanhantes", ev.target.value)} placeholder="Representante(s) da organização e dos empregados" />
@@ -223,7 +225,7 @@ export function EleicaoTab({ gestao }: Props) {
               <Label className="text-xs">Ata de eleição (link do documento)</Label>
               <Input value={e.ata_eleicao_url ?? ""} onChange={(ev) => set("ata_eleicao_url", ev.target.value)} placeholder="https://…" />
             </div>
-            <D k="posse_data" label="Data da posse" hint={`1º dia após o fim do mandato: ${fmt(prazos.posse)}`} />
+            {D({k: "posse_data", label: "Data da posse", hint: `1º dia após o fim do mandato: ${fmt(prazos.posse)}`,})}
           </div>
         </section>
 
@@ -250,6 +252,25 @@ export function EleicaoTab({ gestao }: Props) {
         )}
         {resultado.empates && <p className="text-xs text-amber-500 mt-2">Há empate de votos: desempate aplicado pela data de admissão mais antiga.</p>}
       </Card>
+    </div>
+  );
+}
+
+type FieldP = { k: keyof EleicaoDados; label: string; e: EleicaoDados; set: (k: any, v: any) => void };
+function DateField({ k, label, hint, e, set }: FieldP & { hint?: string }) {
+  return (
+    <div>
+      <Label className="text-xs">{label}</Label>
+      <Input type="date" min="1900-01-01" max="2999-12-31" value={(e[k] as string) ?? ""} onChange={(ev) => set(k, ev.target.value)} />
+      {hint && <p className="text-[10px] text-muted-foreground mt-0.5">{hint}</p>}
+    </div>
+  );
+}
+function NumField({ k, label, disabled, e, set }: FieldP & { disabled?: boolean }) {
+  return (
+    <div>
+      <Label className="text-xs">{label}</Label>
+      <Input type="number" min={0} disabled={disabled} value={(e as any)[k] ?? ""} onChange={(ev) => set(k, ev.target.value === "" ? null : Number(ev.target.value))} />
     </div>
   );
 }

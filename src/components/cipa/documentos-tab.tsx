@@ -80,7 +80,7 @@ export function DocumentosTab({ gestao }: Props) {
     const qrTxt = `CIPA ${gestao.gestao} - EDITAL DE CONVOCAÇÃO\nInscrições: ${fmtBR(cal.find((e) => e.key === "inicio_inscricoes")?.corrigida)} a ${fmtBR(cal.find((e) => e.key === "fim_inscricoes")?.corrigida)}\nLocal: ${cfg.local_inscricao || "SESMT"} (${cfg.horario_inicio || "07h30"} às ${cfg.horario_fim || "17h30"})\nEleição: ${fmtBR(cal.find((e) => e.key === "eleicao")?.corrigida)}\nPosse: ${fmtBR(posse)}`;
     const qr = await QRCode.toDataURL(qrTxt, { margin: 1, width: 300 });
     return {
-      gestao, cal, cfg, comissao, candidatos, membros: ms,
+      gestao, cal, cfg: { ...cfg, votos_brancos: (eleicao as any).votos_brancos ?? null, votos_nulos: (eleicao as any).votos_nulos ?? null }, comissao, candidatos, membros: ms,
       eleitores: (funcs ?? []).map((f) => ({ nome: f.nome, matricula: f.matricula, setor: f.setor })),
       eleitoresAptos: eleicao.eleitores_aptos ?? null, votantes,
       cargaHoras: cargaCapacitacao(gestao.grau_risco), qr,
@@ -198,8 +198,9 @@ export function DocumentosTab({ gestao }: Props) {
             <div><Label className="text-xs">Fim apuração</Label><Input value={cfg.apuracao_hora_fim ?? ""} onChange={(e) => set("apuracao_hora_fim", e.target.value)} placeholder="11h00" /></div>
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <div><Label className="text-xs">Votos brancos</Label><Input type="number" value={cfg.votos_brancos ?? ""} onChange={(e) => set("votos_brancos", e.target.value === "" ? null : Number(e.target.value))} /></div>
-            <div><Label className="text-xs">Votos nulos</Label><Input type="number" value={cfg.votos_nulos ?? ""} onChange={(e) => set("votos_nulos", e.target.value === "" ? null : Number(e.target.value))} /></div>
+            <div><Label className="text-xs">Votos brancos</Label><Input disabled value={(eleicao as any).votos_brancos ?? "—"} /></div>
+            <div><Label className="text-xs">Votos nulos</Label><Input disabled value={(eleicao as any).votos_nulos ?? "—"} /></div>
+            <p className="col-span-2 text-[10px] text-muted-foreground">Preenchidos automaticamente com o resultado lançado na aba Eleição (após a apuração).</p>
           </div>
           <div className="md:col-span-3"><Label className="text-xs">Período do treinamento (certificado)</Label><Input value={cfg.treinamento_periodo ?? ""} onChange={(e) => set("treinamento_periodo", e.target.value)} placeholder="nos dias 16 e 17 de dezembro de 2026" /></div>
         </div>
