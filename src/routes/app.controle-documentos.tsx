@@ -240,7 +240,7 @@ function ControleDocumentosPage() {
         categorias={categorias.data ?? []}
         employees={employees.data ?? []}
         userId={user?.id}
-        onCreated={() => { qc.invalidateQueries({ queryKey: ["controle-documentos"] }); }}
+        onCreated={() => { qc.invalidateQueries({ queryKey: ["controle-documentos"] }); qc.invalidateQueries({ queryKey: ["doc-prazo-alertas"] }); }}
       />
 
       <DetalheSheet
@@ -571,6 +571,7 @@ function DetalheSheet({ id, onClose, categorias, employees }: { id: string | nul
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["controle-documentos"] });
+      qc.invalidateQueries({ queryKey: ["doc-prazo-alertas"] });
       qc.invalidateQueries({ queryKey: ["controle-doc", id] });
       qc.invalidateQueries({ queryKey: ["controle-doc-hist", id] });
       toast.success("Atualizado");
