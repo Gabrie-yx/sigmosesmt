@@ -21,23 +21,29 @@ export async function openStorageFile(bucket: string, path: string, name?: strin
   }
   // Confere se o arquivo existe de fato no Storage antes de abrir o modal.
   // Registro no banco sem arquivo físico devolve 4xx/5xx aqui.
+  let probeType = "";
   try {
     const probe = await fetch(data.signedUrl, { method: "GET", headers: { Range: "bytes=0-0" } });
     if (!probe.ok && probe.status !== 206) {
       toast.error("Este anexo não está mais disponível no servidor. Reenvie o arquivo.");
       return;
     }
+    probeType = (probe.headers.get("content-type") ?? "").toLowerCase();
   } catch {
     toast.error("Não foi possível acessar o arquivo no servidor.");
     return;
   }
-  const fname = name ?? path.split("/").pop() ?? "arquivo";
-  const ext = fname.split(".").pop()?.toLowerCase();
+  const pathName = path.split("/").pop() ?? "arquivo";
+  const pathExt = pathName.includes(".") ? pathName.split(".").pop()!.toLowerCase() : "";
+  let fname = name ?? pathName;
+  if (pathExt && !fname.toLowerCase().endsWith(`.${pathExt}`)) fname = `${fname}.${pathExt}`;
+  const ext = pathExt || fname.split(".").pop()?.toLowerCase();
   const mime =
-    ext === "pdf" ? "application/pdf" :
+    ext === "pdf" || probeType.includes("pdf") ? "application/pdf" :
     ext === "png" ? "image/png" :
     ext === "jpg" || ext === "jpeg" ? "image/jpeg" :
-    ext === "webp" ? "image/webp" : undefined;
+    ext === "webp" ? "image/webp" :
+    probeType.startsWith("image/") ? probeType : undefined;
   // Abrir direto via signed URL — evita blob:// (bloqueado pelo Chrome em <object>/<iframe> para PDF)
   // e elimina o download pesado inicial que travava a abertura do modal.
   openFileViewer({ url: data.signedUrl, name: fname, mime, downloadUrl: data.signedUrl });
