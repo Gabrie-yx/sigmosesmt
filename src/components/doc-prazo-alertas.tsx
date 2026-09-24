@@ -86,7 +86,7 @@ export function DocPrazoAlertas() {
     if (error) return toast.error(error.message);
     toast.success(msg);
     qc.invalidateQueries({ queryKey: ["doc-prazo-alertas"] });
-    qc.invalidateQueries({ queryKey: ["controle_documentos"] });
+    qc.invalidateQueries({ queryKey: ["controle-documentos"] });
   }
 
   function adiar(id: string, dias: number) {
