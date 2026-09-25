@@ -417,8 +417,13 @@ function NovaEntradaDialog({ open, onClose, categorias, employees, userId, onCre
         tags: form.tags.split(",").map((s) => s.trim()).filter(Boolean),
         created_by: userId ?? null,
       };
-      const { data: doc, error } = await supabase.from("controle_documentos").insert(payload).select("*").single();
-      if (error) throw error;
+      let { data: doc, error } = await supabase.from("controle_documentos").insert(payload).select("*").single();
+      if (error && /periodicidade_meses|schema cache/i.test(error.message)) {
+        delete payload.periodicidade_meses;
+        ({ data: doc, error } = await supabase.from("controle_documentos").insert(payload).select("*").single());
+        if (!error) toast.warning("Salvo, mas a Recorrência ainda não está ativa neste servidor.");
+      }
+      if (error || !doc) throw error;
 
       for (const f of files) {
         const path = `${doc.id}/${Date.now()}-${sanitizeFilename(f.name)}`;
@@ -597,7 +602,13 @@ function DetalheSheet({ id, onClose, categorias, employees }: { id: string | nul
 
   const updateMut = useMutation({
     mutationFn: async (patch: any) => {
-      const { error } = await supabase.from("controle_documentos").update(patch).eq("id", id!);
+      let { error } = await supabase.from("controle_documentos").update(patch).eq("id", id!);
+      // Servidor ainda sem a atualização da recorrência: salva o resto e avisa
+      if (error && /periodicidade_meses|schema cache/i.test(error.message)) {
+        const { periodicidade_meses: _p, ...rest } = patch;
+        ({ error } = await supabase.from("controle_documentos").update(rest).eq("id", id!));
+        if (!error) toast.warning("Salvo, mas a Recorrência ainda não está ativa neste servidor. Rode a atualização do servidor.");
+      }
       if (error) throw error;
     },
     onSuccess: () => {
