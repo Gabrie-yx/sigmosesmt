@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.controle_doc_gerar_proxima() FROM PUBLIC, anon, authenticated;
