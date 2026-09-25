@@ -360,10 +360,24 @@ function KanbanView({ docs, onOpen }: { docs: Doc[]; onOpen: (id: string) => voi
   );
 }
 
+const RECORRENCIAS: [string, string][] = [
+  ["0", "Sem recorrência (única vez)"], ["1", "Mensal"], ["2", "Bimestral"], ["3", "Trimestral"],
+  ["4", "Quadrimestral"], ["6", "Semestral"], ["12", "Anual"], ["24", "A cada 2 anos"], ["36", "A cada 3 anos"],
+];
+
+function RecorrenciaSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger><SelectValue /></SelectTrigger>
+      <SelectContent>{RECORRENCIAS.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
+    </Select>
+  );
+}
+
 function NovaEntradaDialog({ open, onClose, categorias, employees, userId, onCreated }: any) {
   const [form, setForm] = useState({
     titulo: "", descricao: "", origem: "EMAIL", remetente_nome: "", remetente_contato: "",
-    data_recebimento: new Date().toISOString().slice(0, 10), prazo: "", data_validade: "", dias_alerta: "",
+    data_recebimento: new Date().toISOString().slice(0, 10), prazo: "", data_validade: "", dias_alerta: "", periodicidade_meses: "0",
     categoria_id: "", criticidade: "MEDIA", responsavel_id: "", tratativa: "", tags: "",
   });
   const [files, setFiles] = useState<File[]>([]);
@@ -371,7 +385,7 @@ function NovaEntradaDialog({ open, onClose, categorias, employees, userId, onCre
 
   function reset() {
     setForm({ titulo: "", descricao: "", origem: "EMAIL", remetente_nome: "", remetente_contato: "",
-      data_recebimento: new Date().toISOString().slice(0, 10), prazo: "", data_validade: "", dias_alerta: "",
+      data_recebimento: new Date().toISOString().slice(0, 10), prazo: "", data_validade: "", dias_alerta: "", periodicidade_meses: "0",
       categoria_id: "", criticidade: "MEDIA", responsavel_id: "", tratativa: "", tags: "" });
     setFiles([]);
   }
@@ -395,6 +409,7 @@ function NovaEntradaDialog({ open, onClose, categorias, employees, userId, onCre
         prazo: form.prazo || null,
         data_validade: form.data_validade || null,
         dias_alerta: form.dias_alerta ? Number(form.dias_alerta) : null,
+        periodicidade_meses: Number(form.periodicidade_meses) || null,
         categoria_id: form.categoria_id || null,
         criticidade: form.criticidade,
         responsavel_id: form.responsavel_id || null,
@@ -463,6 +478,9 @@ function NovaEntradaDialog({ open, onClose, categorias, employees, userId, onCre
             </div>
             <div><Label>Avisar com quantos dias de antecedência</Label>
               <Input type="number" min={0} placeholder="30 (padrão)" value={form.dias_alerta} onChange={(e) => setForm((f) => ({ ...f, dias_alerta: e.target.value }))} />
+            </div>
+            <div><Label>Recorrência <span className="text-[10px] text-muted-foreground">(repete sozinho ao resolver)</span></Label>
+              <RecorrenciaSelect value={form.periodicidade_meses} onChange={(v) => setForm((f) => ({ ...f, periodicidade_meses: v }))} />
             </div>
             <div><Label>Criticidade {form.categoria_id && <span className="text-[10px] text-muted-foreground">(sugerida pela categoria)</span>}</Label>
               <Select value={form.criticidade} onValueChange={(v) => setForm((f) => ({ ...f, criticidade: v }))}>
@@ -543,6 +561,7 @@ function DetalheSheet({ id, onClose, categorias, employees }: { id: string | nul
   const [prazo, setPrazo] = useState("");
   const [validade, setValidade] = useState("");
   const [diasAlerta, setDiasAlerta] = useState("");
+  const [periodo, setPeriodo] = useState("0");
   const [obsFech, setObsFech] = useState("");
   const [tercNome, setTercNome] = useState("");
   const [tercDate, setTercDate] = useState("");
@@ -558,6 +577,7 @@ function DetalheSheet({ id, onClose, categorias, employees }: { id: string | nul
       setPrazo(doc.data.prazo ?? "");
       setValidade((doc.data as any).data_validade ?? "");
       setDiasAlerta((doc.data as any).dias_alerta != null ? String((doc.data as any).dias_alerta) : "");
+      setPeriodo(String((doc.data as any).periodicidade_meses ?? 0));
       setObsFech(doc.data.observacao_fechamento ?? "");
       setTercNome(doc.data.terceiro_nome ?? "");
       setTercDate(doc.data.terceiro_followup_em ?? "");
@@ -649,7 +669,11 @@ function DetalheSheet({ id, onClose, categorias, employees }: { id: string | nul
       data_resolucao: new Date().toISOString().slice(0, 10),
       observacao_fechamento: obsFech,
       tratativa,
-    });
+      data_validade: validade || null,
+      periodicidade_meses: Number(periodo) || null,
+    } as any);
+    if (Number(periodo) > 0) toast.success("Próxima ocorrência criada automaticamente");
+    qc.invalidateQueries({ queryKey: ["doc-prazo-alertas"] });
     // se vier de recorrente, avança próxima validade
     if (doc.data?.recorrente_id) {
       const { data: rec } = await supabase.from("controle_doc_recorrentes").select("*").eq("id", doc.data.recorrente_id).single();
@@ -725,6 +749,9 @@ function DetalheSheet({ id, onClose, categorias, employees }: { id: string | nul
                   <div><Label>Validade do documento</Label><Input type="date" value={validade} onChange={(e) => setValidade(e.target.value)} /></div>
                   <div><Label>Avisar (dias antes)</Label><Input type="number" min={0} placeholder="30" value={diasAlerta} onChange={(e) => setDiasAlerta(e.target.value)} /></div>
                 </div>
+                <div><Label>Recorrência</Label><RecorrenciaSelect value={periodo} onChange={setPeriodo} />
+                  {periodo !== "0" && <p className="text-[11px] text-muted-foreground mt-1">Ao resolver, o próximo é criado sozinho com a validade somada.</p>}
+                </div>
                 <div><Label>Tratativa</Label><Textarea rows={4} value={tratativa} onChange={(e) => setTratativa(e.target.value)} /></div>
                 {status === "AGUARDANDO_TERCEIRO" && (
                   <div className="grid grid-cols-2 gap-2">
@@ -735,9 +762,10 @@ function DetalheSheet({ id, onClose, categorias, employees }: { id: string | nul
                 <Button className="w-full" variant="outline" onClick={() => updateMut.mutate({
                   status, responsavel_id: respId || null, prazo: prazo || null, tratativa,
                   data_validade: validade || null, dias_alerta: diasAlerta ? Number(diasAlerta) : null,
+                  periodicidade_meses: Number(periodo) || null,
                   alerta_adiado_ate: null,
                   terceiro_nome: tercNome || null, terceiro_followup_em: tercDate || null,
-                })}>Salvar alterações</Button>
+                } as any)}>Salvar alterações</Button>
 
                 <div className="border-t pt-3 mt-4">
                   <Label>Observação de fechamento (obrigatório para resolver)</Label>
