@@ -3927,7 +3927,9 @@ export type Database = {
           numero: string
           observacao_fechamento: string | null
           origem: string
+          periodicidade_meses: number | null
           prazo: string | null
+          proxima_gerada_id: string | null
           recorrente_id: string | null
           remetente_contato: string | null
           remetente_nome: string | null
@@ -3958,7 +3960,9 @@ export type Database = {
           numero: string
           observacao_fechamento?: string | null
           origem?: string
+          periodicidade_meses?: number | null
           prazo?: string | null
+          proxima_gerada_id?: string | null
           recorrente_id?: string | null
           remetente_contato?: string | null
           remetente_nome?: string | null
@@ -3989,7 +3993,9 @@ export type Database = {
           numero?: string
           observacao_fechamento?: string | null
           origem?: string
+          periodicidade_meses?: number | null
           prazo?: string | null
+          proxima_gerada_id?: string | null
           recorrente_id?: string | null
           remetente_contato?: string | null
           remetente_nome?: string | null
