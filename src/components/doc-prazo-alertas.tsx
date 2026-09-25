@@ -18,7 +18,7 @@ type Item = {
   id: string;
   titulo: string;
   vence: string;
-  tipo: "Validade" | "Prazo";
+  tipo: "Vencimento" | "Prazo";
   dias: number;
 };
 
@@ -61,7 +61,7 @@ export function DocPrazoAlertas() {
         const dias = daysUntil(vence);
         if (dias === null) continue;
         const limite = d.dias_alerta ?? catMap.get(d.categoria_id) ?? DIAS_ALERTA_PADRAO;
-        if (dias <= limite) out.push({ id: d.id, titulo: d.titulo, vence, tipo: d.data_validade ? "Validade" : "Prazo", dias });
+        if (dias <= limite) out.push({ id: d.id, titulo: d.titulo, vence, tipo: d.data_validade ? "Vencimento" : "Prazo", dias });
       }
       return out.sort((a, b) => a.dias - b.dias);
     },
@@ -110,7 +110,7 @@ export function DocPrazoAlertas() {
     const v = novaData[it.id];
     if (!v) return toast.error("Escolha a nova data");
     patch(it.id, {
-      [it.tipo === "Validade" ? "data_validade" : "prazo"]: v,
+      [it.tipo === "Vencimento" ? "data_validade" : "prazo"]: v,
       alerta_adiado_ate: null,
     }, "Data atualizada");
   }

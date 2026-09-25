@@ -467,13 +467,13 @@ function NovaEntradaDialog({ open, onClose, categorias, employees, userId, onCre
             <div><Label>Contato (e-mail / tel)</Label>
               <Input value={form.remetente_contato} onChange={(e) => setForm((f) => ({ ...f, remetente_contato: e.target.value }))} />
             </div>
-            <div><Label>Data recebimento</Label>
+            <div><Label>Data do documento <span className="text-[10px] text-muted-foreground">(emissão / última visita)</span></Label>
               <Input type="date" value={form.data_recebimento} onChange={(e) => setForm((f) => ({ ...f, data_recebimento: e.target.value }))} />
             </div>
-            <div><Label>Prazo para resolução</Label>
+            <div><Label>Prazo da tratativa <span className="text-[10px] text-muted-foreground">(opcional — até quando agir)</span></Label>
               <Input type="date" value={form.prazo} onChange={(e) => setForm((f) => ({ ...f, prazo: e.target.value }))} />
             </div>
-            <div><Label>Validade do documento <span className="text-[10px] text-muted-foreground">(ex.: vencimento do certificado)</span></Label>
+            <div><Label>Vencimento <span className="text-[10px] text-muted-foreground">(quando o documento vence)</span></Label>
               <Input type="date" value={form.data_validade} onChange={(e) => setForm((f) => ({ ...f, data_validade: e.target.value }))} />
             </div>
             <div><Label>Avisar com quantos dias de antecedência</Label>
@@ -744,9 +744,9 @@ function DetalheSheet({ id, onClose, categorias, employees }: { id: string | nul
                     </SelectContent>
                   </Select>
                 </div>
-                <div><Label>Prazo</Label><Input type="date" value={prazo} onChange={(e) => setPrazo(e.target.value)} /></div>
+                <div><Label>Prazo da tratativa (opcional)</Label><Input type="date" value={prazo} onChange={(e) => setPrazo(e.target.value)} /></div>
                 <div className="grid grid-cols-2 gap-2">
-                  <div><Label>Validade do documento</Label><Input type="date" value={validade} onChange={(e) => setValidade(e.target.value)} /></div>
+                  <div><Label>Vencimento</Label><Input type="date" value={validade} onChange={(e) => setValidade(e.target.value)} /></div>
                   <div><Label>Avisar (dias antes)</Label><Input type="number" min={0} placeholder="30" value={diasAlerta} onChange={(e) => setDiasAlerta(e.target.value)} /></div>
                 </div>
                 <div><Label>Recorrência</Label><RecorrenciaSelect value={periodo} onChange={setPeriodo} />
@@ -803,7 +803,7 @@ function DetalheSheet({ id, onClose, categorias, employees }: { id: string | nul
                           <SelectContent>{["CRITICA", "ALTA", "MEDIA", "BAIXA"].map((c) => (<SelectItem key={c} value={c}>{c}</SelectItem>))}</SelectContent>
                         </Select>
                       </div>
-                      <div><Label>Data recebimento</Label><Input type="date" value={edit.data_recebimento} onChange={(e) => setEdit({ ...edit, data_recebimento: e.target.value })} /></div>
+                      <div><Label>Data do documento</Label><Input type="date" value={edit.data_recebimento} onChange={(e) => setEdit({ ...edit, data_recebimento: e.target.value })} /></div>
                       <div><Label>Remetente</Label><Input value={edit.remetente_nome} onChange={(e) => setEdit({ ...edit, remetente_nome: e.target.value })} /></div>
                       <div><Label>Contato</Label><Input value={edit.remetente_contato} onChange={(e) => setEdit({ ...edit, remetente_contato: e.target.value })} /></div>
                     </div>
