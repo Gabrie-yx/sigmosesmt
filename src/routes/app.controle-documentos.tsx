@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -34,6 +34,8 @@ function sanitizeFilename(name: string): string {
 }
 
 export const Route = createFileRoute("/app/controle-documentos")({
+  validateSearch: (s: Record<string, unknown>): { doc?: string } =>
+    typeof s.doc === "string" && s.doc ? { doc: s.doc } : {},
   component: ControleDocumentosPage,
   head: () => ({ meta: [{ title: "Controle de Documentos · SIGMO" }] }),
 });
@@ -77,7 +79,16 @@ function ControleDocumentosPage() {
   const [fCat, setFCat] = useState<string>("");
   const [fResp, setFResp] = useState<string>("");
   const [novoOpen, setNovoOpen] = useState(false);
-  const [detalheId, setDetalheId] = useState<string | null>(null);
+  const search = Route.useSearch();
+  const navigateSelf = Route.useNavigate();
+  const [detalheId, setDetalheIdState] = useState<string | null>(search.doc ?? null);
+  useEffect(() => {
+    if (search.doc) setDetalheIdState(search.doc);
+  }, [search.doc]);
+  const setDetalheId = (id: string | null) => {
+    setDetalheIdState(id);
+    if (!id && search.doc) navigateSelf({ search: {}, replace: true });
+  };
   const [recOpen, setRecOpen] = useState(false);
   const [recEdit, setRecEdit] = useState<Recorrente | null>(null);
 

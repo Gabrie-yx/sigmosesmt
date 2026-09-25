@@ -148,7 +148,7 @@ export function DocPrazoAlertas() {
                   </Badge>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <Button size="sm" onClick={() => { setOpen(false); navigate({ to: "/app/controle-documentos" }); }}>Resolver</Button>
+                  <Button size="sm" onClick={() => { setOpen(false); navigate({ to: "/app/controle-documentos", search: { doc: it.id } }); }}>Resolver →</Button>
                   <Input type="date" className="h-8 w-40" value={novaData[it.id] ?? ""} onChange={(e) => setNovaData((m) => ({ ...m, [it.id]: e.target.value }))} />
                   <Button size="sm" variant="outline" onClick={() => mudarData(it)}>Nova data</Button>
                   <Button size="sm" variant="outline" onClick={() => adiar(it.id, 1)}>Amanhã</Button>
