@@ -188,6 +188,15 @@ function parseRiscosTexto(raw: string) {
   return Object.keys(cats).length ? cats : null;
 }
 
+/** Achata um texto em linha única: tira bullets e junta com vírgula. */
+function toInline(raw: string): string {
+  return raw
+    .split(/\r?\n|;/)
+    .map((l) => l.replace(/^[•\-*·\u2022]\s*/, "").trim())
+    .filter(Boolean)
+    .join(", ");
+}
+
 /**
  * Renderiza a OS com um fator de densidade `k` (1 = tamanho original).
  * Reduzindo `k`, fontes/alturas encolhem proporcionalmente — usado para
@@ -351,11 +360,15 @@ function renderOss(doc: jsPDF, data: OSSPdfData, k: number) {
     });
     y += totalH;
     if (data.conteudo.medidas_preventivas?.trim()) {
-      textBlock("Medidas preventivas: " + data.conteudo.medidas_preventivas.trim(), { size: 7.5 });
+      textBlock("Medidas preventivas: " + toInline(data.conteudo.medidas_preventivas), { size: 7.5 });
     }
   } else {
-    const riscosTxt = [data.conteudo.riscos_texto, data.conteudo.medidas_preventivas]
-      .filter((s) => s && s.trim()).join("\n");
+    const riscosTxt = [
+      data.conteudo.riscos_texto,
+      data.conteudo.medidas_preventivas?.trim()
+        ? "Medidas preventivas: " + toInline(data.conteudo.medidas_preventivas)
+        : null,
+    ].filter((s) => s && s.trim()).join("\n");
     textBlock(riscosTxt, { minH: 22 });
   }
 
