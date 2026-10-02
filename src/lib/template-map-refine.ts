@@ -111,7 +111,8 @@ export function refineMap(map: BoxMap, fields: FieldDef[], r: Raster): BoxMap {
       const narrow = a[1] - a[0] < 3.5 && c[1] - c[0] < 3.5;
       if (narrow && gap >= 3 && gap <= 12) {
         const mid = (a[1] + c[0]) / 2;
-        const d = Math.abs(mid - (b.x + b.w / 2));
+        // miolo de "( )" é o vão mais largo entre traços finos; distância desempata
+        const d = Math.abs(mid - (b.x + b.w / 2)) - gap * 4;
         if (d < bestD) { bestD = d; best = { x: a[1] + 0.5, top: cy - 4, w: Math.max(3, gap - 1), h: 8 }; }
       }
     }
