@@ -427,8 +427,8 @@ export function detectDDS(pages: PageData[]): DetectResult {
     return e >= it.n.length ? it.x + it.w : it.x + (it.w * e) / it.n.length;
   };
   // Rótulo pode vir quebrado em vários itens ("LOCAL" "/" "SETOR:"): usa o item que termina com ":".
-  const label = (re: RegExp, last: RegExp) => {
-    const a = find(re);
+  const label = (re: RegExp, last: RegExp, ref?: TextItem) => {
+    const a = items.filter((it) => re.test(it.n) && (!ref || sameLine(it, ref))).sort((p, q) => p.y - q.y || p.x - q.x)[0];
     if (!a) return null;
     const fim = items.filter((o) => sameLine(o, a) && o.x >= a.x && o.x < a.x + 90 && last.test(o.n)).sort((p, q) => p.x - q.x)[0] ?? a;
     return { a, fim };
@@ -440,8 +440,9 @@ export function detectDDS(pages: PageData[]): DetectResult {
   ];
   const yTitulo = find(/^NOME\b/)?.y ?? H * 0.2;
   const found: Record<string, { a: TextItem; fim: TextItem }> = {};
+  const refEmp = find(/^EMPRESA\s*:?/);
   for (const [k, re, last] of labs) {
-    const l = label(re, last);
+    const l = label(re, last, refEmp && refEmp.y < yTitulo ? refEmp : undefined);
     if (l && l.a.y < yTitulo) found[k] = l;
   }
   const ordem = Object.entries(found).sort((a, b) => a[1].a.x - b[1].a.x);
