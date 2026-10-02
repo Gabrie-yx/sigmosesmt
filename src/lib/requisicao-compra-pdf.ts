@@ -477,7 +477,7 @@ export async function gerarPdfRequisicaoDoc(
     const bytes = await gerarRcOverlayBytes(req, itens, cotacoes, STATUS_LABEL[req.status] ?? req.status);
     return wrapBytesAsJsPdf(bytes);
   } catch (e) {
-    if (e instanceof Error && /Mapeamento das linhas|Não foi possível identificar as linhas|sem mapeamento de campos/.test(e.message)) throw e;
+    if (e instanceof Error && /Mapeamento das linhas|Não foi possível identificar as linhas|Última linha do mapeamento|sem mapeamento de campos/.test(e.message)) throw e;
     console.warn("[RC] template homologado indisponível, usando layout legado:", e);
     return gerarPdfRequisicaoLegacy(req, itens, cotacoes);
   }

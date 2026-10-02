@@ -49,7 +49,11 @@ async function lerCentrosLinhas(bytes: Uint8Array, primeira: Box, ultima: Box): 
     }
     // A primeira caixa revisada fixa o centro da linha 1; diferenças entre as
     // linhas vêm do próprio PDF, sem presumir altura uniforme ou contar por h.
-    return numeros.map((v) => primeira.top + primeira.h / 2 + v.y - numeros[0].y);
+    const centers = numeros.map((v) => primeira.top + primeira.h / 2 + v.y - numeros[0].y);
+    if (Math.abs(centers.at(-1)! - (ultima.top + ultima.h / 2)) > 12) {
+      throw new Error("Última linha do mapeamento não corresponde às linhas do PDF.");
+    }
+    return centers;
   } finally {
     await task.destroy();
   }
