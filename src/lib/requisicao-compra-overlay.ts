@@ -1,6 +1,6 @@
 import type jsPDF from "jspdf";
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFImage } from "pdf-lib";
-import { loadTemplateBytes, getTemplateMeta } from "@/lib/pdf-overlay-engine";
+import { loadTemplateBytes, getTemplateMeta, clearTemplateCache } from "@/lib/pdf-overlay-engine";
 import { getTemplateSchema, isBoxMap, type BoxMap, type Box } from "@/lib/template-field-schemas";
 import type { RcPdfReq, RcPdfItem, RcPdfCotacao } from "./requisicao-compra-pdf";
 
@@ -94,6 +94,9 @@ export async function gerarRcOverlayBytes(
   cotacoes: RcPdfCotacao[],
   statusLabel: string,
 ): Promise<Uint8Array> {
+  // O mapa pode ter sido salvo em outra aba/sessão: cada emissão lê a revisão
+  // e o mapeamento vigentes, em vez de reutilizar coordenadas antigas do cache.
+  clearTemplateCache(RC_TEMPLATE_CODIGO);
   const tplBytes = await loadTemplateBytes(RC_TEMPLATE_CODIGO);
   const tpl = await PDFDocument.load(tplBytes);
   const pdf = await PDFDocument.create();
