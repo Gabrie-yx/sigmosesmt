@@ -1,5 +1,6 @@
 import type jsPDF from "jspdf";
 import dmnLogo from "@/assets/dmn-logo.png";
+import { gerarRcOverlayBytes, wrapBytesAsJsPdf } from "./requisicao-compra-overlay";
 
 // Lazy loader: jspdf + jspdf-autotable só baixam quando alguém gera o PDF.
 async function loadPdfLibs() {
@@ -117,7 +118,7 @@ async function loadImageDims(src: string): Promise<{ w: number; h: number } | nu
  * que o setor solicitante emite. Devolve o `doc` sem baixar/imprimir —
  * o chamador decide (preview modal, download, print).
  */
-export async function gerarPdfRequisicaoDoc(
+async function gerarPdfRequisicaoLegacy(
   req: RcPdfReq,
   itens: RcPdfItem[],
   cotacoes: RcPdfCotacao[] = [],
@@ -461,4 +462,22 @@ export async function gerarPdfRequisicaoDoc(
 
 export function rcPdfFileName(req: { numero: string; id: string }): string {
   return `requisicao-${req.numero || req.id.slice(0, 8)}.pdf`;
+}
+/**
+ * Gera a RC sobre o PDF-mãe homologado (FOR-SEG-03 no painel de Templates).
+ * Se o template não puder ser baixado, cai no layout desenhado (legado)
+ * pra nunca travar a emissão.
+ */
+export async function gerarPdfRequisicaoDoc(
+  req: RcPdfReq,
+  itens: RcPdfItem[],
+  cotacoes: RcPdfCotacao[] = [],
+): Promise<jsPDF> {
+  try {
+    const bytes = await gerarRcOverlayBytes(req, itens, cotacoes, STATUS_LABEL[req.status] ?? req.status);
+    return wrapBytesAsJsPdf(bytes);
+  } catch (e) {
+    console.warn("[RC] template homologado indisponível, usando layout legado:", e);
+    return gerarPdfRequisicaoLegacy(req, itens, cotacoes);
+  }
 }
