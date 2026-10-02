@@ -1,0 +1,82 @@
+/**
+ * Esquemas de campos por template homologado + mapa padrão.
+ * O mapa de cada revisão (overlay_map) é gerado automaticamente por IA
+ * quando um PDF novo sobe e pode ser ajustado visualmente no painel.
+ * Coordenadas em pontos PDF, origem no canto superior-esquerdo.
+ */
+
+export type Box = { x: number; top: number; w: number; h: number };
+export type BoxMap = { pageW: number; pageH: number; boxes: Record<string, Box> };
+
+export type FieldKind = "text" | "check" | "sig" | "row" | "col";
+export type FieldDef = { key: string; label: string; kind: FieldKind; hint: string };
+
+export type TemplateSchema = { codigo: string; nome: string; fields: FieldDef[]; defaultMap?: BoxMap };
+
+const RC_FIELDS: FieldDef[] = [
+  { key: "data", label: "Data", kind: "text", hint: "espaço em branco à direita do rótulo 'DATA:' (linha da classificação)" },
+  { key: "numero", label: "Nº da requisição", kind: "text", hint: "espaço em branco após 'Nº DA REQUISIÇÃO:'" },
+  { key: "solicitante", label: "Solicitante", kind: "text", hint: "espaço em branco após 'SOLICITANTE:'" },
+  { key: "setor", label: "Setor", kind: "text", hint: "espaço em branco após 'SETOR:'" },
+  { key: "fornecedor", label: "Fornecedor", kind: "text", hint: "espaço em branco após 'FORNECEDOR:'" },
+  { key: "obra_construcao", label: "Obra em construção", kind: "text", hint: "espaço após 'OBRA EM CONSTRUÇÃO:'" },
+  { key: "obra_manutencao", label: "Obra em manutenção", kind: "text", hint: "espaço após 'OBRA EM MANUTENÇÃO:'" },
+  { key: "chk_material", label: "( ) Material", kind: "check", hint: "parênteses vazios logo após a palavra 'MATERIAL'" },
+  { key: "chk_servico", label: "( ) Serviço", kind: "check", hint: "parênteses vazios logo após a palavra 'SERVIÇO'" },
+  { key: "row_first", label: "1ª linha de itens", kind: "row", hint: "primeira linha de dados da tabela de itens (linha 01), largura total da tabela" },
+  { key: "row_last", label: "Última linha de itens", kind: "row", hint: "última linha de dados da tabela de itens, largura total da tabela" },
+  { key: "col_item", label: "Coluna ITEM", kind: "col", hint: "coluna 'ITEM', apenas na altura da 1ª linha de dados" },
+  { key: "col_desc", label: "Coluna DESCRIÇÃO", kind: "col", hint: "coluna 'DESCRIÇÃO', apenas na altura da 1ª linha de dados" },
+  { key: "col_qtde", label: "Coluna QTDE", kind: "col", hint: "coluna 'QTDE', apenas na altura da 1ª linha de dados" },
+  { key: "col_unid", label: "Coluna UNID.", kind: "col", hint: "coluna 'UNID.', apenas na altura da 1ª linha de dados" },
+  { key: "col_obs", label: "Coluna OBSERVAÇÃO", kind: "col", hint: "coluna 'OBSERVAÇÃO', apenas na altura da 1ª linha de dados" },
+  { key: "sig_solicitante", label: "Assinatura solicitante", kind: "sig", hint: "área em branco do quadro 'ASSINATURA SOLICITANTE' (sem o título e sem a linha DATA)" },
+  { key: "sig_supervisor", label: "Assinatura supervisor", kind: "sig", hint: "área em branco do quadro 'ASSINATURA SUPERVISOR GERAL'" },
+  { key: "sig_compras", label: "Assinatura compras", kind: "sig", hint: "área em branco do quadro 'ASSINATURA ANALISTA DE COMPRAS'" },
+  { key: "data_solicitante", label: "Data (solicitante)", kind: "text", hint: "espaço após 'DATA:' embaixo do quadro do solicitante" },
+  { key: "data_supervisor", label: "Data (supervisor)", kind: "text", hint: "espaço após 'DATA:' embaixo do quadro do supervisor" },
+  { key: "data_compras", label: "Data (compras)", kind: "text", hint: "espaço após 'DATA:' embaixo do quadro de compras" },
+];
+
+/** Medido à mão na Rev.01 do FOR-SEG-03 — usado só se a revisão não tiver mapa. */
+const RC_DEFAULT: BoxMap = {
+  pageW: 554.4,
+  pageH: 513.12,
+  boxes: {
+    data: { x: 309, top: 77, w: 236, h: 14 },
+    numero: { x: 362, top: 98, w: 183, h: 14 },
+    solicitante: { x: 70, top: 98, w: 209, h: 14 },
+    setor: { x: 44, top: 117, w: 235, h: 14 },
+    fornecedor: { x: 345, top: 117, w: 200, h: 14 },
+    obra_construcao: { x: 116, top: 137, w: 163, h: 14 },
+    obra_manutencao: { x: 386, top: 137, w: 159, h: 14 },
+    chk_material: { x: 176.5, top: 80.2, w: 8, h: 8 },
+    chk_servico: { x: 227.3, top: 80.2, w: 8, h: 8 },
+    row_first: { x: 10, top: 175, w: 538, h: 20.5 },
+    row_last: { x: 10, top: 359.7, w: 538, h: 20.5 },
+    col_item: { x: 10, top: 175, w: 39, h: 20.5 },
+    col_desc: { x: 50, top: 175, w: 268, h: 20.5 },
+    col_qtde: { x: 320.6, top: 175, w: 50, h: 20.5 },
+    col_unid: { x: 371, top: 175, w: 50, h: 20.5 },
+    col_obs: { x: 423, top: 175, w: 123, h: 20.5 },
+    sig_solicitante: { x: 10, top: 420, w: 179, h: 50 },
+    sig_supervisor: { x: 190, top: 420, w: 178, h: 50 },
+    sig_compras: { x: 370, top: 420, w: 177, h: 50 },
+    data_solicitante: { x: 38, top: 475, w: 140, h: 13 },
+    data_supervisor: { x: 218, top: 475, w: 140, h: 13 },
+    data_compras: { x: 398, top: 475, w: 140, h: 13 },
+  },
+};
+
+export const TEMPLATE_SCHEMAS: Record<string, TemplateSchema> = {
+  "FOR-SEG-03": { codigo: "FOR-SEG-03", nome: "Requisição de Compra", fields: RC_FIELDS, defaultMap: RC_DEFAULT },
+};
+
+export function getTemplateSchema(codigo: string): TemplateSchema | null {
+  return TEMPLATE_SCHEMAS[codigo] ?? null;
+}
+
+/** Garante que o mapa tem todas as chaves do esquema (completa com o padrão). */
+export function isBoxMap(m: unknown): m is BoxMap {
+  return !!m && typeof m === "object" && "boxes" in (m as any) && "pageW" in (m as any);
+}
