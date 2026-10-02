@@ -33,7 +33,7 @@ const PDFPreviewDialog = lazy(() =>
 
 export const Route = createFileRoute("/app/employees/saidas")({
   component: SaidasPage,
-  errorComponent: ({ error }) => <div className="p-6 text-red-700">Erro: {String(error?.message ?? error)}</div>,
+  errorComponent: ({ error }) => <div className="p-6 text-red-700">Erro: {error instanceof Error ? error.message : String(error)}</div>,
   notFoundComponent: () => <div className="p-6">Não encontrado</div>,
 });
 
