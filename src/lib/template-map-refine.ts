@@ -160,7 +160,8 @@ export function refineMap(map: BoxMap, fields: FieldDef[], r: Raster): BoxMap {
       if (!a || !b || !overlap(a, b)) continue;
       for (let tries = 0; tries < 3; tries++) {
         const cur = out[textos[i].key];
-        const next = afterLabel(snapCell({ x: cur.x, top: cur.top + cur.h + 2, w: cur.w, h: cur.h }));
+        const raw = map.boxes[textos[i].key];
+        const next = afterLabel(snapCell({ x: raw.x, top: cur.top + cur.h + 2, w: raw.w, h: cur.h }));
         out[textos[i].key] = next;
         if (!textos.some((f, k) => k !== i && out[f.key] && overlap(out[f.key], next))) break;
       }
