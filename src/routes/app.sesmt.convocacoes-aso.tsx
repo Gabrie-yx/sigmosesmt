@@ -8,7 +8,7 @@ import { FileViewerHost, openStorageFile } from "@/components/file-viewer";
 
 export const Route = createFileRoute("/app/sesmt/convocacoes-aso")({
   component: ConvocacoesAsoPage,
-  errorComponent: ({ error }) => <div className="p-6 text-red-300">Erro: {error.message}</div>,
+  errorComponent: ({ error }) => <div className="p-6 text-red-300">Erro: {error instanceof Error ? error.message : String(error)}</div>,
   notFoundComponent: () => <div className="p-6">Não encontrado</div>,
 });
 
