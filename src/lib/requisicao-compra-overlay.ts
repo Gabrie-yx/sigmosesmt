@@ -17,11 +17,11 @@ const MAP = {
     numero:      { x: 364, c: 105.1, maxW: 178 },
     solicitante: { x: 72, c: 105.1, maxW: 205 },
     setor:       { x: 46, c: 123.8, maxW: 230 },
-    fornecedor:  { x: 344, c: 123.8, maxW: 200 },
-    obraConst:   { x: 115, c: 144, maxW: 162 },
-    obraManut:   { x: 385, c: 144, maxW: 160 },
+    fornecedor:  { x: 347, c: 123.8, maxW: 200 },
+    obraConst:   { x: 118, c: 144, maxW: 162 },
+    obraManut:   { x: 388, c: 144, maxW: 160 },
   },
-  check: { material: { cx: 177.8, cy: 84.2 }, servico: { cx: 229, cy: 84.2 } },
+  check: { material: { cx: 179.5, cy: 84.2 }, servico: { cx: 230.5, cy: 84.2 } },
   items: {
     firstC: 185, step: 20.52, perPage: 10,
     desc: { x: 52, maxW: 262 }, qtde: { x: 322.6, maxW: 46 },
@@ -108,14 +108,17 @@ export async function gerarRcOverlayBytes(
 
     // Itens
     const slice = sorted.slice(p * MAP.items.perPage, (p + 1) * MAP.items.perPage);
+    if (p > 0) {
+      // renumera a coluna ITEM nas páginas de continuação (11, 12, ...)
+      for (let i = 0; i < MAP.items.perPage; i++) {
+        const c = MAP.items.firstC + i * MAP.items.step;
+        page.drawRectangle({ x: 12, y: H - c - 6, width: 34, height: 12, color: rgb(1, 1, 1) });
+        txt(page, String(p * MAP.items.perPage + i + 1).padStart(2, "0"), 20, c, 24);
+      }
+    }
     slice.forEach((it, i) => {
       const c = MAP.items.firstC + i * MAP.items.step;
       const m = MAP.items;
-      if (p > 0) {
-        // renumera a coluna ITEM nas páginas de continuação
-        page.drawRectangle({ x: 12, y: H - c - 6, width: 34, height: 12, color: rgb(1, 1, 1) });
-        txt(page, String(p * m.perPage + i + 1).padStart(2, "0"), 20, c, 24);
-      }
       txt(page, it.descricao, m.desc.x, c, m.desc.maxW);
       txt(page, it.quantidade != null ? String(it.quantidade) : "", m.qtde.x, c, m.qtde.maxW);
       txt(page, it.unidade, m.unid.x, c, m.unid.maxW);
