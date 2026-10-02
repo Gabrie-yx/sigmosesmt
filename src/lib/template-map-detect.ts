@@ -349,7 +349,8 @@ export function detectFicha(pages: PageData[]): DetectResult {
       if (!it) continue;
       const cy = it.y - it.h * 0.33;
       const next = items.filter((o) => o !== it && sameLine(o, it) && o.x > it.x + it.w).sort((a, b) => a.x - b.x)[0];
-      const limit = next ? next.x - 4 : W - 12;
+      // "____/____/____" impresso após o rótulo é a própria lacuna a preencher.
+      const limit = next && /^[_/ ]+$/.test(next.n) ? next.x + next.w : next ? next.x - 4 : W - 12;
       const x0 = g.skipShade(endOf(it, re) + 0.5, cy, limit) + 2;
       const right = g.findV(x0 + 1, limit, cy - 4, cy + 4) ?? limit;
       boxes[k] = { x: x0, top: cy - 7, w: Math.max(10, right - x0 - 2), h: 14 };

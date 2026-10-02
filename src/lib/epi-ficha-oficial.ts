@@ -1,5 +1,76 @@
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib";
-import { loadTemplateBytes } from "@/lib/pdf-overlay-engine";
+import { loadTemplateBytes, getTemplateMeta, clearTemplateCache } from "@/lib/pdf-overlay-engine";
+import { getTemplateSchema, isBoxMap, type Box, type BoxMap } from "@/lib/template-field-schemas";
+import { detectarMapaPdf } from "@/lib/template-map-detect";
+
+export const FICHA_TEMPLATE_CODIGO = "FOR-SEG-02";
+
+/** Mapa salvo completo da revisão; senão o próprio sistema lê o PDF na hora (sem IA). */
+async function resolverMapaFicha(tplBytes: Uint8Array | ArrayBuffer, pageW: number, pageH: number): Promise<BoxMap | null> {
+  const schema = getTemplateSchema(FICHA_TEMPLATE_CODIGO)!;
+  const completo = (m: unknown): m is BoxMap => isBoxMap(m) && schema.fields.every((f) => (m as BoxMap).boxes[f.key]);
+  const escalar = (m: BoxMap): BoxMap => {
+    const sx = pageW / m.pageW, sy = pageH / m.pageH;
+    const boxes: Record<string, Box> = {};
+    for (const [k, b] of Object.entries(m.boxes)) boxes[k] = { x: b.x * sx, top: b.top * sy, w: b.w * sx, h: b.h * sy };
+    return { pageW, pageH, boxes };
+  };
+  const salvo = getTemplateMeta(FICHA_TEMPLATE_CODIGO)?.overlayMap;
+  if (completo(salvo)) return escalar(salvo);
+  try {
+    const r = await detectarMapaPdf(FICHA_TEMPLATE_CODIGO, new Uint8Array(tplBytes as ArrayBuffer).slice());
+    if (completo(r.map)) return escalar(r.map);
+  } catch (e) {
+    console.warn("[Ficha EPI] detecção automática falhou:", e);
+  }
+  return null;
+}
+
+/** Escreve dentro de uma caixa do mapa (coordenadas da CropBox, origem topo-esquerda). */
+function putBox(page: PDFPage, b: Box, text: string | null | undefined, font: PDFFont, o: { size?: number; center?: boolean; min?: number; lines?: number } = {}) {
+  const t = safe(String(text ?? "")).replace(/\s+/g, " ").trim();
+  if (!t) return;
+  const crop = page.getCropBox();
+  const pad = 2;
+  const avail = b.w - pad * 2;
+  let size = o.size ?? 9;
+  const maxLines = o.lines ?? 1;
+  const wrap = (sz: number) => {
+    const out: string[] = [];
+    let cur = "";
+    for (const w of t.split(" ")) {
+      const cand = cur ? cur + " " + w : w;
+      if (font.widthOfTextAtSize(cand, sz) <= avail || !cur) cur = cand; else { out.push(cur); cur = w; }
+    }
+    if (cur) out.push(cur);
+    return out;
+  };
+  let lines = wrap(size);
+  while (size > (o.min ?? 5) && (lines.length > maxLines || lines.some((l) => font.widthOfTextAtSize(l, size) > avail) || lines.length * size * 1.1 > b.h)) {
+    size -= 0.25;
+    lines = wrap(size);
+  }
+  lines = lines.slice(0, maxLines);
+  const lh = size * 1.1;
+  const blockH = lines.length * lh;
+  let top = b.top + (b.h - blockH) / 2;
+  for (const l of lines) {
+    const w = font.widthOfTextAtSize(l, size);
+    const x = crop.x + b.x + (o.center ? (b.w - w) / 2 : pad);
+    const baseline = top + size * 0.8;
+    page.drawText(l, { x, y: crop.y + crop.height - baseline, size, font, color: rgb(0, 0, 0) });
+    top += lh;
+  }
+}
+
+async function putImage(out: PDFDocument, page: PDFPage, b: Box, src: string) {
+  const img = await embedSignature(out, src);
+  if (!img) return;
+  const crop = page.getCropBox();
+  const sc = Math.min((b.w - 4) / img.width, (b.h - 2) / img.height);
+  const w = img.width * sc, h = img.height * sc;
+  page.drawImage(img, { x: crop.x + b.x + (b.w - w) / 2, y: crop.y + crop.height - b.top - (b.h + h) / 2, width: w, height: h });
+}
 
 /**
  * Ficha de Entrega de EPI no PDF-mãe homologado (FOR-SEG 02, rev. 06/08/2026).
@@ -203,11 +274,57 @@ export async function buildFichaOficialBytes(
   templateOverride?: ArrayBuffer | Uint8Array,
 ): Promise<Uint8Array> {
   if (!blocks.length) throw new Error("Nenhuma ficha para gerar.");
-  const templateBytes = templateOverride ?? (await loadTemplateBytes("FOR-SEG-02"));
+  if (!templateOverride) clearTemplateCache(FICHA_TEMPLATE_CODIGO);
+  const templateBytes = templateOverride ?? (await loadTemplateBytes(FICHA_TEMPLATE_CODIGO));
   const template = await PDFDocument.load(templateBytes);
   const out = await PDFDocument.create();
   const font = await out.embedFont(StandardFonts.Helvetica);
   const bold = await out.embedFont(StandardFonts.HelveticaBold);
+
+  const crop0 = template.getPage(0).getCropBox();
+  const map = template.getPageCount() >= 2 ? await resolverMapaFicha(templateBytes, crop0.width, crop0.height) : null;
+  if (map) {
+    const B = (k: string) => map.boxes[k];
+    const rf = B("p2_row_first"), rl = B("p2_row_last");
+    const nRows = Math.max(1, Math.round((rl.top - rf.top) / rf.h) + 1);
+    const pitch = nRows > 1 ? (rl.top - rf.top) / (nRows - 1) : rf.h;
+    for (const block of blocks) {
+      const chunks: FichaOficialEntrega[][] = [];
+      for (let i = 0; i < Math.max(block.entregas.length, 1); i += nRows) chunks.push(block.entregas.slice(i, i + nRows));
+      for (let c = 0; c < chunks.length; c++) {
+        const [p1, p2] = await out.copyPages(template, [0, 1]);
+        out.addPage(p1);
+        out.addPage(p2);
+        const e = { ...block.emp, empresa: block.emp.empresa || "Estaleiro DMN" };
+        putBox(p1, B("empresa"), e.empresa, bold);
+        putBox(p1, B("admissao"), brDate(e.admissao), font);
+        putBox(p1, B("nome"), e.nome, bold);
+        if (e.demissao) putBox(p1, B("demissao"), brDate(e.demissao), font, { center: true });
+        putBox(p1, B("funcao"), e.funcao, font);
+        putBox(p1, B("matricula"), e.matricula, font);
+        putBox(p1, B("folha"), `${c + 1}/${chunks.length}`, font);
+        putBox(p1, B("empresa_termo"), e.empresa, font, { size: 8, center: true });
+        putBox(p1, B("local_data"), block.localData, font);
+        if (block.assinaturaEmpregado) await putImage(out, p1, B("sig_empregado"), block.assinaturaEmpregado);
+        const rows = chunks[c];
+        for (let i = 0; i < rows.length; i++) {
+          const r = rows[i];
+          const top = rf.top + pitch * i;
+          const cell = (k: string) => ({ ...B(k), top, h: rf.h });
+          putBox(p2, cell("p2_col_qt"), r.qtd != null ? String(r.qtd) : "", font, { size: 8, center: true });
+          putBox(p2, cell("p2_col_und"), r.und ?? "UN", font, { size: 8, center: true });
+          putBox(p2, cell("p2_col_espec"), [r.item, r.tamanho ? `(${r.tamanho})` : ""].filter(Boolean).join(" "), font, { size: 7.5, lines: 2 });
+          putBox(p2, cell("p2_col_ca"), r.ca ?? "", font, { size: 8, center: true });
+          putBox(p2, cell("p2_col_data_entrega"), brDate(r.data_entrega), font, { size: 8, center: true });
+          putBox(p2, cell("p2_col_motivo"), motivoCurto(r), font, { size: 8, center: true, lines: 2 });
+          putBox(p2, cell("p2_col_data_devol"), brDate(r.data_devolucao), font, { size: 8, center: true });
+          if (r.assinatura_snapshot) await putImage(out, p2, cell("p2_col_ass_emp"), r.assinatura_snapshot);
+        }
+      }
+    }
+    return await out.save();
+  }
+  // Plano B: coordenadas medidas à mão na rev. 04/08/2026 (só se o PDF não puder ser lido).
 
   for (const block of blocks) {
     const chunks: FichaOficialEntrega[][] = [];
