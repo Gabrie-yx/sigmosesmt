@@ -14195,6 +14195,14 @@ export type Database = {
         Args: { _hora_extra_id: string }
         Returns: undefined
       }
+      excluir_empresa_completa: {
+        Args: {
+          _company_id: string
+          _confirmacao: string
+          _justificativa: string
+        }
+        Returns: Json
+      }
       excluir_empresa_permanente: {
         Args: { _company_id: string; _justificativa: string }
         Returns: undefined
