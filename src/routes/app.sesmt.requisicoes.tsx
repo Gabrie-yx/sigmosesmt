@@ -224,6 +224,79 @@ async function gerarRelatorio(reqs: Req[], periodo: string) {
   doc.save(`relatorio-requisicoes-${Date.now()}.pdf`);
 }
 
+function MesCard({ label, total, pendentes, onClick }: { label: string; total: number; pendentes: number; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group relative rounded-2xl p-[1.5px] overflow-hidden text-left transition-transform hover:scale-[1.015] focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
+      style={{
+        background: "linear-gradient(135deg, rgba(69,10,10,0.92) 0%, rgba(15,118,110,0.62) 48%, rgba(251,191,36,0.72) 100%)",
+        boxShadow:
+          "0 0 0 1px rgba(120,53,15,0.42), " +
+          "0 0 18px rgba(45,212,191,0.22), " +
+          "0 0 36px rgba(245,158,11,0.15), " +
+          "0 24px 56px -22px rgba(13,148,136,0.35), " +
+          "0 18px 48px -22px rgba(120,53,15,0.24)",
+      }}
+    >
+      <div
+        className="relative rounded-2xl overflow-hidden flex flex-col w-full p-5 min-h-[180px]"
+        style={{
+          background:
+            "radial-gradient(120% 80% at 0% 0%, rgba(120,53,15,0.38) 0%, rgba(15,23,42,0) 55%), " +
+            "radial-gradient(120% 80% at 100% 100%, rgba(20,184,166,0.27) 0%, rgba(15,23,42,0) 55%), " +
+            "linear-gradient(160deg, #0b1228 0%, #0a0f22 45%, #070b1a 100%)",
+        }}
+      >
+        <div aria-hidden className="pointer-events-none absolute -top-3 left-[30%] h-6 w-40 rounded-full"
+          style={{
+            background: "radial-gradient(ellipse at center, rgba(207,250,254,0.95) 0%, rgba(103,232,249,0.65) 30%, rgba(34,211,238,0.25) 60%, rgba(34,211,238,0) 80%)",
+            filter: "blur(6px)", mixBlendMode: "screen",
+          }} />
+        <div aria-hidden className="pointer-events-none absolute -top-1 left-[34%] h-1 w-28 rounded-full"
+          style={{ background: "linear-gradient(90deg, rgba(34,211,238,0) 0%, rgba(207,250,254,1) 50%, rgba(34,211,238,0) 100%)", filter: "blur(1.5px)" }} />
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-1/2"
+          style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 40%, transparent 100%)" }} />
+        <div aria-hidden className="pointer-events-none absolute inset-0 rounded-2xl"
+          style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.12), inset 0 0 0 1px rgba(148,163,184,0.08), inset 0 -40px 80px -40px rgba(20,184,166,0.22)" }} />
+        <div aria-hidden className="pointer-events-none absolute -top-20 -left-16 h-56 w-56 rounded-full"
+          style={{ background: "radial-gradient(circle, rgba(120,53,15,0.48) 0%, rgba(120,53,15,0) 70%)", filter: "blur(10px)" }} />
+        <div aria-hidden className="pointer-events-none absolute -bottom-20 -right-16 h-56 w-56 rounded-full"
+          style={{ background: "radial-gradient(circle, rgba(20,184,166,0.42) 0%, rgba(20,184,166,0) 70%)", filter: "blur(10px)" }} />
+
+        <div className="relative flex items-center justify-between mb-3">
+          <span className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-300/90 flex items-center gap-1.5">
+            <CalendarDays className="h-3 w-3" /> Mensal
+          </span>
+          <ChevronRight className="h-4 w-4 text-cyan-300/60 group-hover:text-cyan-200 group-hover:translate-x-0.5 transition-all" />
+        </div>
+
+        <div className="relative flex-1 flex flex-col justify-center">
+          <h3 className="text-2xl font-black uppercase tracking-tight text-white leading-tight capitalize">{label}</h3>
+          <div className="mt-4 flex items-baseline gap-2">
+            <span className="text-5xl font-black text-amber-300" style={{ textShadow: "0 0 20px rgba(245,158,11,0.42)" }}>
+              {total}
+            </span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">
+              requisição{total === 1 ? "" : "ões"}
+            </span>
+          </div>
+        </div>
+
+        <div className="relative flex items-center justify-between pt-3 mt-3 border-t border-slate-700/60">
+          <span className="text-[9.5px] font-black uppercase tracking-wider text-slate-400">
+            {pendentes} em andamento
+          </span>
+          <span className="text-[9.5px] font-black uppercase tracking-wider text-cyan-300/80">
+            Ver detalhes
+          </span>
+        </div>
+      </div>
+    </button>
+  );
+}
+
 function RequisicoesPage() {
   const { user, isEditor } = useAuth();
   const qc = useQueryClient();
@@ -255,6 +328,7 @@ function RequisicoesPage() {
   }, [(location.search as any).tab]);
   const [filtroPeriodo, setFiltroPeriodo] = useState<"all" | "week" | "month" | "year">("all");
   const [filtroSolic, setFiltroSolic] = useState("");
+  const [mesAberto, setMesAberto] = useState<string | null>(null);
 
   const { data: reqs = [], isLoading: carregandoReqs, error: erroReqs } = useQuery({
     queryKey: ["purchase-reqs"],
@@ -443,6 +517,158 @@ function RequisicoesPage() {
       }));
   }, [filtered]);
 
+  const mesSel = grupos.find((g) => g.label === mesAberto) ?? null;
+
+  const renderLinha = (r: Req) => (
+    <div
+      key={r.id}
+      className={`rounded-xl border border-white/15 bg-white/5 backdrop-blur-xl p-3 shadow-lg hover:shadow-xl hover:border-cyan-300/40 hover:bg-white/10 transition-all flex flex-wrap items-center gap-3 ${
+        r.status === "PENDENTE" ? "animate-pulse-amber border-amber-300/70" : ""
+      }`}
+    >
+      <div className="flex-1 min-w-[220px]">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="font-black text-white">Nº {r.numero}</span>
+          {r.titulo && (
+            <span className="font-semibold text-rose-300 ml-1">
+              — {r.titulo}
+            </span>
+          )}
+          <Badge variant="outline" className={STATUS_BADGE[r.status]}>{STATUS_LABEL[r.status]}</Badge>
+          <UrgenciaBadge urgencia={r.urgencia ?? "NORMAL"} slaDeadline={r.sla_deadline} status={r.status} />
+          <Badge
+            variant="outline"
+            className={
+              r.classificacao === "MEDICAMENTOS"
+                ? "text-[10px] bg-rose-50 text-rose-700 border-rose-300 inline-flex items-center gap-1"
+                : "text-[10px] border-white/20 text-slate-200"
+            }
+          >
+            {r.classificacao === "MATERIAL" ? (
+              "Material"
+            ) : r.classificacao === "SERVICO" ? (
+              "Serviço"
+            ) : (
+              <>
+                <Pill className="h-3 w-3" aria-hidden />
+                Medicamentos
+              </>
+            )}
+          </Badge>
+        </div>
+        <div className="text-xs text-slate-400 mt-1">
+          <strong className="text-slate-200">{r.solicitante}</strong>
+          {r.setor ? ` · ${r.setor}` : ""}
+          {r.fornecedor ? ` · Fornecedor: ${r.fornecedor}` : ""}
+        </div>
+        {r.status === "INDEFERIDA" && r.motivo_indeferimento && (
+          <div className="text-xs text-rose-300 mt-1">Motivo: {r.motivo_indeferimento}</div>
+        )}
+        {r.status === "DEVOLVIDA" && (
+          <div className="mt-1 text-xs bg-orange-50 border border-orange-300 rounded px-2 py-1 text-orange-900">
+            <strong>↩ Devolvida pelo Compras</strong>
+            {r.devolvida_por_nome ? <> · {r.devolvida_por_nome}</> : null}
+            {r.devolvida_em ? <> · {fmtBR(r.devolvida_em)}</> : null}
+            {r.devolucao_mensagem && (
+              <div className="text-[11px] text-orange-800 mt-0.5 whitespace-pre-wrap">
+                {r.devolucao_mensagem}
+              </div>
+            )}
+            {r.motivo_indeferimento && (
+              <div className="text-[11px] text-orange-700 mt-0.5">
+                Indeferimento anterior: {r.motivo_indeferimento}
+              </div>
+            )}
+          </div>
+        )}
+        {r.status === "EM_RECEBIMENTO" && r.pc_numero && (
+          <div className="text-xs text-cyan-300 mt-1">
+            PC {r.pc_numero} emitido{r.pc_fornecedor ? <> — {r.pc_fornecedor}</> : null}
+            {r.pc_valor != null && <> · {Number(r.pc_valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</>}
+          </div>
+        )}
+        {r.status === "CONCLUIDA" && r.nf_numero && (
+          <div className="text-xs text-slate-300 mt-1">
+            NF {r.nf_numero} recebida{r.recebido_em ? <> em {fmtBR(r.recebido_em)}</> : null}
+          </div>
+        )}
+        {(r.status === "COTADA" || r.status === "APROVADA") && r.cotacao_fornecedor && (
+          <div className="text-xs text-blue-300 mt-1">
+            Cotada por <strong>{r.cotador_nome ?? "—"}</strong> · {r.cotacao_fornecedor}
+            {r.cotacao_valor != null && (
+              <> · {Number(r.cotacao_valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</>
+            )}
+          </div>
+        )}
+        {r.dispensa_cotacao && (
+          <div className="mt-1 text-xs bg-amber-50 border border-amber-300 rounded px-2 py-1 text-amber-900">
+            <strong>⚠️ Dispensa de cotação:</strong>{" "}
+            {(() => {
+              const map: Record<string, string> = {
+                FORNECEDOR_EXCLUSIVO: "Fornecedor exclusivo",
+                CONTRATO_GUARDA_CHUVA: "Contrato guarda-chuva",
+                URGENCIA_OPERACIONAL: "Urgência operacional",
+                PADRONIZACAO_TECNICA: "Padronização técnica",
+                OUTRO: "Outro",
+              };
+              return map[r.dispensa_motivo ?? ""] ?? r.dispensa_motivo;
+            })()}
+            {r.dispensa_justificativa && (
+              <div className="text-[11px] text-amber-800 mt-0.5 whitespace-pre-wrap">
+                {r.dispensa_justificativa}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+      <div className="flex gap-1 flex-wrap">
+        {r.classificacao === "MEDICAMENTOS" ? (
+          <>
+            <MedPdfBtns req={r} />
+            <ViewBtn req={r} />
+            <MedEditBtn req={r} />
+          </>
+        ) : (
+          <>
+            <Button size="sm" variant="outline" className="border-white/20 bg-white/5 text-slate-200 hover:bg-white/10 hover:text-white" onClick={() => emitirPdf(r, "print")}>
+              <Printer className="h-3.5 w-3.5 mr-1" /> Imprimir
+            </Button>
+            <Button size="sm" variant="outline" className="border-white/20 bg-white/5 text-slate-200 hover:bg-white/10 hover:text-white" onClick={() => emitirPdf(r, "preview")}>
+              <Printer className="h-3.5 w-3.5 mr-1" /> PDF
+            </Button>
+            <ViewBtn req={r} />
+            {isEditor && <EditReqBtn req={r} userId={user?.id} />}
+          </>
+        )}
+        {isEditor && (r.status === "PENDENTE" || r.status === "COTADA") && (
+          <>
+            <Button
+              size="sm"
+              className="bg-emerald-600 hover:bg-emerald-700"
+              onClick={() => updateStatus.mutate({ id: r.id, status: "APROVADA" })}
+            >
+              <Check className="h-3.5 w-3.5 mr-1" /> Deferir
+            </Button>
+            <IndeferBtn onConfirm={(motivo) => updateStatus.mutate({ id: r.id, status: "INDEFERIDA", motivo })} />
+            {r.status === "COTADA" && (
+              <DevolverRcBtn rcId={r.id} numero={r.numero} dispensa={!!r.dispensa_cotacao} />
+            )}
+          </>
+        )}
+        {(r.status === "APROVADA" || r.status === "INDEFERIDA") && (
+          <ReabrirRcBtn rcId={r.id} numero={r.numero} statusAtual={r.status} />
+        )}
+        {isEditor && (
+          <Button size="sm" variant="ghost" className="text-slate-300 hover:bg-white/10 hover:text-white" onClick={() => {
+            if (confirm(`Excluir requisição ${r.numero}?`)) delReq.mutate(r.id);
+          }}>
+            <Trash2 className="h-3.5 w-3.5 text-rose-400" />
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -515,204 +741,69 @@ function RequisicoesPage() {
                 <div role="alert" className="text-center text-destructive py-12 text-sm">Não foi possível carregar as requisições. Tente atualizar a página.</div>
               ) : filtered.length === 0 ? (
                 <div className="text-center text-slate-500 py-12 text-sm">Nenhuma requisição encontrada.</div>
-              ) : (() => {
-                const renderLinha = (r: Req) => (
-                    <div
-                      key={r.id}
-                      className={`border border-border/60 rounded-md p-3 bg-card hover:bg-muted/40 transition flex flex-wrap items-center gap-3 ${
-                        r.status === "PENDENTE" ? "animate-pulse-amber border-amber-300/70" : ""
-                      }`}
-                    >
-                      <div className="flex-1 min-w-[220px]">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-bold text-slate-900 dark:text-white">Nº {r.numero}</span>
-                          {r.titulo && (
-                            <span className="font-semibold text-rose-700 dark:text-rose-200 ml-1">
-                              — {r.titulo}
-                            </span>
-                          )}
-                          <Badge variant="outline" className={STATUS_BADGE[r.status]}>{STATUS_LABEL[r.status]}</Badge>
-                          <UrgenciaBadge urgencia={r.urgencia ?? "NORMAL"} slaDeadline={r.sla_deadline} status={r.status} />
-                          <Badge
-                            variant="outline"
-                            className={
-                              r.classificacao === "MEDICAMENTOS"
-                                ? "text-[10px] bg-rose-50 text-rose-700 border-rose-300 inline-flex items-center gap-1"
-                                : "text-[10px]"
-                            }
-                          >
-                            {r.classificacao === "MATERIAL" ? (
-                              "Material"
-                            ) : r.classificacao === "SERVICO" ? (
-                              "Serviço"
-                            ) : (
-                              <>
-                                <Pill className="h-3 w-3" aria-hidden />
-                                Medicamentos
-                              </>
-                            )}
-                          </Badge>
-                        </div>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          <strong className="text-foreground">{r.solicitante}</strong>
-                          {r.setor ? ` · ${r.setor}` : ""}
-                          {r.fornecedor ? ` · Fornecedor: ${r.fornecedor}` : ""}
-                        </div>
-                        {r.status === "INDEFERIDA" && r.motivo_indeferimento && (
-                          <div className="text-xs text-rose-700 mt-1">Motivo: {r.motivo_indeferimento}</div>
-                        )}
-                        {r.status === "DEVOLVIDA" && (
-                          <div className="mt-1 text-xs bg-orange-50 border border-orange-300 rounded px-2 py-1 text-orange-900">
-                            <strong>↩ Devolvida pelo Compras</strong>
-                            {r.devolvida_por_nome ? <> · {r.devolvida_por_nome}</> : null}
-                            {r.devolvida_em ? <> · {fmtBR(r.devolvida_em)}</> : null}
-                            {r.devolucao_mensagem && (
-                              <div className="text-[11px] text-orange-800 mt-0.5 whitespace-pre-wrap">
-                                {r.devolucao_mensagem}
-                              </div>
-                            )}
-                            {r.motivo_indeferimento && (
-                              <div className="text-[11px] text-orange-700 mt-0.5">
-                                Indeferimento anterior: {r.motivo_indeferimento}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                        {r.status === "EM_RECEBIMENTO" && r.pc_numero && (
-                          <div className="text-xs text-cyan-800 mt-1">
-                            PC {r.pc_numero} emitido{r.pc_fornecedor ? <> — {r.pc_fornecedor}</> : null}
-                            {r.pc_valor != null && <> · {Number(r.pc_valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</>}
-                          </div>
-                        )}
-                        {r.status === "CONCLUIDA" && r.nf_numero && (
-                          <div className="text-xs text-slate-700 mt-1">
-                            NF {r.nf_numero} recebida{r.recebido_em ? <> em {fmtBR(r.recebido_em)}</> : null}
-                          </div>
-                        )}
-                        {(r.status === "COTADA" || r.status === "APROVADA") && r.cotacao_fornecedor && (
-                          <div className="text-xs text-blue-700 mt-1">
-                            Cotada por <strong>{r.cotador_nome ?? "—"}</strong> · {r.cotacao_fornecedor}
-                            {r.cotacao_valor != null && (
-                              <> · {Number(r.cotacao_valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</>
-                            )}
-                          </div>
-                        )}
-                        {r.dispensa_cotacao && (
-                          <div className="mt-1 text-xs bg-amber-50 border border-amber-300 rounded px-2 py-1 text-amber-900">
-                            <strong>⚠️ Dispensa de cotação:</strong>{" "}
-                            {(() => {
-                              const map: Record<string, string> = {
-                                FORNECEDOR_EXCLUSIVO: "Fornecedor exclusivo",
-                                CONTRATO_GUARDA_CHUVA: "Contrato guarda-chuva",
-                                URGENCIA_OPERACIONAL: "Urgência operacional",
-                                PADRONIZACAO_TECNICA: "Padronização técnica",
-                                OUTRO: "Outro",
-                              };
-                              return map[r.dispensa_motivo ?? ""] ?? r.dispensa_motivo;
-                            })()}
-                            {r.dispensa_justificativa && (
-                              <div className="text-[11px] text-amber-800 mt-0.5 whitespace-pre-wrap">
-                                {r.dispensa_justificativa}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex gap-1">
-                        {r.classificacao === "MEDICAMENTOS" ? (
-                          <>
-                            <MedPdfBtns req={r} />
-                            <ViewBtn req={r} />
-                            <MedEditBtn req={r} />
-                          </>
-                        ) : (
-                          <>
-                            <Button size="sm" variant="outline" onClick={() => emitirPdf(r, "print")}>
-                              <Printer className="h-3.5 w-3.5 mr-1" /> Imprimir
-                            </Button>
-                            <Button size="sm" variant="outline" onClick={() => emitirPdf(r, "preview")}>
-                              <Printer className="h-3.5 w-3.5 mr-1" /> PDF
-                            </Button>
-                            <ViewBtn req={r} />
-                            {isEditor && <EditReqBtn req={r} userId={user?.id} />}
-                          </>
-                        )}
-                        {isEditor && (r.status === "PENDENTE" || r.status === "COTADA") && (
-                          <>
-                            <Button
-                              size="sm"
-                              className="bg-emerald-600 hover:bg-emerald-700"
-                              onClick={() => updateStatus.mutate({ id: r.id, status: "APROVADA" })}
-                            >
-                              <Check className="h-3.5 w-3.5 mr-1" /> Deferir
-                            </Button>
-                            <IndeferBtn onConfirm={(motivo) => updateStatus.mutate({ id: r.id, status: "INDEFERIDA", motivo })} />
-                            {r.status === "COTADA" && (
-                              <DevolverRcBtn rcId={r.id} numero={r.numero} dispensa={!!r.dispensa_cotacao} />
-                            )}
-                          </>
-                        )}
-                        {(r.status === "APROVADA" || r.status === "INDEFERIDA") && (
-                          <ReabrirRcBtn rcId={r.id} numero={r.numero} statusAtual={r.status} />
-                        )}
-                        {isEditor && (
-                          <Button size="sm" variant="ghost" onClick={() => {
-                            if (confirm(`Excluir requisição ${r.numero}?`)) delReq.mutate(r.id);
-                          }}>
-                            <Trash2 className="h-3.5 w-3.5 text-rose-600" />
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                );
-                return (
-                  <div className="space-y-4">
-                    {grupos.map((mes, mIdx) => (
-                      <details
+              ) : (
+                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {grupos.map((mes) => {
+                    const pendentesMes = mes.dias.flatMap((d) => d.itens).filter((x) => x.status === "PENDENTE").length;
+                    return (
+                      <MesCard
                         key={mes.label}
-                        open={mIdx === 0}
-                        className="group rounded-lg border border-border bg-card/50 overflow-hidden shadow-sm"
-                      >
-                        <summary className="cursor-pointer select-none list-none px-4 py-3 flex items-center justify-between gap-3 bg-muted/40 hover:bg-muted/60 transition">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <ChevronRight className="h-4 w-4 text-muted-foreground group-open:rotate-90 transition-transform shrink-0" />
-                            <CalendarDays className="h-4 w-4 text-primary shrink-0" />
-                            <span className="font-bold text-foreground capitalize truncate">{mes.label}</span>
-                          </div>
-                          <Badge variant="outline" className="shrink-0 bg-background/40 text-foreground">
-                            {mes.total} {mes.total === 1 ? "requisição" : "requisições"}
-                          </Badge>
-                        </summary>
-                        <div className="divide-y divide-border/60">
-                          {mes.dias.map((dia) => (
-                            <section
-                              key={dia.label}
-                              className="grid md:grid-cols-[150px_minmax(0,1fr)] bg-background/20"
-                            >
-                              <div className="px-4 py-3 md:border-r border-border/60 bg-muted/20 flex md:block items-center justify-between gap-3">
-                                <div>
-                                  <div className="font-bold text-sm text-foreground">{dia.label}</div>
-                                  <div className="text-xs text-muted-foreground capitalize">{dia.semana}</div>
-                                </div>
-                                <Badge variant="secondary" className="mt-0 md:mt-2">
-                                  {dia.itens.length} {dia.itens.length === 1 ? "RC" : "RCs"}
-                                </Badge>
-                              </div>
-                              <div className="p-2 md:p-3 space-y-2 min-w-0">
-                                {dia.itens.map(renderLinha)}
-                              </div>
-                            </section>
-                          ))}
-                        </div>
-                      </details>
-                    ))}
-                  </div>
-                );
-              })()}
+                        label={mes.label}
+                        total={mes.total}
+                        pendentes={pendentesMes}
+                        onClick={() => setMesAberto(mes.label)}
+                      />
+                    );
+                  })}
+                </div>
+              )}
             </TabsContent>
           </Tabs>
         </CardContent>
       </Card>
+
+      <Dialog open={!!mesAberto} onOpenChange={(v) => !v && setMesAberto(null)}>
+        <DialogContent
+          className="max-w-5xl max-h-[88vh] overflow-hidden flex flex-col border border-white/15 text-white shadow-2xl"
+          style={{
+            background:
+              "radial-gradient(120% 80% at 0% 0%, rgba(20,184,166,0.18) 0%, rgba(15,23,42,0) 55%), " +
+              "radial-gradient(120% 80% at 100% 100%, rgba(244,63,94,0.18) 0%, rgba(15,23,42,0) 55%), " +
+              "linear-gradient(160deg, rgba(15,23,42,0.85) 0%, rgba(15,23,42,0.7) 100%)",
+            backdropFilter: "blur(24px) saturate(160%)",
+          }}
+        >
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black uppercase tracking-tight text-white flex items-center gap-3">
+              <CalendarDays className="h-5 w-5 text-cyan-300" />
+              <span className="capitalize">{mesSel?.label}</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-cyan-200/90 bg-white/10 ring-1 ring-white/15 px-2 py-0.5 rounded">
+                {mesSel?.total ?? 0} requisição{(mesSel?.total ?? 0) === 1 ? "" : "ões"}
+              </span>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-auto pr-1 space-y-5 py-2">
+            {(mesSel?.dias ?? []).map((dia) => (
+              <div key={dia.label} className="space-y-2">
+                <div className="flex items-center gap-3">
+                  <span className="text-[11px] font-black uppercase tracking-widest text-white bg-white/10 ring-1 ring-white/15 px-2.5 py-1 rounded-md backdrop-blur">
+                    {dia.label}
+                  </span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-300 capitalize">{dia.semana}</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-amber-200/90 bg-white/10 ring-1 ring-white/15 px-2 py-0.5 rounded">
+                    {dia.itens.length} {dia.itens.length === 1 ? "RC" : "RCs"}
+                  </span>
+                  <div className="h-px flex-1 bg-white/10" />
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {dia.itens.map(renderLinha)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {previewState && (
         <PDFPreviewDialog
           open={!!previewState}
