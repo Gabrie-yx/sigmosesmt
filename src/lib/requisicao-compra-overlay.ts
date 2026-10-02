@@ -48,7 +48,7 @@ async function lerCentrosLinhas(bytes: Uint8Array, coluna: Box, primeira: Box, u
     // linhas vêm do próprio PDF, sem presumir altura uniforme ou contar por h.
     return numeros.map((v) => primeira.top + primeira.h / 2 + v.y - numeros[0].y);
   } finally {
-    await doc.destroy();
+    doc.destroy();
   }
 }
 
