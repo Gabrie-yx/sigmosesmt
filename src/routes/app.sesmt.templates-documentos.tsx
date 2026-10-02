@@ -167,7 +167,7 @@ function PainelInterno() {
         continue;
       }
       const tid = toast.loading(`Novo PDF em ${t.codigo} Rev.${String(alvo.revisao).padStart(2, "0")} — remapeando campos automaticamente…`);
-      autoMapearVersao(alvo.id, t.codigo, { obter: obterMap, detectar: detectarMap })
+      autoMapearVersao(alvo.id, t.codigo, { obter: obterMap, detectar: detectarMap, salvar: salvarMap })
         .then((r: any) => {
           toast.success(`${t.codigo}: ${r?.detectados ?? 0} de ${r?.total ?? 0} campos mapeados pela IA. Revise em "Mapear campos".`, { id: tid });
           qcPainel.invalidateQueries({ queryKey: ["document-templates"] });

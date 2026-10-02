@@ -13,12 +13,26 @@ import {
 } from "@/lib/templates-documentos.functions";
 import { getTemplateSchema, isBoxMap, type Box, type BoxMap } from "@/lib/template-field-schemas";
 import { clearTemplateCache } from "@/lib/pdf-overlay-engine";
+import { refineMap, type Raster } from "@/lib/template-map-refine";
 
 function b64ToBytes(b64: string) {
   const bin = atob(b64);
   const out = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
   return out;
+}
+
+async function dataUrlToRaster(url: string): Promise<Raster> {
+  const im = new Image();
+  im.src = url;
+  await im.decode();
+  const c = document.createElement("canvas");
+  c.width = im.naturalWidth;
+  c.height = im.naturalHeight;
+  const ctx = c.getContext("2d")!;
+  ctx.drawImage(im, 0, 0);
+  const d = ctx.getImageData(0, 0, c.width, c.height);
+  return { data: d.data, width: d.width, height: d.height, channels: 4 };
 }
 
 /** Renderiza a 1ª página do PDF e devolve imagem + tamanho em pontos. */
@@ -41,7 +55,7 @@ export async function renderPrimeiraPagina(bytes: Uint8Array) {
 export async function autoMapearVersao(
   versionId: string,
   codigo: string,
-  fns: { obter: (a: any) => Promise<any>; detectar: (a: any) => Promise<any> },
+  fns: { obter: (a: any) => Promise<any>; detectar: (a: any) => Promise<any>; salvar: (a: any) => Promise<any> },
 ) {
   const schema = getTemplateSchema(codigo);
   if (!schema) return null;
@@ -56,8 +70,12 @@ export async function autoMapearVersao(
       fields: schema.fields.map((f) => ({ key: f.key, label: f.label, hint: f.hint })),
     },
   });
+  // Ajuste fino nos pixels: encaixa nas bordas, pula rótulos, acha "( )".
+  const raster = await dataUrlToRaster(img);
+  const map = refineMap(res.map as BoxMap, schema.fields, raster);
+  await fns.salvar({ data: { versionId, map, status: "AUTO" } });
   clearTemplateCache(codigo);
-  return res as { map: BoxMap; detectados: number; total: number };
+  return { map, detectados: res.detectados as number, total: res.total as number };
 }
 
 const KIND_COLOR: Record<string, string> = {
@@ -158,7 +176,7 @@ export function MapeamentoDialog({
   async function rodarIA() {
     setBusy("ia");
     try {
-      const res = await autoMapearVersao(versionId, codigo, { obter, detectar });
+      const res = await autoMapearVersao(versionId, codigo, { obter, detectar, salvar });
       if (res) {
         setBoxes(res.map.boxes);
         setStatus("AUTO");
