@@ -41,7 +41,7 @@ async function lerCentrosLinhas(bytes: Uint8Array, coluna: Box, primeira: Box, u
       if (x < coluna.x - 2 || x > coluna.x + coluna.w + 2 || y < primeira.top || y > ultima.top + ultima.h + 4) return [];
       return [{ n: Number(item.str.trim()), y }];
     }).sort((a, b) => a.n - b.n);
-    if (numeros.length < 2 || numeros[0].n !== 1 || numeros.some((v, i) => v.n !== i + 1) || numeros.at(-1)!.y < ultima.top) {
+    if (numeros.length < 2 || numeros[0].n !== 1 || numeros.some((v, i) => v.n !== i + 1) || (numeros.at(-1)?.y ?? 0) < ultima.top) {
       throw new Error("Não foi possível identificar as linhas numeradas do formulário.");
     }
     // A primeira caixa revisada fixa o centro da linha 1; diferenças entre as
