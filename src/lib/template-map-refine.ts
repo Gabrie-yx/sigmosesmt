@@ -56,7 +56,7 @@ export function refineMap(map: BoxMap, fields: FieldDef[], r: Raster): BoxMap {
   };
 
   /** Encaixa a caixa na célula que contém o seu centro. */
-  const snapCell = (b: Box): Box => {
+  const snapCell = (b: Box, retry = true): Box => {
     const cx = b.x + b.w / 2, cy = b.top + b.h / 2;
     const span = Math.max(20, b.w * 0.4);
     const top = nearestH(cy, cx - span / 2, cx + span / 2, Math.max(14, b.h), -1) ?? b.top;
@@ -65,6 +65,8 @@ export function refineMap(map: BoxMap, fields: FieldDef[], r: Raster): BoxMap {
     const left = nearestV(b.x, inner0, inner1, 25) ?? b.x;
     const right = nearestV(b.x + b.w, inner0, inner1, 25) ?? b.x + b.w;
     if (right - left < 4 || bot - top < 4) return b;
+    // célula baixa demais = centro caiu numa borda; tenta meia altura abaixo
+    if (retry && bot - top < 11) return snapCell({ ...b, top: b.top + b.h / 2 }, false);
     return { x: left, top, w: right - left, h: bot - top };
   };
 
@@ -107,7 +109,7 @@ export function refineMap(map: BoxMap, fields: FieldDef[], r: Raster): BoxMap {
       const a = runs[i], c = runs[i + 1];
       const gap = c[0] - a[1];
       const narrow = a[1] - a[0] < 3.5 && c[1] - c[0] < 3.5;
-      if (narrow && gap >= 1.5 && gap <= 12) {
+      if (narrow && gap >= 3 && gap <= 12) {
         const mid = (a[1] + c[0]) / 2;
         const d = Math.abs(mid - (b.x + b.w / 2));
         if (d < bestD) { bestD = d; best = { x: a[1] + 0.5, top: cy - 4, w: Math.max(3, gap - 1), h: 8 }; }
