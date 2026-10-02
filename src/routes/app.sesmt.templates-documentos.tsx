@@ -35,7 +35,7 @@ import { toast } from "sonner";
 import { hasOverlay } from "@/lib/pdf-overlay-maps";
 import { getTemplateSchema } from "@/lib/template-field-schemas";
 import { MapeamentoDialog, autoMapearVersao } from "@/components/templates/mapeamento-dialog";
-import { obterMapeamentoVersao, detectarMapeamentoIA, salvarMapeamentoVersao } from "@/lib/templates-documentos.functions";
+import { obterMapeamentoVersao, salvarMapeamentoVersao } from "@/lib/templates-documentos.functions";
 import { useEffect } from "react";
 import { Wand2 } from "lucide-react";
 
@@ -147,11 +147,10 @@ function PainelInterno() {
   const [novoTemplate, setNovoTemplate] = useState<string | null>(null);
   const [mapFor, setMapFor] = useState<{ versionId: string; codigo: string; revisao: number } | null>(null);
   const obterMap = useServerFn(obterMapeamentoVersao);
-  const detectarMap = useServerFn(detectarMapeamentoIA);
   const salvarMap = useServerFn(salvarMapeamentoVersao);
   const autoTentados = useRef(new Set<string>());
 
-  // Alerta automático: revisão nova sem mapeamento → o próprio sistema remapeia com IA.
+  // Alerta automático: revisão nova sem mapeamento → o próprio sistema remapeia (sem IA).
   useEffect(() => {
     for (const t of (templates ?? []) as any[]) {
       const alvo = t.versao_em_homologacao ?? t.versao_atual;
@@ -167,9 +166,9 @@ function PainelInterno() {
         continue;
       }
       const tid = toast.loading(`Novo PDF em ${t.codigo} Rev.${String(alvo.revisao).padStart(2, "0")} — remapeando campos automaticamente…`);
-      autoMapearVersao(alvo.id, t.codigo, { obter: obterMap, detectar: detectarMap, salvar: salvarMap })
+      autoMapearVersao(alvo.id, t.codigo, { obter: obterMap, salvar: salvarMap })
         .then((r: any) => {
-          toast.success(`${t.codigo}: ${r?.detectados ?? 0} de ${r?.total ?? 0} campos mapeados pela IA. Revise em "Mapear campos".`, { id: tid });
+          toast.success(`${t.codigo}: ${r?.detectados ?? 0} de ${r?.total ?? 0} campos mapeados automaticamente. Revise em "Mapear campos".`, { id: tid });
           qcPainel.invalidateQueries({ queryKey: ["document-templates"] });
         })
         .catch((e: any) => toast.error(`${t.codigo}: ${e?.message ?? "falha no remapeamento automático"}`, { id: tid }));
