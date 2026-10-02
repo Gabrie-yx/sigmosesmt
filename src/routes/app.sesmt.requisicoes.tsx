@@ -890,7 +890,7 @@ function ReabrirRcBtn({ rcId, numero, statusAtual }: { rcId: string; numero: str
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="ghost" title={`Reabrir RC (atual: ${statusAtual})`}>
+        <Button size="sm" variant="ghost" title={`Reabrir RC (atual: ${statusAtual})`} className="h-7 px-2.5 text-[11px] text-amber-200 hover:bg-white/10 hover:text-amber-100">
           Reabrir
         </Button>
       </DialogTrigger>
@@ -951,7 +951,7 @@ function DevolverRcBtn({ rcId, numero, dispensa }: { rcId: string; numero: strin
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="outline" className="border-amber-400 text-amber-800 hover:bg-amber-50">
+        <Button size="sm" variant="outline" className="border-amber-400/40 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20 hover:text-amber-100 h-7 px-2.5 text-[11px]">
           Devolver
         </Button>
       </DialogTrigger>
@@ -1009,7 +1009,7 @@ function ViewBtn({ req }: { req: Req }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="ghost"><Eye className="h-3.5 w-3.5" /></Button>
+        <Button size="sm" variant="ghost" title="Ver itens da requisição" className="h-7 w-7 p-0 text-slate-300 hover:bg-white/10 hover:text-white"><Eye className="h-3.5 w-3.5" /></Button>
       </DialogTrigger>
       <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
@@ -1068,7 +1068,7 @@ function EditReqBtn({ req, userId }: { req: Req; userId?: string }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="ghost" title="Editar requisição">
+        <Button size="sm" variant="ghost" title="Editar requisição" className="h-7 w-7 p-0 text-slate-300 hover:bg-white/10 hover:text-white">
           <Pencil className="h-3.5 w-3.5" />
         </Button>
       </DialogTrigger>
@@ -1130,7 +1130,7 @@ function MedPdfBtns({ req }: { req: Req }) {
 
   return (
     <>
-      <Button size="sm" variant="outline" onClick={visualizar} disabled={busy !== null}>
+      <Button size="sm" variant="outline" onClick={visualizar} disabled={busy !== null} title="Gerar PDF" className="border-white/20 bg-white/5 text-slate-200 hover:bg-white/10 hover:text-white h-7 px-2.5 text-[11px]">
         <Printer className="h-3.5 w-3.5 mr-1" /> PDF
       </Button>
       <PDFPreviewDialog
@@ -1151,7 +1151,7 @@ function MedEditBtn({ req }: { req: Req }) {
       <Button
         size="sm"
         variant="outline"
-        className="bg-rose-50 border-rose-300 text-rose-700 hover:bg-rose-100"
+        className="bg-rose-500/10 border-rose-400/40 text-rose-200 hover:bg-rose-500/20 hover:text-rose-100 h-7 px-2.5 text-[11px]"
         onClick={() => setOpen(true)}
         title="Abrir requisição de medicamentos"
       >
@@ -1172,7 +1172,7 @@ function _IndeferBtnImpl({ onConfirm }: { onConfirm: (motivo: string) => void })
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="outline" className="border-rose-300 text-rose-700 hover:bg-rose-50">
+        <Button size="sm" variant="outline" className="border-rose-400/40 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20 hover:text-rose-100 h-7 px-2.5 text-[11px]">
           <XIcon className="h-3.5 w-3.5 mr-1" /> Indeferir
         </Button>
       </DialogTrigger>
