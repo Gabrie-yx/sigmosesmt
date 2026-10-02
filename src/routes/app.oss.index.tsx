@@ -31,6 +31,7 @@ import { OssRowActions } from "@/components/oss/oss-row-actions";
 import { OssAssinarButton } from "@/components/oss/oss-assinar-button";
 import { EmployeeQuickView } from "@/components/employees/employee-quick-view";
 import type jsPDF from "jspdf";
+import { FileViewerHost, openStorageFile } from "@/components/file-viewer";
 
 export const Route = createFileRoute("/app/oss/")({
   component: OssIndexPage,
@@ -489,9 +490,8 @@ function OssIndexPage() {
 
   const downloadAssinado = async (em: Emissao) => {
     if (!em.pdf_assinado_path) return;
-    const { data, error } = await supabase.storage.from("oss-pdfs").createSignedUrl(em.pdf_assinado_path, 60);
-    if (error) { toast.error(error.message); return; }
-    window.open(data.signedUrl, "_blank");
+    const nome = (em as any).employees?.nome ?? "Funcionario";
+    await openStorageFile("oss-pdfs", em.pdf_assinado_path, `OS - ${nome}.pdf`);
   };
 
   const [quickViewEmpId, setQuickViewEmpId] = useState<string | null>(null);
@@ -651,6 +651,7 @@ function OssIndexPage() {
 
   return (
     <div className="h-full flex flex-col bg-slate-50">
+      <FileViewerHost />
       <div className="px-6 pt-5 pb-3 border-b border-rose-100 bg-gradient-to-r from-rose-50 via-white to-amber-50 shadow-sm">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-3">

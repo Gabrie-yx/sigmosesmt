@@ -4057,11 +4057,12 @@ function OssTab({ empId, empNome }: { empId: string; empNome: string }) {
   async function abrirPdf(em: any) {
     // Assinada = documento congelado (valor legal). Não assinada = sempre dinâmica pelo cargo atual.
     if (em.pdf_assinado_path) {
-      openStorageFile("oss-pdfs", em.pdf_assinado_path, `OS-${em.cargo_snapshot}-${empNome}.pdf`);
+      openStorageFile("oss-pdfs", em.pdf_assinado_path, `OS - ${empNome}.pdf`);
       return;
     }
     try {
-      setOssDoc(await buildOssPdfDinamico(em.id));
+      const r = await buildOssPdfDinamico(em.id);
+      setOssDoc({ doc: r.doc, name: `OS - ${empNome}.pdf` });
       qc.invalidateQueries({ queryKey: ["oss-emissoes"] });
     } catch (e: any) {
       toast.error("Não foi possível gerar a OS: " + (e?.message ?? e));
