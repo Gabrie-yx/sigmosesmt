@@ -70,7 +70,7 @@ function putBox(page: PDFPage, b: Box, text: string | null | undefined, font: PD
   let size = Math.min(o.size ?? 9, b.h * 0.75);
   while (size > (o.min ?? 5) && font.widthOfTextAtSize(t, size) > avail) size -= 0.25;
   let s = t;
-  while (s.length > 1 && font.widthOfTextAtSize(s, size) > avail) s = s.slice(0, -2) + "…".replace("…", ".");
+  while (s.length > 1 && font.widthOfTextAtSize(s, size) > avail) s = s.slice(0, -1);
   const w = font.widthOfTextAtSize(s, size);
   const x = crop.x + b.x + (o.center ? (b.w - w) / 2 : 2);
   const baseline = b.top + b.h / 2 + size * 0.35;

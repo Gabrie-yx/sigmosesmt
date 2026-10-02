@@ -16,7 +16,8 @@ import { toast } from "sonner";
 import { DDSEvidencias } from "@/components/dds-evidencias";
 import { DDSAttendeesEditor } from "@/components/dds-attendees-editor";
 import { DDSTabsNav } from "@/components/dds-tabs-nav";
-import { gerarFormularioSemanalDDS } from "@/lib/dds-formulario-semanal-pdf";
+import type { DDSFormParams } from "@/lib/dds-formulario-semanal-pdf";
+import { gerarListaPresencaDDS } from "@/lib/dds-lista-presenca-oficial";
 import { PDFPreviewDialog } from "@/components/pdf-preview-dialog";
 import { EmployeePicker, type EmployeeOption } from "@/components/employee-picker";
 import type jsPDF from "jspdf";
@@ -352,7 +353,7 @@ function DDSDetail({ dds, temaMap, gestorMap }: { dds: DDS; temaMap: any; gestor
     queryFn: async () => (await supabase.from("companies").select("id,name,cnpj,matriz_nome,matriz_cnpj,encarregado1").or(COMPANIES_ATIVAS_FILTER).order("name")).data ?? [],
   });
 
-  function buildAndShow(companies: any[], funcs: { nome: string; funcao?: string | null }[]) {
+  async function buildAndShow(companies: any[], funcs: { nome: string; funcao?: string | null }[]) {
     lastBuildArgs.current = { companies, funcs };
     const c: any = companies[0] ?? company ?? {};
     const seg = (() => { const d = new Date(dds.data + "T00:00"); const day = d.getDay(); d.setDate(d.getDate() + (day === 0 ? -6 : 1 - day)); return d; })();
@@ -362,12 +363,12 @@ function DDSDetail({ dds, temaMap, gestorMap }: { dds: DDS; temaMap: any; gestor
     const titulos = [...ids.map((id) => (temaMap[id] as any)?.titulo).filter(Boolean), ...livres];
     const f: any = ddsFull;
     const list = companies.length > 0 ? companies : [c];
-    let doc: jsPDF | undefined;
+    const blocos: DDSFormParams[] = [];
     list.forEach((co: any, idx: number) => {
       const coFuncs = companies.length > 1
         ? funcs.filter((x: any) => x.company_id === co.id).map(({ nome, funcao }) => ({ nome, funcao }))
         : funcs;
-      doc = gerarFormularioSemanalDDS({
+      blocos.push({
         matrizNome: co.matriz_nome || co.name || "J C S CONSTRUÇÃO NAVAL",
         matrizCnpj: co.matriz_cnpj || co.cnpj || "",
         codigo: "FOR-SEG 06", revisao: "00",
@@ -383,9 +384,10 @@ function DDSDetail({ dds, temaMap, gestorMap }: { dds: DDS; temaMap: any; gestor
         responsavelSesmt: f?.responsavel_sesmt ?? null,
         assinaturaEncarregadoDataUrl: encSigRef.current,
         assinaturaResponsavelDataUrl: sesmtSigRef.current,
-      }, doc);
+      });
     });
-    if (!doc) return;
+    if (!blocos.length) return;
+    const doc = await gerarListaPresencaDDS(blocos);
     setPdfDoc(doc);
     const baseName = list.length === 1 ? (list[0].name ?? "empresa").replace(/\s+/g,"_") : `${list.length}_empresas`;
     setPdfName(`DDS_${baseName}_${dds.data}.pdf`);
@@ -635,7 +637,7 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
   function fmtBR(d: Date) { return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }); }
   function fmtBRFull(d: Date) { return d.toLocaleDateString("pt-BR"); }
 
-  function buildPDFSemanal(): { doc: jsPDF; name: string } | null {
+  async function buildPDFSemanal(): Promise<{ doc: jsPDF; name: string } | null> {
     if (selectedCompanies.length === 0) return null;
     const seg = getMonday(data);
     const sex = new Date(seg); sex.setDate(sex.getDate() + 4);
@@ -645,12 +647,12 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
       .map((t: any) => `${t!.codigo ? t!.codigo + "- " : ""}${t!.titulo}`)
       .join(" / ");
     const assuntos = [temasSel, ...temasLivres].filter(Boolean).join(" / ") || "—";
-    let doc: jsPDF | undefined;
+    const blocos: DDSFormParams[] = [];
     selectedCompanies.forEach((company: any, idx: number) => {
       const funcs = (empresaEmployees as any[])
         .filter((e) => e.company_id === company.id)
         .map((e) => ({ nome: e.nome, funcao: e.roles?.name ?? "" }));
-      doc = gerarFormularioSemanalDDS({
+      blocos.push({
         matrizNome: company?.matriz_nome || company?.name || "—",
         matrizCnpj: company?.matriz_cnpj || company?.cnpj || "",
         codigo: "FOR-SEG 06",
@@ -665,13 +667,14 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
         assuntos,
         funcionarios: funcs,
         encarregado, responsavelSesmt: sesmt,
-      }, doc);
+      });
     });
+    const doc = await gerarListaPresencaDDS(blocos);
     const baseName = selectedCompanies.length === 1
       ? (selectedCompanies[0].name ?? "empresa").replace(/\s+/g, "_")
       : `${selectedCompanies.length}_empresas`;
     const name = `DDS_${baseName}_${seg.toISOString().slice(0, 10)}.pdf`;
-    return { doc: doc!, name };
+    return { doc, name };
   }
 
   async function save() {
@@ -724,7 +727,7 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
       }
       if (gerarPdf && companyIds.length > 0) {
         try {
-          const built = buildPDFSemanal();
+          const built = await buildPDFSemanal();
           if (built) {
             setPreviewDoc(built.doc);
             setPreviewName(built.name);
@@ -970,9 +973,9 @@ function NewDDSDialog({ open, onClose, temas, gestores, employees, onSaved }: {
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>Cancelar</Button>
           {gerarPdf && companyIds.length > 0 && (
-            <Button variant="outline" type="button" onClick={() => {
+            <Button variant="outline" type="button" onClick={async () => {
               try {
-                const built = buildPDFSemanal();
+                const built = await buildPDFSemanal();
                 if (built) { setPreviewDoc(built.doc); setPreviewName(built.name); setPreviewFromSave(false); }
               } catch (err: any) { toast.error(err.message); }
             }}><Eye className="h-4 w-4 mr-1" />Pré-visualizar PDF</Button>
