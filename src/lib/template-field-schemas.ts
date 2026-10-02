@@ -1,6 +1,7 @@
 /**
  * Esquemas de campos por template homologado + mapa padrão.
- * O mapa de cada revisão (overlay_map) é gerado automaticamente por IA
+ * O mapa de cada revisão (overlay_map) é gerado automaticamente pelo próprio
+ * sistema (leitura dos rótulos + linhas do PDF, sem IA — template-map-detect.ts)
  * quando um PDF novo sobe e pode ser ajustado visualmente no painel.
  * Coordenadas em pontos PDF, origem no canto superior-esquerdo.
  */
@@ -15,12 +16,12 @@ export type TemplateSchema = { codigo: string; nome: string; fields: FieldDef[];
 
 const RC_FIELDS: FieldDef[] = [
   { key: "data", label: "Data", kind: "text", hint: "espaço em branco à direita do rótulo 'DATA:' (linha da classificação)" },
-  { key: "numero", label: "Nº da requisição", kind: "text", hint: "espaço em branco após 'Nº DA REQUISIÇÃO:'" },
+  { key: "numero", label: "Nº do pedido", kind: "text", hint: "espaço em branco após 'Nº DO PEDIDO:'" },
   { key: "solicitante", label: "Solicitante", kind: "text", hint: "espaço em branco após 'SOLICITANTE:'" },
   { key: "setor", label: "Setor", kind: "text", hint: "espaço em branco após 'SETOR:'" },
   { key: "fornecedor", label: "Fornecedor", kind: "text", hint: "espaço em branco após 'FORNECEDOR:'" },
-  { key: "obra_construcao", label: "Obra em construção", kind: "text", hint: "espaço após 'OBRA EM CONSTRUÇÃO:'" },
-  { key: "obra_manutencao", label: "Obra em manutenção", kind: "text", hint: "espaço após 'OBRA EM MANUTENÇÃO:'" },
+  { key: "obra_construcao", label: "Obra em construção", kind: "text", hint: "espaço após 'OBRA CONSTRUÇÃO' ou o '( )' para marcar X" },
+  { key: "obra_manutencao", label: "Obra em manutenção", kind: "text", hint: "espaço após 'OBRA MANUTENÇÃO' ou o '( )' para marcar X" },
   { key: "chk_material", label: "( ) Material", kind: "check", hint: "parênteses vazios logo após a palavra 'MATERIAL'" },
   { key: "chk_servico", label: "( ) Serviço", kind: "check", hint: "parênteses vazios logo após a palavra 'SERVIÇO'" },
   { key: "row_first", label: "1ª linha de itens", kind: "row", hint: "primeira linha de dados da tabela de itens (linha 01), largura total da tabela" },
