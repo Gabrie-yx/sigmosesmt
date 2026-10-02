@@ -202,7 +202,7 @@ async function gerarPdfRequisicaoLegacy(
   drawSplitRow(
     "SOLICITANTE:",
     req.solicitante || "",
-    "Nº DA REQUISIÇÃO:",
+    "Nº DO PEDIDO:",
     req.numero || "",
   );
   drawSplitRow(
