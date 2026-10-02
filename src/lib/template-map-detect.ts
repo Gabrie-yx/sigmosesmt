@@ -410,9 +410,111 @@ export function detectFicha(pages: PageData[]): DetectResult {
   return finalizar("FOR-SEG-02", boxes, W, H);
 }
 
+/** Lista de Presença DDS (FOR-SEG-06): cabeçalho, grade numerada e 3 linhas de assinatura. */
+export function detectDDS(pages: PageData[]): DetectResult {
+  const P = pages[0];
+  const g = geo(P.raster, P.w);
+  const items = P.items;
+  const W = P.w, H = P.h;
+  const boxes: Record<string, Box> = {};
+  const find = (re: RegExp) => items.filter((it) => re.test(it.n)).sort((a, b) => a.y - b.y || a.x - b.x)[0];
+  const sameLine = (a: TextItem, b: TextItem) => Math.abs(a.y - b.y) < 3;
+  const cyOf = (it: TextItem) => it.y - it.h * 0.33;
+  const endOf = (it: TextItem, re: RegExp) => {
+    const m = re.exec(it.n);
+    if (!m) return it.x + it.w;
+    const e = m.index + m[0].length;
+    return e >= it.n.length ? it.x + it.w : it.x + (it.w * e) / it.n.length;
+  };
+  // Rótulo pode vir quebrado em vários itens ("LOCAL" "/" "SETOR:"): usa o item que termina com ":".
+  const label = (re: RegExp, last: RegExp, ref?: TextItem) => {
+    const a = items.filter((it) => re.test(it.n) && (!ref || sameLine(it, ref))).sort((p, q) => p.y - q.y || p.x - q.x)[0];
+    if (!a) return null;
+    const fim = items.filter((o) => sameLine(o, a) && o.x >= a.x && o.x < a.x + 90 && last.test(o.n)).sort((p, q) => p.x - q.x)[0] ?? a;
+    return { a, fim };
+  };
+  const labs: Array<[string, RegExp, RegExp]> = [
+    ["empresa", /^EMPRESA\s*:?/, /EMPRESA\s*:?$/],
+    ["local_setor", /^LOCAL\b/, /SETOR\s*:?$/],
+    ["data", /^DATA\s*:?$/, /DATA\s*:?$/],
+  ];
+  const yTitulo = find(/^NOME\b/)?.y ?? H * 0.2;
+  const found: Record<string, { a: TextItem; fim: TextItem }> = {};
+  const refEmp = find(/^EMPRESA\s*:?/);
+  for (const [k, re, last] of labs) {
+    const l = label(re, last, refEmp && refEmp.y < yTitulo ? refEmp : undefined);
+    if (l && l.a.y < yTitulo) found[k] = l;
+  }
+  const ordem = Object.entries(found).sort((a, b) => a[1].a.x - b[1].a.x);
+  for (let i = 0; i < ordem.length; i++) {
+    const [k, { a, fim }] = ordem[i];
+    const x0 = (fim === a ? endOf(a, /^[A-Z ]+\s*:?/) : fim.x + fim.w) + 3;
+    const cy = cyOf(a);
+    const nextX = ordem[i + 1]?.[1].a.x;
+    const limit = nextX ? nextX - 6 : W - 22;
+    const top = g.findH(cy, cy - 14, x0 + 1, x0 + 20) ?? cy - 6;
+    const bot = g.findH(cy, cy + 14, x0 + 1, x0 + 20) ?? cy + 6;
+    boxes[k] = { x: x0, top: top + 0.8, w: Math.max(20, limit - x0), h: Math.max(8, bot - top - 1.6) };
+  }
+
+  // Faixa dos códigos: à direita do título "...(CÓDIGO NO VERSO)".
+  const verso = find(/VERSO\)?$/);
+  if (verso) {
+    const cy = cyOf(verso);
+    const top = g.findH(cy, cy - 12, verso.x, verso.x + verso.w) ?? cy - 5;
+    const bot = g.findH(cy, cy + 12, verso.x, verso.x + verso.w) ?? cy + 5;
+    const x0 = verso.x + verso.w + 6;
+    const right = g.findV(x0, W, top + 1.5, bot - 1.5) ?? W - 22;
+    boxes.assuntos = { x: x0, top: top + 0.6, w: right - x0 - 3, h: Math.max(7, bot - top - 1.2) };
+  }
+
+  // Grade: números 1..N na primeira coluna.
+  const nums = items.filter((it) => /^\d{1,2}$/.test(it.n) && it.y > yTitulo && it.x < W * 0.1).sort((a, b) => a.y - b.y);
+  const seq: TextItem[] = [];
+  for (const it of nums) if (Number(it.n) === seq.length + 1) seq.push(it);
+  if (seq.length >= 2) {
+    const pitch = (seq[seq.length - 1].y - seq[0].y) / (seq.length - 1);
+    const nomeH = find(/^NOME\b/);
+    const sx0 = nomeH ? nomeH.x : seq[0].x + 20, sx1 = sx0 + 40;
+    const band = (it: TextItem) => {
+      const cy = cyOf(it);
+      return { top: g.findH(cy, cy - pitch * 0.9, sx0, sx1) ?? cy - pitch / 2, bot: g.findH(cy, cy + pitch * 0.9, sx0, sx1) ?? cy + pitch / 2 };
+    };
+    const r1 = band(seq[0]), rn = band(seq[seq.length - 1]);
+    const vs = g.allV(r1.top + 1.5, r1.bot - 1.5).filter((x) => x > 2 && x < W - 2);
+    if (vs.length >= 3) {
+      const tL = vs[0], tR = vs[vs.length - 1];
+      boxes.row_first = { x: tL, top: r1.top, w: tR - tL, h: r1.bot - r1.top };
+      boxes.row_last = { x: tL, top: rn.top, w: tR - tL, h: rn.bot - rn.top };
+      const cols: Array<[string, TextItem | undefined]> = [["col_nome", nomeH], ["col_funcao", find(/^FUNCAO$/)]];
+      for (const [k, it] of cols) {
+        if (!it) continue;
+        const cx = it.x + it.w / 2;
+        for (let i = 0; i + 1 < vs.length; i++) if (vs[i] <= cx && cx < vs[i + 1]) boxes[k] = { x: vs[i], top: r1.top, w: vs[i + 1] - vs[i], h: r1.bot - r1.top };
+      }
+    }
+  }
+
+  // Assinaturas: linha horizontal logo acima de cada rótulo.
+  const sigs: Array<[string, RegExp]> = [["sig_encarregado", /^ENCARREGADO\b/], ["sig_sesmt", /^SESMT$/], ["sig_gerente", /^GERENTE\b/]];
+  for (const [k, re] of sigs) {
+    const it = find(re);
+    if (!it || it.y < yTitulo) continue;
+    const cx = it.x + Math.min(it.w, 20) / 2;
+    const top0 = it.y - it.h;
+    const ly = g.findH(top0, top0 - 30, cx - 3, cx + 3, 0.9);
+    if (ly == null) continue;
+    const run = g.inkRuns(0, W, ly - 0.4, ly + 0.4).find(([a, b]) => a <= cx && cx <= b && b - a > 40);
+    const x0 = run ? run[0] : cx - 80, x1 = run ? run[1] : cx + 80;
+    boxes[k] = { x: x0, top: ly - 34, w: x1 - x0, h: 33 };
+  }
+  return finalizar("FOR-SEG-06", boxes, W, H);
+}
+
 const DETECTORES: Record<string, Detector> = {
   "FOR-SEG-03": (p) => detectRC(p[0].items, p[0].raster, p[0].w, p[0].h),
   "FOR-SEG-02": detectFicha,
+  "FOR-SEG-06": detectDDS,
 };
 
 export function temDetector(codigo: string) {

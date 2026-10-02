@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { gerarFormularioSemanalDDS } from "@/lib/dds-formulario-semanal-pdf";
+import { gerarListaPresencaDDS } from "@/lib/dds-lista-presenca-oficial";
 import { toast } from "sonner";
 import { FileDown } from "lucide-react";
 import { ImagePlus, X } from "lucide-react";
@@ -105,7 +105,7 @@ export function DDSFormularioSemanalDialog({ open, onClose }: { open: boolean; o
     return `${fmtBR(seg)} à ${fmtBRFull(sex)}`;
   }, [semanaSegunda]);
 
-  function gerar() {
+  async function gerar() {
     if (!companyId) return toast.error("Selecione a empresa");
     if (employees.length === 0) return toast.error("Empresa sem funcionários ativos");
     const temasSel = temaIds
@@ -114,7 +114,7 @@ export function DDSFormularioSemanalDialog({ open, onClose }: { open: boolean; o
       .map((t: any) => `${t.codigo ? t.codigo + "- " : ""}${t.titulo}`)
       .join(" / ");
     const assuntos = [temasSel, assuntosLivres.trim()].filter(Boolean).join(" / ");
-    const doc = gerarFormularioSemanalDDS({
+    const doc = await gerarListaPresencaDDS([{
       matrizNome, matrizCnpj, codigo, revisao, dataDocumento: dataDoc, pagina: "01/01",
       empresaNome: company?.name ?? "",
       empresaCnpj: company?.cnpj ?? "",
@@ -126,7 +126,7 @@ export function DDSFormularioSemanalDialog({ open, onClose }: { open: boolean; o
       encarregado, responsavelSesmt: sesmt,
       assinaturaResponsavelDataUrl: assinaturaUrl || null,
       assinaturaEncarregadoDataUrl: assinaturaEncUrl || null,
-    });
+    }]);
     const fname = `DDS_${(company?.name ?? "empresa").replace(/\s+/g, "_")}_${semanaSegunda}.pdf`;
     doc.save(fname);
     toast.success("Formulário gerado");

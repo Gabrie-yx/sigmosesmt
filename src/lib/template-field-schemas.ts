@@ -93,9 +93,24 @@ const FICHA_FIELDS: FieldDef[] = [
   { key: "p2_col_ass_receb", label: "Coluna Assinatura recebedor", kind: "col", hint: "", page: 2 },
 ];
 
+const DDS_FIELDS: FieldDef[] = [
+  { key: "empresa", label: "Empresa", kind: "text", hint: "após 'EMPRESA:' (cobre o nome impresso)" },
+  { key: "local_setor", label: "Local / Setor", kind: "text", hint: "após 'LOCAL / SETOR:'" },
+  { key: "data", label: "Data (semana)", kind: "text", hint: "após 'DATA:'" },
+  { key: "assuntos", label: "Códigos dos assuntos", kind: "text", hint: "faixa 'CÓDIGO DOS ASSUNTOS…', à direita do título" },
+  { key: "row_first", label: "1ª linha de funcionários", kind: "row", hint: "linha 1 da tabela" },
+  { key: "row_last", label: "Última linha de funcionários", kind: "row", hint: "última linha da tabela" },
+  { key: "col_nome", label: "Coluna Nome", kind: "col", hint: "" },
+  { key: "col_funcao", label: "Coluna Função", kind: "col", hint: "" },
+  { key: "sig_encarregado", label: "Assinatura encarregado", kind: "sig", hint: "acima da linha 'ENCARREGADO / DESIGNADO'" },
+  { key: "sig_sesmt", label: "Assinatura SESMT", kind: "sig", hint: "acima da linha 'SESMT'" },
+  { key: "sig_gerente", label: "Assinatura gerente", kind: "sig", hint: "acima da linha 'GERENTE DE CONTRATO'" },
+];
+
 export const TEMPLATE_SCHEMAS: Record<string, TemplateSchema> = {
   "FOR-SEG-03": { codigo: "FOR-SEG-03", nome: "Requisição de Compra", fields: RC_FIELDS, defaultMap: RC_DEFAULT, defaultMapRevisao: 1 },
   "FOR-SEG-02": { codigo: "FOR-SEG-02", nome: "Ficha de Entrega de EPI", fields: FICHA_FIELDS },
+  "FOR-SEG-06": { codigo: "FOR-SEG-06", nome: "Lista de Presença DDS", fields: DDS_FIELDS },
 };
 
 export function getTemplateSchema(codigo: string): TemplateSchema | null {
