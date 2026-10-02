@@ -21,7 +21,7 @@ const MAP = {
     obraConst:   { x: 118, c: 144, maxW: 162 },
     obraManut:   { x: 388, c: 144, maxW: 160 },
   },
-  check: { material: { cx: 179.5, cy: 84.2 }, servico: { cx: 230.5, cy: 84.2 } },
+  check: { material: { cx: 180.5, cy: 84.2 }, servico: { cx: 231.3, cy: 84.2 } },
   items: {
     firstC: 185, step: 20.52, perPage: 10,
     desc: { x: 52, maxW: 262 }, qtde: { x: 322.6, maxW: 46 },
