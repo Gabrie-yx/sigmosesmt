@@ -1,38 +1,11 @@
 import type jsPDF from "jspdf";
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage, type PDFImage } from "pdf-lib";
 import { loadTemplateBytes, getTemplateMeta } from "@/lib/pdf-overlay-engine";
+import { getTemplateSchema, isBoxMap, type BoxMap, type Box } from "@/lib/template-field-schemas";
 import type { RcPdfReq, RcPdfItem, RcPdfCotacao } from "./requisicao-compra-pdf";
 
 /** Código do PDF-mãe da RC no painel de Templates Homologados. */
 export const RC_TEMPLATE_CODIGO = "FOR-SEG-03";
-
-/**
- * Coordenadas medidas no PDF-mãe (página 554.4 x 513.1 pt).
- * `c` = centro vertical da linha, medido a partir do topo.
- * Se uma nova revisão mudar o layout, ajuste só aqui.
- */
-const MAP = {
-  header: {
-    data:        { x: 311, c: 84.2, maxW: 230 },
-    numero:      { x: 364, c: 105.1, maxW: 178 },
-    solicitante: { x: 72, c: 105.1, maxW: 205 },
-    setor:       { x: 46, c: 123.8, maxW: 230 },
-    fornecedor:  { x: 347, c: 123.8, maxW: 200 },
-    obraConst:   { x: 118, c: 144, maxW: 162 },
-    obraManut:   { x: 388, c: 144, maxW: 160 },
-  },
-  check: { material: { cx: 180.5, cy: 84.2 }, servico: { cx: 231.3, cy: 84.2 } },
-  items: {
-    firstC: 185, step: 20.52, perPage: 10,
-    desc: { x: 52, maxW: 262 }, qtde: { x: 322.6, maxW: 46 },
-    unid: { x: 373, maxW: 46 }, obs: { x: 425, maxW: 119 },
-  },
-  sig: {
-    boxes: [{ x: 10, w: 179 }, { x: 190, w: 178 }, { x: 370, w: 177 }],
-    top: 420, bottom: 470, dataC: 481.7,
-    dataX: [40, 220, 400],
-  },
-};
 
 function fmtBR(d?: string | null) {
   if (!d) return "";

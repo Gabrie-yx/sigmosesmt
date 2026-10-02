@@ -18,7 +18,12 @@ export type RenderOverlayInput = {
 
 const _cache = new Map<string, Uint8Array>();
 /** Metadados da revisão usada no render (pra estampar o selo do rodapé). */
-const _meta = new Map<string, { revisao: number; status: string; fonte: "painel" | "asset" }>();
+const _meta = new Map<string, { revisao: number; status: string; fonte: "painel" | "asset"; overlayMap?: unknown; overlayStatus?: string }>();
+
+/** Limpa o cache (ex.: após salvar novo mapeamento no painel). */
+export function clearTemplateCache(codigo?: string) {
+  if (codigo) { _cache.delete(codigo); _meta.delete(codigo); } else { _cache.clear(); _meta.clear(); }
+}
 
 export function getTemplateMeta(codigo: string) {
   return _meta.get(codigo) ?? null;
@@ -35,7 +40,7 @@ export async function loadTemplateBytes(codigo: string): Promise<Uint8Array> {
     const bytes = new Uint8Array(bin.length);
     for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
     _cache.set(codigo, bytes);
-    _meta.set(codigo, { revisao: res.revisao, status: res.status, fonte: "painel" });
+    _meta.set(codigo, { revisao: res.revisao, status: res.status, fonte: "painel", overlayMap: res.overlayMap, overlayStatus: res.overlayStatus });
     return bytes;
   } catch (e) {
     if (codigo === "FOR-SEG-04") {
