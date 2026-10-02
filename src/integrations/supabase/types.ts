@@ -4635,6 +4635,10 @@ export type Database = {
           origem_path: string | null
           origem_tamanho: number | null
           origem_tipo: string | null
+          overlay_atualizado_em: string | null
+          overlay_atualizado_por: string | null
+          overlay_map: Json | null
+          overlay_status: string
           revisao: number
           status: string
           tamanho_bytes: number | null
@@ -4658,6 +4662,10 @@ export type Database = {
           origem_path?: string | null
           origem_tamanho?: number | null
           origem_tipo?: string | null
+          overlay_atualizado_em?: string | null
+          overlay_atualizado_por?: string | null
+          overlay_map?: Json | null
+          overlay_status?: string
           revisao: number
           status?: string
           tamanho_bytes?: number | null
@@ -4681,6 +4689,10 @@ export type Database = {
           origem_path?: string | null
           origem_tamanho?: number | null
           origem_tipo?: string | null
+          overlay_atualizado_em?: string | null
+          overlay_atualizado_por?: string | null
+          overlay_map?: Json | null
+          overlay_status?: string
           revisao?: number
           status?: string
           tamanho_bytes?: number | null

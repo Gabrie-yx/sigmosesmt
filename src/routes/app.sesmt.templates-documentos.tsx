@@ -33,6 +33,11 @@ import {
 import { FileText, Upload, History, Download, FileDown, ShieldAlert, CheckCircle2, Archive, RotateCcw, AlertCircle, Trash2, Paperclip, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { hasOverlay } from "@/lib/pdf-overlay-maps";
+import { getTemplateSchema } from "@/lib/template-field-schemas";
+import { MapeamentoDialog, autoMapearVersao } from "@/components/templates/mapeamento-dialog";
+import { obterMapeamentoVersao, detectarMapeamentoIA, salvarMapeamentoVersao } from "@/lib/templates-documentos.functions";
+import { useEffect } from "react";
+import { Wand2 } from "lucide-react";
 
 export const Route = createFileRoute("/app/sesmt/templates-documentos")({
   component: TemplatesDocumentosPage,
@@ -140,6 +145,37 @@ function PainelInterno() {
   const [uploadFor, setUploadFor] = useState<any>(null);
   const [historyFor, setHistoryFor] = useState<any>(null);
   const [novoTemplate, setNovoTemplate] = useState<string | null>(null);
+  const [mapFor, setMapFor] = useState<{ versionId: string; codigo: string; revisao: number } | null>(null);
+  const obterMap = useServerFn(obterMapeamentoVersao);
+  const detectarMap = useServerFn(detectarMapeamentoIA);
+  const salvarMap = useServerFn(salvarMapeamentoVersao);
+  const autoTentados = useRef(new Set<string>());
+
+  // Alerta automático: revisão nova sem mapeamento → o próprio sistema remapeia com IA.
+  useEffect(() => {
+    for (const t of (templates ?? []) as any[]) {
+      const alvo = t.versao_em_homologacao ?? t.versao_atual;
+      if (!alvo || !getTemplateSchema(t.codigo)) continue;
+      if ((alvo.overlay_status ?? "PENDENTE") !== "PENDENTE" || autoTentados.current.has(alvo.id)) continue;
+      autoTentados.current.add(alvo.id);
+      const sch = getTemplateSchema(t.codigo)!;
+      if (sch.defaultMap && sch.defaultMapRevisao === alvo.revisao) {
+        // Revisão já medida e conferida manualmente: grava o mapa conhecido.
+        salvarMap({ data: { versionId: alvo.id, map: sch.defaultMap, status: "REVISADO" } })
+          .then(() => qcPainel.invalidateQueries({ queryKey: ["document-templates"] }))
+          .catch(() => {});
+        continue;
+      }
+      const tid = toast.loading(`Novo PDF em ${t.codigo} Rev.${String(alvo.revisao).padStart(2, "0")} — remapeando campos automaticamente…`);
+      autoMapearVersao(alvo.id, t.codigo, { obter: obterMap, detectar: detectarMap, salvar: salvarMap })
+        .then((r: any) => {
+          toast.success(`${t.codigo}: ${r?.detectados ?? 0} de ${r?.total ?? 0} campos mapeados pela IA. Revise em "Mapear campos".`, { id: tid });
+          qcPainel.invalidateQueries({ queryKey: ["document-templates"] });
+        })
+        .catch((e: any) => toast.error(`${t.codigo}: ${e?.message ?? "falha no remapeamento automático"}`, { id: tid }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [templates]);
 
   const grupos: Array<{ key: string; label: string; match: (c: string) => boolean; hint: string }> = [
     { key: "for-seg", label: "FOR-SEG (Segurança)", match: (c) => c.startsWith("FOR-SEG"), hint: "Formulários operacionais do SESMT — OS, PT, EPI, requisições." },
@@ -207,7 +243,18 @@ function PainelInterno() {
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-mono text-xs px-2 py-0.5 rounded bg-rose-500/20 text-rose-200 border border-rose-500/30">{t.codigo}</span>
                   <h3 className="font-semibold text-rose-50">{t.nome}</h3>
-                  {hasOverlay(t.codigo) ? (
+                  {getTemplateSchema(t.codigo) && (t.versao_em_homologacao ?? t.versao_atual) ? (
+                    (() => {
+                      const st = (t.versao_em_homologacao ?? t.versao_atual).overlay_status ?? "PENDENTE";
+                      return st === "REVISADO" ? (
+                        <Badge variant="outline" className="text-xs bg-emerald-500/20 text-emerald-200 border-emerald-500/30">Mapeamento revisado</Badge>
+                      ) : st === "AUTO" ? (
+                        <Badge variant="outline" className="text-xs bg-sky-500/20 text-sky-200 border-sky-500/30">Mapeado pela IA · revisar</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-xs bg-rose-500/30 text-rose-100 border-rose-400/50 gap-1"><AlertCircle className="w-3 h-3" /> Novo PDF · mapeamento pendente</Badge>
+                      );
+                    })()
+                  ) : hasOverlay(t.codigo) ? (
                     <Badge variant="outline" className="text-xs bg-emerald-500/20 text-emerald-200 border-emerald-500/30">
                       Overlay ativo
                     </Badge>
@@ -278,6 +325,19 @@ function PainelInterno() {
                     <Paperclip className="w-4 h-4 mr-1" /> Anexar original
                   </Button>
                 )}
+                {getTemplateSchema(t.codigo) && (t.versao_em_homologacao ?? t.versao_atual) && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-violet-300 border-violet-500/40"
+                    onClick={() => {
+                      const v = t.versao_em_homologacao ?? t.versao_atual;
+                      setMapFor({ versionId: v.id, codigo: t.codigo, revisao: v.revisao });
+                    }}
+                  >
+                    <Wand2 className="w-4 h-4 mr-1" /> Mapear campos
+                  </Button>
+                )}
                 {t.total_versoes > 0 && (
                   <Button size="sm" variant="outline" onClick={() => setHistoryFor(t)}>
                     <History className="w-4 h-4 mr-1" /> Histórico ({t.total_versoes})
@@ -299,6 +359,7 @@ function PainelInterno() {
       )}
 
       {uploadFor && <UploadDialog template={uploadFor} onClose={() => setUploadFor(null)} />}
+      {mapFor && <MapeamentoDialog {...mapFor} onClose={() => setMapFor(null)} />}
       {historyFor && <HistoryDialog template={historyFor} onClose={() => setHistoryFor(null)} />}
       {novoTemplate && (
         <NovoTemplateDialog

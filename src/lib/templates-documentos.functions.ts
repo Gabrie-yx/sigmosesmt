@@ -37,7 +37,7 @@ export const listarTemplates = createServerFn({ method: "GET" })
 
     const { data: versions } = await supabase
       .from("document_template_versions")
-      .select("id, template_id, revisao, status, uploaded_at, uploaded_by, motivo_alteracao, arquivo_hash, arquivo_nome, deleted_at, origem_nome, origem_tipo, origem_path")
+      .select("id, template_id, revisao, status, uploaded_at, uploaded_by, motivo_alteracao, arquivo_hash, arquivo_nome, deleted_at, origem_nome, origem_tipo, origem_path, overlay_status, overlay_atualizado_em")
       .is("deleted_at", null)
       .order("revisao", { ascending: false });
 
@@ -131,7 +131,7 @@ export const baixarTemplateAtivoPorCodigo = createServerFn({ method: "POST" })
 
     const { data: vs, error: vsErr } = await supabaseAdmin
       .from("document_template_versions")
-      .select("id, revisao, status, arquivo_path, arquivo_nome")
+      .select("id, revisao, status, arquivo_path, arquivo_nome, overlay_map, overlay_status")
       .eq("template_id", tpl.id)
       .is("deleted_at", null)
       .order("revisao", { ascending: false });
@@ -158,6 +158,9 @@ export const baixarTemplateAtivoPorCodigo = createServerFn({ method: "POST" })
       codigo: tpl.codigo,
       revisao: atual.revisao as number,
       status: atual.status as string,
+      versionId: atual.id as string,
+      overlayMap: ((atual as any).overlay_map ?? null) as any,
+      overlayStatus: ((atual as any).overlay_status ?? "PENDENTE") as string,
     };
   });
 
@@ -274,7 +277,7 @@ export const novaRevisaoTemplate = createServerFn({ method: "POST" })
       nota: `Rev.${String(proxima).padStart(2, "0")} enviada — motor de render precisa alinhar.`,
     });
 
-    return { ok: true, revisao: proxima };
+    return { ok: true, revisao: proxima, versionId: nova.id as string };
   });
 
 /* ---------- ANEXAR ORIGEM A REVISÃO EXISTENTE ---------- */
@@ -497,4 +500,176 @@ export const excluirVersaoDefinitivo = createServerFn({ method: "POST" })
     }
 
     return { ok: true };
+  });
+/* ---------- MAPEAMENTO DE CAMPOS (overlay) ---------- */
+const BoxSchema = z.object({ x: z.number(), top: z.number(), w: z.number().positive(), h: z.number().positive() });
+const BoxMapSchema = z.object({ pageW: z.number().positive(), pageH: z.number().positive(), boxes: z.record(z.string(), BoxSchema) });
+
+async function versaoComTemplate(supabaseAdmin: any, versionId: string) {
+  const { data: v, error } = await supabaseAdmin
+    .from("document_template_versions")
+    .select("id, template_id, revisao, overlay_map, overlay_status, document_templates(codigo)")
+    .eq("id", versionId)
+    .single();
+  if (error || !v) throw new Error("Revisão não encontrada.");
+  return v as any;
+}
+
+async function resolverPendencias(supabaseAdmin: any, versionId: string, userId: string) {
+  await supabaseAdmin
+    .from("document_template_pendencias")
+    .update({ resolvido_em: new Date().toISOString(), resolvido_por: userId })
+    .eq("version_id", versionId)
+    .is("resolvido_em", null);
+}
+
+export const obterMapeamentoVersao = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ versionId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const v = await versaoComTemplate(supabaseAdmin, data.versionId);
+    const { data: file, error } = await supabaseAdmin.storage
+      .from("templates-homologados")
+      .download((await supabaseAdmin.from("document_template_versions").select("arquivo_path").eq("id", data.versionId).single()).data!.arquivo_path);
+    if (error || !file) throw new Error("Falha ao baixar o PDF da revisão.");
+    const buf = new Uint8Array(await file.arrayBuffer());
+    let bin = "";
+    for (let i = 0; i < buf.length; i++) bin += String.fromCharCode(buf[i]);
+    return {
+      base64: btoa(bin),
+      codigo: v.document_templates?.codigo as string,
+      revisao: v.revisao as number,
+      overlayMap: v.overlay_map ?? null,
+      overlayStatus: (v.overlay_status ?? "PENDENTE") as string,
+    };
+  });
+
+export const salvarMapeamentoVersao = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({ versionId: z.string().uuid(), map: BoxMapSchema, status: z.enum(["AUTO", "REVISADO"]) }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("document_template_versions")
+      .update({
+        overlay_map: data.map,
+        overlay_status: data.status,
+        overlay_atualizado_em: new Date().toISOString(),
+        overlay_atualizado_por: context.userId,
+      })
+      .eq("id", data.versionId);
+    if (error) throw new Error(error.message);
+    if (data.status === "REVISADO") await resolverPendencias(supabaseAdmin, data.versionId, context.userId);
+    return { ok: true };
+  });
+
+const DetectSchema = z.object({
+  versionId: z.string().uuid(),
+  imageDataUrl: z.string().startsWith("data:image/").max(15_000_000),
+  pageW: z.number().positive(),
+  pageH: z.number().positive(),
+  fields: z.array(z.object({ key: z.string().max(60), label: z.string().max(120), hint: z.string().max(300) })).min(1).max(80),
+});
+
+/**
+ * Detecta automaticamente onde cada campo deve ser preenchido no PDF novo,
+ * olhando a imagem da página (IA de visão). Grava como overlay_status=AUTO.
+ */
+export const detectarMapeamentoIA = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => DetectSchema.parse(i))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const apiKey = process.env["LOVABLE_API_KEY"];
+    if (!apiKey) throw new Error("Serviço de IA não configurado.");
+
+    const lista = data.fields.map((f) => `- ${f.key}: ${f.label} — ${f.hint}`).join("\n");
+    const prompt =
+      "Esta é a imagem de um formulário PDF em branco. Para CADA campo abaixo, devolva a caixa onde o valor deve ser " +
+      "ESCRITO (área em branco, nunca sobre o texto do rótulo). Use coordenadas normalizadas 0-1000 relativas à imagem: " +
+      "[ymin, xmin, ymax, xmax]. Seja preciso com as linhas da tabela e bordas das células.\n\nCampos:\n" + lista;
+
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-pro",
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: prompt },
+              { type: "image_url", image_url: { url: data.imageDataUrl } },
+            ],
+          },
+        ],
+        tools: [
+          {
+            type: "function",
+            function: {
+              name: "salvar_caixas",
+              description: "Caixas de preenchimento detectadas",
+              parameters: {
+                type: "object",
+                properties: {
+                  caixas: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        key: { type: "string" },
+                        box: { type: "array", items: { type: "number" }, minItems: 4, maxItems: 4 },
+                      },
+                      required: ["key", "box"],
+                    },
+                  },
+                },
+                required: ["caixas"],
+              },
+            },
+          },
+        ],
+        tool_choice: { type: "function", function: { name: "salvar_caixas" } },
+      }),
+    });
+    if (res.status === 429) throw new Error("IA ocupada no momento — tente de novo em instantes.");
+    if (res.status === 402) throw new Error("Créditos de IA esgotados no workspace.");
+    if (!res.ok) throw new Error(`Falha na detecção automática (${res.status}).`);
+    const json: any = await res.json();
+    const args = json?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
+    if (!args) throw new Error("A IA não devolveu o mapeamento.");
+    const parsed = JSON.parse(args) as { caixas: Array<{ key: string; box: number[] }> };
+
+    const keys = new Set(data.fields.map((f) => f.key));
+    const boxes: Record<string, { x: number; top: number; w: number; h: number }> = {};
+    for (const c of parsed.caixas ?? []) {
+      if (!keys.has(c.key) || !Array.isArray(c.box) || c.box.length !== 4) continue;
+      const [ymin, xmin, ymax, xmax] = c.box.map((n) => Math.max(0, Math.min(1000, Number(n))));
+      if (!(xmax > xmin && ymax > ymin)) continue;
+      boxes[c.key] = {
+        x: +(xmin / 1000 * data.pageW).toFixed(1),
+        top: +(ymin / 1000 * data.pageH).toFixed(1),
+        w: +((xmax - xmin) / 1000 * data.pageW).toFixed(1),
+        h: +((ymax - ymin) / 1000 * data.pageH).toFixed(1),
+      };
+    }
+    const map = { pageW: data.pageW, pageH: data.pageH, boxes };
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin
+      .from("document_template_versions")
+      .update({
+        overlay_map: map,
+        overlay_status: "AUTO",
+        overlay_atualizado_em: new Date().toISOString(),
+        overlay_atualizado_por: context.userId,
+      })
+      .eq("id", data.versionId);
+
+    return { map, detectados: Object.keys(boxes).length, total: data.fields.length };
   });

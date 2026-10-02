@@ -1,38 +1,11 @@
 import type jsPDF from "jspdf";
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage, type PDFImage } from "pdf-lib";
 import { loadTemplateBytes, getTemplateMeta } from "@/lib/pdf-overlay-engine";
+import { getTemplateSchema, isBoxMap, type BoxMap, type Box } from "@/lib/template-field-schemas";
 import type { RcPdfReq, RcPdfItem, RcPdfCotacao } from "./requisicao-compra-pdf";
 
 /** Código do PDF-mãe da RC no painel de Templates Homologados. */
 export const RC_TEMPLATE_CODIGO = "FOR-SEG-03";
-
-/**
- * Coordenadas medidas no PDF-mãe (página 554.4 x 513.1 pt).
- * `c` = centro vertical da linha, medido a partir do topo.
- * Se uma nova revisão mudar o layout, ajuste só aqui.
- */
-const MAP = {
-  header: {
-    data:        { x: 311, c: 84.2, maxW: 230 },
-    numero:      { x: 364, c: 105.1, maxW: 178 },
-    solicitante: { x: 72, c: 105.1, maxW: 205 },
-    setor:       { x: 46, c: 123.8, maxW: 230 },
-    fornecedor:  { x: 347, c: 123.8, maxW: 200 },
-    obraConst:   { x: 118, c: 144, maxW: 162 },
-    obraManut:   { x: 388, c: 144, maxW: 160 },
-  },
-  check: { material: { cx: 180.5, cy: 84.2 }, servico: { cx: 231.3, cy: 84.2 } },
-  items: {
-    firstC: 185, step: 20.52, perPage: 10,
-    desc: { x: 52, maxW: 262 }, qtde: { x: 322.6, maxW: 46 },
-    unid: { x: 373, maxW: 46 }, obs: { x: 425, maxW: 119 },
-  },
-  sig: {
-    boxes: [{ x: 10, w: 179 }, { x: 190, w: 178 }, { x: 370, w: 177 }],
-    top: 420, bottom: 470, dataC: 481.7,
-    dataX: [40, 220, 400],
-  },
-};
 
 function fmtBR(d?: string | null) {
   if (!d) return "";
@@ -62,6 +35,28 @@ async function embedImage(pdf: PDFDocument, src?: string | null): Promise<PDFIma
   }
 }
 
+/**
+ * Usa o mapa salvo na revisão; escala se o tamanho da página for diferente.
+ * Sem mapa salvo, usa o padrão só se a página tiver o mesmo tamanho do PDF medido.
+ */
+export function resolveMap(saved: unknown, pageW: number, pageH: number): BoxMap {
+  const def = getTemplateSchema(RC_TEMPLATE_CODIGO)!.defaultMap!;
+  const sameAsDefault = Math.abs(def.pageW - pageW) < 1 && Math.abs(def.pageH - pageH) < 1;
+  const scale = (m: BoxMap): BoxMap => {
+    const sx = pageW / m.pageW, sy = pageH / m.pageH;
+    const boxes: Record<string, Box> = {};
+    for (const [k, b] of Object.entries(m.boxes)) boxes[k] = { x: b.x * sx, top: b.top * sy, w: b.w * sx, h: b.h * sy };
+    return { pageW, pageH, boxes };
+  };
+  if (isBoxMap(saved) && Object.keys(saved.boxes).length > 0) {
+    const m = scale(saved);
+    if (sameAsDefault) for (const [k, b] of Object.entries(def.boxes)) m.boxes[k] ??= b;
+    return m;
+  }
+  if (sameAsDefault) return def;
+  throw new Error("Revisão do FOR-SEG-03 sem mapeamento de campos — abra o painel de Templates.");
+}
+
 export async function gerarRcOverlayBytes(
   req: RcPdfReq,
   itens: RcPdfItem[],
@@ -75,8 +70,23 @@ export async function gerarRcOverlayBytes(
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
   const black = rgb(0, 0, 0);
 
+  // Mapa da revisão emitida (gerado por IA/ajustado no painel) → senão o padrão medido.
+  const pageSize = tpl.getPage(0).getSize();
+  const map = resolveMap(getTemplateMeta(RC_TEMPLATE_CODIGO)?.overlayMap, pageSize.width, pageSize.height);
+  const B = (k: string): Box | null => map.boxes[k] ?? null;
+
+  const rf = B("row_first"), rl = B("row_last");
+  let perPage = 10, step = 20.5, rowTop0 = 175, rowH = 20.5;
+  if (rf) {
+    rowTop0 = rf.top; rowH = rf.h;
+    if (rl && rl.top > rf.top) {
+      perPage = Math.max(1, Math.round((rl.top - rf.top) / rf.h) + 1);
+      step = perPage > 1 ? (rl.top - rf.top) / (perPage - 1) : rf.h;
+    } else { perPage = 1; step = rf.h; }
+  }
+
   const sorted = [...itens].sort((a, b) => (a.item_numero ?? 0) - (b.item_numero ?? 0));
-  const pages = Math.max(1, Math.ceil(sorted.length / MAP.items.perPage));
+  const pages = Math.max(1, Math.ceil(sorted.length / perPage));
 
   const [solImg, supImg] = await Promise.all([
     embedImage(pdf, req.signature_solicitante),
@@ -87,73 +97,77 @@ export async function gerarRcOverlayBytes(
     const [page] = await pdf.copyPages(tpl, [0]);
     pdf.addPage(page);
     const H = page.getHeight();
-    const txt = (pg: PDFPage, v: string | null | undefined, x: number, c: number, maxW: number, size = 8, f = font) => {
-      if (!v) return;
-      pg.drawText(fit(String(v), f, size, maxW), { x, y: H - c - size * 0.35, size, font: f, color: black });
+    const inBox = (v: string | null | undefined, b: Box | null, size = 8, f = font, c?: number) => {
+      if (!v || !b) return;
+      const cy = c ?? b.top + b.h / 2;
+      page.drawText(fit(String(v), f, size, b.w - 4), { x: b.x + 2, y: H - cy - size * 0.35, size, font: f, color: black });
     };
 
     // Cabeçalho
-    const h = MAP.header;
-    txt(page, fmtBR(req.data_requisicao), h.data.x, h.data.c, h.data.maxW);
-    txt(page, req.numero, h.numero.x, h.numero.c, h.numero.maxW, 8, bold);
-    txt(page, req.solicitante, h.solicitante.x, h.solicitante.c, h.solicitante.maxW);
-    txt(page, req.setor, h.setor.x, h.setor.c, h.setor.maxW);
-    txt(page, req.fornecedor, h.fornecedor.x, h.fornecedor.c, h.fornecedor.maxW);
-    txt(page, req.obra_construcao, h.obraConst.x, h.obraConst.c, h.obraConst.maxW);
-    txt(page, req.obra_manutencao, h.obraManut.x, h.obraManut.c, h.obraManut.maxW);
+    inBox(fmtBR(req.data_requisicao), B("data"));
+    inBox(req.numero, B("numero"), 8, bold);
+    inBox(req.solicitante, B("solicitante"));
+    inBox(req.setor, B("setor"));
+    inBox(req.fornecedor, B("fornecedor"));
+    inBox(req.obra_construcao, B("obra_construcao"));
+    inBox(req.obra_manutencao, B("obra_manutencao"));
 
-    const mark = req.classificacao === "SERVICO" ? MAP.check.servico : MAP.check.material;
-    const mw = bold.widthOfTextAtSize("X", 7);
-    page.drawText("X", { x: mark.cx - mw / 2, y: H - mark.cy - 2.4, size: 7, font: bold, color: black });
+    const mark = B(req.classificacao === "SERVICO" ? "chk_servico" : "chk_material");
+    if (mark) {
+      const size = Math.max(5, Math.min(8, mark.h));
+      const mw = bold.widthOfTextAtSize("X", size);
+      page.drawText("X", { x: mark.x + mark.w / 2 - mw / 2, y: H - (mark.top + mark.h / 2) - size * 0.35, size, font: bold, color: black });
+    }
 
     // Itens
-    const slice = sorted.slice(p * MAP.items.perPage, (p + 1) * MAP.items.perPage);
-    if (p > 0) {
+    const slice = sorted.slice(p * perPage, (p + 1) * perPage);
+    const colItem = B("col_item");
+    if (p > 0 && colItem) {
       // renumera a coluna ITEM nas páginas de continuação (11, 12, ...)
-      for (let i = 0; i < MAP.items.perPage; i++) {
-        const c = MAP.items.firstC + i * MAP.items.step;
-        page.drawRectangle({ x: 12, y: H - c - 6, width: 34, height: 12, color: rgb(1, 1, 1) });
-        txt(page, String(p * MAP.items.perPage + i + 1).padStart(2, "0"), 20, c, 24);
+      for (let i = 0; i < perPage; i++) {
+        const c = rowTop0 + i * step + rowH / 2;
+        page.drawRectangle({ x: colItem.x + 1.5, y: H - c - rowH / 2 + 1.5, width: colItem.w - 3, height: rowH - 3, color: rgb(1, 1, 1) });
+        const t = String(p * perPage + i + 1).padStart(2, "0");
+        page.drawText(t, { x: colItem.x + colItem.w / 2 - font.widthOfTextAtSize(t, 8) / 2, y: H - c - 2.8, size: 8, font, color: black });
       }
     }
     slice.forEach((it, i) => {
-      const c = MAP.items.firstC + i * MAP.items.step;
-      const m = MAP.items;
-      txt(page, it.descricao, m.desc.x, c, m.desc.maxW);
-      txt(page, it.quantidade != null ? String(it.quantidade) : "", m.qtde.x, c, m.qtde.maxW);
-      txt(page, it.unidade, m.unid.x, c, m.unid.maxW);
-      txt(page, it.observacao, m.obs.x, c, m.obs.maxW, 7);
+      const c = rowTop0 + i * step + rowH / 2;
+      inBox(it.descricao, B("col_desc"), 8, font, c);
+      inBox(it.quantidade != null ? String(it.quantidade) : "", B("col_qtde"), 8, font, c);
+      inBox(it.unidade, B("col_unid"), 8, font, c);
+      inBox(it.observacao, B("col_obs"), 7, font, c);
     });
 
     // Assinaturas
-    const s = MAP.sig;
-    const drawSig = (img: PDFImage | null, idx: number, nome?: string | null) => {
-      const b = s.boxes[idx];
-      const areaH = s.bottom - s.top - (nome ? 8 : 0);
+    const drawSig = (img: PDFImage | null, b: Box | null, nome?: string | null) => {
+      if (!b) return;
+      const areaH = b.h - (nome ? 8 : 0);
       if (img) {
         const scale = Math.min((b.w - 20) / img.width, areaH / img.height);
         const w = img.width * scale, hh = img.height * scale;
-        page.drawImage(img, { x: b.x + (b.w - w) / 2, y: H - s.top - areaH + (areaH - hh) / 2, width: w, height: hh });
+        page.drawImage(img, { x: b.x + (b.w - w) / 2, y: H - b.top - areaH + (areaH - hh) / 2, width: w, height: hh });
       }
       if (nome) {
         const t = fit(nome, font, 6.5, b.w - 8);
-        page.drawText(t, { x: b.x + (b.w - font.widthOfTextAtSize(t, 6.5)) / 2, y: H - s.bottom + 1, size: 6.5, font, color: black });
+        page.drawText(t, { x: b.x + (b.w - font.widthOfTextAtSize(t, 6.5)) / 2, y: H - b.top - b.h + 1, size: 6.5, font, color: black });
       }
     };
-    drawSig(solImg, 0, req.solicitante);
-    txt(page, solImg ? fmtBR(req.data_requisicao) : "", s.dataX[0], s.dataC, 120);
+    drawSig(solImg, B("sig_solicitante"), req.solicitante);
+    if (solImg) inBox(fmtBR(req.data_requisicao), B("data_solicitante"));
     if (supImg || req.decidido_por_nome) {
-      drawSig(supImg, 1, req.decidido_por_nome);
-      txt(page, fmtBR(req.decidido_em), s.dataX[1], s.dataC, 120);
+      drawSig(supImg, B("sig_supervisor"), req.decidido_por_nome);
+      inBox(fmtBR(req.decidido_em), B("data_supervisor"));
     }
     if (req.cotador_nome) {
-      drawSig(null, 2, req.cotador_nome);
-      txt(page, fmtBR(req.cotacao_at), s.dataX[2], s.dataC, 120);
+      drawSig(null, B("sig_compras"), req.cotador_nome);
+      inBox(fmtBR(req.cotacao_at), B("data_compras"));
     }
 
-    // Status + paginação + selo
-    txt(page, `STATUS: ${statusLabel.toUpperCase()}`, 10, 498, 300, 6.5, bold);
-    if (pages > 1) txt(page, `Pág. ${p + 1}/${pages}`, 500, 498, 50, 6.5);
+    // Status + paginação
+    const footY = 15;
+    page.drawText(fit(`STATUS: ${statusLabel.toUpperCase()}`, bold, 6.5, 300), { x: 10, y: footY, size: 6.5, font: bold, color: black });
+    if (pages > 1) page.drawText(`Pág. ${p + 1}/${pages}`, { x: page.getWidth() - 50, y: footY, size: 6.5, font, color: black });
   }
 
   // Página complementar: indeferimento e cotações
