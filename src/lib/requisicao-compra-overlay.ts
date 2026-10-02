@@ -2,6 +2,7 @@ import type jsPDF from "jspdf";
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFImage } from "pdf-lib";
 import { loadTemplateBytes, getTemplateMeta, clearTemplateCache } from "@/lib/pdf-overlay-engine";
 import { getTemplateSchema, isBoxMap, type BoxMap, type Box } from "@/lib/template-field-schemas";
+import { detectarMapaPdf } from "@/lib/template-map-detect";
 import type { RcPdfReq, RcPdfItem, RcPdfCotacao } from "./requisicao-compra-pdf";
 
 /** Código do PDF-mãe da RC no painel de Templates Homologados. */
@@ -108,14 +109,34 @@ export async function gerarRcOverlayBytes(
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
   const black = rgb(0, 0, 0);
 
-  // Mapa da revisão emitida (gerado por IA/ajustado no painel) → senão o padrão medido.
+  // Mapa salvo da revisão emitida → senão o próprio sistema lê o PDF e mapeia na hora (sem IA).
   const pageSize = tpl.getPage(0).getCropBox();
-  const map = resolveMap(getTemplateMeta(RC_TEMPLATE_CODIGO)?.overlayMap, pageSize.width, pageSize.height);
+  const detectarAgora = async () =>
+    resolveMap((await detectarMapaPdf(RC_TEMPLATE_CODIGO, tplBytes)).map, pageSize.width, pageSize.height);
+  let map: BoxMap;
+  let usouSalvo = true;
+  try {
+    map = resolveMap(getTemplateMeta(RC_TEMPLATE_CODIGO)?.overlayMap, pageSize.width, pageSize.height);
+  } catch {
+    map = await detectarAgora();
+    usouSalvo = false;
+  }
+  const linhas = async (m: BoxMap) => {
+    const rf = m.boxes["row_first"], rl = m.boxes["row_last"];
+    if (!rf || !rl || !m.boxes["col_item"]) throw new Error("Mapeamento das linhas da requisição incompleto.");
+    return lerCentrosLinhas(tplBytes, rf, rl);
+  };
+  let centros: number[];
+  try {
+    centros = await linhas(map);
+  } catch (e) {
+    // Mapa salvo não bate com o PDF (ex.: arrastado errado): o sistema remapeia sozinho.
+    if (!usouSalvo) throw e;
+    map = await detectarAgora();
+    centros = await linhas(map);
+  }
   const B = (k: string): Box | null => map.boxes[k] ?? null;
-
-  const rf = B("row_first"), rl = B("row_last"), colItem = B("col_item");
-  if (!rf || !rl || !colItem) throw new Error("Mapeamento das linhas da requisição incompleto.");
-  const centros = await lerCentrosLinhas(tplBytes, rf, rl);
+  const rf = B("row_first")!, rl = B("row_last")!, colItem = B("col_item")!;
   const perPage = centros.length;
 
   const sorted = [...itens].sort((a, b) => (a.item_numero ?? 0) - (b.item_numero ?? 0));
@@ -146,8 +167,17 @@ export async function gerarRcOverlayBytes(
     inBox(req.solicitante, B("solicitante"));
     inBox(req.setor, B("setor"));
     inBox(req.fornecedor, B("fornecedor"));
-    inBox(req.obra_construcao, B("obra_construcao"));
-    inBox(req.obra_manutencao, B("obra_manutencao"));
+    // Revisões novas trazem "( )" para obra: marca X; antigas têm espaço para escrever.
+    const textoOuX = (v: string | null | undefined, b: Box | null) => {
+      if (!b || !v?.trim()) return;
+      if (b.w <= 25 && b.h <= 12) {
+        const size = Math.max(5, Math.min(8, b.h));
+        const mw = bold.widthOfTextAtSize("X", size);
+        page.drawText("X", { x: X(b.x + b.w / 2 - mw / 2), y: Y(b.top + b.h / 2) - size * 0.35, size, font: bold, color: black });
+      } else inBox(v, b);
+    };
+    textoOuX(req.obra_construcao, B("obra_construcao"));
+    textoOuX(req.obra_manutencao, B("obra_manutencao"));
 
     const mark = B(req.classificacao === "SERVICO" ? "chk_servico" : "chk_material");
     if (mark) {

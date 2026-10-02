@@ -299,6 +299,9 @@ export async function detectarMapaPdf(codigo: string, bytes: Uint8Array): Promis
       const h = it.height || Math.hypot(it.transform[2], it.transform[3]) || 10;
       items.push({ str: it.str, n: normTxt(it.str), x, y, w: it.width, h });
     }
+    if (items.length < 5) {
+      throw new Error("Este PDF não tem texto legível (parece imagem/escaneado). Exporte o formulário direto do Excel/Word como PDF e suba de novo.");
+    }
     const S = 3;
     const vp = page.getViewport({ scale: S });
     const canvas = document.createElement("canvas");

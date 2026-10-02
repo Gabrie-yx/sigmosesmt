@@ -248,7 +248,7 @@ function PainelInterno() {
                       return st === "REVISADO" ? (
                         <Badge variant="outline" className="text-xs bg-emerald-500/20 text-emerald-200 border-emerald-500/30">Mapeamento revisado</Badge>
                       ) : st === "AUTO" ? (
-                        <Badge variant="outline" className="text-xs bg-sky-500/20 text-sky-200 border-sky-500/30">Mapeado pela IA · revisar</Badge>
+                        <Badge variant="outline" className="text-xs bg-sky-500/20 text-sky-200 border-sky-500/30">Mapeado automaticamente · revisar</Badge>
                       ) : (
                         <Badge variant="outline" className="text-xs bg-rose-500/30 text-rose-100 border-rose-400/50 gap-1"><AlertCircle className="w-3 h-3" /> Novo PDF · mapeamento pendente</Badge>
                       );
