@@ -87,8 +87,9 @@ export function EmpresaStatusDialog({ company, ativosCount, open, onClose }: Pro
 
   const excluir = useMutation({
     mutationFn: async () => {
-      const { error } = await (supabase as any).rpc("excluir_empresa_permanente", {
+      const { error } = await (supabase as any).rpc("excluir_empresa_completa", {
         _company_id: company.id,
+        _confirmacao: confirmacao.trim(),
         _justificativa: motivo.trim(),
       });
       if (error) throw error;
@@ -101,7 +102,8 @@ export function EmpresaStatusDialog({ company, ativosCount, open, onClose }: Pro
     onError: (e: any) => toast.error(e.message || "Falha ao excluir empresa"),
   });
 
-  const podeExcluir = isAdmin && isDesativada;
+  const podeExcluir = isAdmin;
+  const nomeConfere = confirmacao.trim().toUpperCase() === company.name.trim().toUpperCase();
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && fechar()}>
@@ -128,8 +130,10 @@ export function EmpresaStatusDialog({ company, ativosCount, open, onClose }: Pro
               </div>
               <ul className="list-disc ml-5 space-y-0.5">
                 <li>A empresa é apagada de forma permanente</li>
-                <li><strong>Todos os funcionários vinculados a ela são apagados</strong> junto</li>
-                <li>Não há como desfazer — use apenas para cadastros errados ou de teste</li>
+                <li><strong>Todos os funcionários</strong> dela são apagados junto</li>
+                <li><strong>Tudo vinculado</strong> some: PT, APR, EPIs e fichas, OS, exames/ASO, atestados, treinamentos, integrações, DDS, acidentes, NCs, planos de ação, inspeções, PPP, hora extra, saídas, portaria, CIPA, documentos</li>
+                <li>Cascos/obras não são apagados — só perdem o vínculo com a empresa</li>
+                <li>Não há como desfazer. Se algo falhar no meio, nada é apagado</li>
                 <li>Fica registrado no histórico de auditoria (quem excluiu e por quê)</li>
               </ul>
             </div>
@@ -200,8 +204,8 @@ export function EmpresaStatusDialog({ company, ativosCount, open, onClose }: Pro
 
           {modoExcluir && (
             <div className="space-y-1.5">
-              <Label>Digite <span className="font-black">EXCLUIR</span> para confirmar *</Label>
-              <Input value={confirmacao} onChange={(e) => setConfirmacao(e.target.value)} placeholder="EXCLUIR" />
+              <Label>Digite o nome da empresa <span className="font-black">{company.name}</span> para confirmar *</Label>
+              <Input value={confirmacao} onChange={(e) => setConfirmacao(e.target.value)} placeholder={company.name} />
             </div>
           )}
         </div>
@@ -229,8 +233,8 @@ export function EmpresaStatusDialog({ company, ativosCount, open, onClose }: Pro
             {modoExcluir ? (
               <Button
                 variant="destructive"
-                onClick={() => excluir.mutate()}
-                disabled={excluir.isPending || motivo.trim().length < 10 || confirmacao.trim().toUpperCase() !== "EXCLUIR"}
+                onClick={() => { if (window.confirm(`ÚLTIMO AVISO: apagar ${company.name} e TUDO vinculado a ela, para sempre?`)) excluir.mutate(); }}
+                disabled={excluir.isPending || motivo.trim().length < 10 || !nomeConfere}
               >
                 {excluir.isPending ? "Excluindo…" : "Excluir para sempre"}
               </Button>
