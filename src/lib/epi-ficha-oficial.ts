@@ -299,7 +299,14 @@ export async function buildFichaOficialBytes(
         putBox(p1, B("empresa"), e.empresa, bold);
         putBox(p1, B("admissao"), brDate(e.admissao), font);
         putBox(p1, B("nome"), e.nome, bold);
-        if (e.demissao) putBox(p1, B("demissao"), brDate(e.demissao), font, { center: true });
+        if (e.demissao) {
+          // Lacuna impressa "____/____/_____" (4+1+4+1+5 caracteres): cada parte no seu espaço.
+          const [d, m, a] = brDate(e.demissao).split("/");
+          const b = B("demissao"), u = b.w / 15;
+          putBox(p1, { ...b, x: b.x, w: u * 4 }, d, font, { center: true });
+          putBox(p1, { ...b, x: b.x + u * 5, w: u * 4 }, m, font, { center: true });
+          putBox(p1, { ...b, x: b.x + u * 10, w: u * 5 }, a, font, { center: true });
+        }
         putBox(p1, B("funcao"), e.funcao, font);
         putBox(p1, B("matricula"), e.matricula, font);
         putBox(p1, B("folha"), `${c + 1}/${chunks.length}`, font);
