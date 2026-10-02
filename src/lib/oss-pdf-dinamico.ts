@@ -53,5 +53,5 @@ export async function buildOssPdfDinamico(emissaoId: string) {
     episCatalog,
     assinaturaColaboradorDataUrl: e.employees?.assinatura_url ?? null,
   } as any);
-  return { doc, name: `OS-${e.cargo_snapshot}-${e.employees?.nome ?? "func"}.pdf` };
+  return { doc, name: `OS - ${e.employees?.nome ?? "Funcionario"}.pdf` };
 }
