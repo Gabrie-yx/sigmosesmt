@@ -25,7 +25,7 @@ function fit(t: string, f: PDFFont, size: number, maxW: number) {
 }
 
 /** Lê os números impressos na coluna ITEM: cada linha pode ter altura diferente. */
-async function lerCentrosLinhas(bytes: Uint8Array, coluna: Box, primeira: Box, ultima: Box): Promise<number[]> {
+async function lerCentrosLinhas(bytes: Uint8Array, primeira: Box, ultima: Box): Promise<number[]> {
   const pdfjs = await import("pdfjs-dist");
   // @ts-ignore — Vite entrega o worker como URL na versão usada pelo projeto.
   const workerUrl = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
@@ -38,7 +38,9 @@ async function lerCentrosLinhas(bytes: Uint8Array, coluna: Box, primeira: Box, u
     const numeros = content.items.flatMap((item) => {
       if (!("str" in item) || !/^\d{1,3}$/.test(item.str.trim())) return [];
       const [x, y] = viewport.convertToViewportPoint(item.transform[4], item.transform[5]);
-      if (x < coluna.x - 2 || x > coluna.x + coluna.w + 2 || y < primeira.top || y > ultima.top + ultima.h + 4) return [];
+      // A coluna ITEM pode ter sido arrastada incorretamente pelo usuário;
+      // os números impressos continuam no primeiro trecho da tabela.
+      if (x < primeira.x - 2 || x > primeira.x + 75 || y < primeira.top || y > ultima.top + ultima.h + 4) return [];
       return [{ n: Number(item.str.trim()), y }];
     }).sort((a, b) => a.n - b.n);
     if (numeros.length < 2 || numeros[0].n !== 1 || numeros.some((v, i) => v.n !== i + 1) || (numeros.at(-1)?.y ?? 0) < ultima.top) {
@@ -105,7 +107,7 @@ export async function gerarRcOverlayBytes(
 
   const rf = B("row_first"), rl = B("row_last"), colItem = B("col_item");
   if (!rf || !rl || !colItem) throw new Error("Mapeamento das linhas da requisição incompleto.");
-  const centros = await lerCentrosLinhas(tplBytes, colItem, rf, rl);
+  const centros = await lerCentrosLinhas(tplBytes, rf, rl);
   const perPage = centros.length;
 
   const sorted = [...itens].sort((a, b) => (a.item_numero ?? 0) - (b.item_numero ?? 0));
