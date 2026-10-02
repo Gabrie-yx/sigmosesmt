@@ -149,6 +149,24 @@ export function refineMap(map: BoxMap, fields: FieldDef[], r: Raster): BoxMap {
       out[f.key] = b;
     }
   }
+  // Dois campos de texto na mesma célula = IA confundiu a linha.
+  // O primeiro na ordem de leitura fica; o seguinte desce para a próxima célula livre.
+  const textos = fields.filter((f) => f.kind === "text");
+  const overlap = (a: Box, b: Box) =>
+    Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x) > 10 && Math.min(a.top + a.h, b.top + b.h) - Math.max(a.top, b.top) > 4;
+  for (let i = 0; i < textos.length; i++) {
+    for (let j = 0; j < i; j++) {
+      const a = out[textos[j].key], b = out[textos[i].key];
+      if (!a || !b || !overlap(a, b)) continue;
+      for (let tries = 0; tries < 3; tries++) {
+        const cur = out[textos[i].key];
+        const next = afterLabel(snapCell({ x: cur.x, top: cur.top + cur.h + 2, w: cur.w, h: cur.h }));
+        out[textos[i].key] = next;
+        if (!textos.some((f, k) => k !== i && out[f.key] && overlap(out[f.key], next))) break;
+      }
+    }
+  }
+
   // colunas da tabela ficam na altura exata da 1ª linha
   const rf = out["row_first"];
   if (rf) for (const f of fields) if (f.kind === "col" && out[f.key]) out[f.key] = { ...out[f.key], top: rf.top, h: rf.h };
