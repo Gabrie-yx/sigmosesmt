@@ -30,7 +30,8 @@ async function lerCentrosLinhas(bytes: Uint8Array, primeira: Box, ultima: Box): 
   // @ts-ignore — Vite entrega o worker como URL na versão usada pelo projeto.
   const workerUrl = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
   pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
-  const doc = await pdfjs.getDocument({ data: bytes.slice() }).promise;
+  const task = pdfjs.getDocument({ data: bytes.slice() });
+  const doc = await task.promise;
   try {
     const page = await doc.getPage(1);
     const viewport = page.getViewport({ scale: 1 });
@@ -50,7 +51,7 @@ async function lerCentrosLinhas(bytes: Uint8Array, primeira: Box, ultima: Box): 
     // linhas vêm do próprio PDF, sem presumir altura uniforme ou contar por h.
     return numeros.map((v) => primeira.top + primeira.h / 2 + v.y - numeros[0].y);
   } finally {
-    doc.destroy();
+    await task.destroy();
   }
 }
 
