@@ -519,20 +519,31 @@ function RequisicoesPage() {
 
   const mesSel = grupos.find((g) => g.label === mesAberto) ?? null;
 
-  const renderLinha = (r: Req) => (
+  const renderLinha = (r: Req, dia?: { label: string; semana: string }) => (
     <div
       key={r.id}
       className={`rounded-xl border border-white/15 bg-white/5 backdrop-blur-xl shadow-lg hover:shadow-xl hover:border-cyan-300/40 hover:bg-white/10 transition-all flex flex-col ${
         r.status === "PENDENTE" ? "animate-pulse-amber border-amber-300/70" : ""
       }`}
     >
-      {/* Cabeçalho: número + status */}
-      <div className="flex items-start justify-between gap-2 flex-wrap px-3.5 pt-3">
+      {/* Chip de data do dia */}
+      {dia && (
+        <div className="flex items-center gap-1.5 px-3.5 pt-3 text-[10px] font-black uppercase tracking-widest text-cyan-200/90">
+          <CalendarDays className="h-3 w-3 shrink-0" aria-hidden />
+          <span className="truncate">
+            {dia.label}
+            {dia.semana && dia.semana !== "Revisar cadastro" ? ` · ${dia.semana}` : ""}
+          </span>
+        </div>
+      )}
+
+      {/* Cabeçalho: número + título (truncado) + status */}
+      <div className="flex items-start justify-between gap-2 px-3.5 pt-2.5">
         <div className="min-w-0">
           <span className="font-black text-white text-sm leading-tight">Nº {r.numero}</span>
           {r.titulo && (
-            <span className="font-semibold text-rose-300 ml-1.5 text-sm">
-              — {r.titulo}
+            <span className="block truncate font-semibold text-rose-300 text-xs mt-0.5">
+              {r.titulo}
             </span>
           )}
         </div>
@@ -632,7 +643,7 @@ function RequisicoesPage() {
       )}
 
       {/* Rodapé de ações: documentos à esquerda, decisões à direita */}
-      <div className="mt-auto pt-3 pb-3.5 px-3.5 mt-3 border-t border-white/10 flex items-center justify-between gap-2 flex-wrap">
+      <div className="mt-auto pt-2.5 pb-3 px-3.5 mt-3 border-t border-white/10 flex flex-wrap items-center gap-1.5">
         <div className="flex items-center gap-1.5 flex-wrap">
           {r.classificacao === "MEDICAMENTOS" ? (
             <>
@@ -642,10 +653,10 @@ function RequisicoesPage() {
             </>
           ) : (
             <>
-              <Button size="sm" variant="outline" className="border-white/20 bg-white/5 text-slate-200 hover:bg-white/10 hover:text-white h-8 px-2.5 text-xs" onClick={() => emitirPdf(r, "print")}>
+              <Button size="sm" variant="outline" title="Imprimir" className="border-white/20 bg-white/5 text-slate-200 hover:bg-white/10 hover:text-white h-7 px-2.5 text-[11px]" onClick={() => emitirPdf(r, "print")}>
                 <Printer className="h-3.5 w-3.5 mr-1" /> Imprimir
               </Button>
-              <Button size="sm" variant="outline" className="border-white/20 bg-white/5 text-slate-200 hover:bg-white/10 hover:text-white h-8 px-2.5 text-xs" onClick={() => emitirPdf(r, "preview")}>
+              <Button size="sm" variant="outline" title="Visualizar / baixar PDF" className="border-white/20 bg-white/5 text-slate-200 hover:bg-white/10 hover:text-white h-7 px-2.5 text-[11px]" onClick={() => emitirPdf(r, "preview")}>
                 <Printer className="h-3.5 w-3.5 mr-1" /> PDF
               </Button>
               <ViewBtn req={r} />
@@ -653,12 +664,12 @@ function RequisicoesPage() {
             </>
           )}
         </div>
-        <div className="flex items-center gap-1.5 flex-wrap">
+        <div className="flex items-center gap-1.5 flex-wrap ml-auto">
           {isEditor && (r.status === "PENDENTE" || r.status === "COTADA") && (
             <>
               <Button
                 size="sm"
-                className="bg-emerald-600 hover:bg-emerald-700 h-8 px-2.5 text-xs"
+                className="bg-emerald-600 hover:bg-emerald-700 h-7 px-2.5 text-[11px]"
                 onClick={() => updateStatus.mutate({ id: r.id, status: "APROVADA" })}
               >
                 <Check className="h-3.5 w-3.5 mr-1" /> Deferir
@@ -673,7 +684,7 @@ function RequisicoesPage() {
             <ReabrirRcBtn rcId={r.id} numero={r.numero} statusAtual={r.status} />
           )}
           {isEditor && (
-            <Button size="sm" variant="ghost" className="text-slate-300 hover:bg-white/10 hover:text-white h-8 w-8 p-0" onClick={() => {
+            <Button size="sm" variant="ghost" title="Excluir requisição" className="text-slate-300 hover:bg-white/10 hover:text-white h-7 w-7 p-0" onClick={() => {
               if (confirm(`Excluir requisição ${r.numero}?`)) delReq.mutate(r.id);
             }}>
               <Trash2 className="h-3.5 w-3.5 text-rose-400" />
@@ -797,24 +808,13 @@ function RequisicoesPage() {
               </span>
             </DialogTitle>
           </DialogHeader>
-          <div className="flex-1 overflow-auto pr-1 space-y-5 py-2">
-            {(mesSel?.dias ?? []).map((dia) => (
-              <div key={dia.label} className="space-y-2">
-                <div className="flex items-center gap-3">
-                  <span className="text-[11px] font-black uppercase tracking-widest text-white bg-white/10 ring-1 ring-white/15 px-2.5 py-1 rounded-md backdrop-blur">
-                    {dia.label}
-                  </span>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-300 capitalize">{dia.semana}</span>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-amber-200/90 bg-white/10 ring-1 ring-white/15 px-2 py-0.5 rounded">
-                    {dia.itens.length} {dia.itens.length === 1 ? "RC" : "RCs"}
-                  </span>
-                  <div className="h-px flex-1 bg-white/10" />
-                </div>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {dia.itens.map(renderLinha)}
-                </div>
-              </div>
-            ))}
+          {/* Requisições do mês em fluxo contínuo de 2 colunas; a data vai no chip do card */}
+          <div className="flex-1 overflow-auto pr-1 py-2">
+            <div className="grid gap-3 items-start md:grid-cols-2">
+              {(mesSel?.dias ?? []).flatMap((dia) =>
+                dia.itens.map((r) => renderLinha(r, dia))
+              )}
+            </div>
           </div>
         </DialogContent>
       </Dialog>
