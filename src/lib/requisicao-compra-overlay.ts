@@ -35,6 +35,28 @@ async function embedImage(pdf: PDFDocument, src?: string | null): Promise<PDFIma
   }
 }
 
+/**
+ * Usa o mapa salvo na revisão; escala se o tamanho da página for diferente.
+ * Sem mapa salvo, usa o padrão só se a página tiver o mesmo tamanho do PDF medido.
+ */
+export function resolveMap(saved: unknown, pageW: number, pageH: number): BoxMap {
+  const def = getTemplateSchema(RC_TEMPLATE_CODIGO)!.defaultMap!;
+  const sameAsDefault = Math.abs(def.pageW - pageW) < 1 && Math.abs(def.pageH - pageH) < 1;
+  const scale = (m: BoxMap): BoxMap => {
+    const sx = pageW / m.pageW, sy = pageH / m.pageH;
+    const boxes: Record<string, Box> = {};
+    for (const [k, b] of Object.entries(m.boxes)) boxes[k] = { x: b.x * sx, top: b.top * sy, w: b.w * sx, h: b.h * sy };
+    return { pageW, pageH, boxes };
+  };
+  if (isBoxMap(saved) && Object.keys(saved.boxes).length > 0) {
+    const m = scale(saved);
+    if (sameAsDefault) for (const [k, b] of Object.entries(def.boxes)) m.boxes[k] ??= b;
+    return m;
+  }
+  if (sameAsDefault) return def;
+  throw new Error("Revisão do FOR-SEG-03 sem mapeamento de campos — abra o painel de Templates.");
+}
+
 export async function gerarRcOverlayBytes(
   req: RcPdfReq,
   itens: RcPdfItem[],
@@ -143,7 +165,7 @@ export async function gerarRcOverlayBytes(
     }
 
     // Status + paginação
-    const footY = H - 15;
+    const footY = 15;
     page.drawText(fit(`STATUS: ${statusLabel.toUpperCase()}`, bold, 6.5, 300), { x: 10, y: footY, size: 6.5, font: bold, color: black });
     if (pages > 1) page.drawText(`Pág. ${p + 1}/${pages}`, { x: page.getWidth() - 50, y: footY, size: 6.5, font, color: black });
   }
