@@ -522,149 +522,164 @@ function RequisicoesPage() {
   const renderLinha = (r: Req) => (
     <div
       key={r.id}
-      className={`rounded-xl border border-white/15 bg-white/5 backdrop-blur-xl p-3 shadow-lg hover:shadow-xl hover:border-cyan-300/40 hover:bg-white/10 transition-all flex flex-wrap items-center gap-3 ${
+      className={`rounded-xl border border-white/15 bg-white/5 backdrop-blur-xl shadow-lg hover:shadow-xl hover:border-cyan-300/40 hover:bg-white/10 transition-all flex flex-col ${
         r.status === "PENDENTE" ? "animate-pulse-amber border-amber-300/70" : ""
       }`}
     >
-      <div className="flex-1 min-w-[220px]">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-black text-white">Nº {r.numero}</span>
+      {/* Cabeçalho: número + status */}
+      <div className="flex items-start justify-between gap-2 flex-wrap px-3.5 pt-3">
+        <div className="min-w-0">
+          <span className="font-black text-white text-sm leading-tight">Nº {r.numero}</span>
           {r.titulo && (
-            <span className="font-semibold text-rose-300 ml-1">
+            <span className="font-semibold text-rose-300 ml-1.5 text-sm">
               — {r.titulo}
             </span>
           )}
-          <Badge variant="outline" className={STATUS_BADGE[r.status]}>{STATUS_LABEL[r.status]}</Badge>
-          <UrgenciaBadge urgencia={r.urgencia ?? "NORMAL"} slaDeadline={r.sla_deadline} status={r.status} />
-          <Badge
-            variant="outline"
-            className={
-              r.classificacao === "MEDICAMENTOS"
-                ? "text-[10px] bg-rose-50 text-rose-700 border-rose-300 inline-flex items-center gap-1"
-                : "text-[10px] border-white/20 text-slate-200"
-            }
-          >
-            {r.classificacao === "MATERIAL" ? (
-              "Material"
-            ) : r.classificacao === "SERVICO" ? (
-              "Serviço"
-            ) : (
-              <>
-                <Pill className="h-3 w-3" aria-hidden />
-                Medicamentos
-              </>
-            )}
-          </Badge>
         </div>
-        <div className="text-xs text-slate-400 mt-1">
-          <strong className="text-slate-200">{r.solicitante}</strong>
-          {r.setor ? ` · ${r.setor}` : ""}
-          {r.fornecedor ? ` · Fornecedor: ${r.fornecedor}` : ""}
-        </div>
-        {r.status === "INDEFERIDA" && r.motivo_indeferimento && (
-          <div className="text-xs text-rose-300 mt-1">Motivo: {r.motivo_indeferimento}</div>
-        )}
-        {r.status === "DEVOLVIDA" && (
-          <div className="mt-1 text-xs bg-orange-50 border border-orange-300 rounded px-2 py-1 text-orange-900">
-            <strong>↩ Devolvida pelo Compras</strong>
-            {r.devolvida_por_nome ? <> · {r.devolvida_por_nome}</> : null}
-            {r.devolvida_em ? <> · {fmtBR(r.devolvida_em)}</> : null}
-            {r.devolucao_mensagem && (
-              <div className="text-[11px] text-orange-800 mt-0.5 whitespace-pre-wrap">
-                {r.devolucao_mensagem}
-              </div>
-            )}
-            {r.motivo_indeferimento && (
-              <div className="text-[11px] text-orange-700 mt-0.5">
-                Indeferimento anterior: {r.motivo_indeferimento}
-              </div>
-            )}
-          </div>
-        )}
-        {r.status === "EM_RECEBIMENTO" && r.pc_numero && (
-          <div className="text-xs text-cyan-300 mt-1">
-            PC {r.pc_numero} emitido{r.pc_fornecedor ? <> — {r.pc_fornecedor}</> : null}
-            {r.pc_valor != null && <> · {Number(r.pc_valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</>}
-          </div>
-        )}
-        {r.status === "CONCLUIDA" && r.nf_numero && (
-          <div className="text-xs text-slate-300 mt-1">
-            NF {r.nf_numero} recebida{r.recebido_em ? <> em {fmtBR(r.recebido_em)}</> : null}
-          </div>
-        )}
-        {(r.status === "COTADA" || r.status === "APROVADA") && r.cotacao_fornecedor && (
-          <div className="text-xs text-blue-300 mt-1">
-            Cotada por <strong>{r.cotador_nome ?? "—"}</strong> · {r.cotacao_fornecedor}
-            {r.cotacao_valor != null && (
-              <> · {Number(r.cotacao_valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</>
-            )}
-          </div>
-        )}
-        {r.dispensa_cotacao && (
-          <div className="mt-1 text-xs bg-amber-50 border border-amber-300 rounded px-2 py-1 text-amber-900">
-            <strong>⚠️ Dispensa de cotação:</strong>{" "}
-            {(() => {
-              const map: Record<string, string> = {
-                FORNECEDOR_EXCLUSIVO: "Fornecedor exclusivo",
-                CONTRATO_GUARDA_CHUVA: "Contrato guarda-chuva",
-                URGENCIA_OPERACIONAL: "Urgência operacional",
-                PADRONIZACAO_TECNICA: "Padronização técnica",
-                OUTRO: "Outro",
-              };
-              return map[r.dispensa_motivo ?? ""] ?? r.dispensa_motivo;
-            })()}
-            {r.dispensa_justificativa && (
-              <div className="text-[11px] text-amber-800 mt-0.5 whitespace-pre-wrap">
-                {r.dispensa_justificativa}
-              </div>
-            )}
-          </div>
-        )}
+        <Badge variant="outline" className={`${STATUS_BADGE[r.status]} shrink-0 text-[10px]`}>{STATUS_LABEL[r.status]}</Badge>
       </div>
-      <div className="flex gap-1 flex-wrap">
-        {r.classificacao === "MEDICAMENTOS" ? (
-          <>
-            <MedPdfBtns req={r} />
-            <ViewBtn req={r} />
-            <MedEditBtn req={r} />
-          </>
-        ) : (
-          <>
-            <Button size="sm" variant="outline" className="border-white/20 bg-white/5 text-slate-200 hover:bg-white/10 hover:text-white" onClick={() => emitirPdf(r, "print")}>
-              <Printer className="h-3.5 w-3.5 mr-1" /> Imprimir
+
+      {/* Metadados: classificação + urgência */}
+      <div className="flex items-center gap-1.5 flex-wrap px-3.5 mt-2">
+        <Badge
+          variant="outline"
+          className={
+            r.classificacao === "MEDICAMENTOS"
+              ? "text-[10px] bg-rose-50 text-rose-700 border-rose-300 inline-flex items-center gap-1"
+              : "text-[10px] border-white/20 text-slate-200"
+          }
+        >
+          {r.classificacao === "MATERIAL" ? (
+            "Material"
+          ) : r.classificacao === "SERVICO" ? (
+            "Serviço"
+          ) : (
+            <>
+              <Pill className="h-3 w-3" aria-hidden />
+              Medicamentos
+            </>
+          )}
+        </Badge>
+        <UrgenciaBadge urgencia={r.urgencia ?? "NORMAL"} slaDeadline={r.sla_deadline} status={r.status} />
+      </div>
+
+      {/* Solicitante / setor / fornecedor */}
+      <div className="text-xs text-slate-400 px-3.5 mt-1.5">
+        <strong className="text-slate-200">{r.solicitante}</strong>
+        {r.setor ? ` · ${r.setor}` : ""}
+        {r.fornecedor ? ` · Fornecedor: ${r.fornecedor}` : ""}
+      </div>
+
+      {/* Informações condicionais */}
+      {(r.status === "INDEFERIDA" && r.motivo_indeferimento) && (
+        <div className="text-xs text-rose-300 px-3.5 mt-1.5">Motivo: {r.motivo_indeferimento}</div>
+      )}
+      {r.status === "DEVOLVIDA" && (
+        <div className="mx-3.5 mt-2 text-xs bg-orange-50 border border-orange-300 rounded px-2 py-1 text-orange-900">
+          <strong>↩ Devolvida pelo Compras</strong>
+          {r.devolvida_por_nome ? <> · {r.devolvida_por_nome}</> : null}
+          {r.devolvida_em ? <> · {fmtBR(r.devolvida_em)}</> : null}
+          {r.devolucao_mensagem && (
+            <div className="text-[11px] text-orange-800 mt-0.5 whitespace-pre-wrap">
+              {r.devolucao_mensagem}
+            </div>
+          )}
+          {r.motivo_indeferimento && (
+            <div className="text-[11px] text-orange-700 mt-0.5">
+              Indeferimento anterior: {r.motivo_indeferimento}
+            </div>
+          )}
+        </div>
+      )}
+      {r.status === "EM_RECEBIMENTO" && r.pc_numero && (
+        <div className="text-xs text-cyan-300 px-3.5 mt-1.5">
+          PC {r.pc_numero} emitido{r.pc_fornecedor ? <> — {r.pc_fornecedor}</> : null}
+          {r.pc_valor != null && <> · {Number(r.pc_valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</>}
+        </div>
+      )}
+      {r.status === "CONCLUIDA" && r.nf_numero && (
+        <div className="text-xs text-slate-300 px-3.5 mt-1.5">
+          NF {r.nf_numero} recebida{r.recebido_em ? <> em {fmtBR(r.recebido_em)}</> : null}
+        </div>
+      )}
+      {(r.status === "COTADA" || r.status === "APROVADA") && r.cotacao_fornecedor && (
+        <div className="text-xs text-blue-300 px-3.5 mt-1.5">
+          Cotada por <strong>{r.cotador_nome ?? "—"}</strong> · {r.cotacao_fornecedor}
+          {r.cotacao_valor != null && (
+            <> · {Number(r.cotacao_valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</>
+          )}
+        </div>
+      )}
+      {r.dispensa_cotacao && (
+        <div className="mx-3.5 mt-2 text-xs bg-amber-50 border border-amber-300 rounded px-2 py-1 text-amber-900">
+          <strong>⚠️ Dispensa de cotação:</strong>{" "}
+          {(() => {
+            const map: Record<string, string> = {
+              FORNECEDOR_EXCLUSIVO: "Fornecedor exclusivo",
+              CONTRATO_GUARDA_CHUVA: "Contrato guarda-chuva",
+              URGENCIA_OPERACIONAL: "Urgência operacional",
+              PADRONIZACAO_TECNICA: "Padronização técnica",
+              OUTRO: "Outro",
+            };
+            return map[r.dispensa_motivo ?? ""] ?? r.dispensa_motivo;
+          })()}
+          {r.dispensa_justificativa && (
+            <div className="text-[11px] text-amber-800 mt-0.5 whitespace-pre-wrap">
+              {r.dispensa_justificativa}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Rodapé de ações: documentos à esquerda, decisões à direita */}
+      <div className="mt-auto pt-3 pb-3.5 px-3.5 mt-3 border-t border-white/10 flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {r.classificacao === "MEDICAMENTOS" ? (
+            <>
+              <MedPdfBtns req={r} />
+              <ViewBtn req={r} />
+              <MedEditBtn req={r} />
+            </>
+          ) : (
+            <>
+              <Button size="sm" variant="outline" className="border-white/20 bg-white/5 text-slate-200 hover:bg-white/10 hover:text-white h-8 px-2.5 text-xs" onClick={() => emitirPdf(r, "print")}>
+                <Printer className="h-3.5 w-3.5 mr-1" /> Imprimir
+              </Button>
+              <Button size="sm" variant="outline" className="border-white/20 bg-white/5 text-slate-200 hover:bg-white/10 hover:text-white h-8 px-2.5 text-xs" onClick={() => emitirPdf(r, "preview")}>
+                <Printer className="h-3.5 w-3.5 mr-1" /> PDF
+              </Button>
+              <ViewBtn req={r} />
+              {isEditor && <EditReqBtn req={r} userId={user?.id} />}
+            </>
+          )}
+        </div>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {isEditor && (r.status === "PENDENTE" || r.status === "COTADA") && (
+            <>
+              <Button
+                size="sm"
+                className="bg-emerald-600 hover:bg-emerald-700 h-8 px-2.5 text-xs"
+                onClick={() => updateStatus.mutate({ id: r.id, status: "APROVADA" })}
+              >
+                <Check className="h-3.5 w-3.5 mr-1" /> Deferir
+              </Button>
+              <IndeferBtn onConfirm={(motivo) => updateStatus.mutate({ id: r.id, status: "INDEFERIDA", motivo })} />
+              {r.status === "COTADA" && (
+                <DevolverRcBtn rcId={r.id} numero={r.numero} dispensa={!!r.dispensa_cotacao} />
+              )}
+            </>
+          )}
+          {(r.status === "APROVADA" || r.status === "INDEFERIDA") && (
+            <ReabrirRcBtn rcId={r.id} numero={r.numero} statusAtual={r.status} />
+          )}
+          {isEditor && (
+            <Button size="sm" variant="ghost" className="text-slate-300 hover:bg-white/10 hover:text-white h-8 w-8 p-0" onClick={() => {
+              if (confirm(`Excluir requisição ${r.numero}?`)) delReq.mutate(r.id);
+            }}>
+              <Trash2 className="h-3.5 w-3.5 text-rose-400" />
             </Button>
-            <Button size="sm" variant="outline" className="border-white/20 bg-white/5 text-slate-200 hover:bg-white/10 hover:text-white" onClick={() => emitirPdf(r, "preview")}>
-              <Printer className="h-3.5 w-3.5 mr-1" /> PDF
-            </Button>
-            <ViewBtn req={r} />
-            {isEditor && <EditReqBtn req={r} userId={user?.id} />}
-          </>
-        )}
-        {isEditor && (r.status === "PENDENTE" || r.status === "COTADA") && (
-          <>
-            <Button
-              size="sm"
-              className="bg-emerald-600 hover:bg-emerald-700"
-              onClick={() => updateStatus.mutate({ id: r.id, status: "APROVADA" })}
-            >
-              <Check className="h-3.5 w-3.5 mr-1" /> Deferir
-            </Button>
-            <IndeferBtn onConfirm={(motivo) => updateStatus.mutate({ id: r.id, status: "INDEFERIDA", motivo })} />
-            {r.status === "COTADA" && (
-              <DevolverRcBtn rcId={r.id} numero={r.numero} dispensa={!!r.dispensa_cotacao} />
-            )}
-          </>
-        )}
-        {(r.status === "APROVADA" || r.status === "INDEFERIDA") && (
-          <ReabrirRcBtn rcId={r.id} numero={r.numero} statusAtual={r.status} />
-        )}
-        {isEditor && (
-          <Button size="sm" variant="ghost" className="text-slate-300 hover:bg-white/10 hover:text-white" onClick={() => {
-            if (confirm(`Excluir requisição ${r.numero}?`)) delReq.mutate(r.id);
-          }}>
-            <Trash2 className="h-3.5 w-3.5 text-rose-400" />
-          </Button>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
