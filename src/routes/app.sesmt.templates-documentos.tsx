@@ -35,7 +35,7 @@ import { toast } from "sonner";
 import { hasOverlay } from "@/lib/pdf-overlay-maps";
 import { getTemplateSchema } from "@/lib/template-field-schemas";
 import { MapeamentoDialog, autoMapearVersao } from "@/components/templates/mapeamento-dialog";
-import { obterMapeamentoVersao, detectarMapeamentoIA } from "@/lib/templates-documentos.functions";
+import { obterMapeamentoVersao, detectarMapeamentoIA, salvarMapeamentoVersao } from "@/lib/templates-documentos.functions";
 import { useEffect } from "react";
 import { Wand2 } from "lucide-react";
 
@@ -148,6 +148,7 @@ function PainelInterno() {
   const [mapFor, setMapFor] = useState<{ versionId: string; codigo: string; revisao: number } | null>(null);
   const obterMap = useServerFn(obterMapeamentoVersao);
   const detectarMap = useServerFn(detectarMapeamentoIA);
+  const salvarMap = useServerFn(salvarMapeamentoVersao);
   const autoTentados = useRef(new Set<string>());
 
   // Alerta automático: revisão nova sem mapeamento → o próprio sistema remapeia com IA.
@@ -157,9 +158,17 @@ function PainelInterno() {
       if (!alvo || !getTemplateSchema(t.codigo)) continue;
       if ((alvo.overlay_status ?? "PENDENTE") !== "PENDENTE" || autoTentados.current.has(alvo.id)) continue;
       autoTentados.current.add(alvo.id);
+      const sch = getTemplateSchema(t.codigo)!;
+      if (sch.defaultMap && sch.defaultMapRevisao === alvo.revisao) {
+        // Revisão já medida e conferida manualmente: grava o mapa conhecido.
+        salvarMap({ data: { versionId: alvo.id, map: sch.defaultMap, status: "REVISADO" } })
+          .then(() => qcPainel.invalidateQueries({ queryKey: ["document-templates"] }))
+          .catch(() => {});
+        continue;
+      }
       const tid = toast.loading(`Novo PDF em ${t.codigo} Rev.${String(alvo.revisao).padStart(2, "0")} — remapeando campos automaticamente…`);
       autoMapearVersao(alvo.id, t.codigo, { obter: obterMap, detectar: detectarMap })
-        .then((r) => {
+        .then((r: any) => {
           toast.success(`${t.codigo}: ${r?.detectados ?? 0} de ${r?.total ?? 0} campos mapeados pela IA. Revise em "Mapear campos".`, { id: tid });
           qcPainel.invalidateQueries({ queryKey: ["document-templates"] });
         })

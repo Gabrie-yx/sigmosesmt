@@ -11,7 +11,7 @@ export type BoxMap = { pageW: number; pageH: number; boxes: Record<string, Box> 
 export type FieldKind = "text" | "check" | "sig" | "row" | "col";
 export type FieldDef = { key: string; label: string; kind: FieldKind; hint: string };
 
-export type TemplateSchema = { codigo: string; nome: string; fields: FieldDef[]; defaultMap?: BoxMap };
+export type TemplateSchema = { codigo: string; nome: string; fields: FieldDef[]; defaultMap?: BoxMap; /** Revisão em que o defaultMap foi medido e conferido. */ defaultMapRevisao?: number };
 
 const RC_FIELDS: FieldDef[] = [
   { key: "data", label: "Data", kind: "text", hint: "espaço em branco à direita do rótulo 'DATA:' (linha da classificação)" },
@@ -69,7 +69,7 @@ const RC_DEFAULT: BoxMap = {
 };
 
 export const TEMPLATE_SCHEMAS: Record<string, TemplateSchema> = {
-  "FOR-SEG-03": { codigo: "FOR-SEG-03", nome: "Requisição de Compra", fields: RC_FIELDS, defaultMap: RC_DEFAULT },
+  "FOR-SEG-03": { codigo: "FOR-SEG-03", nome: "Requisição de Compra", fields: RC_FIELDS, defaultMap: RC_DEFAULT, defaultMapRevisao: 1 },
 };
 
 export function getTemplateSchema(codigo: string): TemplateSchema | null {
