@@ -256,15 +256,25 @@ function RequisicoesPage() {
   const [filtroPeriodo, setFiltroPeriodo] = useState<"all" | "week" | "month" | "year">("all");
   const [filtroSolic, setFiltroSolic] = useState("");
 
-  const { data: reqs = [] } = useQuery({
+  const { data: reqs = [], isLoading: carregandoReqs, error: erroReqs } = useQuery({
     queryKey: ["purchase-reqs"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("purchase_requisitions")
-        .select("*")
-        .order("data_requisicao", { ascending: false });
-      if (error) throw error;
-      return (data ?? []) as Req[];
+      // O limite padrão da API é de 1.000 linhas; buscar todas as páginas
+      // evita que requisições antigas desapareçam do agrupamento.
+      const todos: Req[] = [];
+      const tamanhoPagina = 500;
+      for (let inicio = 0; ; inicio += tamanhoPagina) {
+        const { data, error } = await supabase
+          .from("purchase_requisitions")
+          .select("*")
+          .order("data_requisicao", { ascending: false })
+          .order("id", { ascending: false })
+          .range(inicio, inicio + tamanhoPagina - 1);
+        if (error) throw error;
+        todos.push(...((data ?? []) as Req[]));
+        if (!data || data.length < tamanhoPagina) break;
+      }
+      return todos;
     },
   });
 
@@ -499,7 +509,11 @@ function RequisicoesPage() {
               <TabsTrigger value="INDEFERIDA">Indeferidas</TabsTrigger>
             </TabsList>
             <TabsContent value={tab} className="mt-4">
-              {filtered.length === 0 ? (
+              {carregandoReqs ? (
+                <div className="text-center text-muted-foreground py-12 text-sm">Carregando requisições…</div>
+              ) : erroReqs ? (
+                <div role="alert" className="text-center text-destructive py-12 text-sm">Não foi possível carregar as requisições. Tente atualizar a página.</div>
+              ) : filtered.length === 0 ? (
                 <div className="text-center text-slate-500 py-12 text-sm">Nenhuma requisição encontrada.</div>
               ) : (() => {
                 const renderLinha = (r: Req) => (
