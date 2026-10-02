@@ -42,7 +42,8 @@ export async function renderPrimeiraPagina(bytes: Uint8Array) {
     import("pdf-lib"),
   ]);
   const doc = await PDFDocument.load(bytes);
-  const { width, height } = doc.getPage(0).getSize();
+  // A imagem é renderizada pela CropBox (pdfjs), não pela MediaBox do arquivo.
+  const { width, height } = doc.getPage(0).getCropBox();
   const [img] = await renderPdfToImagePages(bytes.slice(), 2);
   return { img, pageW: width, pageH: height };
 }

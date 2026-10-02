@@ -99,7 +99,7 @@ export async function gerarRcOverlayBytes(
   const black = rgb(0, 0, 0);
 
   // Mapa da revisão emitida (gerado por IA/ajustado no painel) → senão o padrão medido.
-  const pageSize = tpl.getPage(0).getSize();
+  const pageSize = tpl.getPage(0).getCropBox();
   const map = resolveMap(getTemplateMeta(RC_TEMPLATE_CODIGO)?.overlayMap, pageSize.width, pageSize.height);
   const B = (k: string): Box | null => map.boxes[k] ?? null;
 
