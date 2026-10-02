@@ -277,7 +277,7 @@ export const novaRevisaoTemplate = createServerFn({ method: "POST" })
       nota: `Rev.${String(proxima).padStart(2, "0")} enviada — motor de render precisa alinhar.`,
     });
 
-    return { ok: true, revisao: proxima };
+    return { ok: true, revisao: proxima, versionId: nova.id as string };
   });
 
 /* ---------- ANEXAR ORIGEM A REVISÃO EXISTENTE ---------- */
