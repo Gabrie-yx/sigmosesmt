@@ -9,161 +9,136 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AppRouteImport } from './routes/app'
-import { Route as DenunciaRouteImport } from './routes/denuncia'
-import { Route as ExtraSabadoRouteImport } from './routes/extra-sabado'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as PrivacidadeRouteImport } from './routes/privacidade'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as TermosRouteImport } from './routes/termos'
-import { Route as ApiPgrChatRouteImport } from './routes/api/pgr-chat'
-import { Route as ApiSigmoChatRouteImport } from './routes/api/sigmo-chat'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as PrivacidadeRouteImport } from './routes/privacidade'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as ExtraSabadoRouteImport } from './routes/extra-sabado'
+import { Route as DenunciaRouteImport } from './routes/denuncia'
+import { Route as AppRouteImport } from './routes/app'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
-import { Route as AppAcidentesRouteImport } from './routes/app.acidentes'
-import { Route as AppAcoesRouteImport } from './routes/app.acoes'
-import { Route as AppAdministrativoRouteImport } from './routes/app.administrativo'
-import { Route as AppAjudaRouteImport } from './routes/app.ajuda'
-import { Route as AppAprsRouteImport } from './routes/app.aprs'
-import { Route as AppAssinadorRouteImport } from './routes/app.assinador'
-import { Route as AppAuditRouteImport } from './routes/app.audit'
-import { Route as AppCascosRouteImport } from './routes/app.cascos'
-import { Route as AppCompaniesRouteImport } from './routes/app.companies'
-import { Route as AppConfiguracoesIndicadoresRouteImport } from './routes/app.configuracoes-indicadores'
-import { Route as AppControleDocumentosRouteImport } from './routes/app.controle-documentos'
-import { Route as AppCozinhaRouteImport } from './routes/app.cozinha'
-import { Route as AppEmployeesRouteImport } from './routes/app.employees'
-import { Route as AppExtintoresRouteImport } from './routes/app.extintores'
-import { Route as AppExtintoresInspecaoFotoRouteImport } from './routes/app.extintores-inspecao-foto'
-import { Route as AppExtraSabadoAprovacoesRouteImport } from './routes/app.extra-sabado-aprovacoes'
-import { Route as AppHojeRouteImport } from './routes/app.hoje'
-import { Route as AppIncidentesRouteImport } from './routes/app.incidentes'
-import { Route as AppMatrizRiscosRouteImport } from './routes/app.matriz-riscos'
-import { Route as AppMatrizTreinamentoRouteImport } from './routes/app.matriz-treinamento'
-import { Route as AppNcsRouteImport } from './routes/app.ncs'
-import { Route as AppOssRouteImport } from './routes/app.oss'
-import { Route as AppPainelRouteImport } from './routes/app.painel'
-import { Route as AppPgrRouteImport } from './routes/app.pgr'
-import { Route as AppPsicossocialRouteImport } from './routes/app.psicossocial'
-import { Route as AppPtesRouteImport } from './routes/app.ptes'
-import { Route as AppRolesRouteImport } from './routes/app.roles'
-import { Route as AppTrainingsRouteImport } from './routes/app.trainings'
-import { Route as AppUsersRouteImport } from './routes/app.users'
-import { Route as PsicoTokenRouteImport } from './routes/psico.$token'
 import { Route as RcTokenRouteImport } from './routes/rc.$token'
-import { Route as ApiPublicDenunciaRouteImport } from './routes/api/public/denuncia'
-import { Route as AppAdministrativoGestaoPontoRouteImport } from './routes/app.administrativo.gestao-ponto'
-import { Route as AppAdministrativoHoraExtraRecebidaRouteImport } from './routes/app.administrativo.hora-extra-recebida'
-import { Route as AppAdministrativoMarcadoresHoraExtraRouteImport } from './routes/app.administrativo.marcadores-hora-extra'
-import { Route as AppAdministrativoRequisicoesRecebidasRouteImport } from './routes/app.administrativo.requisicoes-recebidas'
-import { Route as AppAlmoxarifadoRequisicaoComprasRouteImport } from './routes/app.almoxarifado.requisicao-compras'
-import { Route as AppComprasDashboardRouteImport } from './routes/app.compras.dashboard'
-import { Route as AppComprasFornecedoresRouteImport } from './routes/app.compras.fornecedores'
-import { Route as AppComprasRequisicoesRecebidasRouteImport } from './routes/app.compras.requisicoes-recebidas'
-import { Route as AppConfiguracoesProdutividadeRouteImport } from './routes/app.configuracoes.produtividade'
-import { Route as AppContaSegurancaRouteImport } from './routes/app.conta.seguranca'
-import { Route as AppDdsIndexRouteImport } from './routes/app.dds.index'
-import { Route as AppDdsGestoresRouteImport } from './routes/app.dds.gestores'
-import { Route as AppDdsHistoricoRouteImport } from './routes/app.dds.historico'
-import { Route as AppDdsPainelRouteImport } from './routes/app.dds.painel'
-import { Route as AppDdsTemasRouteImport } from './routes/app.dds.temas'
-import { Route as AppEmployeesIndexRouteImport } from './routes/app.employees.index'
-import { Route as AppEmployeesIdRouteImport } from './routes/app.employees.$id'
-import { Route as AppEmployeesDesligadosRouteImport } from './routes/app.employees.desligados'
-import { Route as AppEmployeesHoraExtraSabadoRouteImport } from './routes/app.employees.hora-extra-sabado'
-import { Route as AppEmployeesListagemRouteImport } from './routes/app.employees.listagem'
-import { Route as AppEmployeesRelatorioAdmissoesRouteImport } from './routes/app.employees.relatorio-admissoes'
-import { Route as AppEmployeesSaidasRouteImport } from './routes/app.employees.saidas'
-import { Route as AppEstoqueIndexRouteImport } from './routes/app.estoque.index'
-import { Route as AppEstoqueEpiRouteImport } from './routes/app.estoque.epi'
-import { Route as AppEstoqueSesmtRouteImport } from './routes/app.estoque.sesmt'
-import { Route as AppOssIndexRouteImport } from './routes/app.oss.index'
-import { Route as AppOssTemplatesRouteImport } from './routes/app.oss.templates'
+import { Route as PsicoTokenRouteImport } from './routes/psico.$token'
+import { Route as AppUsersRouteImport } from './routes/app.users'
+import { Route as AppTrainingsRouteImport } from './routes/app.trainings'
+import { Route as AppRolesRouteImport } from './routes/app.roles'
+import { Route as AppPtesRouteImport } from './routes/app.ptes'
+import { Route as AppPsicossocialRouteImport } from './routes/app.psicossocial'
+import { Route as AppPgrRouteImport } from './routes/app.pgr'
+import { Route as AppPainelRouteImport } from './routes/app.painel'
+import { Route as AppOssRouteImport } from './routes/app.oss'
+import { Route as AppNcsRouteImport } from './routes/app.ncs'
+import { Route as AppMatrizTreinamentoRouteImport } from './routes/app.matriz-treinamento'
+import { Route as AppMatrizRiscosRouteImport } from './routes/app.matriz-riscos'
+import { Route as AppIncidentesRouteImport } from './routes/app.incidentes'
+import { Route as AppHojeRouteImport } from './routes/app.hoje'
+import { Route as AppExtraSabadoAprovacoesRouteImport } from './routes/app.extra-sabado-aprovacoes'
+import { Route as AppExtintoresInspecaoFotoRouteImport } from './routes/app.extintores-inspecao-foto'
+import { Route as AppExtintoresRouteImport } from './routes/app.extintores'
+import { Route as AppEmployeesRouteImport } from './routes/app.employees'
+import { Route as AppCozinhaRouteImport } from './routes/app.cozinha'
+import { Route as AppControleDocumentosRouteImport } from './routes/app.controle-documentos'
+import { Route as AppConfiguracoesIndicadoresRouteImport } from './routes/app.configuracoes-indicadores'
+import { Route as AppCompaniesRouteImport } from './routes/app.companies'
+import { Route as AppCascosRouteImport } from './routes/app.cascos'
+import { Route as AppAuditRouteImport } from './routes/app.audit'
+import { Route as AppAssinadorRouteImport } from './routes/app.assinador'
+import { Route as AppAprsRouteImport } from './routes/app.aprs'
+import { Route as AppAjudaRouteImport } from './routes/app.ajuda'
+import { Route as AppAdministrativoRouteImport } from './routes/app.administrativo'
+import { Route as AppAcoesRouteImport } from './routes/app.acoes'
+import { Route as AppAcidentesRouteImport } from './routes/app.acidentes'
+import { Route as ApiSigmoChatRouteImport } from './routes/api/sigmo-chat'
+import { Route as ApiPgrChatRouteImport } from './routes/api/pgr-chat'
 import { Route as AppPortariaIndexRouteImport } from './routes/app.portaria.index'
-import { Route as AppPortariaControleRouteImport } from './routes/app.portaria.controle'
-import { Route as AppPortariaControleEntradaRouteImport } from './routes/app.portaria.controle-entrada'
-import { Route as AppPortariaSaidasRouteImport } from './routes/app.portaria.saidas'
-import { Route as AppPortariaSaidasHojeRouteImport } from './routes/app.portaria.saidas-hoje'
-import { Route as AppProducaoBaseMateriaPrimaRouteImport } from './routes/app.producao.base-materia-prima'
-import { Route as AppProducaoCriarOrdemRouteImport } from './routes/app.producao.criar-ordem'
-import { Route as AppProducaoExpedicaoRouteImport } from './routes/app.producao.expedicao'
-import { Route as AppProducaoFatoresConsumoRouteImport } from './routes/app.producao.fatores-consumo'
-import { Route as AppProducaoListaTecnicaRouteImport } from './routes/app.producao.lista-tecnica'
-import { Route as AppProducaoOrdensRouteImport } from './routes/app.producao.ordens'
-import { Route as AppProducaoPainelListaTecnicaRouteImport } from './routes/app.producao.painel-lista-tecnica'
-import { Route as AppProducaoRequisicaoComprasRouteImport } from './routes/app.producao.requisicao-compras'
-import { Route as AppProducaoTiposProdutoRouteImport } from './routes/app.producao.tipos-produto'
-import { Route as AppRelatoriosIndicadoresRouteImport } from './routes/app.relatorios.indicadores'
-import { Route as AppRelatoriosReincidenciaEpiRouteImport } from './routes/app.relatorios.reincidencia-epi'
-import { Route as AppSesmtAgendaRouteImport } from './routes/app.sesmt.agenda'
-import { Route as AppSesmtAsosRouteImport } from './routes/app.sesmt.asos'
-import { Route as AppSesmtCipaRouteImport } from './routes/app.sesmt.cipa'
-import { Route as AppSesmtConvocacoesAsoRouteImport } from './routes/app.sesmt.convocacoes-aso'
-import { Route as AppSesmtDocsRouteImport } from './routes/app.sesmt.docs'
-import { Route as AppSesmtEquipamentosMoveisRouteImport } from './routes/app.sesmt.equipamentos-moveis'
-import { Route as AppSesmtGuiaDocumentosRouteImport } from './routes/app.sesmt.guia-documentos'
-import { Route as AppSesmtInspecoesRouteImport } from './routes/app.sesmt.inspecoes'
-import { Route as AppSesmtIntegracoesRouteImport } from './routes/app.sesmt.integracoes'
-import { Route as AppSesmtMedicinaOcupacionalRouteImport } from './routes/app.sesmt.medicina-ocupacional'
-import { Route as AppSesmtOcrTesteRouteImport } from './routes/app.sesmt.ocr-teste'
-import { Route as AppSesmtOrganogramaRouteImport } from './routes/app.sesmt.organograma'
-import { Route as AppSesmtPrestadoresRouteImport } from './routes/app.sesmt.prestadores'
-import { Route as AppSesmtProcedimentosRouteImport } from './routes/app.sesmt.procedimentos'
-import { Route as AppSesmtRequisicoesRouteImport } from './routes/app.sesmt.requisicoes'
-import { Route as AppSesmtSimuladosRouteImport } from './routes/app.sesmt.simulados'
-import { Route as AppSesmtTemplatesDocumentosRouteImport } from './routes/app.sesmt.templates-documentos'
-import { Route as AppSesmtTerceirosRouteImport } from './routes/app.sesmt.terceiros'
+import { Route as AppOssIndexRouteImport } from './routes/app.oss.index'
+import { Route as AppEstoqueIndexRouteImport } from './routes/app.estoque.index'
+import { Route as AppEmployeesIndexRouteImport } from './routes/app.employees.index'
+import { Route as AppDdsIndexRouteImport } from './routes/app.dds.index'
 import { Route as AppSesmtVincularUsuariosRouteImport } from './routes/app.sesmt.vincular-usuarios'
-import { Route as ApiPublicPsicoHashRouteImport } from './routes/api/public/psico.$hash'
-import { Route as ApiPublicPsicoSubmitRouteImport } from './routes/api/public/psico.submit'
-import { Route as AppAdministrativoGestaoPontoIndexRouteImport } from './routes/app.administrativo.gestao-ponto.index'
-import { Route as AppAdministrativoGestaoPontoCicloIdRouteImport } from './routes/app.administrativo.gestao-ponto.$cicloId'
-import { Route as AppEstoqueEpiFichasMensaisRouteImport } from './routes/app.estoque.epi.fichas-mensais'
-import { Route as AppModuloModuloHoraExtraRouteImport } from './routes/app.modulo.$modulo.hora-extra'
-import { Route as AppModuloEletricaRequisicaoComprasRouteImport } from './routes/app.modulo.eletrica.requisicao-compras'
-import { Route as AppModuloMecanicaRequisicaoComprasRouteImport } from './routes/app.modulo.mecanica.requisicao-compras'
-import { Route as AppSesmtCatalogosIndexRouteImport } from './routes/app.sesmt.catalogos.index'
-import { Route as AppSesmtCatalogosCruzamentosRouteImport } from './routes/app.sesmt.catalogos.cruzamentos'
-import { Route as AppSesmtCatalogosEpisRouteImport } from './routes/app.sesmt.catalogos.epis'
-import { Route as AppSesmtCatalogosExamesRouteImport } from './routes/app.sesmt.catalogos.exames'
-import { Route as AppSesmtCatalogosGasesRouteImport } from './routes/app.sesmt.catalogos.gases'
-import { Route as AppSesmtCatalogosNrsRouteImport } from './routes/app.sesmt.catalogos.nrs'
-import { Route as AppSesmtCatalogosRiscosRouteImport } from './routes/app.sesmt.catalogos.riscos'
-import { Route as AppSesmtCatalogosVacinasRouteImport } from './routes/app.sesmt.catalogos.vacinas'
-import { Route as AppSesmtEquipamentosMoveisArquivosMensaisRouteImport } from './routes/app.sesmt.equipamentos-moveis_.arquivos-mensais'
+import { Route as AppSesmtTerceirosRouteImport } from './routes/app.sesmt.terceiros'
+import { Route as AppSesmtTemplatesDocumentosRouteImport } from './routes/app.sesmt.templates-documentos'
+import { Route as AppSesmtSimuladosRouteImport } from './routes/app.sesmt.simulados'
+import { Route as AppSesmtRequisicoesRouteImport } from './routes/app.sesmt.requisicoes'
+import { Route as AppSesmtProcedimentosRouteImport } from './routes/app.sesmt.procedimentos'
+import { Route as AppSesmtPrestadoresRouteImport } from './routes/app.sesmt.prestadores'
+import { Route as AppSesmtOrganogramaRouteImport } from './routes/app.sesmt.organograma'
+import { Route as AppSesmtOcrTesteRouteImport } from './routes/app.sesmt.ocr-teste'
+import { Route as AppSesmtMedicinaOcupacionalRouteImport } from './routes/app.sesmt.medicina-ocupacional'
+import { Route as AppSesmtIntegracoesRouteImport } from './routes/app.sesmt.integracoes'
+import { Route as AppSesmtInspecoesRouteImport } from './routes/app.sesmt.inspecoes'
+import { Route as AppSesmtGuiaDocumentosRouteImport } from './routes/app.sesmt.guia-documentos'
+import { Route as AppSesmtEquipamentosMoveisRouteImport } from './routes/app.sesmt.equipamentos-moveis'
+import { Route as AppSesmtDocsRouteImport } from './routes/app.sesmt.docs'
+import { Route as AppSesmtConvocacoesAsoRouteImport } from './routes/app.sesmt.convocacoes-aso'
+import { Route as AppSesmtCipaRouteImport } from './routes/app.sesmt.cipa'
+import { Route as AppSesmtAsosRouteImport } from './routes/app.sesmt.asos'
+import { Route as AppSesmtAgendaRouteImport } from './routes/app.sesmt.agenda'
+import { Route as AppRelatoriosReincidenciaEpiRouteImport } from './routes/app.relatorios.reincidencia-epi'
+import { Route as AppRelatoriosIndicadoresRouteImport } from './routes/app.relatorios.indicadores'
+import { Route as AppProducaoTiposProdutoRouteImport } from './routes/app.producao.tipos-produto'
+import { Route as AppProducaoRequisicaoComprasRouteImport } from './routes/app.producao.requisicao-compras'
+import { Route as AppProducaoPainelListaTecnicaRouteImport } from './routes/app.producao.painel-lista-tecnica'
+import { Route as AppProducaoOrdensRouteImport } from './routes/app.producao.ordens'
+import { Route as AppProducaoListaTecnicaRouteImport } from './routes/app.producao.lista-tecnica'
+import { Route as AppProducaoFatoresConsumoRouteImport } from './routes/app.producao.fatores-consumo'
+import { Route as AppProducaoExpedicaoRouteImport } from './routes/app.producao.expedicao'
+import { Route as AppProducaoCriarOrdemRouteImport } from './routes/app.producao.criar-ordem'
+import { Route as AppProducaoBaseMateriaPrimaRouteImport } from './routes/app.producao.base-materia-prima'
+import { Route as AppPortariaSaidasHojeRouteImport } from './routes/app.portaria.saidas-hoje'
+import { Route as AppPortariaSaidasRouteImport } from './routes/app.portaria.saidas'
+import { Route as AppPortariaControleEntradaRouteImport } from './routes/app.portaria.controle-entrada'
+import { Route as AppPortariaControleRouteImport } from './routes/app.portaria.controle'
+import { Route as AppOssTemplatesRouteImport } from './routes/app.oss.templates'
+import { Route as AppEstoqueSesmtRouteImport } from './routes/app.estoque.sesmt'
+import { Route as AppEstoqueEpiRouteImport } from './routes/app.estoque.epi'
+import { Route as AppEmployeesSaidasRouteImport } from './routes/app.employees.saidas'
+import { Route as AppEmployeesRelatorioAdmissoesRouteImport } from './routes/app.employees.relatorio-admissoes'
+import { Route as AppEmployeesListagemRouteImport } from './routes/app.employees.listagem'
+import { Route as AppEmployeesHoraExtraSabadoRouteImport } from './routes/app.employees.hora-extra-sabado'
+import { Route as AppEmployeesDesligadosRouteImport } from './routes/app.employees.desligados'
+import { Route as AppEmployeesIdRouteImport } from './routes/app.employees.$id'
+import { Route as AppDdsTemasRouteImport } from './routes/app.dds.temas'
+import { Route as AppDdsPainelRouteImport } from './routes/app.dds.painel'
+import { Route as AppDdsHistoricoRouteImport } from './routes/app.dds.historico'
+import { Route as AppDdsGestoresRouteImport } from './routes/app.dds.gestores'
+import { Route as AppContaSegurancaRouteImport } from './routes/app.conta.seguranca'
+import { Route as AppConfiguracoesProdutividadeRouteImport } from './routes/app.configuracoes.produtividade'
+import { Route as AppComprasRequisicoesRecebidasRouteImport } from './routes/app.compras.requisicoes-recebidas'
+import { Route as AppComprasFornecedoresRouteImport } from './routes/app.compras.fornecedores'
+import { Route as AppComprasDashboardRouteImport } from './routes/app.compras.dashboard'
+import { Route as AppAlmoxarifadoRequisicaoComprasRouteImport } from './routes/app.almoxarifado.requisicao-compras'
+import { Route as AppAdministrativoRequisicoesRecebidasRouteImport } from './routes/app.administrativo.requisicoes-recebidas'
+import { Route as AppAdministrativoMarcadoresHoraExtraRouteImport } from './routes/app.administrativo.marcadores-hora-extra'
+import { Route as AppAdministrativoHoraExtraRecebidaRouteImport } from './routes/app.administrativo.hora-extra-recebida'
+import { Route as AppAdministrativoGestaoPontoRouteImport } from './routes/app.administrativo.gestao-ponto'
+import { Route as ApiPublicDenunciaRouteImport } from './routes/api/public/denuncia'
 import { Route as AppSesmtInspecoesIndexRouteImport } from './routes/app.sesmt.inspecoes.index'
+import { Route as AppSesmtCatalogosIndexRouteImport } from './routes/app.sesmt.catalogos.index'
+import { Route as AppAdministrativoGestaoPontoIndexRouteImport } from './routes/app.administrativo.gestao-ponto.index'
 import { Route as AppSesmtInspecoesIdRouteImport } from './routes/app.sesmt.inspecoes.$id'
-import { Route as AppSesmtEquipamentosMoveisChecklistEquipamentoIdRouteImport } from './routes/app.sesmt.equipamentos-moveis_.checklist.$equipamentoId'
+import { Route as AppSesmtEquipamentosMoveisArquivosMensaisRouteImport } from './routes/app.sesmt.equipamentos-moveis_.arquivos-mensais'
+import { Route as AppSesmtCatalogosVacinasRouteImport } from './routes/app.sesmt.catalogos.vacinas'
+import { Route as AppSesmtCatalogosRiscosRouteImport } from './routes/app.sesmt.catalogos.riscos'
+import { Route as AppSesmtCatalogosNrsRouteImport } from './routes/app.sesmt.catalogos.nrs'
+import { Route as AppSesmtCatalogosGasesRouteImport } from './routes/app.sesmt.catalogos.gases'
+import { Route as AppSesmtCatalogosExamesRouteImport } from './routes/app.sesmt.catalogos.exames'
+import { Route as AppSesmtCatalogosEpisRouteImport } from './routes/app.sesmt.catalogos.epis'
+import { Route as AppSesmtCatalogosCruzamentosRouteImport } from './routes/app.sesmt.catalogos.cruzamentos'
+import { Route as AppModuloMecanicaRequisicaoComprasRouteImport } from './routes/app.modulo.mecanica.requisicao-compras'
+import { Route as AppModuloEletricaRequisicaoComprasRouteImport } from './routes/app.modulo.eletrica.requisicao-compras'
+import { Route as AppModuloModuloHoraExtraRouteImport } from './routes/app.modulo.$modulo.hora-extra'
+import { Route as AppEstoqueEpiFichasMensaisRouteImport } from './routes/app.estoque.epi.fichas-mensais'
+import { Route as AppAdministrativoGestaoPontoCicloIdRouteImport } from './routes/app.administrativo.gestao-ponto.$cicloId'
+import { Route as ApiPublicPsicoSubmitRouteImport } from './routes/api/public/psico.submit'
+import { Route as ApiPublicPsicoHashRouteImport } from './routes/api/public/psico.$hash'
 import { Route as AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRouteImport } from './routes/app.sesmt.equipamentos-moveis_.historico.$equipamentoId'
+import { Route as AppSesmtEquipamentosMoveisChecklistEquipamentoIdRouteImport } from './routes/app.sesmt.equipamentos-moveis_.checklist.$equipamentoId'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AppRoute = AppRouteImport.update({
-  id: '/app',
-  path: '/app',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DenunciaRoute = DenunciaRouteImport.update({
-  id: '/denuncia',
-  path: '/denuncia',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ExtraSabadoRoute = ExtraSabadoRouteImport.update({
-  id: '/extra-sabado',
-  path: '/extra-sabado',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivacidadeRoute = PrivacidadeRouteImport.update({
-  id: '/privacidade',
-  path: '/privacidade',
+const TermosRoute = TermosRouteImport.update({
+  id: '/termos',
+  path: '/termos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -171,19 +146,34 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TermosRoute = TermosRouteImport.update({
-  id: '/termos',
-  path: '/termos',
+const PrivacidadeRoute = PrivacidadeRouteImport.update({
+  id: '/privacidade',
+  path: '/privacidade',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPgrChatRoute = ApiPgrChatRouteImport.update({
-  id: '/api/pgr-chat',
-  path: '/api/pgr-chat',
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiSigmoChatRoute = ApiSigmoChatRouteImport.update({
-  id: '/api/sigmo-chat',
-  path: '/api/sigmo-chat',
+const ExtraSabadoRoute = ExtraSabadoRouteImport.update({
+  id: '/extra-sabado',
+  path: '/extra-sabado',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DenunciaRoute = DenunciaRouteImport.update({
+  id: '/denuncia',
+  path: '/denuncia',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppIndexRoute = AppIndexRouteImport.update({
@@ -191,49 +181,111 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
-const AppAcidentesRoute = AppAcidentesRouteImport.update({
-  id: '/acidentes',
-  path: '/acidentes',
+const RcTokenRoute = RcTokenRouteImport.update({
+  id: '/rc/$token',
+  path: '/rc/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PsicoTokenRoute = PsicoTokenRouteImport.update({
+  id: '/psico/$token',
+  path: '/psico/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppUsersRoute = AppUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
   getParentRoute: () => AppRoute,
 } as any)
-const AppAcoesRoute = AppAcoesRouteImport.update({
-  id: '/acoes',
-  path: '/acoes',
+const AppTrainingsRoute = AppTrainingsRouteImport.update({
+  id: '/trainings',
+  path: '/trainings',
   getParentRoute: () => AppRoute,
 } as any)
-const AppAdministrativoRoute = AppAdministrativoRouteImport.update({
-  id: '/administrativo',
-  path: '/administrativo',
+const AppRolesRoute = AppRolesRouteImport.update({
+  id: '/roles',
+  path: '/roles',
   getParentRoute: () => AppRoute,
 } as any)
-const AppAjudaRoute = AppAjudaRouteImport.update({
-  id: '/ajuda',
-  path: '/ajuda',
+const AppPtesRoute = AppPtesRouteImport.update({
+  id: '/ptes',
+  path: '/ptes',
   getParentRoute: () => AppRoute,
 } as any)
-const AppAprsRoute = AppAprsRouteImport.update({
-  id: '/aprs',
-  path: '/aprs',
+const AppPsicossocialRoute = AppPsicossocialRouteImport.update({
+  id: '/psicossocial',
+  path: '/psicossocial',
   getParentRoute: () => AppRoute,
 } as any)
-const AppAssinadorRoute = AppAssinadorRouteImport.update({
-  id: '/assinador',
-  path: '/assinador',
+const AppPgrRoute = AppPgrRouteImport.update({
+  id: '/pgr',
+  path: '/pgr',
   getParentRoute: () => AppRoute,
 } as any)
-const AppAuditRoute = AppAuditRouteImport.update({
-  id: '/audit',
-  path: '/audit',
+const AppPainelRoute = AppPainelRouteImport.update({
+  id: '/painel',
+  path: '/painel',
   getParentRoute: () => AppRoute,
 } as any)
-const AppCascosRoute = AppCascosRouteImport.update({
-  id: '/cascos',
-  path: '/cascos',
+const AppOssRoute = AppOssRouteImport.update({
+  id: '/oss',
+  path: '/oss',
   getParentRoute: () => AppRoute,
 } as any)
-const AppCompaniesRoute = AppCompaniesRouteImport.update({
-  id: '/companies',
-  path: '/companies',
+const AppNcsRoute = AppNcsRouteImport.update({
+  id: '/ncs',
+  path: '/ncs',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMatrizTreinamentoRoute = AppMatrizTreinamentoRouteImport.update({
+  id: '/matriz-treinamento',
+  path: '/matriz-treinamento',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMatrizRiscosRoute = AppMatrizRiscosRouteImport.update({
+  id: '/matriz-riscos',
+  path: '/matriz-riscos',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppIncidentesRoute = AppIncidentesRouteImport.update({
+  id: '/incidentes',
+  path: '/incidentes',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHojeRoute = AppHojeRouteImport.update({
+  id: '/hoje',
+  path: '/hoje',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppExtraSabadoAprovacoesRoute =
+  AppExtraSabadoAprovacoesRouteImport.update({
+    id: '/extra-sabado-aprovacoes',
+    path: '/extra-sabado-aprovacoes',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppExtintoresInspecaoFotoRoute =
+  AppExtintoresInspecaoFotoRouteImport.update({
+    id: '/extintores-inspecao-foto',
+    path: '/extintores-inspecao-foto',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppExtintoresRoute = AppExtintoresRouteImport.update({
+  id: '/extintores',
+  path: '/extintores',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppEmployeesRoute = AppEmployeesRouteImport.update({
+  id: '/employees',
+  path: '/employees',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCozinhaRoute = AppCozinhaRouteImport.update({
+  id: '/cozinha',
+  path: '/cozinha',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppControleDocumentosRoute = AppControleDocumentosRouteImport.update({
+  id: '/controle-documentos',
+  path: '/controle-documentos',
   getParentRoute: () => AppRoute,
 } as any)
 const AppConfiguracoesIndicadoresRoute =
@@ -242,250 +294,64 @@ const AppConfiguracoesIndicadoresRoute =
     path: '/configuracoes-indicadores',
     getParentRoute: () => AppRoute,
   } as any)
-const AppControleDocumentosRoute = AppControleDocumentosRouteImport.update({
-  id: '/controle-documentos',
-  path: '/controle-documentos',
+const AppCompaniesRoute = AppCompaniesRouteImport.update({
+  id: '/companies',
+  path: '/companies',
   getParentRoute: () => AppRoute,
 } as any)
-const AppCozinhaRoute = AppCozinhaRouteImport.update({
-  id: '/cozinha',
-  path: '/cozinha',
+const AppCascosRoute = AppCascosRouteImport.update({
+  id: '/cascos',
+  path: '/cascos',
   getParentRoute: () => AppRoute,
 } as any)
-const AppEmployeesRoute = AppEmployeesRouteImport.update({
-  id: '/employees',
-  path: '/employees',
+const AppAuditRoute = AppAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
   getParentRoute: () => AppRoute,
 } as any)
-const AppExtintoresRoute = AppExtintoresRouteImport.update({
-  id: '/extintores',
-  path: '/extintores',
+const AppAssinadorRoute = AppAssinadorRouteImport.update({
+  id: '/assinador',
+  path: '/assinador',
   getParentRoute: () => AppRoute,
 } as any)
-const AppExtintoresInspecaoFotoRoute =
-  AppExtintoresInspecaoFotoRouteImport.update({
-    id: '/extintores-inspecao-foto',
-    path: '/extintores-inspecao-foto',
-    getParentRoute: () => AppRoute,
-  } as any)
-const AppExtraSabadoAprovacoesRoute =
-  AppExtraSabadoAprovacoesRouteImport.update({
-    id: '/extra-sabado-aprovacoes',
-    path: '/extra-sabado-aprovacoes',
-    getParentRoute: () => AppRoute,
-  } as any)
-const AppHojeRoute = AppHojeRouteImport.update({
-  id: '/hoje',
-  path: '/hoje',
+const AppAprsRoute = AppAprsRouteImport.update({
+  id: '/aprs',
+  path: '/aprs',
   getParentRoute: () => AppRoute,
 } as any)
-const AppIncidentesRoute = AppIncidentesRouteImport.update({
-  id: '/incidentes',
-  path: '/incidentes',
+const AppAjudaRoute = AppAjudaRouteImport.update({
+  id: '/ajuda',
+  path: '/ajuda',
   getParentRoute: () => AppRoute,
 } as any)
-const AppMatrizRiscosRoute = AppMatrizRiscosRouteImport.update({
-  id: '/matriz-riscos',
-  path: '/matriz-riscos',
+const AppAdministrativoRoute = AppAdministrativoRouteImport.update({
+  id: '/administrativo',
+  path: '/administrativo',
   getParentRoute: () => AppRoute,
 } as any)
-const AppMatrizTreinamentoRoute = AppMatrizTreinamentoRouteImport.update({
-  id: '/matriz-treinamento',
-  path: '/matriz-treinamento',
+const AppAcoesRoute = AppAcoesRouteImport.update({
+  id: '/acoes',
+  path: '/acoes',
   getParentRoute: () => AppRoute,
 } as any)
-const AppNcsRoute = AppNcsRouteImport.update({
-  id: '/ncs',
-  path: '/ncs',
+const AppAcidentesRoute = AppAcidentesRouteImport.update({
+  id: '/acidentes',
+  path: '/acidentes',
   getParentRoute: () => AppRoute,
 } as any)
-const AppOssRoute = AppOssRouteImport.update({
-  id: '/oss',
-  path: '/oss',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppPainelRoute = AppPainelRouteImport.update({
-  id: '/painel',
-  path: '/painel',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppPgrRoute = AppPgrRouteImport.update({
-  id: '/pgr',
-  path: '/pgr',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppPsicossocialRoute = AppPsicossocialRouteImport.update({
-  id: '/psicossocial',
-  path: '/psicossocial',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppPtesRoute = AppPtesRouteImport.update({
-  id: '/ptes',
-  path: '/ptes',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppRolesRoute = AppRolesRouteImport.update({
-  id: '/roles',
-  path: '/roles',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppTrainingsRoute = AppTrainingsRouteImport.update({
-  id: '/trainings',
-  path: '/trainings',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppUsersRoute = AppUsersRouteImport.update({
-  id: '/users',
-  path: '/users',
-  getParentRoute: () => AppRoute,
-} as any)
-const PsicoTokenRoute = PsicoTokenRouteImport.update({
-  id: '/psico/$token',
-  path: '/psico/$token',
+const ApiSigmoChatRoute = ApiSigmoChatRouteImport.update({
+  id: '/api/sigmo-chat',
+  path: '/api/sigmo-chat',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RcTokenRoute = RcTokenRouteImport.update({
-  id: '/rc/$token',
-  path: '/rc/$token',
+const ApiPgrChatRoute = ApiPgrChatRouteImport.update({
+  id: '/api/pgr-chat',
+  path: '/api/pgr-chat',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicDenunciaRoute = ApiPublicDenunciaRouteImport.update({
-  id: '/api/public/denuncia',
-  path: '/api/public/denuncia',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AppAdministrativoGestaoPontoRoute =
-  AppAdministrativoGestaoPontoRouteImport.update({
-    id: '/gestao-ponto',
-    path: '/gestao-ponto',
-    getParentRoute: () => AppAdministrativoRoute,
-  } as any)
-const AppAdministrativoHoraExtraRecebidaRoute =
-  AppAdministrativoHoraExtraRecebidaRouteImport.update({
-    id: '/hora-extra-recebida',
-    path: '/hora-extra-recebida',
-    getParentRoute: () => AppAdministrativoRoute,
-  } as any)
-const AppAdministrativoMarcadoresHoraExtraRoute =
-  AppAdministrativoMarcadoresHoraExtraRouteImport.update({
-    id: '/marcadores-hora-extra',
-    path: '/marcadores-hora-extra',
-    getParentRoute: () => AppAdministrativoRoute,
-  } as any)
-const AppAdministrativoRequisicoesRecebidasRoute =
-  AppAdministrativoRequisicoesRecebidasRouteImport.update({
-    id: '/requisicoes-recebidas',
-    path: '/requisicoes-recebidas',
-    getParentRoute: () => AppAdministrativoRoute,
-  } as any)
-const AppAlmoxarifadoRequisicaoComprasRoute =
-  AppAlmoxarifadoRequisicaoComprasRouteImport.update({
-    id: '/almoxarifado/requisicao-compras',
-    path: '/almoxarifado/requisicao-compras',
-    getParentRoute: () => AppRoute,
-  } as any)
-const AppComprasDashboardRoute = AppComprasDashboardRouteImport.update({
-  id: '/compras/dashboard',
-  path: '/compras/dashboard',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppComprasFornecedoresRoute = AppComprasFornecedoresRouteImport.update({
-  id: '/compras/fornecedores',
-  path: '/compras/fornecedores',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppComprasRequisicoesRecebidasRoute =
-  AppComprasRequisicoesRecebidasRouteImport.update({
-    id: '/compras/requisicoes-recebidas',
-    path: '/compras/requisicoes-recebidas',
-    getParentRoute: () => AppRoute,
-  } as any)
-const AppConfiguracoesProdutividadeRoute =
-  AppConfiguracoesProdutividadeRouteImport.update({
-    id: '/configuracoes/produtividade',
-    path: '/configuracoes/produtividade',
-    getParentRoute: () => AppRoute,
-  } as any)
-const AppContaSegurancaRoute = AppContaSegurancaRouteImport.update({
-  id: '/conta/seguranca',
-  path: '/conta/seguranca',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppDdsIndexRoute = AppDdsIndexRouteImport.update({
-  id: '/dds/',
-  path: '/dds/',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppDdsGestoresRoute = AppDdsGestoresRouteImport.update({
-  id: '/dds/gestores',
-  path: '/dds/gestores',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppDdsHistoricoRoute = AppDdsHistoricoRouteImport.update({
-  id: '/dds/historico',
-  path: '/dds/historico',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppDdsPainelRoute = AppDdsPainelRouteImport.update({
-  id: '/dds/painel',
-  path: '/dds/painel',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppDdsTemasRoute = AppDdsTemasRouteImport.update({
-  id: '/dds/temas',
-  path: '/dds/temas',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppEmployeesIndexRoute = AppEmployeesIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AppEmployeesRoute,
-} as any)
-const AppEmployeesIdRoute = AppEmployeesIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AppEmployeesRoute,
-} as any)
-const AppEmployeesDesligadosRoute = AppEmployeesDesligadosRouteImport.update({
-  id: '/desligados',
-  path: '/desligados',
-  getParentRoute: () => AppEmployeesRoute,
-} as any)
-const AppEmployeesHoraExtraSabadoRoute =
-  AppEmployeesHoraExtraSabadoRouteImport.update({
-    id: '/hora-extra-sabado',
-    path: '/hora-extra-sabado',
-    getParentRoute: () => AppEmployeesRoute,
-  } as any)
-const AppEmployeesListagemRoute = AppEmployeesListagemRouteImport.update({
-  id: '/listagem',
-  path: '/listagem',
-  getParentRoute: () => AppEmployeesRoute,
-} as any)
-const AppEmployeesRelatorioAdmissoesRoute =
-  AppEmployeesRelatorioAdmissoesRouteImport.update({
-    id: '/relatorio-admissoes',
-    path: '/relatorio-admissoes',
-    getParentRoute: () => AppEmployeesRoute,
-  } as any)
-const AppEmployeesSaidasRoute = AppEmployeesSaidasRouteImport.update({
-  id: '/saidas',
-  path: '/saidas',
-  getParentRoute: () => AppEmployeesRoute,
-} as any)
-const AppEstoqueIndexRoute = AppEstoqueIndexRouteImport.update({
-  id: '/estoque/',
-  path: '/estoque/',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppEstoqueEpiRoute = AppEstoqueEpiRouteImport.update({
-  id: '/estoque/epi',
-  path: '/estoque/epi',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppEstoqueSesmtRoute = AppEstoqueSesmtRouteImport.update({
-  id: '/estoque/sesmt',
-  path: '/estoque/sesmt',
+const AppPortariaIndexRoute = AppPortariaIndexRouteImport.update({
+  id: '/portaria/',
+  path: '/portaria/',
   getParentRoute: () => AppRoute,
 } as any)
 const AppOssIndexRoute = AppOssIndexRouteImport.update({
@@ -493,189 +359,19 @@ const AppOssIndexRoute = AppOssIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppOssRoute,
 } as any)
-const AppOssTemplatesRoute = AppOssTemplatesRouteImport.update({
-  id: '/templates',
-  path: '/templates',
-  getParentRoute: () => AppOssRoute,
-} as any)
-const AppPortariaIndexRoute = AppPortariaIndexRouteImport.update({
-  id: '/portaria/',
-  path: '/portaria/',
+const AppEstoqueIndexRoute = AppEstoqueIndexRouteImport.update({
+  id: '/estoque/',
+  path: '/estoque/',
   getParentRoute: () => AppRoute,
 } as any)
-const AppPortariaControleRoute = AppPortariaControleRouteImport.update({
-  id: '/portaria/controle',
-  path: '/portaria/controle',
-  getParentRoute: () => AppRoute,
+const AppEmployeesIndexRoute = AppEmployeesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppEmployeesRoute,
 } as any)
-const AppPortariaControleEntradaRoute =
-  AppPortariaControleEntradaRouteImport.update({
-    id: '/portaria/controle-entrada',
-    path: '/portaria/controle-entrada',
-    getParentRoute: () => AppRoute,
-  } as any)
-const AppPortariaSaidasRoute = AppPortariaSaidasRouteImport.update({
-  id: '/portaria/saidas',
-  path: '/portaria/saidas',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppPortariaSaidasHojeRoute = AppPortariaSaidasHojeRouteImport.update({
-  id: '/portaria/saidas-hoje',
-  path: '/portaria/saidas-hoje',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppProducaoBaseMateriaPrimaRoute =
-  AppProducaoBaseMateriaPrimaRouteImport.update({
-    id: '/producao/base-materia-prima',
-    path: '/producao/base-materia-prima',
-    getParentRoute: () => AppRoute,
-  } as any)
-const AppProducaoCriarOrdemRoute = AppProducaoCriarOrdemRouteImport.update({
-  id: '/producao/criar-ordem',
-  path: '/producao/criar-ordem',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppProducaoExpedicaoRoute = AppProducaoExpedicaoRouteImport.update({
-  id: '/producao/expedicao',
-  path: '/producao/expedicao',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppProducaoFatoresConsumoRoute =
-  AppProducaoFatoresConsumoRouteImport.update({
-    id: '/producao/fatores-consumo',
-    path: '/producao/fatores-consumo',
-    getParentRoute: () => AppRoute,
-  } as any)
-const AppProducaoListaTecnicaRoute = AppProducaoListaTecnicaRouteImport.update({
-  id: '/producao/lista-tecnica',
-  path: '/producao/lista-tecnica',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppProducaoOrdensRoute = AppProducaoOrdensRouteImport.update({
-  id: '/producao/ordens',
-  path: '/producao/ordens',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppProducaoPainelListaTecnicaRoute =
-  AppProducaoPainelListaTecnicaRouteImport.update({
-    id: '/producao/painel-lista-tecnica',
-    path: '/producao/painel-lista-tecnica',
-    getParentRoute: () => AppRoute,
-  } as any)
-const AppProducaoRequisicaoComprasRoute =
-  AppProducaoRequisicaoComprasRouteImport.update({
-    id: '/producao/requisicao-compras',
-    path: '/producao/requisicao-compras',
-    getParentRoute: () => AppRoute,
-  } as any)
-const AppProducaoTiposProdutoRoute = AppProducaoTiposProdutoRouteImport.update({
-  id: '/producao/tipos-produto',
-  path: '/producao/tipos-produto',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppRelatoriosIndicadoresRoute =
-  AppRelatoriosIndicadoresRouteImport.update({
-    id: '/relatorios/indicadores',
-    path: '/relatorios/indicadores',
-    getParentRoute: () => AppRoute,
-  } as any)
-const AppRelatoriosReincidenciaEpiRoute =
-  AppRelatoriosReincidenciaEpiRouteImport.update({
-    id: '/relatorios/reincidencia-epi',
-    path: '/relatorios/reincidencia-epi',
-    getParentRoute: () => AppRoute,
-  } as any)
-const AppSesmtAgendaRoute = AppSesmtAgendaRouteImport.update({
-  id: '/sesmt/agenda',
-  path: '/sesmt/agenda',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSesmtAsosRoute = AppSesmtAsosRouteImport.update({
-  id: '/sesmt/asos',
-  path: '/sesmt/asos',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSesmtCipaRoute = AppSesmtCipaRouteImport.update({
-  id: '/sesmt/cipa',
-  path: '/sesmt/cipa',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSesmtConvocacoesAsoRoute = AppSesmtConvocacoesAsoRouteImport.update({
-  id: '/sesmt/convocacoes-aso',
-  path: '/sesmt/convocacoes-aso',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSesmtDocsRoute = AppSesmtDocsRouteImport.update({
-  id: '/sesmt/docs',
-  path: '/sesmt/docs',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSesmtEquipamentosMoveisRoute =
-  AppSesmtEquipamentosMoveisRouteImport.update({
-    id: '/sesmt/equipamentos-moveis',
-    path: '/sesmt/equipamentos-moveis',
-    getParentRoute: () => AppRoute,
-  } as any)
-const AppSesmtGuiaDocumentosRoute = AppSesmtGuiaDocumentosRouteImport.update({
-  id: '/sesmt/guia-documentos',
-  path: '/sesmt/guia-documentos',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSesmtInspecoesRoute = AppSesmtInspecoesRouteImport.update({
-  id: '/sesmt/inspecoes',
-  path: '/sesmt/inspecoes',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSesmtIntegracoesRoute = AppSesmtIntegracoesRouteImport.update({
-  id: '/sesmt/integracoes',
-  path: '/sesmt/integracoes',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSesmtMedicinaOcupacionalRoute =
-  AppSesmtMedicinaOcupacionalRouteImport.update({
-    id: '/sesmt/medicina-ocupacional',
-    path: '/sesmt/medicina-ocupacional',
-    getParentRoute: () => AppRoute,
-  } as any)
-const AppSesmtOcrTesteRoute = AppSesmtOcrTesteRouteImport.update({
-  id: '/sesmt/ocr-teste',
-  path: '/sesmt/ocr-teste',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSesmtOrganogramaRoute = AppSesmtOrganogramaRouteImport.update({
-  id: '/sesmt/organograma',
-  path: '/sesmt/organograma',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSesmtPrestadoresRoute = AppSesmtPrestadoresRouteImport.update({
-  id: '/sesmt/prestadores',
-  path: '/sesmt/prestadores',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSesmtProcedimentosRoute = AppSesmtProcedimentosRouteImport.update({
-  id: '/sesmt/procedimentos',
-  path: '/sesmt/procedimentos',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSesmtRequisicoesRoute = AppSesmtRequisicoesRouteImport.update({
-  id: '/sesmt/requisicoes',
-  path: '/sesmt/requisicoes',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSesmtSimuladosRoute = AppSesmtSimuladosRouteImport.update({
-  id: '/sesmt/simulados',
-  path: '/sesmt/simulados',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSesmtTemplatesDocumentosRoute =
-  AppSesmtTemplatesDocumentosRouteImport.update({
-    id: '/sesmt/templates-documentos',
-    path: '/sesmt/templates-documentos',
-    getParentRoute: () => AppRoute,
-  } as any)
-const AppSesmtTerceirosRoute = AppSesmtTerceirosRouteImport.update({
-  id: '/sesmt/terceiros',
-  path: '/sesmt/terceiros',
+const AppDdsIndexRoute = AppDdsIndexRouteImport.update({
+  id: '/dds/',
+  path: '/dds/',
   getParentRoute: () => AppRoute,
 } as any)
 const AppSesmtVincularUsuariosRoute =
@@ -684,15 +380,319 @@ const AppSesmtVincularUsuariosRoute =
     path: '/sesmt/vincular-usuarios',
     getParentRoute: () => AppRoute,
   } as any)
-const ApiPublicPsicoHashRoute = ApiPublicPsicoHashRouteImport.update({
-  id: '/api/public/psico/$hash',
-  path: '/api/public/psico/$hash',
+const AppSesmtTerceirosRoute = AppSesmtTerceirosRouteImport.update({
+  id: '/sesmt/terceiros',
+  path: '/sesmt/terceiros',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSesmtTemplatesDocumentosRoute =
+  AppSesmtTemplatesDocumentosRouteImport.update({
+    id: '/sesmt/templates-documentos',
+    path: '/sesmt/templates-documentos',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppSesmtSimuladosRoute = AppSesmtSimuladosRouteImport.update({
+  id: '/sesmt/simulados',
+  path: '/sesmt/simulados',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSesmtRequisicoesRoute = AppSesmtRequisicoesRouteImport.update({
+  id: '/sesmt/requisicoes',
+  path: '/sesmt/requisicoes',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSesmtProcedimentosRoute = AppSesmtProcedimentosRouteImport.update({
+  id: '/sesmt/procedimentos',
+  path: '/sesmt/procedimentos',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSesmtPrestadoresRoute = AppSesmtPrestadoresRouteImport.update({
+  id: '/sesmt/prestadores',
+  path: '/sesmt/prestadores',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSesmtOrganogramaRoute = AppSesmtOrganogramaRouteImport.update({
+  id: '/sesmt/organograma',
+  path: '/sesmt/organograma',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSesmtOcrTesteRoute = AppSesmtOcrTesteRouteImport.update({
+  id: '/sesmt/ocr-teste',
+  path: '/sesmt/ocr-teste',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSesmtMedicinaOcupacionalRoute =
+  AppSesmtMedicinaOcupacionalRouteImport.update({
+    id: '/sesmt/medicina-ocupacional',
+    path: '/sesmt/medicina-ocupacional',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppSesmtIntegracoesRoute = AppSesmtIntegracoesRouteImport.update({
+  id: '/sesmt/integracoes',
+  path: '/sesmt/integracoes',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSesmtInspecoesRoute = AppSesmtInspecoesRouteImport.update({
+  id: '/sesmt/inspecoes',
+  path: '/sesmt/inspecoes',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSesmtGuiaDocumentosRoute = AppSesmtGuiaDocumentosRouteImport.update({
+  id: '/sesmt/guia-documentos',
+  path: '/sesmt/guia-documentos',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSesmtEquipamentosMoveisRoute =
+  AppSesmtEquipamentosMoveisRouteImport.update({
+    id: '/sesmt/equipamentos-moveis',
+    path: '/sesmt/equipamentos-moveis',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppSesmtDocsRoute = AppSesmtDocsRouteImport.update({
+  id: '/sesmt/docs',
+  path: '/sesmt/docs',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSesmtConvocacoesAsoRoute = AppSesmtConvocacoesAsoRouteImport.update({
+  id: '/sesmt/convocacoes-aso',
+  path: '/sesmt/convocacoes-aso',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSesmtCipaRoute = AppSesmtCipaRouteImport.update({
+  id: '/sesmt/cipa',
+  path: '/sesmt/cipa',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSesmtAsosRoute = AppSesmtAsosRouteImport.update({
+  id: '/sesmt/asos',
+  path: '/sesmt/asos',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSesmtAgendaRoute = AppSesmtAgendaRouteImport.update({
+  id: '/sesmt/agenda',
+  path: '/sesmt/agenda',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppRelatoriosReincidenciaEpiRoute =
+  AppRelatoriosReincidenciaEpiRouteImport.update({
+    id: '/relatorios/reincidencia-epi',
+    path: '/relatorios/reincidencia-epi',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppRelatoriosIndicadoresRoute =
+  AppRelatoriosIndicadoresRouteImport.update({
+    id: '/relatorios/indicadores',
+    path: '/relatorios/indicadores',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppProducaoTiposProdutoRoute = AppProducaoTiposProdutoRouteImport.update({
+  id: '/producao/tipos-produto',
+  path: '/producao/tipos-produto',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProducaoRequisicaoComprasRoute =
+  AppProducaoRequisicaoComprasRouteImport.update({
+    id: '/producao/requisicao-compras',
+    path: '/producao/requisicao-compras',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppProducaoPainelListaTecnicaRoute =
+  AppProducaoPainelListaTecnicaRouteImport.update({
+    id: '/producao/painel-lista-tecnica',
+    path: '/producao/painel-lista-tecnica',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppProducaoOrdensRoute = AppProducaoOrdensRouteImport.update({
+  id: '/producao/ordens',
+  path: '/producao/ordens',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProducaoListaTecnicaRoute = AppProducaoListaTecnicaRouteImport.update({
+  id: '/producao/lista-tecnica',
+  path: '/producao/lista-tecnica',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProducaoFatoresConsumoRoute =
+  AppProducaoFatoresConsumoRouteImport.update({
+    id: '/producao/fatores-consumo',
+    path: '/producao/fatores-consumo',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppProducaoExpedicaoRoute = AppProducaoExpedicaoRouteImport.update({
+  id: '/producao/expedicao',
+  path: '/producao/expedicao',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProducaoCriarOrdemRoute = AppProducaoCriarOrdemRouteImport.update({
+  id: '/producao/criar-ordem',
+  path: '/producao/criar-ordem',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProducaoBaseMateriaPrimaRoute =
+  AppProducaoBaseMateriaPrimaRouteImport.update({
+    id: '/producao/base-materia-prima',
+    path: '/producao/base-materia-prima',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppPortariaSaidasHojeRoute = AppPortariaSaidasHojeRouteImport.update({
+  id: '/portaria/saidas-hoje',
+  path: '/portaria/saidas-hoje',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPortariaSaidasRoute = AppPortariaSaidasRouteImport.update({
+  id: '/portaria/saidas',
+  path: '/portaria/saidas',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPortariaControleEntradaRoute =
+  AppPortariaControleEntradaRouteImport.update({
+    id: '/portaria/controle-entrada',
+    path: '/portaria/controle-entrada',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppPortariaControleRoute = AppPortariaControleRouteImport.update({
+  id: '/portaria/controle',
+  path: '/portaria/controle',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppOssTemplatesRoute = AppOssTemplatesRouteImport.update({
+  id: '/templates',
+  path: '/templates',
+  getParentRoute: () => AppOssRoute,
+} as any)
+const AppEstoqueSesmtRoute = AppEstoqueSesmtRouteImport.update({
+  id: '/estoque/sesmt',
+  path: '/estoque/sesmt',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppEstoqueEpiRoute = AppEstoqueEpiRouteImport.update({
+  id: '/estoque/epi',
+  path: '/estoque/epi',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppEmployeesSaidasRoute = AppEmployeesSaidasRouteImport.update({
+  id: '/saidas',
+  path: '/saidas',
+  getParentRoute: () => AppEmployeesRoute,
+} as any)
+const AppEmployeesRelatorioAdmissoesRoute =
+  AppEmployeesRelatorioAdmissoesRouteImport.update({
+    id: '/relatorio-admissoes',
+    path: '/relatorio-admissoes',
+    getParentRoute: () => AppEmployeesRoute,
+  } as any)
+const AppEmployeesListagemRoute = AppEmployeesListagemRouteImport.update({
+  id: '/listagem',
+  path: '/listagem',
+  getParentRoute: () => AppEmployeesRoute,
+} as any)
+const AppEmployeesHoraExtraSabadoRoute =
+  AppEmployeesHoraExtraSabadoRouteImport.update({
+    id: '/hora-extra-sabado',
+    path: '/hora-extra-sabado',
+    getParentRoute: () => AppEmployeesRoute,
+  } as any)
+const AppEmployeesDesligadosRoute = AppEmployeesDesligadosRouteImport.update({
+  id: '/desligados',
+  path: '/desligados',
+  getParentRoute: () => AppEmployeesRoute,
+} as any)
+const AppEmployeesIdRoute = AppEmployeesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AppEmployeesRoute,
+} as any)
+const AppDdsTemasRoute = AppDdsTemasRouteImport.update({
+  id: '/dds/temas',
+  path: '/dds/temas',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDdsPainelRoute = AppDdsPainelRouteImport.update({
+  id: '/dds/painel',
+  path: '/dds/painel',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDdsHistoricoRoute = AppDdsHistoricoRouteImport.update({
+  id: '/dds/historico',
+  path: '/dds/historico',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDdsGestoresRoute = AppDdsGestoresRouteImport.update({
+  id: '/dds/gestores',
+  path: '/dds/gestores',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppContaSegurancaRoute = AppContaSegurancaRouteImport.update({
+  id: '/conta/seguranca',
+  path: '/conta/seguranca',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppConfiguracoesProdutividadeRoute =
+  AppConfiguracoesProdutividadeRouteImport.update({
+    id: '/configuracoes/produtividade',
+    path: '/configuracoes/produtividade',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppComprasRequisicoesRecebidasRoute =
+  AppComprasRequisicoesRecebidasRouteImport.update({
+    id: '/compras/requisicoes-recebidas',
+    path: '/compras/requisicoes-recebidas',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppComprasFornecedoresRoute = AppComprasFornecedoresRouteImport.update({
+  id: '/compras/fornecedores',
+  path: '/compras/fornecedores',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppComprasDashboardRoute = AppComprasDashboardRouteImport.update({
+  id: '/compras/dashboard',
+  path: '/compras/dashboard',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAlmoxarifadoRequisicaoComprasRoute =
+  AppAlmoxarifadoRequisicaoComprasRouteImport.update({
+    id: '/almoxarifado/requisicao-compras',
+    path: '/almoxarifado/requisicao-compras',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppAdministrativoRequisicoesRecebidasRoute =
+  AppAdministrativoRequisicoesRecebidasRouteImport.update({
+    id: '/requisicoes-recebidas',
+    path: '/requisicoes-recebidas',
+    getParentRoute: () => AppAdministrativoRoute,
+  } as any)
+const AppAdministrativoMarcadoresHoraExtraRoute =
+  AppAdministrativoMarcadoresHoraExtraRouteImport.update({
+    id: '/marcadores-hora-extra',
+    path: '/marcadores-hora-extra',
+    getParentRoute: () => AppAdministrativoRoute,
+  } as any)
+const AppAdministrativoHoraExtraRecebidaRoute =
+  AppAdministrativoHoraExtraRecebidaRouteImport.update({
+    id: '/hora-extra-recebida',
+    path: '/hora-extra-recebida',
+    getParentRoute: () => AppAdministrativoRoute,
+  } as any)
+const AppAdministrativoGestaoPontoRoute =
+  AppAdministrativoGestaoPontoRouteImport.update({
+    id: '/gestao-ponto',
+    path: '/gestao-ponto',
+    getParentRoute: () => AppAdministrativoRoute,
+  } as any)
+const ApiPublicDenunciaRoute = ApiPublicDenunciaRouteImport.update({
+  id: '/api/public/denuncia',
+  path: '/api/public/denuncia',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicPsicoSubmitRoute = ApiPublicPsicoSubmitRouteImport.update({
-  id: '/api/public/psico/submit',
-  path: '/api/public/psico/submit',
-  getParentRoute: () => rootRouteImport,
+const AppSesmtInspecoesIndexRoute = AppSesmtInspecoesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppSesmtInspecoesRoute,
+} as any)
+const AppSesmtCatalogosIndexRoute = AppSesmtCatalogosIndexRouteImport.update({
+  id: '/sesmt/catalogos/',
+  path: '/sesmt/catalogos/',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppAdministrativoGestaoPontoIndexRoute =
   AppAdministrativoGestaoPontoIndexRouteImport.update({
@@ -700,39 +700,46 @@ const AppAdministrativoGestaoPontoIndexRoute =
     path: '/',
     getParentRoute: () => AppAdministrativoGestaoPontoRoute,
   } as any)
-const AppAdministrativoGestaoPontoCicloIdRoute =
-  AppAdministrativoGestaoPontoCicloIdRouteImport.update({
-    id: '/$cicloId',
-    path: '/$cicloId',
-    getParentRoute: () => AppAdministrativoGestaoPontoRoute,
-  } as any)
-const AppEstoqueEpiFichasMensaisRoute =
-  AppEstoqueEpiFichasMensaisRouteImport.update({
-    id: '/fichas-mensais',
-    path: '/fichas-mensais',
-    getParentRoute: () => AppEstoqueEpiRoute,
-  } as any)
-const AppModuloModuloHoraExtraRoute =
-  AppModuloModuloHoraExtraRouteImport.update({
-    id: '/modulo/$modulo/hora-extra',
-    path: '/modulo/$modulo/hora-extra',
+const AppSesmtInspecoesIdRoute = AppSesmtInspecoesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AppSesmtInspecoesRoute,
+} as any)
+const AppSesmtEquipamentosMoveisArquivosMensaisRoute =
+  AppSesmtEquipamentosMoveisArquivosMensaisRouteImport.update({
+    id: '/sesmt/equipamentos-moveis_/arquivos-mensais',
+    path: '/sesmt/equipamentos-moveis/arquivos-mensais',
     getParentRoute: () => AppRoute,
   } as any)
-const AppModuloEletricaRequisicaoComprasRoute =
-  AppModuloEletricaRequisicaoComprasRouteImport.update({
-    id: '/modulo/eletrica/requisicao-compras',
-    path: '/modulo/eletrica/requisicao-compras',
+const AppSesmtCatalogosVacinasRoute =
+  AppSesmtCatalogosVacinasRouteImport.update({
+    id: '/sesmt/catalogos/vacinas',
+    path: '/sesmt/catalogos/vacinas',
     getParentRoute: () => AppRoute,
   } as any)
-const AppModuloMecanicaRequisicaoComprasRoute =
-  AppModuloMecanicaRequisicaoComprasRouteImport.update({
-    id: '/modulo/mecanica/requisicao-compras',
-    path: '/modulo/mecanica/requisicao-compras',
-    getParentRoute: () => AppRoute,
-  } as any)
-const AppSesmtCatalogosIndexRoute = AppSesmtCatalogosIndexRouteImport.update({
-  id: '/sesmt/catalogos/',
-  path: '/sesmt/catalogos/',
+const AppSesmtCatalogosRiscosRoute = AppSesmtCatalogosRiscosRouteImport.update({
+  id: '/sesmt/catalogos/riscos',
+  path: '/sesmt/catalogos/riscos',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSesmtCatalogosNrsRoute = AppSesmtCatalogosNrsRouteImport.update({
+  id: '/sesmt/catalogos/nrs',
+  path: '/sesmt/catalogos/nrs',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSesmtCatalogosGasesRoute = AppSesmtCatalogosGasesRouteImport.update({
+  id: '/sesmt/catalogos/gases',
+  path: '/sesmt/catalogos/gases',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSesmtCatalogosExamesRoute = AppSesmtCatalogosExamesRouteImport.update({
+  id: '/sesmt/catalogos/exames',
+  path: '/sesmt/catalogos/exames',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSesmtCatalogosEpisRoute = AppSesmtCatalogosEpisRouteImport.update({
+  id: '/sesmt/catalogos/epis',
+  path: '/sesmt/catalogos/epis',
   getParentRoute: () => AppRoute,
 } as any)
 const AppSesmtCatalogosCruzamentosRoute =
@@ -741,63 +748,56 @@ const AppSesmtCatalogosCruzamentosRoute =
     path: '/sesmt/catalogos/cruzamentos',
     getParentRoute: () => AppRoute,
   } as any)
-const AppSesmtCatalogosEpisRoute = AppSesmtCatalogosEpisRouteImport.update({
-  id: '/sesmt/catalogos/epis',
-  path: '/sesmt/catalogos/epis',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSesmtCatalogosExamesRoute = AppSesmtCatalogosExamesRouteImport.update({
-  id: '/sesmt/catalogos/exames',
-  path: '/sesmt/catalogos/exames',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSesmtCatalogosGasesRoute = AppSesmtCatalogosGasesRouteImport.update({
-  id: '/sesmt/catalogos/gases',
-  path: '/sesmt/catalogos/gases',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSesmtCatalogosNrsRoute = AppSesmtCatalogosNrsRouteImport.update({
-  id: '/sesmt/catalogos/nrs',
-  path: '/sesmt/catalogos/nrs',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSesmtCatalogosRiscosRoute = AppSesmtCatalogosRiscosRouteImport.update({
-  id: '/sesmt/catalogos/riscos',
-  path: '/sesmt/catalogos/riscos',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSesmtCatalogosVacinasRoute =
-  AppSesmtCatalogosVacinasRouteImport.update({
-    id: '/sesmt/catalogos/vacinas',
-    path: '/sesmt/catalogos/vacinas',
+const AppModuloMecanicaRequisicaoComprasRoute =
+  AppModuloMecanicaRequisicaoComprasRouteImport.update({
+    id: '/modulo/mecanica/requisicao-compras',
+    path: '/modulo/mecanica/requisicao-compras',
     getParentRoute: () => AppRoute,
   } as any)
-const AppSesmtEquipamentosMoveisArquivosMensaisRoute =
-  AppSesmtEquipamentosMoveisArquivosMensaisRouteImport.update({
-    id: '/sesmt/equipamentos-moveis_/arquivos-mensais',
-    path: '/sesmt/equipamentos-moveis/arquivos-mensais',
+const AppModuloEletricaRequisicaoComprasRoute =
+  AppModuloEletricaRequisicaoComprasRouteImport.update({
+    id: '/modulo/eletrica/requisicao-compras',
+    path: '/modulo/eletrica/requisicao-compras',
     getParentRoute: () => AppRoute,
   } as any)
-const AppSesmtInspecoesIndexRoute = AppSesmtInspecoesIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AppSesmtInspecoesRoute,
-} as any)
-const AppSesmtInspecoesIdRoute = AppSesmtInspecoesIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AppSesmtInspecoesRoute,
-} as any)
-const AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute =
-  AppSesmtEquipamentosMoveisChecklistEquipamentoIdRouteImport.update({
-    id: '/sesmt/equipamentos-moveis_/checklist/$equipamentoId',
-    path: '/sesmt/equipamentos-moveis/checklist/$equipamentoId',
+const AppModuloModuloHoraExtraRoute =
+  AppModuloModuloHoraExtraRouteImport.update({
+    id: '/modulo/$modulo/hora-extra',
+    path: '/modulo/$modulo/hora-extra',
     getParentRoute: () => AppRoute,
   } as any)
+const AppEstoqueEpiFichasMensaisRoute =
+  AppEstoqueEpiFichasMensaisRouteImport.update({
+    id: '/fichas-mensais',
+    path: '/fichas-mensais',
+    getParentRoute: () => AppEstoqueEpiRoute,
+  } as any)
+const AppAdministrativoGestaoPontoCicloIdRoute =
+  AppAdministrativoGestaoPontoCicloIdRouteImport.update({
+    id: '/$cicloId',
+    path: '/$cicloId',
+    getParentRoute: () => AppAdministrativoGestaoPontoRoute,
+  } as any)
+const ApiPublicPsicoSubmitRoute = ApiPublicPsicoSubmitRouteImport.update({
+  id: '/api/public/psico/submit',
+  path: '/api/public/psico/submit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicPsicoHashRoute = ApiPublicPsicoHashRouteImport.update({
+  id: '/api/public/psico/$hash',
+  path: '/api/public/psico/$hash',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRoute =
   AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRouteImport.update({
     id: '/sesmt/equipamentos-moveis_/historico/$equipamentoId',
     path: '/sesmt/equipamentos-moveis/historico/$equipamentoId',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppSesmtEquipamentosMoveisChecklistEquipamentoIdRoute =
+  AppSesmtEquipamentosMoveisChecklistEquipamentoIdRouteImport.update({
+    id: '/sesmt/equipamentos-moveis_/checklist/$equipamentoId',
+    path: '/sesmt/equipamentos-moveis/checklist/$equipamentoId',
     getParentRoute: () => AppRoute,
   } as any)
 
@@ -1583,46 +1583,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/app': {
-      id: '/app'
-      path: '/app'
-      fullPath: '/app'
-      preLoaderRoute: typeof AppRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/denuncia': {
-      id: '/denuncia'
-      path: '/denuncia'
-      fullPath: '/denuncia'
-      preLoaderRoute: typeof DenunciaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/extra-sabado': {
-      id: '/extra-sabado'
-      path: '/extra-sabado'
-      fullPath: '/extra-sabado'
-      preLoaderRoute: typeof ExtraSabadoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privacidade': {
-      id: '/privacidade'
-      path: '/privacidade'
-      fullPath: '/privacidade'
-      preLoaderRoute: typeof PrivacidadeRouteImport
+    '/termos': {
+      id: '/termos'
+      path: '/termos'
+      fullPath: '/termos'
+      preLoaderRoute: typeof TermosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -1632,25 +1597,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/termos': {
-      id: '/termos'
-      path: '/termos'
-      fullPath: '/termos'
-      preLoaderRoute: typeof TermosRouteImport
+    '/privacidade': {
+      id: '/privacidade'
+      path: '/privacidade'
+      fullPath: '/privacidade'
+      preLoaderRoute: typeof PrivacidadeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/pgr-chat': {
-      id: '/api/pgr-chat'
-      path: '/api/pgr-chat'
-      fullPath: '/api/pgr-chat'
-      preLoaderRoute: typeof ApiPgrChatRouteImport
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/sigmo-chat': {
-      id: '/api/sigmo-chat'
-      path: '/api/sigmo-chat'
-      fullPath: '/api/sigmo-chat'
-      preLoaderRoute: typeof ApiSigmoChatRouteImport
+    '/extra-sabado': {
+      id: '/extra-sabado'
+      path: '/extra-sabado'
+      fullPath: '/extra-sabado'
+      preLoaderRoute: typeof ExtraSabadoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/denuncia': {
+      id: '/denuncia'
+      path: '/denuncia'
+      fullPath: '/denuncia'
+      preLoaderRoute: typeof DenunciaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/': {
@@ -1660,193 +1646,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/acidentes': {
-      id: '/app/acidentes'
-      path: '/acidentes'
-      fullPath: '/app/acidentes'
-      preLoaderRoute: typeof AppAcidentesRouteImport
-      parentRoute: typeof AppRoute
+    '/rc/$token': {
+      id: '/rc/$token'
+      path: '/rc/$token'
+      fullPath: '/rc/$token'
+      preLoaderRoute: typeof RcTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/app/acoes': {
-      id: '/app/acoes'
-      path: '/acoes'
-      fullPath: '/app/acoes'
-      preLoaderRoute: typeof AppAcoesRouteImport
-      parentRoute: typeof AppRoute
+    '/psico/$token': {
+      id: '/psico/$token'
+      path: '/psico/$token'
+      fullPath: '/psico/$token'
+      preLoaderRoute: typeof PsicoTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/app/administrativo': {
-      id: '/app/administrativo'
-      path: '/administrativo'
-      fullPath: '/app/administrativo'
-      preLoaderRoute: typeof AppAdministrativoRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/ajuda': {
-      id: '/app/ajuda'
-      path: '/ajuda'
-      fullPath: '/app/ajuda'
-      preLoaderRoute: typeof AppAjudaRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/aprs': {
-      id: '/app/aprs'
-      path: '/aprs'
-      fullPath: '/app/aprs'
-      preLoaderRoute: typeof AppAprsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/assinador': {
-      id: '/app/assinador'
-      path: '/assinador'
-      fullPath: '/app/assinador'
-      preLoaderRoute: typeof AppAssinadorRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/audit': {
-      id: '/app/audit'
-      path: '/audit'
-      fullPath: '/app/audit'
-      preLoaderRoute: typeof AppAuditRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/cascos': {
-      id: '/app/cascos'
-      path: '/cascos'
-      fullPath: '/app/cascos'
-      preLoaderRoute: typeof AppCascosRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/companies': {
-      id: '/app/companies'
-      path: '/companies'
-      fullPath: '/app/companies'
-      preLoaderRoute: typeof AppCompaniesRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/configuracoes-indicadores': {
-      id: '/app/configuracoes-indicadores'
-      path: '/configuracoes-indicadores'
-      fullPath: '/app/configuracoes-indicadores'
-      preLoaderRoute: typeof AppConfiguracoesIndicadoresRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/controle-documentos': {
-      id: '/app/controle-documentos'
-      path: '/controle-documentos'
-      fullPath: '/app/controle-documentos'
-      preLoaderRoute: typeof AppControleDocumentosRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/cozinha': {
-      id: '/app/cozinha'
-      path: '/cozinha'
-      fullPath: '/app/cozinha'
-      preLoaderRoute: typeof AppCozinhaRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/employees': {
-      id: '/app/employees'
-      path: '/employees'
-      fullPath: '/app/employees'
-      preLoaderRoute: typeof AppEmployeesRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/extintores': {
-      id: '/app/extintores'
-      path: '/extintores'
-      fullPath: '/app/extintores'
-      preLoaderRoute: typeof AppExtintoresRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/extintores-inspecao-foto': {
-      id: '/app/extintores-inspecao-foto'
-      path: '/extintores-inspecao-foto'
-      fullPath: '/app/extintores-inspecao-foto'
-      preLoaderRoute: typeof AppExtintoresInspecaoFotoRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/extra-sabado-aprovacoes': {
-      id: '/app/extra-sabado-aprovacoes'
-      path: '/extra-sabado-aprovacoes'
-      fullPath: '/app/extra-sabado-aprovacoes'
-      preLoaderRoute: typeof AppExtraSabadoAprovacoesRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/hoje': {
-      id: '/app/hoje'
-      path: '/hoje'
-      fullPath: '/app/hoje'
-      preLoaderRoute: typeof AppHojeRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/incidentes': {
-      id: '/app/incidentes'
-      path: '/incidentes'
-      fullPath: '/app/incidentes'
-      preLoaderRoute: typeof AppIncidentesRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/matriz-riscos': {
-      id: '/app/matriz-riscos'
-      path: '/matriz-riscos'
-      fullPath: '/app/matriz-riscos'
-      preLoaderRoute: typeof AppMatrizRiscosRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/matriz-treinamento': {
-      id: '/app/matriz-treinamento'
-      path: '/matriz-treinamento'
-      fullPath: '/app/matriz-treinamento'
-      preLoaderRoute: typeof AppMatrizTreinamentoRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/ncs': {
-      id: '/app/ncs'
-      path: '/ncs'
-      fullPath: '/app/ncs'
-      preLoaderRoute: typeof AppNcsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/oss': {
-      id: '/app/oss'
-      path: '/oss'
-      fullPath: '/app/oss'
-      preLoaderRoute: typeof AppOssRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/painel': {
-      id: '/app/painel'
-      path: '/painel'
-      fullPath: '/app/painel'
-      preLoaderRoute: typeof AppPainelRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/pgr': {
-      id: '/app/pgr'
-      path: '/pgr'
-      fullPath: '/app/pgr'
-      preLoaderRoute: typeof AppPgrRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/psicossocial': {
-      id: '/app/psicossocial'
-      path: '/psicossocial'
-      fullPath: '/app/psicossocial'
-      preLoaderRoute: typeof AppPsicossocialRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/ptes': {
-      id: '/app/ptes'
-      path: '/ptes'
-      fullPath: '/app/ptes'
-      preLoaderRoute: typeof AppPtesRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/roles': {
-      id: '/app/roles'
-      path: '/roles'
-      fullPath: '/app/roles'
-      preLoaderRoute: typeof AppRolesRouteImport
+    '/app/users': {
+      id: '/app/users'
+      path: '/users'
+      fullPath: '/app/users'
+      preLoaderRoute: typeof AppUsersRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/trainings': {
@@ -1856,207 +1674,214 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTrainingsRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/users': {
-      id: '/app/users'
-      path: '/users'
-      fullPath: '/app/users'
-      preLoaderRoute: typeof AppUsersRouteImport
+    '/app/roles': {
+      id: '/app/roles'
+      path: '/roles'
+      fullPath: '/app/roles'
+      preLoaderRoute: typeof AppRolesRouteImport
       parentRoute: typeof AppRoute
     }
-    '/psico/$token': {
-      id: '/psico/$token'
-      path: '/psico/$token'
-      fullPath: '/psico/$token'
-      preLoaderRoute: typeof PsicoTokenRouteImport
+    '/app/ptes': {
+      id: '/app/ptes'
+      path: '/ptes'
+      fullPath: '/app/ptes'
+      preLoaderRoute: typeof AppPtesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/psicossocial': {
+      id: '/app/psicossocial'
+      path: '/psicossocial'
+      fullPath: '/app/psicossocial'
+      preLoaderRoute: typeof AppPsicossocialRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/pgr': {
+      id: '/app/pgr'
+      path: '/pgr'
+      fullPath: '/app/pgr'
+      preLoaderRoute: typeof AppPgrRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/painel': {
+      id: '/app/painel'
+      path: '/painel'
+      fullPath: '/app/painel'
+      preLoaderRoute: typeof AppPainelRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/oss': {
+      id: '/app/oss'
+      path: '/oss'
+      fullPath: '/app/oss'
+      preLoaderRoute: typeof AppOssRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/ncs': {
+      id: '/app/ncs'
+      path: '/ncs'
+      fullPath: '/app/ncs'
+      preLoaderRoute: typeof AppNcsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/matriz-treinamento': {
+      id: '/app/matriz-treinamento'
+      path: '/matriz-treinamento'
+      fullPath: '/app/matriz-treinamento'
+      preLoaderRoute: typeof AppMatrizTreinamentoRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/matriz-riscos': {
+      id: '/app/matriz-riscos'
+      path: '/matriz-riscos'
+      fullPath: '/app/matriz-riscos'
+      preLoaderRoute: typeof AppMatrizRiscosRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/incidentes': {
+      id: '/app/incidentes'
+      path: '/incidentes'
+      fullPath: '/app/incidentes'
+      preLoaderRoute: typeof AppIncidentesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/hoje': {
+      id: '/app/hoje'
+      path: '/hoje'
+      fullPath: '/app/hoje'
+      preLoaderRoute: typeof AppHojeRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/extra-sabado-aprovacoes': {
+      id: '/app/extra-sabado-aprovacoes'
+      path: '/extra-sabado-aprovacoes'
+      fullPath: '/app/extra-sabado-aprovacoes'
+      preLoaderRoute: typeof AppExtraSabadoAprovacoesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/extintores-inspecao-foto': {
+      id: '/app/extintores-inspecao-foto'
+      path: '/extintores-inspecao-foto'
+      fullPath: '/app/extintores-inspecao-foto'
+      preLoaderRoute: typeof AppExtintoresInspecaoFotoRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/extintores': {
+      id: '/app/extintores'
+      path: '/extintores'
+      fullPath: '/app/extintores'
+      preLoaderRoute: typeof AppExtintoresRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/employees': {
+      id: '/app/employees'
+      path: '/employees'
+      fullPath: '/app/employees'
+      preLoaderRoute: typeof AppEmployeesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/cozinha': {
+      id: '/app/cozinha'
+      path: '/cozinha'
+      fullPath: '/app/cozinha'
+      preLoaderRoute: typeof AppCozinhaRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/controle-documentos': {
+      id: '/app/controle-documentos'
+      path: '/controle-documentos'
+      fullPath: '/app/controle-documentos'
+      preLoaderRoute: typeof AppControleDocumentosRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/configuracoes-indicadores': {
+      id: '/app/configuracoes-indicadores'
+      path: '/configuracoes-indicadores'
+      fullPath: '/app/configuracoes-indicadores'
+      preLoaderRoute: typeof AppConfiguracoesIndicadoresRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/companies': {
+      id: '/app/companies'
+      path: '/companies'
+      fullPath: '/app/companies'
+      preLoaderRoute: typeof AppCompaniesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/cascos': {
+      id: '/app/cascos'
+      path: '/cascos'
+      fullPath: '/app/cascos'
+      preLoaderRoute: typeof AppCascosRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/audit': {
+      id: '/app/audit'
+      path: '/audit'
+      fullPath: '/app/audit'
+      preLoaderRoute: typeof AppAuditRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/assinador': {
+      id: '/app/assinador'
+      path: '/assinador'
+      fullPath: '/app/assinador'
+      preLoaderRoute: typeof AppAssinadorRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/aprs': {
+      id: '/app/aprs'
+      path: '/aprs'
+      fullPath: '/app/aprs'
+      preLoaderRoute: typeof AppAprsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/ajuda': {
+      id: '/app/ajuda'
+      path: '/ajuda'
+      fullPath: '/app/ajuda'
+      preLoaderRoute: typeof AppAjudaRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/administrativo': {
+      id: '/app/administrativo'
+      path: '/administrativo'
+      fullPath: '/app/administrativo'
+      preLoaderRoute: typeof AppAdministrativoRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/acoes': {
+      id: '/app/acoes'
+      path: '/acoes'
+      fullPath: '/app/acoes'
+      preLoaderRoute: typeof AppAcoesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/acidentes': {
+      id: '/app/acidentes'
+      path: '/acidentes'
+      fullPath: '/app/acidentes'
+      preLoaderRoute: typeof AppAcidentesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/api/sigmo-chat': {
+      id: '/api/sigmo-chat'
+      path: '/api/sigmo-chat'
+      fullPath: '/api/sigmo-chat'
+      preLoaderRoute: typeof ApiSigmoChatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/rc/$token': {
-      id: '/rc/$token'
-      path: '/rc/$token'
-      fullPath: '/rc/$token'
-      preLoaderRoute: typeof RcTokenRouteImport
+    '/api/pgr-chat': {
+      id: '/api/pgr-chat'
+      path: '/api/pgr-chat'
+      fullPath: '/api/pgr-chat'
+      preLoaderRoute: typeof ApiPgrChatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/denuncia': {
-      id: '/api/public/denuncia'
-      path: '/api/public/denuncia'
-      fullPath: '/api/public/denuncia'
-      preLoaderRoute: typeof ApiPublicDenunciaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/app/administrativo/gestao-ponto': {
-      id: '/app/administrativo/gestao-ponto'
-      path: '/gestao-ponto'
-      fullPath: '/app/administrativo/gestao-ponto'
-      preLoaderRoute: typeof AppAdministrativoGestaoPontoRouteImport
-      parentRoute: typeof AppAdministrativoRoute
-    }
-    '/app/administrativo/hora-extra-recebida': {
-      id: '/app/administrativo/hora-extra-recebida'
-      path: '/hora-extra-recebida'
-      fullPath: '/app/administrativo/hora-extra-recebida'
-      preLoaderRoute: typeof AppAdministrativoHoraExtraRecebidaRouteImport
-      parentRoute: typeof AppAdministrativoRoute
-    }
-    '/app/administrativo/marcadores-hora-extra': {
-      id: '/app/administrativo/marcadores-hora-extra'
-      path: '/marcadores-hora-extra'
-      fullPath: '/app/administrativo/marcadores-hora-extra'
-      preLoaderRoute: typeof AppAdministrativoMarcadoresHoraExtraRouteImport
-      parentRoute: typeof AppAdministrativoRoute
-    }
-    '/app/administrativo/requisicoes-recebidas': {
-      id: '/app/administrativo/requisicoes-recebidas'
-      path: '/requisicoes-recebidas'
-      fullPath: '/app/administrativo/requisicoes-recebidas'
-      preLoaderRoute: typeof AppAdministrativoRequisicoesRecebidasRouteImport
-      parentRoute: typeof AppAdministrativoRoute
-    }
-    '/app/almoxarifado/requisicao-compras': {
-      id: '/app/almoxarifado/requisicao-compras'
-      path: '/almoxarifado/requisicao-compras'
-      fullPath: '/app/almoxarifado/requisicao-compras'
-      preLoaderRoute: typeof AppAlmoxarifadoRequisicaoComprasRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/compras/dashboard': {
-      id: '/app/compras/dashboard'
-      path: '/compras/dashboard'
-      fullPath: '/app/compras/dashboard'
-      preLoaderRoute: typeof AppComprasDashboardRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/compras/fornecedores': {
-      id: '/app/compras/fornecedores'
-      path: '/compras/fornecedores'
-      fullPath: '/app/compras/fornecedores'
-      preLoaderRoute: typeof AppComprasFornecedoresRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/compras/requisicoes-recebidas': {
-      id: '/app/compras/requisicoes-recebidas'
-      path: '/compras/requisicoes-recebidas'
-      fullPath: '/app/compras/requisicoes-recebidas'
-      preLoaderRoute: typeof AppComprasRequisicoesRecebidasRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/configuracoes/produtividade': {
-      id: '/app/configuracoes/produtividade'
-      path: '/configuracoes/produtividade'
-      fullPath: '/app/configuracoes/produtividade'
-      preLoaderRoute: typeof AppConfiguracoesProdutividadeRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/conta/seguranca': {
-      id: '/app/conta/seguranca'
-      path: '/conta/seguranca'
-      fullPath: '/app/conta/seguranca'
-      preLoaderRoute: typeof AppContaSegurancaRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/dds/': {
-      id: '/app/dds/'
-      path: '/dds'
-      fullPath: '/app/dds/'
-      preLoaderRoute: typeof AppDdsIndexRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/dds/gestores': {
-      id: '/app/dds/gestores'
-      path: '/dds/gestores'
-      fullPath: '/app/dds/gestores'
-      preLoaderRoute: typeof AppDdsGestoresRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/dds/historico': {
-      id: '/app/dds/historico'
-      path: '/dds/historico'
-      fullPath: '/app/dds/historico'
-      preLoaderRoute: typeof AppDdsHistoricoRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/dds/painel': {
-      id: '/app/dds/painel'
-      path: '/dds/painel'
-      fullPath: '/app/dds/painel'
-      preLoaderRoute: typeof AppDdsPainelRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/dds/temas': {
-      id: '/app/dds/temas'
-      path: '/dds/temas'
-      fullPath: '/app/dds/temas'
-      preLoaderRoute: typeof AppDdsTemasRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/employees/': {
-      id: '/app/employees/'
-      path: '/'
-      fullPath: '/app/employees/'
-      preLoaderRoute: typeof AppEmployeesIndexRouteImport
-      parentRoute: typeof AppEmployeesRoute
-    }
-    '/app/employees/$id': {
-      id: '/app/employees/$id'
-      path: '/$id'
-      fullPath: '/app/employees/$id'
-      preLoaderRoute: typeof AppEmployeesIdRouteImport
-      parentRoute: typeof AppEmployeesRoute
-    }
-    '/app/employees/desligados': {
-      id: '/app/employees/desligados'
-      path: '/desligados'
-      fullPath: '/app/employees/desligados'
-      preLoaderRoute: typeof AppEmployeesDesligadosRouteImport
-      parentRoute: typeof AppEmployeesRoute
-    }
-    '/app/employees/hora-extra-sabado': {
-      id: '/app/employees/hora-extra-sabado'
-      path: '/hora-extra-sabado'
-      fullPath: '/app/employees/hora-extra-sabado'
-      preLoaderRoute: typeof AppEmployeesHoraExtraSabadoRouteImport
-      parentRoute: typeof AppEmployeesRoute
-    }
-    '/app/employees/listagem': {
-      id: '/app/employees/listagem'
-      path: '/listagem'
-      fullPath: '/app/employees/listagem'
-      preLoaderRoute: typeof AppEmployeesListagemRouteImport
-      parentRoute: typeof AppEmployeesRoute
-    }
-    '/app/employees/relatorio-admissoes': {
-      id: '/app/employees/relatorio-admissoes'
-      path: '/relatorio-admissoes'
-      fullPath: '/app/employees/relatorio-admissoes'
-      preLoaderRoute: typeof AppEmployeesRelatorioAdmissoesRouteImport
-      parentRoute: typeof AppEmployeesRoute
-    }
-    '/app/employees/saidas': {
-      id: '/app/employees/saidas'
-      path: '/saidas'
-      fullPath: '/app/employees/saidas'
-      preLoaderRoute: typeof AppEmployeesSaidasRouteImport
-      parentRoute: typeof AppEmployeesRoute
-    }
-    '/app/estoque/': {
-      id: '/app/estoque/'
-      path: '/estoque'
-      fullPath: '/app/estoque/'
-      preLoaderRoute: typeof AppEstoqueIndexRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/estoque/epi': {
-      id: '/app/estoque/epi'
-      path: '/estoque/epi'
-      fullPath: '/app/estoque/epi'
-      preLoaderRoute: typeof AppEstoqueEpiRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/estoque/sesmt': {
-      id: '/app/estoque/sesmt'
-      path: '/estoque/sesmt'
-      fullPath: '/app/estoque/sesmt'
-      preLoaderRoute: typeof AppEstoqueSesmtRouteImport
+    '/app/portaria/': {
+      id: '/app/portaria/'
+      path: '/portaria'
+      fullPath: '/app/portaria/'
+      preLoaderRoute: typeof AppPortariaIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/oss/': {
@@ -2066,249 +1891,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOssIndexRouteImport
       parentRoute: typeof AppOssRoute
     }
-    '/app/oss/templates': {
-      id: '/app/oss/templates'
-      path: '/templates'
-      fullPath: '/app/oss/templates'
-      preLoaderRoute: typeof AppOssTemplatesRouteImport
-      parentRoute: typeof AppOssRoute
-    }
-    '/app/portaria/': {
-      id: '/app/portaria/'
-      path: '/portaria'
-      fullPath: '/app/portaria/'
-      preLoaderRoute: typeof AppPortariaIndexRouteImport
+    '/app/estoque/': {
+      id: '/app/estoque/'
+      path: '/estoque'
+      fullPath: '/app/estoque/'
+      preLoaderRoute: typeof AppEstoqueIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/portaria/controle': {
-      id: '/app/portaria/controle'
-      path: '/portaria/controle'
-      fullPath: '/app/portaria/controle'
-      preLoaderRoute: typeof AppPortariaControleRouteImport
-      parentRoute: typeof AppRoute
+    '/app/employees/': {
+      id: '/app/employees/'
+      path: '/'
+      fullPath: '/app/employees/'
+      preLoaderRoute: typeof AppEmployeesIndexRouteImport
+      parentRoute: typeof AppEmployeesRoute
     }
-    '/app/portaria/controle-entrada': {
-      id: '/app/portaria/controle-entrada'
-      path: '/portaria/controle-entrada'
-      fullPath: '/app/portaria/controle-entrada'
-      preLoaderRoute: typeof AppPortariaControleEntradaRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/portaria/saidas': {
-      id: '/app/portaria/saidas'
-      path: '/portaria/saidas'
-      fullPath: '/app/portaria/saidas'
-      preLoaderRoute: typeof AppPortariaSaidasRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/portaria/saidas-hoje': {
-      id: '/app/portaria/saidas-hoje'
-      path: '/portaria/saidas-hoje'
-      fullPath: '/app/portaria/saidas-hoje'
-      preLoaderRoute: typeof AppPortariaSaidasHojeRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/producao/base-materia-prima': {
-      id: '/app/producao/base-materia-prima'
-      path: '/producao/base-materia-prima'
-      fullPath: '/app/producao/base-materia-prima'
-      preLoaderRoute: typeof AppProducaoBaseMateriaPrimaRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/producao/criar-ordem': {
-      id: '/app/producao/criar-ordem'
-      path: '/producao/criar-ordem'
-      fullPath: '/app/producao/criar-ordem'
-      preLoaderRoute: typeof AppProducaoCriarOrdemRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/producao/expedicao': {
-      id: '/app/producao/expedicao'
-      path: '/producao/expedicao'
-      fullPath: '/app/producao/expedicao'
-      preLoaderRoute: typeof AppProducaoExpedicaoRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/producao/fatores-consumo': {
-      id: '/app/producao/fatores-consumo'
-      path: '/producao/fatores-consumo'
-      fullPath: '/app/producao/fatores-consumo'
-      preLoaderRoute: typeof AppProducaoFatoresConsumoRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/producao/lista-tecnica': {
-      id: '/app/producao/lista-tecnica'
-      path: '/producao/lista-tecnica'
-      fullPath: '/app/producao/lista-tecnica'
-      preLoaderRoute: typeof AppProducaoListaTecnicaRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/producao/ordens': {
-      id: '/app/producao/ordens'
-      path: '/producao/ordens'
-      fullPath: '/app/producao/ordens'
-      preLoaderRoute: typeof AppProducaoOrdensRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/producao/painel-lista-tecnica': {
-      id: '/app/producao/painel-lista-tecnica'
-      path: '/producao/painel-lista-tecnica'
-      fullPath: '/app/producao/painel-lista-tecnica'
-      preLoaderRoute: typeof AppProducaoPainelListaTecnicaRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/producao/requisicao-compras': {
-      id: '/app/producao/requisicao-compras'
-      path: '/producao/requisicao-compras'
-      fullPath: '/app/producao/requisicao-compras'
-      preLoaderRoute: typeof AppProducaoRequisicaoComprasRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/producao/tipos-produto': {
-      id: '/app/producao/tipos-produto'
-      path: '/producao/tipos-produto'
-      fullPath: '/app/producao/tipos-produto'
-      preLoaderRoute: typeof AppProducaoTiposProdutoRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/relatorios/indicadores': {
-      id: '/app/relatorios/indicadores'
-      path: '/relatorios/indicadores'
-      fullPath: '/app/relatorios/indicadores'
-      preLoaderRoute: typeof AppRelatoriosIndicadoresRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/relatorios/reincidencia-epi': {
-      id: '/app/relatorios/reincidencia-epi'
-      path: '/relatorios/reincidencia-epi'
-      fullPath: '/app/relatorios/reincidencia-epi'
-      preLoaderRoute: typeof AppRelatoriosReincidenciaEpiRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/sesmt/agenda': {
-      id: '/app/sesmt/agenda'
-      path: '/sesmt/agenda'
-      fullPath: '/app/sesmt/agenda'
-      preLoaderRoute: typeof AppSesmtAgendaRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/sesmt/asos': {
-      id: '/app/sesmt/asos'
-      path: '/sesmt/asos'
-      fullPath: '/app/sesmt/asos'
-      preLoaderRoute: typeof AppSesmtAsosRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/sesmt/cipa': {
-      id: '/app/sesmt/cipa'
-      path: '/sesmt/cipa'
-      fullPath: '/app/sesmt/cipa'
-      preLoaderRoute: typeof AppSesmtCipaRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/sesmt/convocacoes-aso': {
-      id: '/app/sesmt/convocacoes-aso'
-      path: '/sesmt/convocacoes-aso'
-      fullPath: '/app/sesmt/convocacoes-aso'
-      preLoaderRoute: typeof AppSesmtConvocacoesAsoRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/sesmt/docs': {
-      id: '/app/sesmt/docs'
-      path: '/sesmt/docs'
-      fullPath: '/app/sesmt/docs'
-      preLoaderRoute: typeof AppSesmtDocsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/sesmt/equipamentos-moveis': {
-      id: '/app/sesmt/equipamentos-moveis'
-      path: '/sesmt/equipamentos-moveis'
-      fullPath: '/app/sesmt/equipamentos-moveis'
-      preLoaderRoute: typeof AppSesmtEquipamentosMoveisRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/sesmt/guia-documentos': {
-      id: '/app/sesmt/guia-documentos'
-      path: '/sesmt/guia-documentos'
-      fullPath: '/app/sesmt/guia-documentos'
-      preLoaderRoute: typeof AppSesmtGuiaDocumentosRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/sesmt/inspecoes': {
-      id: '/app/sesmt/inspecoes'
-      path: '/sesmt/inspecoes'
-      fullPath: '/app/sesmt/inspecoes'
-      preLoaderRoute: typeof AppSesmtInspecoesRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/sesmt/integracoes': {
-      id: '/app/sesmt/integracoes'
-      path: '/sesmt/integracoes'
-      fullPath: '/app/sesmt/integracoes'
-      preLoaderRoute: typeof AppSesmtIntegracoesRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/sesmt/medicina-ocupacional': {
-      id: '/app/sesmt/medicina-ocupacional'
-      path: '/sesmt/medicina-ocupacional'
-      fullPath: '/app/sesmt/medicina-ocupacional'
-      preLoaderRoute: typeof AppSesmtMedicinaOcupacionalRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/sesmt/ocr-teste': {
-      id: '/app/sesmt/ocr-teste'
-      path: '/sesmt/ocr-teste'
-      fullPath: '/app/sesmt/ocr-teste'
-      preLoaderRoute: typeof AppSesmtOcrTesteRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/sesmt/organograma': {
-      id: '/app/sesmt/organograma'
-      path: '/sesmt/organograma'
-      fullPath: '/app/sesmt/organograma'
-      preLoaderRoute: typeof AppSesmtOrganogramaRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/sesmt/prestadores': {
-      id: '/app/sesmt/prestadores'
-      path: '/sesmt/prestadores'
-      fullPath: '/app/sesmt/prestadores'
-      preLoaderRoute: typeof AppSesmtPrestadoresRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/sesmt/procedimentos': {
-      id: '/app/sesmt/procedimentos'
-      path: '/sesmt/procedimentos'
-      fullPath: '/app/sesmt/procedimentos'
-      preLoaderRoute: typeof AppSesmtProcedimentosRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/sesmt/requisicoes': {
-      id: '/app/sesmt/requisicoes'
-      path: '/sesmt/requisicoes'
-      fullPath: '/app/sesmt/requisicoes'
-      preLoaderRoute: typeof AppSesmtRequisicoesRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/sesmt/simulados': {
-      id: '/app/sesmt/simulados'
-      path: '/sesmt/simulados'
-      fullPath: '/app/sesmt/simulados'
-      preLoaderRoute: typeof AppSesmtSimuladosRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/sesmt/templates-documentos': {
-      id: '/app/sesmt/templates-documentos'
-      path: '/sesmt/templates-documentos'
-      fullPath: '/app/sesmt/templates-documentos'
-      preLoaderRoute: typeof AppSesmtTemplatesDocumentosRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/sesmt/terceiros': {
-      id: '/app/sesmt/terceiros'
-      path: '/sesmt/terceiros'
-      fullPath: '/app/sesmt/terceiros'
-      preLoaderRoute: typeof AppSesmtTerceirosRouteImport
+    '/app/dds/': {
+      id: '/app/dds/'
+      path: '/dds'
+      fullPath: '/app/dds/'
+      preLoaderRoute: typeof AppDdsIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/sesmt/vincular-usuarios': {
@@ -2318,61 +1919,411 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSesmtVincularUsuariosRouteImport
       parentRoute: typeof AppRoute
     }
-    '/api/public/psico/$hash': {
-      id: '/api/public/psico/$hash'
-      path: '/api/public/psico/$hash'
-      fullPath: '/api/public/psico/$hash'
-      preLoaderRoute: typeof ApiPublicPsicoHashRouteImport
+    '/app/sesmt/terceiros': {
+      id: '/app/sesmt/terceiros'
+      path: '/sesmt/terceiros'
+      fullPath: '/app/sesmt/terceiros'
+      preLoaderRoute: typeof AppSesmtTerceirosRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/sesmt/templates-documentos': {
+      id: '/app/sesmt/templates-documentos'
+      path: '/sesmt/templates-documentos'
+      fullPath: '/app/sesmt/templates-documentos'
+      preLoaderRoute: typeof AppSesmtTemplatesDocumentosRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/sesmt/simulados': {
+      id: '/app/sesmt/simulados'
+      path: '/sesmt/simulados'
+      fullPath: '/app/sesmt/simulados'
+      preLoaderRoute: typeof AppSesmtSimuladosRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/sesmt/requisicoes': {
+      id: '/app/sesmt/requisicoes'
+      path: '/sesmt/requisicoes'
+      fullPath: '/app/sesmt/requisicoes'
+      preLoaderRoute: typeof AppSesmtRequisicoesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/sesmt/procedimentos': {
+      id: '/app/sesmt/procedimentos'
+      path: '/sesmt/procedimentos'
+      fullPath: '/app/sesmt/procedimentos'
+      preLoaderRoute: typeof AppSesmtProcedimentosRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/sesmt/prestadores': {
+      id: '/app/sesmt/prestadores'
+      path: '/sesmt/prestadores'
+      fullPath: '/app/sesmt/prestadores'
+      preLoaderRoute: typeof AppSesmtPrestadoresRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/sesmt/organograma': {
+      id: '/app/sesmt/organograma'
+      path: '/sesmt/organograma'
+      fullPath: '/app/sesmt/organograma'
+      preLoaderRoute: typeof AppSesmtOrganogramaRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/sesmt/ocr-teste': {
+      id: '/app/sesmt/ocr-teste'
+      path: '/sesmt/ocr-teste'
+      fullPath: '/app/sesmt/ocr-teste'
+      preLoaderRoute: typeof AppSesmtOcrTesteRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/sesmt/medicina-ocupacional': {
+      id: '/app/sesmt/medicina-ocupacional'
+      path: '/sesmt/medicina-ocupacional'
+      fullPath: '/app/sesmt/medicina-ocupacional'
+      preLoaderRoute: typeof AppSesmtMedicinaOcupacionalRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/sesmt/integracoes': {
+      id: '/app/sesmt/integracoes'
+      path: '/sesmt/integracoes'
+      fullPath: '/app/sesmt/integracoes'
+      preLoaderRoute: typeof AppSesmtIntegracoesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/sesmt/inspecoes': {
+      id: '/app/sesmt/inspecoes'
+      path: '/sesmt/inspecoes'
+      fullPath: '/app/sesmt/inspecoes'
+      preLoaderRoute: typeof AppSesmtInspecoesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/sesmt/guia-documentos': {
+      id: '/app/sesmt/guia-documentos'
+      path: '/sesmt/guia-documentos'
+      fullPath: '/app/sesmt/guia-documentos'
+      preLoaderRoute: typeof AppSesmtGuiaDocumentosRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/sesmt/equipamentos-moveis': {
+      id: '/app/sesmt/equipamentos-moveis'
+      path: '/sesmt/equipamentos-moveis'
+      fullPath: '/app/sesmt/equipamentos-moveis'
+      preLoaderRoute: typeof AppSesmtEquipamentosMoveisRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/sesmt/docs': {
+      id: '/app/sesmt/docs'
+      path: '/sesmt/docs'
+      fullPath: '/app/sesmt/docs'
+      preLoaderRoute: typeof AppSesmtDocsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/sesmt/convocacoes-aso': {
+      id: '/app/sesmt/convocacoes-aso'
+      path: '/sesmt/convocacoes-aso'
+      fullPath: '/app/sesmt/convocacoes-aso'
+      preLoaderRoute: typeof AppSesmtConvocacoesAsoRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/sesmt/cipa': {
+      id: '/app/sesmt/cipa'
+      path: '/sesmt/cipa'
+      fullPath: '/app/sesmt/cipa'
+      preLoaderRoute: typeof AppSesmtCipaRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/sesmt/asos': {
+      id: '/app/sesmt/asos'
+      path: '/sesmt/asos'
+      fullPath: '/app/sesmt/asos'
+      preLoaderRoute: typeof AppSesmtAsosRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/sesmt/agenda': {
+      id: '/app/sesmt/agenda'
+      path: '/sesmt/agenda'
+      fullPath: '/app/sesmt/agenda'
+      preLoaderRoute: typeof AppSesmtAgendaRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/relatorios/reincidencia-epi': {
+      id: '/app/relatorios/reincidencia-epi'
+      path: '/relatorios/reincidencia-epi'
+      fullPath: '/app/relatorios/reincidencia-epi'
+      preLoaderRoute: typeof AppRelatoriosReincidenciaEpiRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/relatorios/indicadores': {
+      id: '/app/relatorios/indicadores'
+      path: '/relatorios/indicadores'
+      fullPath: '/app/relatorios/indicadores'
+      preLoaderRoute: typeof AppRelatoriosIndicadoresRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/producao/tipos-produto': {
+      id: '/app/producao/tipos-produto'
+      path: '/producao/tipos-produto'
+      fullPath: '/app/producao/tipos-produto'
+      preLoaderRoute: typeof AppProducaoTiposProdutoRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/producao/requisicao-compras': {
+      id: '/app/producao/requisicao-compras'
+      path: '/producao/requisicao-compras'
+      fullPath: '/app/producao/requisicao-compras'
+      preLoaderRoute: typeof AppProducaoRequisicaoComprasRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/producao/painel-lista-tecnica': {
+      id: '/app/producao/painel-lista-tecnica'
+      path: '/producao/painel-lista-tecnica'
+      fullPath: '/app/producao/painel-lista-tecnica'
+      preLoaderRoute: typeof AppProducaoPainelListaTecnicaRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/producao/ordens': {
+      id: '/app/producao/ordens'
+      path: '/producao/ordens'
+      fullPath: '/app/producao/ordens'
+      preLoaderRoute: typeof AppProducaoOrdensRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/producao/lista-tecnica': {
+      id: '/app/producao/lista-tecnica'
+      path: '/producao/lista-tecnica'
+      fullPath: '/app/producao/lista-tecnica'
+      preLoaderRoute: typeof AppProducaoListaTecnicaRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/producao/fatores-consumo': {
+      id: '/app/producao/fatores-consumo'
+      path: '/producao/fatores-consumo'
+      fullPath: '/app/producao/fatores-consumo'
+      preLoaderRoute: typeof AppProducaoFatoresConsumoRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/producao/expedicao': {
+      id: '/app/producao/expedicao'
+      path: '/producao/expedicao'
+      fullPath: '/app/producao/expedicao'
+      preLoaderRoute: typeof AppProducaoExpedicaoRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/producao/criar-ordem': {
+      id: '/app/producao/criar-ordem'
+      path: '/producao/criar-ordem'
+      fullPath: '/app/producao/criar-ordem'
+      preLoaderRoute: typeof AppProducaoCriarOrdemRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/producao/base-materia-prima': {
+      id: '/app/producao/base-materia-prima'
+      path: '/producao/base-materia-prima'
+      fullPath: '/app/producao/base-materia-prima'
+      preLoaderRoute: typeof AppProducaoBaseMateriaPrimaRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/portaria/saidas-hoje': {
+      id: '/app/portaria/saidas-hoje'
+      path: '/portaria/saidas-hoje'
+      fullPath: '/app/portaria/saidas-hoje'
+      preLoaderRoute: typeof AppPortariaSaidasHojeRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/portaria/saidas': {
+      id: '/app/portaria/saidas'
+      path: '/portaria/saidas'
+      fullPath: '/app/portaria/saidas'
+      preLoaderRoute: typeof AppPortariaSaidasRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/portaria/controle-entrada': {
+      id: '/app/portaria/controle-entrada'
+      path: '/portaria/controle-entrada'
+      fullPath: '/app/portaria/controle-entrada'
+      preLoaderRoute: typeof AppPortariaControleEntradaRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/portaria/controle': {
+      id: '/app/portaria/controle'
+      path: '/portaria/controle'
+      fullPath: '/app/portaria/controle'
+      preLoaderRoute: typeof AppPortariaControleRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/oss/templates': {
+      id: '/app/oss/templates'
+      path: '/templates'
+      fullPath: '/app/oss/templates'
+      preLoaderRoute: typeof AppOssTemplatesRouteImport
+      parentRoute: typeof AppOssRoute
+    }
+    '/app/estoque/sesmt': {
+      id: '/app/estoque/sesmt'
+      path: '/estoque/sesmt'
+      fullPath: '/app/estoque/sesmt'
+      preLoaderRoute: typeof AppEstoqueSesmtRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/estoque/epi': {
+      id: '/app/estoque/epi'
+      path: '/estoque/epi'
+      fullPath: '/app/estoque/epi'
+      preLoaderRoute: typeof AppEstoqueEpiRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/employees/saidas': {
+      id: '/app/employees/saidas'
+      path: '/saidas'
+      fullPath: '/app/employees/saidas'
+      preLoaderRoute: typeof AppEmployeesSaidasRouteImport
+      parentRoute: typeof AppEmployeesRoute
+    }
+    '/app/employees/relatorio-admissoes': {
+      id: '/app/employees/relatorio-admissoes'
+      path: '/relatorio-admissoes'
+      fullPath: '/app/employees/relatorio-admissoes'
+      preLoaderRoute: typeof AppEmployeesRelatorioAdmissoesRouteImport
+      parentRoute: typeof AppEmployeesRoute
+    }
+    '/app/employees/listagem': {
+      id: '/app/employees/listagem'
+      path: '/listagem'
+      fullPath: '/app/employees/listagem'
+      preLoaderRoute: typeof AppEmployeesListagemRouteImport
+      parentRoute: typeof AppEmployeesRoute
+    }
+    '/app/employees/hora-extra-sabado': {
+      id: '/app/employees/hora-extra-sabado'
+      path: '/hora-extra-sabado'
+      fullPath: '/app/employees/hora-extra-sabado'
+      preLoaderRoute: typeof AppEmployeesHoraExtraSabadoRouteImport
+      parentRoute: typeof AppEmployeesRoute
+    }
+    '/app/employees/desligados': {
+      id: '/app/employees/desligados'
+      path: '/desligados'
+      fullPath: '/app/employees/desligados'
+      preLoaderRoute: typeof AppEmployeesDesligadosRouteImport
+      parentRoute: typeof AppEmployeesRoute
+    }
+    '/app/employees/$id': {
+      id: '/app/employees/$id'
+      path: '/$id'
+      fullPath: '/app/employees/$id'
+      preLoaderRoute: typeof AppEmployeesIdRouteImport
+      parentRoute: typeof AppEmployeesRoute
+    }
+    '/app/dds/temas': {
+      id: '/app/dds/temas'
+      path: '/dds/temas'
+      fullPath: '/app/dds/temas'
+      preLoaderRoute: typeof AppDdsTemasRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/dds/painel': {
+      id: '/app/dds/painel'
+      path: '/dds/painel'
+      fullPath: '/app/dds/painel'
+      preLoaderRoute: typeof AppDdsPainelRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/dds/historico': {
+      id: '/app/dds/historico'
+      path: '/dds/historico'
+      fullPath: '/app/dds/historico'
+      preLoaderRoute: typeof AppDdsHistoricoRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/dds/gestores': {
+      id: '/app/dds/gestores'
+      path: '/dds/gestores'
+      fullPath: '/app/dds/gestores'
+      preLoaderRoute: typeof AppDdsGestoresRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/conta/seguranca': {
+      id: '/app/conta/seguranca'
+      path: '/conta/seguranca'
+      fullPath: '/app/conta/seguranca'
+      preLoaderRoute: typeof AppContaSegurancaRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/configuracoes/produtividade': {
+      id: '/app/configuracoes/produtividade'
+      path: '/configuracoes/produtividade'
+      fullPath: '/app/configuracoes/produtividade'
+      preLoaderRoute: typeof AppConfiguracoesProdutividadeRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/compras/requisicoes-recebidas': {
+      id: '/app/compras/requisicoes-recebidas'
+      path: '/compras/requisicoes-recebidas'
+      fullPath: '/app/compras/requisicoes-recebidas'
+      preLoaderRoute: typeof AppComprasRequisicoesRecebidasRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/compras/fornecedores': {
+      id: '/app/compras/fornecedores'
+      path: '/compras/fornecedores'
+      fullPath: '/app/compras/fornecedores'
+      preLoaderRoute: typeof AppComprasFornecedoresRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/compras/dashboard': {
+      id: '/app/compras/dashboard'
+      path: '/compras/dashboard'
+      fullPath: '/app/compras/dashboard'
+      preLoaderRoute: typeof AppComprasDashboardRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/almoxarifado/requisicao-compras': {
+      id: '/app/almoxarifado/requisicao-compras'
+      path: '/almoxarifado/requisicao-compras'
+      fullPath: '/app/almoxarifado/requisicao-compras'
+      preLoaderRoute: typeof AppAlmoxarifadoRequisicaoComprasRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/administrativo/requisicoes-recebidas': {
+      id: '/app/administrativo/requisicoes-recebidas'
+      path: '/requisicoes-recebidas'
+      fullPath: '/app/administrativo/requisicoes-recebidas'
+      preLoaderRoute: typeof AppAdministrativoRequisicoesRecebidasRouteImport
+      parentRoute: typeof AppAdministrativoRoute
+    }
+    '/app/administrativo/marcadores-hora-extra': {
+      id: '/app/administrativo/marcadores-hora-extra'
+      path: '/marcadores-hora-extra'
+      fullPath: '/app/administrativo/marcadores-hora-extra'
+      preLoaderRoute: typeof AppAdministrativoMarcadoresHoraExtraRouteImport
+      parentRoute: typeof AppAdministrativoRoute
+    }
+    '/app/administrativo/hora-extra-recebida': {
+      id: '/app/administrativo/hora-extra-recebida'
+      path: '/hora-extra-recebida'
+      fullPath: '/app/administrativo/hora-extra-recebida'
+      preLoaderRoute: typeof AppAdministrativoHoraExtraRecebidaRouteImport
+      parentRoute: typeof AppAdministrativoRoute
+    }
+    '/app/administrativo/gestao-ponto': {
+      id: '/app/administrativo/gestao-ponto'
+      path: '/gestao-ponto'
+      fullPath: '/app/administrativo/gestao-ponto'
+      preLoaderRoute: typeof AppAdministrativoGestaoPontoRouteImport
+      parentRoute: typeof AppAdministrativoRoute
+    }
+    '/api/public/denuncia': {
+      id: '/api/public/denuncia'
+      path: '/api/public/denuncia'
+      fullPath: '/api/public/denuncia'
+      preLoaderRoute: typeof ApiPublicDenunciaRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/psico/submit': {
-      id: '/api/public/psico/submit'
-      path: '/api/public/psico/submit'
-      fullPath: '/api/public/psico/submit'
-      preLoaderRoute: typeof ApiPublicPsicoSubmitRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/app/administrativo/gestao-ponto/': {
-      id: '/app/administrativo/gestao-ponto/'
+    '/app/sesmt/inspecoes/': {
+      id: '/app/sesmt/inspecoes/'
       path: '/'
-      fullPath: '/app/administrativo/gestao-ponto/'
-      preLoaderRoute: typeof AppAdministrativoGestaoPontoIndexRouteImport
-      parentRoute: typeof AppAdministrativoGestaoPontoRoute
-    }
-    '/app/administrativo/gestao-ponto/$cicloId': {
-      id: '/app/administrativo/gestao-ponto/$cicloId'
-      path: '/$cicloId'
-      fullPath: '/app/administrativo/gestao-ponto/$cicloId'
-      preLoaderRoute: typeof AppAdministrativoGestaoPontoCicloIdRouteImport
-      parentRoute: typeof AppAdministrativoGestaoPontoRoute
-    }
-    '/app/estoque/epi/fichas-mensais': {
-      id: '/app/estoque/epi/fichas-mensais'
-      path: '/fichas-mensais'
-      fullPath: '/app/estoque/epi/fichas-mensais'
-      preLoaderRoute: typeof AppEstoqueEpiFichasMensaisRouteImport
-      parentRoute: typeof AppEstoqueEpiRoute
-    }
-    '/app/modulo/$modulo/hora-extra': {
-      id: '/app/modulo/$modulo/hora-extra'
-      path: '/modulo/$modulo/hora-extra'
-      fullPath: '/app/modulo/$modulo/hora-extra'
-      preLoaderRoute: typeof AppModuloModuloHoraExtraRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/modulo/eletrica/requisicao-compras': {
-      id: '/app/modulo/eletrica/requisicao-compras'
-      path: '/modulo/eletrica/requisicao-compras'
-      fullPath: '/app/modulo/eletrica/requisicao-compras'
-      preLoaderRoute: typeof AppModuloEletricaRequisicaoComprasRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/modulo/mecanica/requisicao-compras': {
-      id: '/app/modulo/mecanica/requisicao-compras'
-      path: '/modulo/mecanica/requisicao-compras'
-      fullPath: '/app/modulo/mecanica/requisicao-compras'
-      preLoaderRoute: typeof AppModuloMecanicaRequisicaoComprasRouteImport
-      parentRoute: typeof AppRoute
+      fullPath: '/app/sesmt/inspecoes/'
+      preLoaderRoute: typeof AppSesmtInspecoesIndexRouteImport
+      parentRoute: typeof AppSesmtInspecoesRoute
     }
     '/app/sesmt/catalogos/': {
       id: '/app/sesmt/catalogos/'
@@ -2381,46 +2332,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSesmtCatalogosIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/sesmt/catalogos/cruzamentos': {
-      id: '/app/sesmt/catalogos/cruzamentos'
-      path: '/sesmt/catalogos/cruzamentos'
-      fullPath: '/app/sesmt/catalogos/cruzamentos'
-      preLoaderRoute: typeof AppSesmtCatalogosCruzamentosRouteImport
-      parentRoute: typeof AppRoute
+    '/app/administrativo/gestao-ponto/': {
+      id: '/app/administrativo/gestao-ponto/'
+      path: '/'
+      fullPath: '/app/administrativo/gestao-ponto/'
+      preLoaderRoute: typeof AppAdministrativoGestaoPontoIndexRouteImport
+      parentRoute: typeof AppAdministrativoGestaoPontoRoute
     }
-    '/app/sesmt/catalogos/epis': {
-      id: '/app/sesmt/catalogos/epis'
-      path: '/sesmt/catalogos/epis'
-      fullPath: '/app/sesmt/catalogos/epis'
-      preLoaderRoute: typeof AppSesmtCatalogosEpisRouteImport
-      parentRoute: typeof AppRoute
+    '/app/sesmt/inspecoes/$id': {
+      id: '/app/sesmt/inspecoes/$id'
+      path: '/$id'
+      fullPath: '/app/sesmt/inspecoes/$id'
+      preLoaderRoute: typeof AppSesmtInspecoesIdRouteImport
+      parentRoute: typeof AppSesmtInspecoesRoute
     }
-    '/app/sesmt/catalogos/exames': {
-      id: '/app/sesmt/catalogos/exames'
-      path: '/sesmt/catalogos/exames'
-      fullPath: '/app/sesmt/catalogos/exames'
-      preLoaderRoute: typeof AppSesmtCatalogosExamesRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/sesmt/catalogos/gases': {
-      id: '/app/sesmt/catalogos/gases'
-      path: '/sesmt/catalogos/gases'
-      fullPath: '/app/sesmt/catalogos/gases'
-      preLoaderRoute: typeof AppSesmtCatalogosGasesRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/sesmt/catalogos/nrs': {
-      id: '/app/sesmt/catalogos/nrs'
-      path: '/sesmt/catalogos/nrs'
-      fullPath: '/app/sesmt/catalogos/nrs'
-      preLoaderRoute: typeof AppSesmtCatalogosNrsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/sesmt/catalogos/riscos': {
-      id: '/app/sesmt/catalogos/riscos'
-      path: '/sesmt/catalogos/riscos'
-      fullPath: '/app/sesmt/catalogos/riscos'
-      preLoaderRoute: typeof AppSesmtCatalogosRiscosRouteImport
+    '/app/sesmt/equipamentos-moveis_/arquivos-mensais': {
+      id: '/app/sesmt/equipamentos-moveis_/arquivos-mensais'
+      path: '/sesmt/equipamentos-moveis/arquivos-mensais'
+      fullPath: '/app/sesmt/equipamentos-moveis/arquivos-mensais'
+      preLoaderRoute: typeof AppSesmtEquipamentosMoveisArquivosMensaisRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/sesmt/catalogos/vacinas': {
@@ -2430,39 +2360,109 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSesmtCatalogosVacinasRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/sesmt/equipamentos-moveis_/arquivos-mensais': {
-      id: '/app/sesmt/equipamentos-moveis_/arquivos-mensais'
-      path: '/sesmt/equipamentos-moveis/arquivos-mensais'
-      fullPath: '/app/sesmt/equipamentos-moveis/arquivos-mensais'
-      preLoaderRoute: typeof AppSesmtEquipamentosMoveisArquivosMensaisRouteImport
+    '/app/sesmt/catalogos/riscos': {
+      id: '/app/sesmt/catalogos/riscos'
+      path: '/sesmt/catalogos/riscos'
+      fullPath: '/app/sesmt/catalogos/riscos'
+      preLoaderRoute: typeof AppSesmtCatalogosRiscosRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/sesmt/inspecoes/': {
-      id: '/app/sesmt/inspecoes/'
-      path: '/'
-      fullPath: '/app/sesmt/inspecoes/'
-      preLoaderRoute: typeof AppSesmtInspecoesIndexRouteImport
-      parentRoute: typeof AppSesmtInspecoesRoute
-    }
-    '/app/sesmt/inspecoes/$id': {
-      id: '/app/sesmt/inspecoes/$id'
-      path: '/$id'
-      fullPath: '/app/sesmt/inspecoes/$id'
-      preLoaderRoute: typeof AppSesmtInspecoesIdRouteImport
-      parentRoute: typeof AppSesmtInspecoesRoute
-    }
-    '/app/sesmt/equipamentos-moveis_/checklist/$equipamentoId': {
-      id: '/app/sesmt/equipamentos-moveis_/checklist/$equipamentoId'
-      path: '/sesmt/equipamentos-moveis/checklist/$equipamentoId'
-      fullPath: '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId'
-      preLoaderRoute: typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRouteImport
+    '/app/sesmt/catalogos/nrs': {
+      id: '/app/sesmt/catalogos/nrs'
+      path: '/sesmt/catalogos/nrs'
+      fullPath: '/app/sesmt/catalogos/nrs'
+      preLoaderRoute: typeof AppSesmtCatalogosNrsRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/app/sesmt/catalogos/gases': {
+      id: '/app/sesmt/catalogos/gases'
+      path: '/sesmt/catalogos/gases'
+      fullPath: '/app/sesmt/catalogos/gases'
+      preLoaderRoute: typeof AppSesmtCatalogosGasesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/sesmt/catalogos/exames': {
+      id: '/app/sesmt/catalogos/exames'
+      path: '/sesmt/catalogos/exames'
+      fullPath: '/app/sesmt/catalogos/exames'
+      preLoaderRoute: typeof AppSesmtCatalogosExamesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/sesmt/catalogos/epis': {
+      id: '/app/sesmt/catalogos/epis'
+      path: '/sesmt/catalogos/epis'
+      fullPath: '/app/sesmt/catalogos/epis'
+      preLoaderRoute: typeof AppSesmtCatalogosEpisRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/sesmt/catalogos/cruzamentos': {
+      id: '/app/sesmt/catalogos/cruzamentos'
+      path: '/sesmt/catalogos/cruzamentos'
+      fullPath: '/app/sesmt/catalogos/cruzamentos'
+      preLoaderRoute: typeof AppSesmtCatalogosCruzamentosRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/modulo/mecanica/requisicao-compras': {
+      id: '/app/modulo/mecanica/requisicao-compras'
+      path: '/modulo/mecanica/requisicao-compras'
+      fullPath: '/app/modulo/mecanica/requisicao-compras'
+      preLoaderRoute: typeof AppModuloMecanicaRequisicaoComprasRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/modulo/eletrica/requisicao-compras': {
+      id: '/app/modulo/eletrica/requisicao-compras'
+      path: '/modulo/eletrica/requisicao-compras'
+      fullPath: '/app/modulo/eletrica/requisicao-compras'
+      preLoaderRoute: typeof AppModuloEletricaRequisicaoComprasRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/modulo/$modulo/hora-extra': {
+      id: '/app/modulo/$modulo/hora-extra'
+      path: '/modulo/$modulo/hora-extra'
+      fullPath: '/app/modulo/$modulo/hora-extra'
+      preLoaderRoute: typeof AppModuloModuloHoraExtraRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/estoque/epi/fichas-mensais': {
+      id: '/app/estoque/epi/fichas-mensais'
+      path: '/fichas-mensais'
+      fullPath: '/app/estoque/epi/fichas-mensais'
+      preLoaderRoute: typeof AppEstoqueEpiFichasMensaisRouteImport
+      parentRoute: typeof AppEstoqueEpiRoute
+    }
+    '/app/administrativo/gestao-ponto/$cicloId': {
+      id: '/app/administrativo/gestao-ponto/$cicloId'
+      path: '/$cicloId'
+      fullPath: '/app/administrativo/gestao-ponto/$cicloId'
+      preLoaderRoute: typeof AppAdministrativoGestaoPontoCicloIdRouteImport
+      parentRoute: typeof AppAdministrativoGestaoPontoRoute
+    }
+    '/api/public/psico/submit': {
+      id: '/api/public/psico/submit'
+      path: '/api/public/psico/submit'
+      fullPath: '/api/public/psico/submit'
+      preLoaderRoute: typeof ApiPublicPsicoSubmitRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/psico/$hash': {
+      id: '/api/public/psico/$hash'
+      path: '/api/public/psico/$hash'
+      fullPath: '/api/public/psico/$hash'
+      preLoaderRoute: typeof ApiPublicPsicoHashRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/app/sesmt/equipamentos-moveis_/historico/$equipamentoId': {
       id: '/app/sesmt/equipamentos-moveis_/historico/$equipamentoId'
       path: '/sesmt/equipamentos-moveis/historico/$equipamentoId'
       fullPath: '/app/sesmt/equipamentos-moveis/historico/$equipamentoId'
       preLoaderRoute: typeof AppSesmtEquipamentosMoveisHistoricoEquipamentoIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/sesmt/equipamentos-moveis_/checklist/$equipamentoId': {
+      id: '/app/sesmt/equipamentos-moveis_/checklist/$equipamentoId'
+      path: '/sesmt/equipamentos-moveis/checklist/$equipamentoId'
+      fullPath: '/app/sesmt/equipamentos-moveis/checklist/$equipamentoId'
+      preLoaderRoute: typeof AppSesmtEquipamentosMoveisChecklistEquipamentoIdRouteImport
       parentRoute: typeof AppRoute
     }
   }
