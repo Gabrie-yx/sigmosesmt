@@ -1,5 +1,5 @@
 import type jsPDF from "jspdf";
-import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage, type PDFImage } from "pdf-lib";
+import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFImage } from "pdf-lib";
 import { loadTemplateBytes, getTemplateMeta } from "@/lib/pdf-overlay-engine";
 import { getTemplateSchema, isBoxMap, type BoxMap, type Box } from "@/lib/template-field-schemas";
 import type { RcPdfReq, RcPdfItem, RcPdfCotacao } from "./requisicao-compra-pdf";
@@ -19,9 +19,37 @@ function fit(t: string, f: PDFFont, size: number, maxW: number) {
   let lo = 0, hi = t.length;
   while (lo < hi) {
     const mid = (lo + hi + 1) >> 1;
-    if (f.widthOfTextAtSize(t.slice(0, mid) + "…", size) <= maxW) lo = mid; else hi = mid - 1;
+    if (f.widthOfTextAtSize(t.slice(0, mid) + "...", size) <= maxW) lo = mid; else hi = mid - 1;
   }
-  return t.slice(0, lo) + "…";
+  return t.slice(0, lo) + "...";
+}
+
+/** Lê os números impressos na coluna ITEM: cada linha pode ter altura diferente. */
+async function lerCentrosLinhas(bytes: Uint8Array, coluna: Box, primeira: Box, ultima: Box): Promise<number[]> {
+  const pdfjs = await import("pdfjs-dist");
+  // @ts-ignore — Vite entrega o worker como URL na versão usada pelo projeto.
+  const workerUrl = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
+  pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+  const doc = await pdfjs.getDocument({ data: bytes.slice() }).promise;
+  try {
+    const page = await doc.getPage(1);
+    const viewport = page.getViewport({ scale: 1 });
+    const content = await page.getTextContent();
+    const numeros = content.items.flatMap((item) => {
+      if (!("str" in item) || !/^\d{1,3}$/.test(item.str.trim())) return [];
+      const [x, y] = viewport.convertToViewportPoint(item.transform[4], item.transform[5]);
+      if (x < coluna.x - 2 || x > coluna.x + coluna.w + 2 || y < primeira.top || y > ultima.top + ultima.h + 4) return [];
+      return [{ n: Number(item.str.trim()), y }];
+    }).sort((a, b) => a.n - b.n);
+    if (numeros.length < 2 || numeros[0].n !== 1 || numeros.some((v, i) => v.n !== i + 1)) {
+      throw new Error("Não foi possível identificar as linhas numeradas do formulário.");
+    }
+    // A primeira caixa revisada fixa o centro da linha 1; diferenças entre as
+    // linhas vêm do próprio PDF, sem presumir altura uniforme ou contar por h.
+    return numeros.map((v) => primeira.top + primeira.h / 2 + v.y - numeros[0].y);
+  } finally {
+    await doc.destroy();
+  }
 }
 
 async function embedImage(pdf: PDFDocument, src?: string | null): Promise<PDFImage | null> {
@@ -75,15 +103,10 @@ export async function gerarRcOverlayBytes(
   const map = resolveMap(getTemplateMeta(RC_TEMPLATE_CODIGO)?.overlayMap, pageSize.width, pageSize.height);
   const B = (k: string): Box | null => map.boxes[k] ?? null;
 
-  const rf = B("row_first"), rl = B("row_last");
-  let perPage = 10, step = 20.5, rowTop0 = 175, rowH = 20.5;
-  if (rf) {
-    rowTop0 = rf.top; rowH = rf.h;
-    if (rl && rl.top > rf.top) {
-      perPage = Math.max(1, Math.round((rl.top - rf.top) / rf.h) + 1);
-      step = perPage > 1 ? (rl.top - rf.top) / (perPage - 1) : rf.h;
-    } else { perPage = 1; step = rf.h; }
-  }
+  const rf = B("row_first"), rl = B("row_last"), colItem = B("col_item");
+  if (!rf || !rl || !colItem) throw new Error("Mapeamento das linhas da requisição incompleto.");
+  const centros = await lerCentrosLinhas(tplBytes, colItem, rf, rl);
+  const perPage = centros.length;
 
   const sorted = [...itens].sort((a, b) => (a.item_numero ?? 0) - (b.item_numero ?? 0));
   const pages = Math.max(1, Math.ceil(sorted.length / perPage));
@@ -96,11 +119,15 @@ export async function gerarRcOverlayBytes(
   for (let p = 0; p < pages; p++) {
     const [page] = await pdf.copyPages(tpl, [0]);
     pdf.addPage(page);
-    const H = page.getHeight();
+    // Caixas são medidas na imagem da CropBox, cuja origem pode NÃO ser (0,0).
+    // O PDF exportado pelo Excel usa MediaBox/CropBox com x=-8.39, y=+8.39.
+    const crop = page.getCropBox();
+    const X = (x: number) => crop.x + x;
+    const Y = (top: number) => crop.y + crop.height - top;
     const inBox = (v: string | null | undefined, b: Box | null, size = 8, f = font, c?: number) => {
       if (!v || !b) return;
       const cy = c ?? b.top + b.h / 2;
-      page.drawText(fit(String(v), f, size, b.w - 4), { x: b.x + 2, y: H - cy - size * 0.35, size, font: f, color: black });
+      page.drawText(fit(String(v), f, size, b.w - 4), { x: X(b.x + 2), y: Y(cy) - size * 0.35, size, font: f, color: black });
     };
 
     // Cabeçalho
@@ -116,23 +143,24 @@ export async function gerarRcOverlayBytes(
     if (mark) {
       const size = Math.max(5, Math.min(8, mark.h));
       const mw = bold.widthOfTextAtSize("X", size);
-      page.drawText("X", { x: mark.x + mark.w / 2 - mw / 2, y: H - (mark.top + mark.h / 2) - size * 0.35, size, font: bold, color: black });
+      page.drawText("X", { x: X(mark.x + mark.w / 2 - mw / 2), y: Y(mark.top + mark.h / 2) - size * 0.35, size, font: bold, color: black });
     }
 
     // Itens
     const slice = sorted.slice(p * perPage, (p + 1) * perPage);
-    const colItem = B("col_item");
-    if (p > 0 && colItem) {
+    if (p > 0) {
       // renumera a coluna ITEM nas páginas de continuação (11, 12, ...)
       for (let i = 0; i < perPage; i++) {
-        const c = rowTop0 + i * step + rowH / 2;
-        page.drawRectangle({ x: colItem.x + 1.5, y: H - c - rowH / 2 + 1.5, width: colItem.w - 3, height: rowH - 3, color: rgb(1, 1, 1) });
+        const c = centros[i];
+        const upper = i === 0 ? rf.top : (centros[i - 1] + c) / 2;
+        const lower = i === perPage - 1 ? rl.top + rl.h : (c + centros[i + 1]) / 2;
+        page.drawRectangle({ x: X(colItem.x + 1.5), y: Y(lower - 1.5), width: colItem.w - 3, height: lower - upper - 3, color: rgb(1, 1, 1) });
         const t = String(p * perPage + i + 1).padStart(2, "0");
-        page.drawText(t, { x: colItem.x + colItem.w / 2 - font.widthOfTextAtSize(t, 8) / 2, y: H - c - 2.8, size: 8, font, color: black });
+        page.drawText(t, { x: X(colItem.x + colItem.w / 2 - font.widthOfTextAtSize(t, 8) / 2), y: Y(c) - 2.8, size: 8, font, color: black });
       }
     }
     slice.forEach((it, i) => {
-      const c = rowTop0 + i * step + rowH / 2;
+      const c = centros[i];
       inBox(it.descricao, B("col_desc"), 8, font, c);
       inBox(it.quantidade != null ? String(it.quantidade) : "", B("col_qtde"), 8, font, c);
       inBox(it.unidade, B("col_unid"), 8, font, c);
@@ -146,11 +174,11 @@ export async function gerarRcOverlayBytes(
       if (img) {
         const scale = Math.min((b.w - 20) / img.width, areaH / img.height);
         const w = img.width * scale, hh = img.height * scale;
-        page.drawImage(img, { x: b.x + (b.w - w) / 2, y: H - b.top - areaH + (areaH - hh) / 2, width: w, height: hh });
+        page.drawImage(img, { x: X(b.x + (b.w - w) / 2), y: Y(b.top + areaH) + (areaH - hh) / 2, width: w, height: hh });
       }
       if (nome) {
         const t = fit(nome, font, 6.5, b.w - 8);
-        page.drawText(t, { x: b.x + (b.w - font.widthOfTextAtSize(t, 6.5)) / 2, y: H - b.top - b.h + 1, size: 6.5, font, color: black });
+        page.drawText(t, { x: X(b.x + (b.w - font.widthOfTextAtSize(t, 6.5)) / 2), y: Y(b.top + b.h) + 1, size: 6.5, font, color: black });
       }
     };
     drawSig(solImg, B("sig_solicitante"), req.solicitante);
@@ -166,8 +194,8 @@ export async function gerarRcOverlayBytes(
 
     // Status + paginação
     const footY = 15;
-    page.drawText(fit(`STATUS: ${statusLabel.toUpperCase()}`, bold, 6.5, 300), { x: 10, y: footY, size: 6.5, font: bold, color: black });
-    if (pages > 1) page.drawText(`Pág. ${p + 1}/${pages}`, { x: page.getWidth() - 50, y: footY, size: 6.5, font, color: black });
+    page.drawText(fit(`STATUS: ${statusLabel.toUpperCase()}`, bold, 6.5, 300), { x: X(10), y: crop.y + footY, size: 6.5, font: bold, color: black });
+    if (pages > 1) page.drawText(`Pág. ${p + 1}/${pages}`, { x: X(crop.width - 50), y: crop.y + footY, size: 6.5, font, color: black });
   }
 
   // Página complementar: indeferimento e cotações
