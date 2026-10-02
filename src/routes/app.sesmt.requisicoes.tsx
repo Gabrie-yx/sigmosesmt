@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/tabs";
 import {
   ShoppingCart, Plus, FileDown, Printer, Check, X as XIcon, Trash2, Eye, Filter, Pencil, Link2, Pill,
+  CalendarDays, ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import type jsPDF from "jspdf";
@@ -46,6 +47,16 @@ import { gerarPdfRequisicaoDoc, rcPdfFileName, type RcPdfReq, type RcPdfCotacao 
 import { UrgenciaBadge, UrgenciaSelect, type Urgencia } from "@/components/compras/urgencia";
 
 export const Route = createFileRoute("/app/sesmt/requisicoes")({
+  head: () => ({
+    meta: [
+      { title: "Requisições de Compra · SIGMO" },
+      { name: "description", content: "Painel de requisições de compra do SESMT organizado por mês e dia." },
+      { property: "og:title", content: "Requisições de Compra · SIGMO" },
+      { property: "og:description", content: "Painel de requisições de compra do SESMT organizado por mês e dia." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: RequisicoesPage,
 });
 
@@ -375,15 +386,31 @@ function RequisicoesPage() {
     return "Último ano";
   }
 
-  // Agrupa as RCs filtradas em Mês → Dia → itens.
-  // Ordena tudo do mais recente pro mais antigo (data_requisicao desc).
+  // Agrupa somente para exibição. Nenhuma requisição é alterada ou descartada.
+  // Datas inválidas também permanecem visíveis em "Sem data informada".
   const grupos = useMemo(() => {
     const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
-    const byMes = new Map<string, { label: string; ord: number; dias: Map<string, { label: string; ord: number; itens: Req[] }> }>();
+    const DIAS_SEMANA = ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"];
+    const byMes = new Map<string, { label: string; ord: number; dias: Map<string, { label: string; semana: string; ord: number; itens: Req[] }> }>();
     for (const r of filtered) {
       const [yStr, mStr, dStr] = (r.data_requisicao || "").split("T")[0].split("-");
       const y = Number(yStr), m = Number(mStr), d = Number(dStr);
-      if (!y || !m || !d) continue;
+      if (!y || !m || !d || m < 1 || m > 12 || d < 1 || d > 31) {
+        const mesKey = "sem-data";
+        let mes = byMes.get(mesKey);
+        if (!mes) {
+          mes = { label: "Sem data informada", ord: -1, dias: new Map() };
+          byMes.set(mesKey, mes);
+        }
+        const diaKey = "sem-data";
+        let dia = mes.dias.get(diaKey);
+        if (!dia) {
+          dia = { label: "Data não informada", semana: "Revisar cadastro", ord: -1, itens: [] };
+          mes.dias.set(diaKey, dia);
+        }
+        dia.itens.push(r);
+        continue;
+      }
       const mesKey = `${y}-${String(m).padStart(2,"0")}`;
       const mesLabel = `${MESES[m-1]} de ${y}`;
       const mesOrd = y * 100 + m;
@@ -391,9 +418,10 @@ function RequisicoesPage() {
       if (!mes) { mes = { label: mesLabel, ord: mesOrd, dias: new Map() }; byMes.set(mesKey, mes); }
       const diaKey = `${mesKey}-${String(d).padStart(2,"0")}`;
       const diaLabel = `${String(d).padStart(2,"0")}/${String(m).padStart(2,"0")}/${y}`;
+      const semana = DIAS_SEMANA[new Date(y, m - 1, d).getDay()];
       const diaOrd = mesOrd * 100 + d;
       let dia = mes.dias.get(diaKey);
-      if (!dia) { dia = { label: diaLabel, ord: diaOrd, itens: [] }; mes.dias.set(diaKey, dia); }
+      if (!dia) { dia = { label: diaLabel, semana, ord: diaOrd, itens: [] }; mes.dias.set(diaKey, dia); }
       dia.itens.push(r);
     }
     return Array.from(byMes.values())
@@ -477,7 +505,7 @@ function RequisicoesPage() {
                 const renderLinha = (r: Req) => (
                     <div
                       key={r.id}
-                      className={`border rounded-lg p-3 bg-card hover:bg-muted/40 transition flex flex-wrap items-center gap-3 ${
+                      className={`border border-border/60 rounded-md p-3 bg-card hover:bg-muted/40 transition flex flex-wrap items-center gap-3 ${
                         r.status === "PENDENTE" ? "animate-pulse-amber border-amber-300/70" : ""
                       }`}
                     >
@@ -511,8 +539,8 @@ function RequisicoesPage() {
                             )}
                           </Badge>
                         </div>
-                        <div className="text-xs text-slate-700 mt-1">
-                          {fmtBR(r.data_requisicao)} · <strong>{r.solicitante}</strong>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          <strong className="text-foreground">{r.solicitante}</strong>
                           {r.setor ? ` · ${r.setor}` : ""}
                           {r.fornecedor ? ` · Fornecedor: ${r.fornecedor}` : ""}
                         </div>
@@ -624,42 +652,42 @@ function RequisicoesPage() {
                     </div>
                 );
                 return (
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {grupos.map((mes, mIdx) => (
                       <details
                         key={mes.label}
                         open={mIdx === 0}
-                        className="group rounded-xl border border-border/60 bg-muted/20 overflow-hidden"
+                        className="group rounded-lg border border-border bg-card/50 overflow-hidden shadow-sm"
                       >
-                        <summary className="cursor-pointer select-none list-none px-3 md:px-4 py-2.5 flex items-center justify-between gap-2 hover:bg-muted/40 transition">
+                        <summary className="cursor-pointer select-none list-none px-4 py-3 flex items-center justify-between gap-3 bg-muted/40 hover:bg-muted/60 transition">
                           <div className="flex items-center gap-2 min-w-0">
-                            <span className="text-muted-foreground text-xs group-open:rotate-90 transition-transform">▶</span>
+                            <ChevronRight className="h-4 w-4 text-muted-foreground group-open:rotate-90 transition-transform shrink-0" />
+                            <CalendarDays className="h-4 w-4 text-primary shrink-0" />
                             <span className="font-bold text-foreground capitalize truncate">{mes.label}</span>
                           </div>
-                          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-200 shrink-0">
+                          <Badge variant="outline" className="shrink-0 bg-background/40 text-foreground">
                             {mes.total} {mes.total === 1 ? "requisição" : "requisições"}
-                          </span>
+                          </Badge>
                         </summary>
-                        <div className="p-2 md:p-3 space-y-2 bg-background/40">
-                          {mes.dias.map((dia, dIdx) => (
-                            <details
+                        <div className="divide-y divide-border/60">
+                          {mes.dias.map((dia) => (
+                            <section
                               key={dia.label}
-                              open={mIdx === 0 && dIdx === 0}
-                              className="group/dia rounded-lg border border-border/50 bg-card/60"
+                              className="grid md:grid-cols-[150px_minmax(0,1fr)] bg-background/20"
                             >
-                              <summary className="cursor-pointer select-none list-none px-3 py-2 flex items-center justify-between gap-2 hover:bg-muted/30 transition">
-                                <div className="flex items-center gap-2 min-w-0">
-                                  <span className="text-muted-foreground text-[10px] group-open/dia:rotate-90 transition-transform">▶</span>
-                                  <span className="font-semibold text-sm text-foreground">{dia.label}</span>
+                              <div className="px-4 py-3 md:border-r border-border/60 bg-muted/20 flex md:block items-center justify-between gap-3">
+                                <div>
+                                  <div className="font-bold text-sm text-foreground">{dia.label}</div>
+                                  <div className="text-xs text-muted-foreground capitalize">{dia.semana}</div>
                                 </div>
-                                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">
-                                  {dia.itens.length}
-                                </span>
-                              </summary>
-                              <div className="p-2 space-y-2">
+                                <Badge variant="secondary" className="mt-0 md:mt-2">
+                                  {dia.itens.length} {dia.itens.length === 1 ? "RC" : "RCs"}
+                                </Badge>
+                              </div>
+                              <div className="p-2 md:p-3 space-y-2 min-w-0">
                                 {dia.itens.map(renderLinha)}
                               </div>
-                            </details>
+                            </section>
                           ))}
                         </div>
                       </details>
