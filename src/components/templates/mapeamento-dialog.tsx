@@ -30,8 +30,8 @@ export async function renderPrimeiraPagina(bytes: Uint8Array) {
   const doc = await PDFDocument.load(bytes);
   // A imagem é renderizada pela CropBox (pdfjs), não pela MediaBox do arquivo.
   const { width, height } = doc.getPage(0).getCropBox();
-  const [img] = await renderPdfToImagePages(bytes.slice(), 2);
-  return { img, pageW: width, pageH: height };
+  const imgs = await renderPdfToImagePages(bytes.slice(), 2);
+  return { img: imgs[0], imgs, pageW: width, pageH: height };
 }
 
 /**
@@ -78,7 +78,10 @@ export function MapeamentoDialog({
   const salvar = useServerFn(salvarMapeamentoVersao);
   const qc = useQueryClient();
 
-  const [img, setImg] = useState<string | null>(null);
+  const [imgs, setImgs] = useState<string[]>([]);
+  const [pg, setPg] = useState(1);
+  const img = imgs[pg - 1] ?? null;
+  const pageCount = Math.max(1, ...schema.fields.map((f) => f.page ?? 1));
   const [page, setPage] = useState<{ w: number; h: number } | null>(null);
   const [boxes, setBoxes] = useState<Record<string, Box>>({});
   const [status, setStatus] = useState("PENDENTE");
@@ -92,7 +95,7 @@ export function MapeamentoDialog({
       try {
         const v = await obter({ data: { versionId } });
         const r = await renderPrimeiraPagina(b64ToBytes(v.base64));
-        setImg(r.img);
+        setImgs(r.imgs);
         setPage({ w: r.pageW, h: r.pageH });
         setStatus(v.overlayStatus);
         const def = schema.defaultMap;
@@ -221,7 +224,7 @@ export function MapeamentoDialog({
                 <img src={img} alt="PDF do template" className="w-full block" draggable={false} />
                 {schema.fields.map((f) => {
                   const b = boxes[f.key];
-                  if (!b) return null;
+                  if (!b || (f.page ?? 1) !== pg) return null;
                   return (
                     <div
                       key={f.key}
@@ -247,10 +250,19 @@ export function MapeamentoDialog({
           </div>
 
           <div className="w-60 shrink-0 overflow-auto space-y-1 text-sm">
+            {pageCount > 1 && (
+              <div className="flex gap-1 pb-2">
+                {Array.from({ length: pageCount }, (_, i) => (
+                  <Button key={i} size="sm" variant={pg === i + 1 ? "default" : "outline"} onClick={() => setPg(i + 1)}>
+                    Página {i + 1}
+                  </Button>
+                ))}
+              </div>
+            )}
             {schema.fields.map((f) => (
               <div
                 key={f.key}
-                onClick={() => (boxes[f.key] ? setSel(f.key) : adicionar(f.key))}
+                onClick={() => { setPg(f.page ?? 1); if (boxes[f.key]) setSel(f.key); else adicionar(f.key); }}
                 className={`flex items-center justify-between gap-2 px-2 py-1 rounded cursor-pointer hover:bg-muted ${sel === f.key ? "bg-muted" : ""}`}
               >
                 <span className="flex items-center gap-2 truncate">

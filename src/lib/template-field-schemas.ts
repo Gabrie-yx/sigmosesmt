@@ -10,7 +10,7 @@ export type Box = { x: number; top: number; w: number; h: number };
 export type BoxMap = { pageW: number; pageH: number; boxes: Record<string, Box> };
 
 export type FieldKind = "text" | "check" | "sig" | "row" | "col";
-export type FieldDef = { key: string; label: string; kind: FieldKind; hint: string };
+export type FieldDef = { key: string; label: string; kind: FieldKind; hint: string; /** Página do PDF (1 por padrão). */ page?: number };
 
 export type TemplateSchema = { codigo: string; nome: string; fields: FieldDef[]; defaultMap?: BoxMap; /** Revisão em que o defaultMap foi medido e conferido. */ defaultMapRevisao?: number };
 
@@ -69,8 +69,33 @@ const RC_DEFAULT: BoxMap = {
   },
 };
 
+const FICHA_FIELDS: FieldDef[] = [
+  { key: "empresa", label: "Empresa", kind: "text", hint: "após 'Empresa:'" },
+  { key: "admissao", label: "Data de admissão", kind: "text", hint: "após 'Data de Admissão:'" },
+  { key: "nome", label: "Nome", kind: "text", hint: "após 'Nome:'" },
+  { key: "demissao", label: "Data de demissão", kind: "text", hint: "após 'Data de Demissão:'" },
+  { key: "funcao", label: "Função", kind: "text", hint: "após 'Função:'" },
+  { key: "matricula", label: "Matrícula", kind: "text", hint: "após 'Matrícula:'" },
+  { key: "folha", label: "Folha", kind: "text", hint: "após 'Folha:'" },
+  { key: "empresa_termo", label: "Empresa (termo)", kind: "text", hint: "lacuna 'recebi da empresa ____'" },
+  { key: "local_data", label: "Local e data", kind: "text", hint: "linha após 'Local e Data:'" },
+  { key: "sig_empregado", label: "Assinatura do empregado", kind: "sig", hint: "acima da linha 'Assinatura do Empregado:'" },
+  { key: "p2_row_first", label: "1ª linha de entregas", kind: "row", hint: "primeira linha da grade", page: 2 },
+  { key: "p2_row_last", label: "Última linha de entregas", kind: "row", hint: "última linha da grade", page: 2 },
+  { key: "p2_col_qt", label: "Coluna QT", kind: "col", hint: "", page: 2 },
+  { key: "p2_col_und", label: "Coluna UND", kind: "col", hint: "", page: 2 },
+  { key: "p2_col_espec", label: "Coluna Especificação", kind: "col", hint: "", page: 2 },
+  { key: "p2_col_ca", label: "Coluna CA", kind: "col", hint: "", page: 2 },
+  { key: "p2_col_ass_emp", label: "Coluna Assinatura empregado", kind: "col", hint: "", page: 2 },
+  { key: "p2_col_data_entrega", label: "Coluna Data entrega", kind: "col", hint: "", page: 2 },
+  { key: "p2_col_motivo", label: "Coluna Motivo", kind: "col", hint: "", page: 2 },
+  { key: "p2_col_data_devol", label: "Coluna Data devolução", kind: "col", hint: "", page: 2 },
+  { key: "p2_col_ass_receb", label: "Coluna Assinatura recebedor", kind: "col", hint: "", page: 2 },
+];
+
 export const TEMPLATE_SCHEMAS: Record<string, TemplateSchema> = {
   "FOR-SEG-03": { codigo: "FOR-SEG-03", nome: "Requisição de Compra", fields: RC_FIELDS, defaultMap: RC_DEFAULT, defaultMapRevisao: 1 },
+  "FOR-SEG-02": { codigo: "FOR-SEG-02", nome: "Ficha de Entrega de EPI", fields: FICHA_FIELDS },
 };
 
 export function getTemplateSchema(codigo: string): TemplateSchema | null {
