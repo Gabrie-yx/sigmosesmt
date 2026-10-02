@@ -102,7 +102,8 @@ export function refineMap(map: BoxMap, fields: FieldDef[], r: Raster): BoxMap {
 
   /** Acha "( )" perto da caixa sugerida e devolve o miolo dos parênteses. */
   const snapCheck = (b: Box): Box => {
-    const cy = b.top + b.h / 2;
+    const cell = snapCell(b);
+    const cy = cell.h > 6 && cell.h < 40 ? cell.top + cell.h / 2 : b.top + b.h / 2;
     const runs = inkRuns(b.x - 25, b.x + b.w + 25, cy - 3, cy + 3);
     let best: Box | null = null, bestD = Infinity;
     for (let i = 0; i + 1 < runs.length; i++) {
