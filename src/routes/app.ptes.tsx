@@ -222,6 +222,13 @@ function PtesPage() {
     queryFn: async () => (await supabase.from("cascos").select("id,numero,nome").order("numero")).data ?? [],
   });
   const cascosMap = useMemo(() => new Map((cascos as any[]).map((c: any) => [c.id, c])), [cascos]);
+  // Nº do casco sem repetir a palavra "CASCO" (o cadastro às vezes já traz no numero/nome)
+  const cascoNumeroLimpo = (c: any): string => {
+    const num = String(c?.numero ?? "").replace(/\bcasco\b/gi, "").trim();
+    if (num) return num;
+    const doNome = String(c?.nome ?? "").replace(/\bcasco\b/gi, "").trim().match(/\S*\d\S*/);
+    return doNome ? doNome[0] : "";
+  };
   // Só APRs em andamento podem ser vinculadas a uma nova PT (encerradas/canceladas ficam fora),
   // mas mantém visível a APR já vinculada ao editar uma PT existente.
   const aprsVinculaveis = useMemo(
