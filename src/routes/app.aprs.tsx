@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Search, Pencil, Trash2, FileText, Filter, MoreHorizontal, Printer, Download, Eye, ShieldAlert, Zap, Copy, LayoutGrid, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, FileText, Filter, MoreHorizontal, Printer, Download, Eye, ShieldAlert, Zap, Copy, LayoutGrid, ChevronDown, ChevronUp, CheckCircle2, Archive } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateBR } from "@/lib/utils-date";
 import { AprForm } from "@/components/aprs/apr-form";
@@ -25,6 +25,8 @@ const PDFPreviewDialog = lazy(() =>
 );
 import type jsPDF from "jspdf";
 import { DEFAULT_TEXTO_GERAIS } from "@/lib/apr-defaults";
+import { AprsExecutadasPanel } from "@/components/aprs/aprs-executadas-panel";
+import { Textarea } from "@/components/ui/textarea";
 import { RevalidarLoteDialog, type RevalidarItem } from "@/components/aprs/revalidar-lote-dialog";
 import { detectarCategoriasPTE, CATEGORIA_PTE_TO_RISCO_LABEL, type CategoriaPTE } from "@/lib/apr-pte-rules";
 
@@ -76,6 +78,9 @@ function AprsPage() {
   const [dupCascoIds, setDupCascoIds] = useState<string[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [revalidarOpen, setRevalidarOpen] = useState(false);
+  const [executadasOpen, setExecutadasOpen] = useState(false);
+  const [encerrarApr, setEncerrarApr] = useState<any | null>(null);
+  const [encerrarObs, setEncerrarObs] = useState("");
 
   function toggleSel(id: string) {
     setSelectedIds((prev) => {
@@ -109,6 +114,19 @@ function AprsPage() {
     queryKey: ["aprs"],
     queryFn: async () => (await supabase.from("aprs").select("*").order("data_emissao", { ascending: false }).order("numero", { ascending: false })).data ?? [],
   });
+  const encerrar = useMutation({
+    mutationFn: async () => {
+      const { error } = await (supabase as any).rpc("encerrar_apr", { _apr_id: encerrarApr.id, _obs: encerrarObs });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success(`${encerrarApr?.numero ?? "APR"} encerrada e guardada em APRs Executadas`);
+      qc.invalidateQueries({ queryKey: ["aprs"] });
+      setEncerrarApr(null); setEncerrarObs("");
+    },
+    onError: (e: any) => toast.error(e.message || "Falha ao encerrar APR"),
+  });
+  const qtdExecutadas = aprs.filter((a: any) => a.status === "ENCERRADA").length;
   const { data: ptesLink = [] } = useQuery({
     queryKey: ["ptes-by-apr"],
     queryFn: async () => (await supabase.from("ptes").select("id,numero,apr_id,status,risco")).data ?? [],
@@ -340,6 +358,10 @@ function AprsPage() {
           </h1>
           <p className="text-sm text-muted-foreground">Matriz de rastreabilidade de análises preliminares de risco — {filtered.length} APR(s) listadas.</p>
         </div>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => setExecutadasOpen(true)} className="border-primary/50 text-primary">
+            <Archive className="h-4 w-4 mr-1" /> APRs Executadas ({qtdExecutadas})
+          </Button>
         {isEditor && (
           <div className="flex flex-wrap gap-2">
             {selectedIds.size > 0 && (
@@ -374,6 +396,7 @@ function AprsPage() {
             </Button>
           </div>
         )}
+        </div>
       </div>
 
       <Card>
@@ -641,6 +664,11 @@ function AprsPage() {
                                           <ShieldAlert className="h-4 w-4 mr-2" /> Gerar PTE vinculada
                                         </DropdownMenuItem>
                                       )}
+                                      {isEditor && (a.status === "ATIVA" || a.status === "RASCUNHO") && (
+                                        <DropdownMenuItem className="text-emerald-600 focus:text-emerald-600" onClick={() => { setEncerrarApr(a); setEncerrarObs(""); }}>
+                                          <CheckCircle2 className="h-4 w-4 mr-2" /> Encerrar APR
+                                        </DropdownMenuItem>
+                                      )}
                                       {isEditor && (
                                         <DropdownMenuItem onClick={() => setEditing(a.id)}>
                                           <Pencil className="h-4 w-4 mr-2" /> Editar
@@ -751,6 +779,43 @@ function AprsPage() {
           />
         </Suspense>
       )}
+
+      <AprsExecutadasPanel
+        open={executadasOpen}
+        onOpenChange={setExecutadasOpen}
+        aprs={aprs}
+        cascoMap={cascoMap}
+        companyMap={companyMap as Map<string, string>}
+        onView={(a) => openPreview(a.id, a.numero)}
+        onPrint={(a) => imprimirAprPdf(a.id).catch((e) => toast.error(e.message))}
+        onDownload={(a) => baixarAprPdf(a.id, a.numero).catch((e) => toast.error(e.message))}
+      />
+
+      <Dialog open={!!encerrarApr} onOpenChange={(o) => !o && !encerrar.isPending && setEncerrarApr(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5 text-emerald-500" /> Encerrar {encerrarApr?.numero}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <p className="text-muted-foreground">{encerrarApr?.atividade_descricao}</p>
+            <div className="rounded-lg border border-border bg-muted/40 p-3 text-xs text-foreground space-y-1">
+              <div>• A APR sai da lista de ativas e vai para <b>APRs Executadas</b>.</div>
+              <div>• Fica guardada para ver, imprimir ou baixar quando precisar.</div>
+              <div>• Depois de encerrada, não volta a ficar ativa. Para o mesmo serviço, crie ou duplique uma nova APR.</div>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold">Observação final (opcional)</label>
+              <Textarea rows={3} value={encerrarObs} onChange={(e) => setEncerrarObs(e.target.value)} placeholder="Ex.: serviço concluído sem ocorrências" />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setEncerrarApr(null)} disabled={encerrar.isPending}>Cancelar</Button>
+            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => encerrar.mutate()} disabled={encerrar.isPending}>
+              {encerrar.isPending ? "Encerrando…" : "Encerrar APR"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <RevalidarLoteDialog
         open={revalidarOpen}
