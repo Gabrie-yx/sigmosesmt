@@ -16,6 +16,8 @@ import { calculateSafetyStatus } from "@/lib/safety-engine";
 import { hasGlobalOverride, type SafetyOverride } from "@/lib/safety-overrides";
 import { detectarExigenciaPTE } from "@/lib/apr-pte-rules";
 import { PtPdfPreview } from "@/components/ptes/PtPdfPreview";
+import { PtsExecutadasPanel } from "@/components/ptes/pts-executadas-panel";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PteAtmosferaTab } from "@/components/ptes/PteAtmosferaTab";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -51,6 +53,9 @@ function PtesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [linkedAprId, setLinkedAprId] = useState<string | null>(null);
   const [previewPt, setPreviewPt] = useState<any | null>(null);
+  const [executadasOpen, setExecutadasOpen] = useState(false);
+  const [encerrarPt, setEncerrarPt] = useState<any | null>(null);
+  const [encerrarObs, setEncerrarObs] = useState("");
   const emptyForm = {
     data: today, risco: PTE_RISCOS[0], local: "", company_id: "", casco_id: "",
     tipo_pt: "PTE", hora_inicio: "07:00", hora_fim: "17:00",
@@ -492,16 +497,18 @@ function PtesPage() {
 
   const revoke = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("ptes").update({ status: "ENCERRADA" }).eq("id", id);
+      const { error } = await (supabase as any).rpc("encerrar_pt", { _pt_id: id, _obs: encerrarObs });
       if (error) throw error;
     },
+    onError: (e: any) => toast.error(e.message || "Falha ao encerrar PT"),
     onSuccess: () => {
       qc.invalidateQueries({ predicate: (q) => {
         const k = q.queryKey?.[0];
         return k === "ptes" || k === "ptes-by-apr" || k === "ptes-linked-apr" || k === "ptes-light";
       } });
       qc.invalidateQueries({ predicate: (q) => typeof q.queryKey?.[0] === "string" && (q.queryKey[0] as string).startsWith("pend-") });
-      toast.success("PTE encerrada");
+      toast.success("PT encerrada e guardada em PTs Executadas");
+      setEncerrarPt(null); setEncerrarObs("");
     },
   });
   const del = useMutation({
@@ -718,6 +725,9 @@ function PtesPage() {
         <p className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-slate-200/80 mt-1">
           PT • PTE • PET • emissão, validade e impressão
         </p>
+        <Button variant="outline" size="sm" onClick={() => setExecutadasOpen(true)} className="mt-3 border-primary/50 text-primary">
+          <CheckCircle2 className="h-4 w-4 mr-1" /> PTs Executadas ({ptes.filter((p: any) => p.status === "ENCERRADA").length})
+        </Button>
       </div>
 
       <div className="flex flex-col gap-6 md:gap-8">
@@ -1765,7 +1775,7 @@ function PtesPage() {
                 Nenhuma permissão foi emitida até o momento.
               </div>
             )}
-            {ptes.map((p: any) => (
+            {ptes.filter((p: any) => p.status !== "ENCERRADA").map((p: any) => (
               <div key={p.id} className={`glass-card p-4 rounded-2xl transition-all hover:-translate-y-0.5 flex flex-col ${p.status !== "ATIVA" ? "opacity-60" : ""}`}>
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex items-center gap-2">
@@ -1882,8 +1892,8 @@ function PtesPage() {
                   <Clock className="h-3 w-3" /> Emitida em: {formatDateBR(p.data_emissao || p.data)}
                 </div>
                 {p.status === "ATIVA" && isEditor && (
-                  <button onClick={() => revoke.mutate(p.id)} className="mt-4 w-full py-2 bg-black/40 border border-rose-500/30 text-rose-300 text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-rose-600 hover:text-white hover:border-rose-400 transition-colors flex items-center justify-center gap-1">
-                    <X className="h-3 w-3" /> Encerrar / Revogar
+                  <button onClick={() => { setEncerrarPt(p); setEncerrarObs(""); }} className="mt-4 w-full py-2 bg-black/40 border border-rose-500/30 text-rose-300 text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-rose-600 hover:text-white hover:border-rose-400 transition-colors flex items-center justify-center gap-1">
+                    <CheckCircle2 className="h-3 w-3" /> Encerrar PT
                   </button>
                 )}
               </div>
@@ -1891,6 +1901,41 @@ function PtesPage() {
           </div>
         </div>
       </div>
+
+      <PtsExecutadasPanel
+        open={executadasOpen}
+        onOpenChange={setExecutadasOpen}
+        ptes={ptes as any[]}
+        cascosMap={cascosMap}
+        companies={companies as any[]}
+        onView={(p) => setPreviewPt(p)}
+      />
+
+      <Dialog open={!!encerrarPt} onOpenChange={(o) => !o && !revoke.isPending && setEncerrarPt(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5 text-emerald-500" /> Encerrar {encerrarPt?.numero}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <p className="text-muted-foreground">{encerrarPt?.tipo_pt} · {encerrarPt?.local}</p>
+            <div className="rounded-lg border border-border bg-muted/40 p-3 text-xs text-foreground space-y-1">
+              <div>• A PT sai da lista de ativas e vai para <b>PTs Executadas</b>.</div>
+              <div>• Fica guardada para ver, imprimir ou baixar quando precisar.</div>
+              <div>• Depois de encerrada, não volta a ficar ativa.</div>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold">Observação final (opcional)</Label>
+              <Textarea rows={3} value={encerrarObs} onChange={(e) => setEncerrarObs(e.target.value)} placeholder="Ex.: serviço concluído, área liberada e limpa" />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setEncerrarPt(null)} disabled={revoke.isPending}>Cancelar</Button>
+            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => encerrarPt && revoke.mutate(encerrarPt.id)} disabled={revoke.isPending}>
+              {revoke.isPending ? "Encerrando…" : "Encerrar PT"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <PtPdfPreview
         open={!!previewPt}
