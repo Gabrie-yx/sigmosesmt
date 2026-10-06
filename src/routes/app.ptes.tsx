@@ -897,9 +897,9 @@ function PtesPage() {
                   <SelectItem value="none">— SEM APR —</SelectItem>
                   {aprsVinculaveis.slice(0, 200).map((a: any) => {
                     const casco = a.casco_id ? (cascosMap.get(a.casco_id) as any) : null;
-                    const cascoLabel = casco ? `CASCO ${casco.numero}${casco.nome ? ` ${casco.nome}` : ""}` : "SEM CASCO";
+                    const cascoNum = cascoNumeroLimpo(casco) || "—";
                     return (
-                      <SelectItem key={a.id} value={a.id}>{cascoLabel} — APR {a.numero} — {a.atividade_descricao?.slice(0, 40) ?? ""}</SelectItem>
+                      <SelectItem key={a.id} value={a.id}>{cascoNum} / {a.numero}</SelectItem>
                     );
                   })}
                 </SelectContent>
