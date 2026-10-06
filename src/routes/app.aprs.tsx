@@ -664,9 +664,14 @@ function AprsPage() {
                                           <ShieldAlert className="h-4 w-4 mr-2" /> Gerar PTE vinculada
                                         </DropdownMenuItem>
                                       )}
-                                      {isEditor && (a.status === "ATIVA" || a.status === "RASCUNHO") && (
+                                      {isEditor && a.status !== "ENCERRADA" && a.status !== "CANCELADA" && (
                                         <DropdownMenuItem className="text-emerald-600 focus:text-emerald-600" onClick={() => { setEncerrarApr(a); setEncerrarObs(""); }}>
                                           <CheckCircle2 className="h-4 w-4 mr-2" /> Encerrar APR
+                                        </DropdownMenuItem>
+                                      )}
+                                      {a.status === "ENCERRADA" && (
+                                        <DropdownMenuItem className="text-emerald-600 focus:text-emerald-600" onClick={() => setExecutadasOpen(true)}>
+                                          <Archive className="h-4 w-4 mr-2" /> Já encerrada — ver em APRs Executadas
                                         </DropdownMenuItem>
                                       )}
                                       {isEditor && (
