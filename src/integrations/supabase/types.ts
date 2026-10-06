@@ -729,6 +729,9 @@ export type Database = {
           dias_semana: string[] | null
           empresa_id: string | null
           encarregado_id: string | null
+          encerrada_em: string | null
+          encerrada_obs: string | null
+          encerrada_por: string | null
           exige_pte: boolean
           hora_fim: string | null
           hora_fim_sexta: string | null
@@ -766,6 +769,9 @@ export type Database = {
           dias_semana?: string[] | null
           empresa_id?: string | null
           encarregado_id?: string | null
+          encerrada_em?: string | null
+          encerrada_obs?: string | null
+          encerrada_por?: string | null
           exige_pte?: boolean
           hora_fim?: string | null
           hora_fim_sexta?: string | null
@@ -803,6 +809,9 @@ export type Database = {
           dias_semana?: string[] | null
           empresa_id?: string | null
           encarregado_id?: string | null
+          encerrada_em?: string | null
+          encerrada_obs?: string | null
+          encerrada_por?: string | null
           exige_pte?: boolean
           hora_fim?: string | null
           hora_fim_sexta?: string | null
@@ -14185,6 +14194,10 @@ export type Database = {
           _rc_id: string
           _valor: number
         }
+        Returns: undefined
+      }
+      encerrar_apr: {
+        Args: { _apr_id: string; _obs: string }
         Returns: undefined
       }
       enviar_rc_para_supervisor: {
