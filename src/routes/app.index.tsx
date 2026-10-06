@@ -27,7 +27,8 @@ import {
 } from "lucide-react";
 import shipyardImg from "@/assets/dmn-shipyard.jpg";
 import isoSeal from "@/assets/iso-9001.png";
-import sigmoHomeLogo from "@/assets/sigmo-home-logo.png.asset.json";
+import sigmoHomeLogoSrc from "@/assets/sigmo-home-logo.png";
+const sigmoHomeLogo = { url: sigmoHomeLogoSrc };
 import dmnLogoBranco from "@/assets/dmn-logo-branco-v2.png";
 import { useAuth } from "@/hooks/use-auth";
 import { IS_BACKEND_LOCAL } from "@/integrations/supabase/client";
