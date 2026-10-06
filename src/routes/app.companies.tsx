@@ -101,6 +101,7 @@ function CompaniesPage() {
   const [dossieOpen, setDossieOpen] = useState(false);
   const [verDesativadas, setVerDesativadas] = useState(false);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
+  const [abrirExcluir, setAbrirExcluir] = useState(false);
 
   const { data: companies = [] } = useQuery({
     queryKey: ["companies"],
@@ -662,6 +663,12 @@ function CompaniesPage() {
                       <DropdownMenuItem onClick={startNew}>
                         <Plus className="h-4 w-4 mr-2" /> Nova empresa
                       </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => { setAbrirExcluir(true); setStatusDialogOpen(true); }}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" /> Excluir empresa
+                      </DropdownMenuItem>
                     </>
                   )}
                 </DropdownMenuContent>
@@ -785,7 +792,8 @@ function CompaniesPage() {
           company={selected}
           ativosCount={ativosDaSelecionada}
           open={statusDialogOpen}
-          onClose={() => setStatusDialogOpen(false)}
+          iniciarExcluindo={abrirExcluir}
+          onClose={() => { setStatusDialogOpen(false); setAbrirExcluir(false); }}
         />
       )}
       <CompanyDossieDialog

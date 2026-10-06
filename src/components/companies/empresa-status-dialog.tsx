@@ -21,16 +21,17 @@ type Props = {
   };
   ativosCount: number;
   open: boolean;
+  iniciarExcluindo?: boolean;
   onClose: () => void;
 };
 
-export function EmpresaStatusDialog({ company, ativosCount, open, onClose }: Props) {
+export function EmpresaStatusDialog({ company, ativosCount, open, iniciarExcluindo, onClose }: Props) {
   const qc = useQueryClient();
   const { isAdmin } = useAuth();
   const isDesativada = (company.status ?? "ATIVA") === "DESATIVADA";
   const [motivo, setMotivo] = useState("");
   const [desligarTodos, setDesligarTodos] = useState(false);
-  const [modoExcluir, setModoExcluir] = useState(false);
+  const [modoExcluir, setModoExcluir] = useState(!!iniciarExcluindo);
   const [confirmacao, setConfirmacao] = useState("");
 
   const invalidate = () => {
