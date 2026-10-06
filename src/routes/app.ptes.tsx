@@ -888,9 +888,13 @@ function PtesPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">— SEM APR —</SelectItem>
-                  {(aprsAll as any[]).slice(0, 200).map((a: any) => (
-                    <SelectItem key={a.id} value={a.id}>APR {a.numero} — {a.atividade_descricao?.slice(0, 50) ?? ""}</SelectItem>
-                  ))}
+                  {aprsVinculaveis.slice(0, 200).map((a: any) => {
+                    const casco = a.casco_id ? (cascosMap.get(a.casco_id) as any) : null;
+                    const cascoLabel = casco ? `CASCO ${casco.numero}${casco.nome ? ` ${casco.nome}` : ""}` : "SEM CASCO";
+                    return (
+                      <SelectItem key={a.id} value={a.id}>{cascoLabel} — APR {a.numero} — {a.atividade_descricao?.slice(0, 40) ?? ""}</SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
               {isAdmin && (
