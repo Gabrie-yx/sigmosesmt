@@ -222,6 +222,13 @@ function PtesPage() {
     queryFn: async () => (await supabase.from("cascos").select("id,numero,nome").order("numero")).data ?? [],
   });
   const cascosMap = useMemo(() => new Map((cascos as any[]).map((c: any) => [c.id, c])), [cascos]);
+  // Nº do casco sem repetir a palavra "CASCO" (o cadastro às vezes já traz no numero/nome)
+  const cascoNumeroLimpo = (c: any): string => {
+    const num = String(c?.numero ?? "").replace(/\bcasco\b/gi, "").trim();
+    if (num) return num;
+    const doNome = String(c?.nome ?? "").replace(/\bcasco\b/gi, "").trim().match(/\S*\d\S*/);
+    return doNome ? doNome[0] : "";
+  };
   // Só APRs em andamento podem ser vinculadas a uma nova PT (encerradas/canceladas ficam fora),
   // mas mantém visível a APR já vinculada ao editar uma PT existente.
   const aprsVinculaveis = useMemo(
@@ -890,9 +897,9 @@ function PtesPage() {
                   <SelectItem value="none">— SEM APR —</SelectItem>
                   {aprsVinculaveis.slice(0, 200).map((a: any) => {
                     const casco = a.casco_id ? (cascosMap.get(a.casco_id) as any) : null;
-                    const cascoLabel = casco ? `CASCO ${casco.numero}${casco.nome ? ` ${casco.nome}` : ""}` : "SEM CASCO";
+                    const cascoNum = cascoNumeroLimpo(casco) || "—";
                     return (
-                      <SelectItem key={a.id} value={a.id}>{cascoLabel} — APR {a.numero} — {a.atividade_descricao?.slice(0, 40) ?? ""}</SelectItem>
+                      <SelectItem key={a.id} value={a.id}>{cascoNum} / {a.numero}</SelectItem>
                     );
                   })}
                 </SelectContent>
@@ -953,7 +960,7 @@ function PtesPage() {
                   <SelectItem value="none">— SEM CASCO —</SelectItem>
                   {(cascos as any[]).map((c: any) => (
                     <SelectItem key={c.id} value={c.id}>
-                      CASCO {c.numero}{c.nome ? ` — ${c.nome}` : ""}
+                      {cascoNumeroLimpo(c) || c.numero || c.nome}
                     </SelectItem>
                   ))}
                 </SelectContent>
