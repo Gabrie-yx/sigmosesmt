@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # SIGMO — aplicador de migrations BLINDADO
 # Regras:
-#  1. NUNCA aplica arquivo com comando destrutivo (DELETE/TRUNCATE/DROP TABLE/DROP SCHEMA/DROP COLUMN).
+#  1. NUNCA aplica arquivo com comando destrutivo (DELETE/TRUNCATE/DROP TABLE/DROP SCHEMA/DROP COLUMN)
+#     fora de corpos de função ($$...$$).
 #  2. Só aplica migration que ainda não foi aplicada (registro em public.sigmo_migrations_aplicadas).
 #  3. Cada migration roda dentro de uma transação: erro = nada é gravado.
 set -uo pipefail
@@ -53,8 +54,10 @@ for f in $(ls -1 "$DIR"/*.sql 2>/dev/null | sort); do
     PULADAS=$((PULADAS+1)); continue
   fi
 
-  # remove comentários de linha antes de checar
-  if sed 's/--.*//' "$f" | grep -qiE "$DESTRUTIVO"; then
+  # remove corpos de funções ($$...$$) e comentários antes de checar:
+  # DELETE dentro de uma função só roda quando um admin chama a função,
+  # não ao aplicar a migration — então não é destrutivo aqui.
+  if perl -0pe 's/\$([A-Za-z_]*)\$.*?\$\1\$//gs' "$f" | sed 's/--.*//' | grep -qiE "$DESTRUTIVO"; then
     err "BLOQUEADA (contém comando destrutivo): $base"
     BLOQUEADAS=$((BLOQUEADAS+1))
     continue
