@@ -23,6 +23,9 @@ interface Props {
   employees?: any[];
 }
 
+const NO_EMPLOYEES: any[] = [];
+const NO_ANEXOS: any[] = [];
+
 function isWeekend(date?: string | null) {
   if (!date) return null;
   const d = new Date(`${date.split("T")[0]}T12:00:00`);
@@ -30,7 +33,7 @@ function isWeekend(date?: string | null) {
   return d.getDay() === 0 || d.getDay() === 6;
 }
 
-export function PtPdfPreview({ open, onClose, pt, apr, casco, company, employees = [] }: Props) {
+export function PtPdfPreview({ open, onClose, pt, apr, casco, company, employees = NO_EMPLOYEES }: Props) {
   const [assinaturaTst, setAssinaturaTst] = useState<string | null>(null);
   const [padOpen, setPadOpen] = useState<null | "tst" | "encarregado" | "gerente">(null);
   const [assinaturaEnc, setAssinaturaEnc] = useState<string | null>(null);
@@ -44,7 +47,7 @@ export function PtPdfPreview({ open, onClose, pt, apr, casco, company, employees
   const tokenRef = useRef(0);
 
   const listarAnexos = useServerFn(listarAnexosPorEscopo);
-  const { data: anexosDisponiveis = [] } = useQuery({
+  const { data: anexosDisponiveis = NO_ANEXOS } = useQuery({
     queryKey: ["pdf-anexos-padrao", "pte"],
     queryFn: () => listarAnexos({ data: { escopo: "pte" } }),
     enabled: open,
