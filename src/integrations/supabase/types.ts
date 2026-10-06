@@ -11823,6 +11823,9 @@ export type Database = {
           emitente_user_id: string | null
           employee_id: string | null
           employee_name: string | null
+          encerrada_em: string | null
+          encerrada_obs: string | null
+          encerrada_por: string | null
           executantes_ids: string[] | null
           hora_fim: string | null
           hora_inicio: string | null
@@ -11858,6 +11861,9 @@ export type Database = {
           emitente_user_id?: string | null
           employee_id?: string | null
           employee_name?: string | null
+          encerrada_em?: string | null
+          encerrada_obs?: string | null
+          encerrada_por?: string | null
           executantes_ids?: string[] | null
           hora_fim?: string | null
           hora_inicio?: string | null
@@ -11893,6 +11899,9 @@ export type Database = {
           emitente_user_id?: string | null
           employee_id?: string | null
           employee_name?: string | null
+          encerrada_em?: string | null
+          encerrada_obs?: string | null
+          encerrada_por?: string | null
           executantes_ids?: string[] | null
           hora_fim?: string | null
           hora_inicio?: string | null
@@ -14198,6 +14207,10 @@ export type Database = {
       }
       encerrar_apr: {
         Args: { _apr_id: string; _obs: string }
+        Returns: undefined
+      }
+      encerrar_pt: {
+        Args: { _obs: string; _pt_id: string }
         Returns: undefined
       }
       enviar_rc_para_supervisor: {
