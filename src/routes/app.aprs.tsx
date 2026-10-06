@@ -187,8 +187,9 @@ function AprsPage() {
       cutoff = d.toISOString().slice(0, 10);
     }
     return aprs.filter((a: any) => {
+      if (a.status === "ENCERRADA") return false; // encerradas só aparecem no painel APRs Executadas
       if (filterStatus === "ATIVAS") {
-        if (a.status === "ENCERRADA" || a.status === "CANCELADA") return false;
+        if (a.status === "CANCELADA") return false;
       } else if (filterStatus !== "ALL" && a.status !== filterStatus) return false;
       if (filterCasco !== "ALL" && a.casco_id !== filterCasco) return false;
       if (cutoff && a.data_emissao && a.data_emissao < cutoff) return false;
@@ -413,7 +414,6 @@ function AprsPage() {
                 <SelectItem value="ALL">Todos status</SelectItem>
                 <SelectItem value="RASCUNHO">Rascunho</SelectItem>
                 <SelectItem value="ATIVA">Ativa</SelectItem>
-                <SelectItem value="ENCERRADA">Encerrada</SelectItem>
                 <SelectItem value="CANCELADA">Cancelada</SelectItem>
               </SelectContent>
             </Select>
@@ -667,11 +667,6 @@ function AprsPage() {
                                       {isEditor && a.status !== "ENCERRADA" && a.status !== "CANCELADA" && (
                                         <DropdownMenuItem className="text-emerald-600 focus:text-emerald-600" onClick={() => { setEncerrarApr(a); setEncerrarObs(""); }}>
                                           <CheckCircle2 className="h-4 w-4 mr-2" /> Encerrar APR
-                                        </DropdownMenuItem>
-                                      )}
-                                      {a.status === "ENCERRADA" && (
-                                        <DropdownMenuItem className="text-emerald-600 focus:text-emerald-600" onClick={() => setExecutadasOpen(true)}>
-                                          <Archive className="h-4 w-4 mr-2" /> Já encerrada — ver em APRs Executadas
                                         </DropdownMenuItem>
                                       )}
                                       {isEditor && (
