@@ -16,6 +16,7 @@ import { calculateSafetyStatus } from "@/lib/safety-engine";
 import { hasGlobalOverride, type SafetyOverride } from "@/lib/safety-overrides";
 import { detectarExigenciaPTE } from "@/lib/apr-pte-rules";
 import { PtPdfPreview } from "@/components/ptes/PtPdfPreview";
+import { LocalErrorBoundary } from "@/components/local-error-boundary";
 import { PtsExecutadasPanel } from "@/components/ptes/pts-executadas-panel";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PteAtmosferaTab } from "@/components/ptes/PteAtmosferaTab";
@@ -1908,7 +1909,7 @@ function PtesPage() {
         ptes={ptes as any[]}
         cascosMap={cascosMap}
         companies={companies as any[]}
-        onView={(p) => setPreviewPt(p)}
+        onView={(p) => { setExecutadasOpen(false); setTimeout(() => setPreviewPt(p), 150); }}
       />
 
       <Dialog open={!!encerrarPt} onOpenChange={(o) => !o && !revoke.isPending && setEncerrarPt(null)}>
@@ -1937,6 +1938,7 @@ function PtesPage() {
         </DialogContent>
       </Dialog>
 
+      <LocalErrorBoundary key={previewPt?.id ?? "none"} label="a PT" onReset={() => setPreviewPt(null)}>
       <PtPdfPreview
         open={!!previewPt}
         onClose={() => setPreviewPt(null)}
@@ -1946,6 +1948,7 @@ function PtesPage() {
         company={previewPt?.company_id ? (companies as any[]).find((c: any) => c.id === previewPt.company_id) : undefined}
         employees={emps as any[]}
       />
+      </LocalErrorBoundary>
     </div>
   );
 }
