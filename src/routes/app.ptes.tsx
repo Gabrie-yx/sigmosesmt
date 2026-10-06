@@ -165,7 +165,7 @@ function PtesPage() {
   }, [ptes, medsAll]);
   const { data: aprsAll = [] } = useQuery({
     queryKey: ["aprs-light-for-ptes"],
-    queryFn: async () => (await supabase.from("aprs").select("id,numero,atividade_descricao,casco_id,empresa_id,local").order("data_emissao", { ascending: false })).data ?? [],
+    queryFn: async () => (await supabase.from("aprs").select("id,numero,status,atividade_descricao,casco_id,empresa_id,local").order("data_emissao", { ascending: false })).data ?? [],
   });
   const aprsMap = useMemo(() => new Map(aprsAll.map((a: any) => [a.id, a])), [aprsAll]);
 
@@ -222,6 +222,12 @@ function PtesPage() {
     queryFn: async () => (await supabase.from("cascos").select("id,numero,nome").order("numero")).data ?? [],
   });
   const cascosMap = useMemo(() => new Map((cascos as any[]).map((c: any) => [c.id, c])), [cascos]);
+  // Só APRs em andamento podem ser vinculadas a uma nova PT (encerradas/canceladas ficam fora),
+  // mas mantém visível a APR já vinculada ao editar uma PT existente.
+  const aprsVinculaveis = useMemo(
+    () => (aprsAll as any[]).filter((a) => (a.status !== "ENCERRADA" && a.status !== "CANCELADA") || a.id === linkedAprId),
+    [aprsAll, linkedAprId],
+  );
   const { data: roles = [] } = useQuery({
     queryKey: ["roles"],
     queryFn: async () => (await supabase.from("roles").select("*")).data ?? [],
