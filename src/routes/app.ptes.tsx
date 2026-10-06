@@ -776,6 +776,16 @@ function PtesPage() {
                 </span>
               )}
               {editingId && (
+                <button
+                  type="button"
+                  onClick={() => save.mutate()}
+                  disabled={save.isPending}
+                  className="text-[10px] bg-gradient-to-br from-blue-600/90 to-blue-900/90 text-white border border-blue-400/40 px-3 py-1.5 rounded-lg uppercase font-black flex items-center gap-1 disabled:opacity-50"
+                >
+                  <CheckCircle2 className="h-3 w-3" /> {save.isPending ? "Salvando…" : "Salvar PT"}
+                </button>
+              )}
+              {editingId && (
                 <button type="button" onClick={cancelEdit} className="text-[10px] bg-black/40 text-rose-200 border border-white/10 px-3 py-1.5 rounded-lg hover:bg-black/60 uppercase font-black">
                   Cancelar
                 </button>
