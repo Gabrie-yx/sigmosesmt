@@ -61,10 +61,10 @@ export function PtPdfPreview({ open, onClose, pt, apr, casco, company, employees
     const employeeName = (id?: string | null) => (id ? employeeMap.get(id)?.nome : "");
     const dados = (pt.dados ?? {}) as any;
     const atv = (dados.atividades ?? {}) as any;
-    const encarregado = (dados.encarregado_nome && String(dados.encarregado_nome).trim())
+    const encarregado = ((dados.encarregado_nome && String(dados.encarregado_nome).trim())
       || employeeName(pt.requisitante_id)
       || pt.employee_name
-      || "";
+      || "").toUpperCase();
     const equipeLista = Array.isArray(dados.equipe_lista) ? dados.equipe_lista : [];
     const sigOf = (nome?: string) => {
       if (!nome) return null;
@@ -73,7 +73,7 @@ export function PtPdfPreview({ open, onClose, pt, apr, casco, company, employees
       return url ? (empSigs[url] ?? null) : null;
     };
     const localTexto = [pt.local, casco ? `CASCO ${casco.numero}${casco.nome ? ` — ${casco.nome}` : ""}` : null]
-      .filter(Boolean).join(" · ");
+      .filter(Boolean).join(" · ").toUpperCase();
     return {
       numero: pt.numero,
       data_inicio: formatDateBR(pt.data_emissao || pt.data),
