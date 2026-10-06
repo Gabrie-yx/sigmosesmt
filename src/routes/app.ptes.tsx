@@ -960,7 +960,7 @@ function PtesPage() {
                   <SelectItem value="none">— SEM CASCO —</SelectItem>
                   {(cascos as any[]).map((c: any) => (
                     <SelectItem key={c.id} value={c.id}>
-                      CASCO {c.numero}{c.nome ? ` — ${c.nome}` : ""}
+                      {cascoNumeroLimpo(c) || c.numero || c.nome}
                     </SelectItem>
                   ))}
                 </SelectContent>
