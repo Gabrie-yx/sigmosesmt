@@ -4,6 +4,7 @@
 # Regra de ouro: o ambiente LOCAL nunca é sobrescrito pelo git.
 #   Fonte da verdade: $APP/.env.local (ignorado pelo git)
 set -uo pipefail
+export PATH="/home/sigmo/.bun/bin:$PATH"
 
 APP=/home/sigmo/app
 LOG=/home/sigmo/sigmo.log
