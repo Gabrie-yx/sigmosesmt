@@ -770,73 +770,41 @@ function PtesPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-[210px_minmax(0,1fr)] gap-4 lg:gap-6">
-            {/* RAIL VERTICAL DE PASSOS */}
-            <aside className="lg:sticky lg:top-4 lg:self-start">
-              {/* Mobile: seletor compacto horizontal com scroll */}
-              <div className="lg:hidden -mx-1 overflow-x-auto custom-scrollbar mb-2">
-                <div className="flex items-center gap-1.5 px-1 min-w-max">
-                  {STEPS.map((s, i) => {
-                    const active = s.id === activeStep;
-                    const done = (stepChecks as any)[s.id] === true;
-                    return (
-                      <button
-                        key={s.id}
-                        type="button"
-                        onClick={() => setActiveStep(s.id)}
-                        className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wider border transition-all whitespace-nowrap ${
-                          active
-                            ? "bg-amber-200/80 text-[#120307] border-amber-100/60"
-                            : done
-                              ? "bg-lime-500/15 text-lime-100 border-lime-400/40"
-                              : "bg-white/[0.05] text-slate-200 border-white/10"
-                        }`}
-                      >
-                        <span className="h-4 w-4 rounded-full bg-black/20 flex items-center justify-center text-[9px]">
-                          {done && !active ? <CheckCircle2 className="h-2.5 w-2.5" /> : i + 1}
-                        </span>
-                        {s.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-              {/* Desktop: rail vertical */}
-              <ol className="hidden lg:flex flex-col gap-1 bg-white/[0.03] border border-white/10 rounded-xl p-2">
+          <div className="space-y-4">
+            {/* ABAS DE PASSOS — topo do painel */}
+            <div className="-mx-1 overflow-x-auto custom-scrollbar pb-1">
+              <div className="flex items-center gap-1 p-1 min-w-max bg-slate-900/40 border border-white/5 rounded-xl">
                 {STEPS.map((s, i) => {
                   const active = s.id === activeStep;
                   const done = (stepChecks as any)[s.id] === true;
                   const Icon = s.icon;
                   return (
-                    <li key={s.id}>
-                      <button
-                        type="button"
-                        onClick={() => setActiveStep(s.id)}
-                        className={`w-full flex items-center gap-2 rounded-lg pl-2 pr-3 py-2 text-[11px] font-bold tracking-wide transition-all border ${
-                          active
-                            ? "bg-gradient-to-r from-amber-300/95 to-lime-400/95 text-[#120307] border-amber-100/60 shadow-[0_0_16px_-6px_rgba(245,158,11,0.9)]"
-                            : done
-                              ? "bg-lime-500/10 text-lime-100 border-lime-400/25 hover:bg-lime-500/20"
-                              : "bg-transparent text-slate-200 border-transparent hover:bg-white/[0.05] hover:text-white"
-                        }`}
-                      >
-                        <span className={`h-5 w-5 shrink-0 rounded-full flex items-center justify-center text-[10px] font-black ${
-                          active ? "bg-[#120307]/80 text-amber-50" : done ? "bg-lime-400/30 text-lime-50" : "bg-white/10 text-slate-100"
-                        }`}>
-                          {done && !active ? <CheckCircle2 className="h-3 w-3" /> : i + 1}
-                        </span>
-                        <Icon className="h-3.5 w-3.5 opacity-80" />
-                        <span className="truncate">{s.label}</span>
-                      </button>
-                    </li>
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => setActiveStep(s.id)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-wide transition-all duration-200 whitespace-nowrap ${
+                        active
+                          ? "bg-gradient-to-br from-amber-300/95 to-lime-400/95 text-[#120307] shadow-[0_4px_18px_-4px_rgba(245,158,11,0.6)] scale-[1.02]"
+                          : done
+                            ? "bg-lime-500/10 text-lime-200 hover:bg-lime-500/20"
+                            : "text-slate-300 hover:text-white hover:bg-white/5"
+                      }`}
+                    >
+                      <Icon className="h-3.5 w-3.5 opacity-80" />
+                      {s.label}
+                      {done && !active && <CheckCircle2 className="h-3 w-3" />}
+                    </button>
                   );
                 })}
-              </ol>
-              <div className="hidden lg:flex mt-2 items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-300/70 px-1">
-                <span>Progresso</span>
-                <span className="text-lime-200">{Object.values(stepChecks).filter(Boolean).length}/{STEPS.length - 1}</span>
               </div>
-            </aside>
+            </div>
+            <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-300/70 px-1">
+              <span className="lg:hidden">Passo {stepIndex + 1} de {STEPS.length}</span>
+              <span className="hidden lg:inline">Clique na aba para avançar — as marcadas com ✓ já estão completas</span>
+              <span className="text-lime-200">Progresso {Object.values(stepChecks).filter(Boolean).length}/{STEPS.length - 1}</span>
+            </div>
+
 
             <form onSubmit={(e) => { e.preventDefault(); save.mutate(); }} className="space-y-5 min-w-0">
           <div hidden={activeStep !== "ident"} className="space-y-4">
