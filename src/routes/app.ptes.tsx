@@ -19,6 +19,7 @@ import { PtPdfPreview } from "@/components/ptes/PtPdfPreview";
 import { LocalErrorBoundary } from "@/components/local-error-boundary";
 import { PtsExecutadasPanel } from "@/components/ptes/pts-executadas-panel";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AprForm } from "@/components/aprs/apr-form";
 import { PteAtmosferaTab } from "@/components/ptes/PteAtmosferaTab";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -53,6 +54,7 @@ function PtesPage() {
   const today = new Date().toISOString().slice(0, 10);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [linkedAprId, setLinkedAprId] = useState<string | null>(null);
+  const [aprModalId, setAprModalId] = useState<string | null>(null);
   const [previewPt, setPreviewPt] = useState<any | null>(null);
   const [executadasOpen, setExecutadasOpen] = useState(false);
   const [encerrarPt, setEncerrarPt] = useState<any | null>(null);
@@ -949,6 +951,15 @@ function PtesPage() {
             <div className="rounded-xl p-4 bg-gradient-to-br from-rose-950/60 to-black/40 border border-rose-500/20 shadow-[inset_0_1px_0_rgba(255,230,235,0.05)]">
               <Label className="text-[10px] font-black text-rose-200 uppercase flex items-center gap-2 mb-2">
                 <Link2 className="h-4 w-4" /> APR Vinculada {!f.emergencia_sem_apr && <span className="text-red-600">*</span>}
+                {linkedAprId && (
+                  <button
+                    type="button"
+                    onClick={() => setAprModalId(linkedAprId)}
+                    className="ml-auto inline-flex items-center gap-1 rounded-md border border-rose-300/30 bg-white/5 px-2 py-1 text-[10px] font-black uppercase text-rose-100 hover:bg-white/10"
+                  >
+                    <Eye className="h-3.5 w-3.5" /> Abrir / editar APR
+                  </button>
+                )}
               </Label>
               <Select
                 value={linkedAprId ?? "none"}
@@ -1994,6 +2005,20 @@ function PtesPage() {
       </Dialog>
 
       <LocalErrorBoundary key={previewPt?.id ?? "none"} label="a PT" onReset={() => setPreviewPt(null)}>
+      <Dialog open={!!aprModalId} onOpenChange={(o) => { if (!o) { setAprModalId(null); qc.invalidateQueries({ queryKey: ["aprs-light-for-ptes"] }); } }}>
+        <DialogContent className="max-w-[95vw] w-[1200px] h-[92vh] flex flex-col p-0 gap-0 bg-background border-border z-[130]">
+          <DialogHeader className="sr-only"><DialogTitle>APR vinculada</DialogTitle></DialogHeader>
+          <div className="flex-1 overflow-hidden">
+            {aprModalId && (
+              <AprForm
+                key={aprModalId}
+                aprId={aprModalId}
+                onClose={() => { setAprModalId(null); qc.invalidateQueries({ queryKey: ["aprs-light-for-ptes"] }); }}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
       <PtPdfPreview
         open={!!previewPt}
         onClose={() => setPreviewPt(null)}
