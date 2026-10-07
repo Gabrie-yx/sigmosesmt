@@ -289,6 +289,17 @@ function PtesPage() {
     });
   }, [emps, roles, exams, vaccines, companies, overridesAll, ossValidIds, f.company_id]);
 
+  // Detecção de solda/corte (descrição, APR vinculada, funções da equipe, "outros")
+  const soldaDetectada: string | null = (() => {
+    const apr = linkedAprId ? (aprsAll as any[]).find((a) => a.id === linkedAprId) : null;
+    const textos = [
+      f.local, f.outros_atividade_texto, apr?.atividade_descricao,
+      ...((f.equipe_lista ?? []) as any[]).map((r) => r?.funcao),
+    ].filter(Boolean).join(" ").toLowerCase();
+    const m = textos.match(/sold[a-z]*|oxicorte|ma[cç]arico|esmerilh[a-z]*|eletrodo|corte a quente|lixadeira/);
+    return m ? m[0].toUpperCase() : null;
+  })();
+
   const save = useMutation({
     mutationFn: async () => {
       // Validações de papéis
@@ -327,6 +338,13 @@ function PtesPage() {
         if (aplica && !_temX(g)) {
           throw new Error(`A atividade inclui ${nome}: marque ao menos 1 precaução dessa seção (ela não pode ficar toda NA).`);
         }
+      }
+      // Trava inteligente: solda/corte detectado em PT de altura (ou qualquer PT) exige "Trabalho a quente"
+      if (soldaDetectada && !f.atv_trabalho_quente && f.tipo_pt !== "PTQ") {
+        throw new Error(`Detectamos atividade de solda/corte (${soldaDetectada}). Marque "Trabalho a quente" em Atividades e preencha as precauções dessa seção (NR-34/NR-18).`);
+      }
+      if (f.tipo_pt === "PTS" && (f.pts_relacionadas ?? []).length === 0) {
+        throw new Error("PT Simultânea (PTS) exige vincular ao menos 1 PT que ocorre ao mesmo tempo no mesmo casco.");
       }
       if (!_temX("epis_col1") && !_temX("epis_col2") && !_temX("outros_epi")) {
         throw new Error("Marque ao menos 1 EPI/proteção na aba EPIs.");
@@ -491,6 +509,10 @@ function PtesPage() {
         } : null,
       };
 
+      let savedId: string | null = editingId;
+      const prevRel: string[] = editingId
+        ? (((ptes as any[]).find((p) => p.id === editingId)?.pts_relacionadas as string[] | null) ?? [])
+        : [];
       if (editingId) {
         // Reemissão: ao atualizar, considera como nova emissão (zera o "envelhecimento" de 7 dias)
         const { error } = await supabase
@@ -507,14 +529,30 @@ function PtesPage() {
         );
         if (nErr) throw nErr;
         const numero = String(numeroRpc ?? `${f.tipo_pt}-${anoAtual}-0000`);
-        const { error } = await supabase.from("ptes").insert({
+        const { data: ins, error } = await supabase.from("ptes").insert({
           ...commonPayload,
           numero,
           status: "ATIVA",
           dados: dadosPdf,
           pts_relacionadas: f.pts_relacionadas ?? [],
-        });
+        }).select("id").single();
         if (error) throw error;
+        savedId = (ins as any)?.id ?? null;
+      }
+
+      // Vínculo recíproco entre PTs simultâneas: A→B também grava B→A (e remove os desvinculados)
+      if (savedId) {
+        const novos: string[] = f.pts_relacionadas ?? [];
+        const afetados = Array.from(new Set([...novos, ...prevRel]));
+        for (const otherId of afetados) {
+          const other = (ptes as any[]).find((p) => p.id === otherId);
+          const atual: string[] = (other?.pts_relacionadas as string[] | null) ?? [];
+          const deve = novos.includes(otherId);
+          const tem = atual.includes(savedId);
+          if (deve === tem) continue;
+          const next = deve ? [...atual, savedId] : atual.filter((x) => x !== savedId);
+          await supabase.from("ptes").update({ pts_relacionadas: next }).eq("id", otherId);
+        }
       }
     },
     onSuccess: () => {
@@ -921,7 +959,7 @@ function PtesPage() {
               return (
                 <div className="rounded-xl border border-fuchsia-400/25 bg-gradient-to-br from-fuchsia-950/40 to-black/40 p-3 space-y-2">
                   <Label className="text-[10px] font-black text-fuchsia-200 uppercase flex items-center gap-2">
-                    <Link2 className="h-3.5 w-3.5" /> PTEs vinculadas (mesma manobra / mesmo pátio)
+                    <Link2 className="h-3.5 w-3.5" /> PTs simultâneas (mesmo casco / mesmo dia){f.tipo_pt === "PTS" ? " — obrigatório na PTS" : ""}
                   </Label>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5 max-h-40 overflow-y-auto custom-scrollbar">
                     {candidatas.map((p: any) => {
@@ -1275,6 +1313,14 @@ function PtesPage() {
               </h3>
               <div className="space-y-2">
                 <Label className="text-xs font-black text-amber-50/85/70 uppercase tracking-wider block">Descrição das atividades a serem executadas</Label>
+                {soldaDetectada && !f.atv_trabalho_quente && f.tipo_pt !== "PTQ" && (
+                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-400/50 bg-amber-500/10 px-3 py-2 text-[10px] font-bold uppercase text-amber-100">
+                    <span>⚠ Detectamos "{soldaDetectada}" nesta PT. Solda/corte exige a seção Trabalho a Quente (NR-34).</span>
+                    <Button type="button" size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => setF({ ...f, atv_trabalho_quente: true })}>
+                      Marcar trabalho a quente
+                    </Button>
+                  </div>
+                )}
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                   {[
                     { k: "atv_movimentacao_cargas", l: "Movimentação de cargas" },
