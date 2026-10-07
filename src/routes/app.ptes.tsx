@@ -328,6 +328,13 @@ function PtesPage() {
           throw new Error(`A atividade inclui ${nome}: marque ao menos 1 precaução dessa seção (ela não pode ficar toda NA).`);
         }
       }
+      // Trava inteligente: solda/corte detectado em PT de altura (ou qualquer PT) exige "Trabalho a quente"
+      if (soldaDetectada && !f.atv_trabalho_quente && f.tipo_pt !== "PTQ") {
+        throw new Error(`Detectamos atividade de solda/corte (${soldaDetectada}). Marque "Trabalho a quente" em Atividades e preencha as precauções dessa seção (NR-34/NR-18).`);
+      }
+      if (f.tipo_pt === "PTS" && (f.pts_relacionadas ?? []).length === 0) {
+        throw new Error("PT Simultânea (PTS) exige vincular ao menos 1 PT que ocorre ao mesmo tempo no mesmo casco.");
+      }
       if (!_temX("epis_col1") && !_temX("epis_col2") && !_temX("outros_epi")) {
         throw new Error("Marque ao menos 1 EPI/proteção na aba EPIs.");
       }
@@ -491,6 +498,10 @@ function PtesPage() {
         } : null,
       };
 
+      let savedId: string | null = editingId;
+      const prevRel: string[] = editingId
+        ? (((ptes as any[]).find((p) => p.id === editingId)?.pts_relacionadas as string[] | null) ?? [])
+        : [];
       if (editingId) {
         // Reemissão: ao atualizar, considera como nova emissão (zera o "envelhecimento" de 7 dias)
         const { error } = await supabase
@@ -507,14 +518,30 @@ function PtesPage() {
         );
         if (nErr) throw nErr;
         const numero = String(numeroRpc ?? `${f.tipo_pt}-${anoAtual}-0000`);
-        const { error } = await supabase.from("ptes").insert({
+        const { data: ins, error } = await supabase.from("ptes").insert({
           ...commonPayload,
           numero,
           status: "ATIVA",
           dados: dadosPdf,
           pts_relacionadas: f.pts_relacionadas ?? [],
-        });
+        }).select("id").single();
         if (error) throw error;
+        savedId = (ins as any)?.id ?? null;
+      }
+
+      // Vínculo recíproco entre PTs simultâneas: A→B também grava B→A (e remove os desvinculados)
+      if (savedId) {
+        const novos: string[] = f.pts_relacionadas ?? [];
+        const afetados = Array.from(new Set([...novos, ...prevRel]));
+        for (const otherId of afetados) {
+          const other = (ptes as any[]).find((p) => p.id === otherId);
+          const atual: string[] = (other?.pts_relacionadas as string[] | null) ?? [];
+          const deve = novos.includes(otherId);
+          const tem = atual.includes(savedId);
+          if (deve === tem) continue;
+          const next = deve ? [...atual, savedId] : atual.filter((x) => x !== savedId);
+          await supabase.from("ptes").update({ pts_relacionadas: next }).eq("id", otherId);
+        }
       }
     },
     onSuccess: () => {
