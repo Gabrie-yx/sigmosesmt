@@ -959,7 +959,7 @@ function PtesPage() {
               return (
                 <div className="rounded-xl border border-fuchsia-400/25 bg-gradient-to-br from-fuchsia-950/40 to-black/40 p-3 space-y-2">
                   <Label className="text-[10px] font-black text-fuchsia-200 uppercase flex items-center gap-2">
-                    <Link2 className="h-3.5 w-3.5" /> PTEs vinculadas (mesma manobra / mesmo pátio)
+                    <Link2 className="h-3.5 w-3.5" /> PTs simultâneas (mesmo casco / mesmo dia){f.tipo_pt === "PTS" ? " — obrigatório na PTS" : ""}
                   </Label>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5 max-h-40 overflow-y-auto custom-scrollbar">
                     {candidatas.map((p: any) => {
@@ -1313,6 +1313,14 @@ function PtesPage() {
               </h3>
               <div className="space-y-2">
                 <Label className="text-xs font-black text-amber-50/85/70 uppercase tracking-wider block">Descrição das atividades a serem executadas</Label>
+                {soldaDetectada && !f.atv_trabalho_quente && f.tipo_pt !== "PTQ" && (
+                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-400/50 bg-amber-500/10 px-3 py-2 text-[10px] font-bold uppercase text-amber-100">
+                    <span>⚠ Detectamos "{soldaDetectada}" nesta PT. Solda/corte exige a seção Trabalho a Quente (NR-34).</span>
+                    <Button type="button" size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => setF({ ...f, atv_trabalho_quente: true })}>
+                      Marcar trabalho a quente
+                    </Button>
+                  </div>
+                )}
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                   {[
                     { k: "atv_movimentacao_cargas", l: "Movimentação de cargas" },
