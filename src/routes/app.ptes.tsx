@@ -289,6 +289,17 @@ function PtesPage() {
     });
   }, [emps, roles, exams, vaccines, companies, overridesAll, ossValidIds, f.company_id]);
 
+  // Detecção de solda/corte (descrição, APR vinculada, funções da equipe, "outros")
+  const soldaDetectada: string | null = (() => {
+    const apr = linkedAprId ? (aprsAll as any[]).find((a) => a.id === linkedAprId) : null;
+    const textos = [
+      f.local, f.outros_atividade_texto, apr?.atividade_descricao,
+      ...((f.equipe_lista ?? []) as any[]).map((r) => r?.funcao),
+    ].filter(Boolean).join(" ").toLowerCase();
+    const m = textos.match(/sold[a-z]*|oxicorte|ma[cç]arico|esmerilh[a-z]*|eletrodo|corte a quente|lixadeira/);
+    return m ? m[0].toUpperCase() : null;
+  })();
+
   const save = useMutation({
     mutationFn: async () => {
       // Validações de papéis
