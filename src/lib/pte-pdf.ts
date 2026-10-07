@@ -1,6 +1,24 @@
 import { renderOverlay, preloadTemplate } from "@/lib/pdf-overlay-engine";
 import { PDFDocument } from "pdf-lib";
 import type { PtTipo } from "@/lib/constants";
+import {
+  PTE_RISCOS_POTENCIAIS, PTE_PRECAUCOES_QUENTE, PTE_PRECAUCOES_ALTURA, PTE_PRECAUCOES_ELETRICA,
+  PTE_PRECAUCOES_CARGA, PTE_PRECAUCOES_PINTURA, PTE_EPIS_1, PTE_EPIS_2, PTE_OUTROS_EPI,
+  type PteOfficialItem,
+} from "@/lib/pte-official-fields";
+
+/** Seções que aceitam "NA nos não marcados": grupo do formulário → prefixo no PDF + itens. */
+export const PTE_SECOES_NA: Record<string, { prefix: string; items: readonly PteOfficialItem[] }> = {
+  riscos_potenciais: { prefix: "ris", items: PTE_RISCOS_POTENCIAIS },
+  precaucao_quente: { prefix: "hot", items: PTE_PRECAUCOES_QUENTE },
+  precaucao_altura: { prefix: "alt", items: PTE_PRECAUCOES_ALTURA },
+  precaucao_eletrica: { prefix: "ele", items: PTE_PRECAUCOES_ELETRICA },
+  precaucao_carga: { prefix: "carga", items: PTE_PRECAUCOES_CARGA },
+  precaucao_pintura: { prefix: "pint", items: PTE_PRECAUCOES_PINTURA },
+  epis_col1: { prefix: "epi1", items: PTE_EPIS_1 },
+  epis_col2: { prefix: "epi2", items: PTE_EPIS_2 },
+  outros_epi: { prefix: "outrosepi", items: PTE_OUTROS_EPI },
+};
 
 export type PtePdfParams = {
   numero?: string;
@@ -44,6 +62,8 @@ export type PtePdfParams = {
   epis_col2?: Record<string, boolean>;
   outros_epi?: Record<string, boolean>;
   recomendacoes_adicionais?: string;
+  /** Seções marcadas como "NA nos não marcados" (itens sem X saem com NA). */
+  secoes_na?: Record<string, boolean>;
   equipe_lista?: { nome?: string; funcao?: string }[];
   assinatura_encarregado_nome?: string;
   assinatura_gerente_nome?: string;
@@ -85,6 +105,12 @@ export async function gerarPtePdf(p: PtePdfParams): Promise<Blob> {
     if (row?.nome) equipeFields[`equipe_nome_${i}`] = row.nome;
     if (row?.funcao) equipeFields[`equipe_funcao_${i}`] = row.funcao;
   });
+  const naChecks: Record<string, string> = {};
+  for (const [group, cfg] of Object.entries(PTE_SECOES_NA)) {
+    if (!p.secoes_na?.[group]) continue;
+    const marcados = ((p as any)[group] ?? {}) as Record<string, boolean>;
+    for (const it of cfg.items) if (!marcados[it.key]) naChecks[`${cfg.prefix}_${it.key}`] = "NA";
+  }
   const base = await renderOverlay({
     codigo: "FOR-SEG-04",
     fields: {
@@ -134,6 +160,7 @@ export async function gerarPtePdf(p: PtePdfParams): Promise<Blob> {
       ...prefixChecks("epi1", p.epis_col1),
       ...prefixChecks("epi2", p.epis_col2),
       ...prefixChecks("outrosepi", p.outros_epi),
+      ...naChecks,
     },
   });
   const equipeSigs = (p.equipe_assinaturas_data_urls ?? []).slice(0, 12);

@@ -116,6 +116,7 @@ export function PtPdfPreview({ open, onClose, pt, apr, casco, company, employees
       epis_col2: dados.epis_col2 ?? {},
       outros_epi: dados.outros_epi ?? {},
       recomendacoes_adicionais: dados.recomendacoes_adicionais ?? "",
+      secoes_na: dados.secoes_na ?? {},
       equipe_lista: equipeLista,
       equipe_assinaturas_data_urls: equipeLista.map((r: any) => sigOf(r?.nome)),
       assinatura_encarregado_nome: dados.assinatura_encarregado_nome ?? "",
