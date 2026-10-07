@@ -86,6 +86,7 @@ function PtesPage() {
     atv_outros: false,
     outros_atividade_texto: "",
     riscos_potenciais: {} as Record<string, boolean>,
+    secoes_na: {} as Record<string, boolean>,
     outros_risco_texto: "",
     preenchimento_snna: {} as Record<string, PteTriValue | "">,
     outros_snna_texto: "",
@@ -310,7 +311,27 @@ function PtesPage() {
       }
       const _algumRisco = Object.values(f.riscos_potenciais ?? {}).some(Boolean);
       if (!_algumRisco) {
-        throw new Error("Marque ao menos 1 risco potencial no bloco Riscos.");
+        throw new Error("Marque ao menos 1 risco potencial no bloco Riscos (NA só vale para os demais itens).");
+      }
+      // Coerência atividade × precaução: a seção da atividade executada não pode ficar toda NA/vazia
+      const _temX = (g: string) => Object.values(f[g] ?? {}).some(Boolean);
+      const _coerencia: [boolean, string, string][] = [
+        [!!f.atv_trabalho_quente || f.tipo_pt === "PTQ", "precaucao_quente", "Trabalho a Quente"],
+        [!!f.atv_altura_telhados || f.tipo_pt === "PTA", "precaucao_altura", "Trabalho em Altura"],
+        [!!f.atv_eletricidade || f.tipo_pt === "PTEL", "precaucao_eletrica", "Eletricidade"],
+        [!!f.atv_movimentacao_cargas || f.tipo_pt === "PTI", "precaucao_carga", "Movimentação/Içamento de Carga"],
+      ];
+      for (const [aplica, g, nome] of _coerencia) {
+        if (aplica && !_temX(g)) {
+          throw new Error(`A atividade inclui ${nome}: marque ao menos 1 precaução dessa seção (ela não pode ficar toda NA).`);
+        }
+      }
+      if (!_temX("epis_col1") && !_temX("epis_col2") && !_temX("outros_epi")) {
+        throw new Error("Marque ao menos 1 EPI/proteção na aba EPIs.");
+      }
+      const _snnaVazio = PTE_PREENCIMENTO_SNNA.filter((it) => !(f.preenchimento_snna ?? {})[it.key]).length;
+      if (_snnaVazio > 0) {
+        throw new Error(`Faltam ${_snnaVazio} pergunta(s) S/N/NA sem resposta. Use "NA nos não respondidos" se não se aplicarem.`);
       }
 
       // (4) Sanidade risco × atividade — chuva/clima + içamento exige parecer explícito do TST
@@ -435,6 +456,7 @@ function PtesPage() {
         },
         outros_atividade_texto: (f.outros_atividade_texto ?? "").trim() || null,
         riscos_potenciais: f.riscos_potenciais ?? {},
+        secoes_na: f.secoes_na ?? {},
         outros_risco_texto: (f.outros_risco_texto ?? "").trim() || null,
         preenchimento_snna: f.preenchimento_snna ?? {},
         outros_snna_texto: (f.outros_snna_texto ?? "").trim() || null,
@@ -579,6 +601,7 @@ function PtesPage() {
       atv_outros: !!atv.outros,
       outros_atividade_texto: d.outros_atividade_texto ?? "",
       riscos_potenciais: d.riscos_potenciais ?? {},
+      secoes_na: d.secoes_na ?? {},
       outros_risco_texto: d.outros_risco_texto ?? "",
       preenchimento_snna: d.preenchimento_snna ?? {},
       outros_snna_texto: d.outros_snna_texto ?? "",
@@ -632,6 +655,20 @@ function PtesPage() {
     }));
   }
 
+  function secaoOk(group: string) {
+    return !!f.secoes_na?.[group] || Object.values(f[group] ?? {}).some(Boolean);
+  }
+  function toggleSecaoNa(group: string) {
+    setF((cur: any) => ({ ...cur, secoes_na: { ...(cur.secoes_na ?? {}), [group]: !cur.secoes_na?.[group] } }));
+  }
+  function snnaRestantesNa(group: string, items: readonly PteOfficialItem[]) {
+    setF((cur: any) => {
+      const atual = { ...(cur[group] ?? {}) };
+      for (const it of items) if (!atual[it.key]) atual[it.key] = "NA";
+      return { ...cur, [group]: atual };
+    });
+  }
+
   // Wizard horizontal — abas/pills
   const [activeStep, setActiveStep] = useState<string>("ident");
   const stepChecks = useMemo(() => ({
@@ -639,16 +676,11 @@ function PtesPage() {
     equipe: !!(f.requisitante_id && (f.executantes_ids?.length ?? 0) > 0 &&
       (f.tipo_pt !== "PET" || (f.vigia_id && f.supervisor_entrada_id))),
     atividades: Object.entries(f).some(([k, v]) => k.startsWith("atv_") && v) || !!f.mao_obra || !!f.area_restrita,
-    riscos: Object.values(f.riscos_potenciais ?? {}).some(Boolean),
-    snna: Object.values(f.preenchimento_snna ?? {}).some((v) => v === "S" || v === "N" || v === "NA"),
-    precaucoes: Object.values(f.precaucao_quente ?? {}).some(Boolean) ||
-      Object.values(f.precaucao_altura ?? {}).some(Boolean) ||
-      Object.values(f.precaucao_eletrica ?? {}).some(Boolean),
-    cargas_pintura: Object.values(f.precaucao_carga ?? {}).some(Boolean) ||
-      Object.values(f.precaucao_pintura ?? {}).some(Boolean),
-    epis: Object.values(f.epis_col1 ?? {}).some(Boolean) ||
-      Object.values(f.epis_col2 ?? {}).some(Boolean) ||
-      Object.values(f.outros_epi ?? {}).some(Boolean),
+    riscos: secaoOk("riscos_potenciais"),
+    snna: PTE_PREENCIMENTO_SNNA.every((it) => ["S", "N", "NA"].includes((f.preenchimento_snna ?? {})[it.key] ?? "")),
+    precaucoes: secaoOk("precaucao_quente") && secaoOk("precaucao_altura") && secaoOk("precaucao_eletrica"),
+    cargas_pintura: secaoOk("precaucao_carga") && secaoOk("precaucao_pintura"),
+    epis: secaoOk("epis_col1") && secaoOk("epis_col2") && secaoOk("outros_epi"),
     assinaturas: !!(f.assinatura_encarregado_nome?.trim() && f.assinatura_gerente_nome?.trim()),
     pet: f.tipo_pt !== "PET" || !!(f.plano_equipe_resgate && f.plano_equipamentos && f.plano_hospital_referencia && f.plano_tempo_resposta_min),
   }), [f, linkedAprId]);
@@ -672,9 +704,28 @@ function PtesPage() {
   const goNext = () => !isLast && setActiveStep(STEPS[stepIndex + 1].id);
 
   function PdfCheckboxGroup({ title, group, items }: { title: string; group: string; items: readonly PteOfficialItem[] }) {
+    const na = !!f.secoes_na?.[group];
+    const marcados = items.filter((o) => f[group]?.[o.key]).length;
     return (
       <div className="space-y-2">
-        <Label className="text-xs font-black text-amber-50/85/70 uppercase tracking-wider block">{title}</Label>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <Label className="text-xs font-black text-amber-50/85/70 uppercase tracking-wider block">{title}</Label>
+          <button
+            type="button"
+            onClick={() => toggleSecaoNa(group)}
+            title="Os itens não marcados saem como NA (Não Aplicável) no PDF"
+            className={`h-7 px-3 rounded-lg border text-[10px] font-black uppercase tracking-wider transition-all ${
+              na ? "bg-sky-500/25 text-sky-50 border-sky-300/60" : "bg-white/[0.04] text-slate-200 border-white/15 hover:bg-white/[0.08]"
+            }`}
+          >
+            {na ? "✓ NA aplicado" : marcados > 0 ? "NA nos demais" : "NA (Não Aplicável) em tudo"}
+          </button>
+        </div>
+        {na && (
+          <p className="text-[10px] font-bold uppercase text-sky-200/80">
+            {marcados > 0 ? `${marcados} marcado(s) com X · os demais saem como NA` : "Seção inteira sai como NA no PDF"}
+          </p>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           {items.map((o) => (
             <label key={o.key} className={`flex items-start gap-2 text-[11px] leading-snug font-bold normal-case rounded-xl px-3 py-2 cursor-pointer transition-all border ${
@@ -698,7 +749,16 @@ function PtesPage() {
   function PdfAnswerGroup({ title, group, items }: { title: string; group: string; items: readonly PteOfficialItem[] }) {
     return (
       <div className="space-y-2">
-        <Label className="text-xs font-black text-amber-50/85/70 uppercase tracking-wider block">{title}</Label>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <Label className="text-xs font-black text-amber-50/85/70 uppercase tracking-wider block">{title}</Label>
+          <button
+            type="button"
+            onClick={() => snnaRestantesNa(group, items)}
+            className="h-7 px-3 rounded-lg border text-[10px] font-black uppercase tracking-wider bg-white/[0.04] text-slate-200 border-white/15 hover:bg-white/[0.08]"
+          >
+            NA nos não respondidos
+          </button>
+        </div>
         <div className="grid grid-cols-1 gap-2">
           {items.map((o) => (
             <div key={o.key} className="grid grid-cols-[1fr_auto] gap-3 items-center text-[11px] leading-snug font-bold normal-case text-slate-100 bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2">
