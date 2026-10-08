@@ -72,7 +72,7 @@ export function PtPdfPreview({ open, onClose, pt, apr, casco, company, employees
       const url = emp?.assinatura_url as string | undefined;
       return url ? (empSigs[url] ?? null) : null;
     };
-    const localTexto = [pt.local, casco ? `CASCO ${casco.numero}${casco.nome ? ` — ${casco.nome}` : ""}` : null]
+    const localTexto = [pt.local, casco ? `${casco.numero}${casco.nome ? ` — ${casco.nome}` : ""}` : null]
       .filter(Boolean).join(" · ").toUpperCase();
     return {
       numero: pt.numero,

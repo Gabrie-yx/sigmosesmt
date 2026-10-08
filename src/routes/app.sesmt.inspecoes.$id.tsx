@@ -1284,7 +1284,7 @@ function NcPlanos({ ncId, ncDescricao, ncRecomendacao, ncNorma, editable, empres
           <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2">
             <div>
               <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Onde · <span className="text-primary">Where</span></Label>
-              <Input placeholder="Local exato (deck, casco, área)" value={form.onde} onChange={(e) => setForm((f) => ({ ...f, onde: e.target.value }))} className="h-8 text-xs" />
+              <Input placeholder="Local exato (setor, área, ponto)" value={form.onde} onChange={(e) => setForm((f) => ({ ...f, onde: e.target.value }))} className="h-8 text-xs" />
             </div>
             <div>
               <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Quem · <span className="text-primary">Who</span></Label>
@@ -1403,7 +1403,7 @@ function EditarCabecalhoDialog({ insp }: { insp: any }) {
           <div><Label>Local *</Label><Input value={local} onChange={(e) => setLocal(e.target.value)} /></div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div><Label>Data *</Label><Input type="date" value={data} onChange={(e) => setData(e.target.value)} /></div>
-            <div><Label>Tipo de local</Label><Input value={tipoLocal} onChange={(e) => setTipoLocal(e.target.value)} placeholder="Ex.: Pátio, Casco, Oficina" /></div>
+            <div><Label>Tipo de local</Label><Input value={tipoLocal} onChange={(e) => setTipoLocal(e.target.value)} placeholder="Ex.: Pátio, Galpão, Oficina" /></div>
           </div>
           <div><Label>Escopo</Label><Textarea rows={3} value={escopo} onChange={(e) => setEscopo(e.target.value)} placeholder="O que + Onde + Com o quê" /></div>
           <div><Label>Participantes</Label><Textarea rows={2} value={participantes} onChange={(e) => setParticipantes(e.target.value)} placeholder="Nome / função dos presentes" /></div>

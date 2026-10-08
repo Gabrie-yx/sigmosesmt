@@ -84,7 +84,7 @@ export function PtsExecutadasPanel({ open, onOpenChange, ptes, cascosMap, compan
               PTs encerradas — por mês, dia e tipo
             </p>
           </DialogHeader>
-          <Input placeholder="Buscar por número, tipo, local, casco ou data…" value={busca} onChange={(e) => setBusca(e.target.value)} className="max-w-md" />
+          <Input placeholder="Buscar por número, tipo, local ou data…" value={busca} onChange={(e) => setBusca(e.target.value)} className="max-w-md" />
           {meses.length === 0 ? (
             <p className="py-10 text-center text-sm text-muted-foreground">Nenhuma PT encerrada ainda.</p>
           ) : (
@@ -150,7 +150,7 @@ export function PtsExecutadasPanel({ open, onOpenChange, ptes, cascosMap, compan
                               </div>
                               <div className="text-xs text-foreground">{p.local}</div>
                               <div className="text-[11px] text-muted-foreground">
-                                {c ? `Casco ${c.numero}` : "Sem casco"}
+                                {c ? `${c.numero}` : "Sem local cadastrado"}
                                 {compName(p.company_id) ? ` · ${compName(p.company_id)}` : ""}
                                 {p.employee_name ? ` · ${p.employee_name}` : ""}
                               </div>

@@ -394,7 +394,7 @@ export function PteLookupSheet({
                 <Input
                   value={form.local}
                   onChange={(e) => setForm({ ...form, local: e.target.value })}
-                  placeholder="Ex.: Casco 23, deck superior"
+                  placeholder="Ex.: Galpão 2, área de solda"
                   className="mt-1 border-rose-900/60 bg-black/35 text-rose-50 placeholder:text-rose-200/40"
                 />
               </div>

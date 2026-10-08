@@ -344,7 +344,7 @@ function PtesPage() {
         throw new Error(`Detectamos atividade de solda/corte (${soldaDetectada}). Marque "Trabalho a quente" em Atividades e preencha as precauções dessa seção (NR-34/NR-18).`);
       }
       if (f.tipo_pt === "PTS" && (f.pts_relacionadas ?? []).length === 0) {
-        throw new Error("PT Simultânea (PTS) exige vincular ao menos 1 PT que ocorre ao mesmo tempo no mesmo casco.");
+        throw new Error("PT Simultânea (PTS) exige vincular ao menos 1 PT que ocorre ao mesmo tempo no mesmo local de trabalho.");
       }
       if (!_temX("epis_col1") && !_temX("epis_col2") && !_temX("outros_epi")) {
         throw new Error("Marque ao menos 1 EPI/proteção na aba EPIs.");
@@ -959,7 +959,7 @@ function PtesPage() {
               return (
                 <div className="rounded-xl border border-fuchsia-400/25 bg-gradient-to-br from-fuchsia-950/40 to-black/40 p-3 space-y-2">
                   <Label className="text-[10px] font-black text-fuchsia-200 uppercase flex items-center gap-2">
-                    <Link2 className="h-3.5 w-3.5" /> PTs simultâneas (mesmo casco / mesmo dia){f.tipo_pt === "PTS" ? " — obrigatório na PTS" : ""}
+                    <Link2 className="h-3.5 w-3.5" /> PTs simultâneas (mesmo local / mesmo dia){f.tipo_pt === "PTS" ? " — obrigatório na PTS" : ""}
                   </Label>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5 max-h-40 overflow-y-auto custom-scrollbar">
                     {candidatas.map((p: any) => {
@@ -1070,7 +1070,7 @@ function PtesPage() {
               <p className="text-[9px] text-slate-300/60 mt-1 uppercase">Se vazio, usa o requisitante no PDF.</p>
             </div>
             <div>
-              <Label className="text-xs font-black text-amber-50/85/70 uppercase tracking-wider">Frente de Trabalho (Casco)</Label>
+              <Label className="text-xs font-black text-amber-50/85/70 uppercase tracking-wider">Local de trabalho (cadastrado)</Label>
               <Select value={f.casco_id || "none"} onValueChange={(v) => setF({ ...f, casco_id: v === "none" ? "" : v })}>
                 <SelectTrigger className="bg-black/30 border-white/10 text-rose-50 mt-2 text-xs font-bold uppercase">
                   <SelectValue placeholder="-- SELECIONE O CASCO --" />
