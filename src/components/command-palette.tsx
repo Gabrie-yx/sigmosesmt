@@ -76,7 +76,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: "/app/acoes", label: "Plano de Ações (5W2H)", group: "Navegar", icon: ClipboardList },
   { to: "/app/audit", label: "Auditoria do Sistema", group: "Navegar", icon: FileText },
   { to: "/app/relatorios/reincidencia-epi", label: "Reincidência de EPI", group: "Navegar", icon: AlertTriangle },
-  { to: "/app/cascos", label: "Cascos / Embarcações", group: "Navegar", icon: Compass },
+  { to: "/app/cascos", label: "Locais de trabalho", group: "Navegar", icon: Compass },
   { to: "/app/companies", label: "Empresas / Contratadas", group: "Navegar", icon: Building2 },
   { to: "/app/roles", label: "Cargos & Matriz de Riscos", group: "Navegar", icon: Users },
   { to: "/app/estoque", label: "Estoque de EPIs", group: "Navegar", icon: Boxes },

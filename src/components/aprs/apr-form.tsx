@@ -181,7 +181,7 @@ function PaperFullHeader({
             <Textarea rows={2} className="border-0 p-0 text-[11px] resize-none focus-visible:ring-0 min-h-0"
               value={apr.atividade_descricao}
               onChange={(e) => setApr!({ ...apr, atividade_descricao: e.target.value })} />
-          ) : <span>{apr.atividade_descricao || "—"}{casco?.numero ? ` - CASCO ${casco.numero}` : ""}</span>}
+          ) : <span>{apr.atividade_descricao || "—"}{casco?.numero ? ` - ${casco.numero}` : ""}</span>}
         </div>
         <div className="px-2 py-1">
           <div className="font-bold text-[10px]">SERVIÇO DETALHADO:</div>
@@ -225,7 +225,7 @@ function PaperFullHeader({
             <Input className="h-6 text-[11px] border-0 p-0"
               value={apr.local ?? ""}
               onChange={(e) => setApr!({ ...apr, local: e.target.value })}
-              placeholder="Ex.: Casco 23, deck superior" />
+              placeholder="Ex.: Galpão 2, área de solda" />
           ) : <span>{apr.local ?? "—"}</span>}
         </div>
         <div className="px-2 py-1 leading-tight">
@@ -688,6 +688,10 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
 
       const numero = apr.numero ?? (await supabase.rpc("gerar_numero_apr")).data as string;
 
+      if (!apr.casco_id && !String(apr.local ?? "").trim()) {
+        throw new Error("Informe o local de trabalho: escolha um cadastrado ou digite o local.");
+      }
+
       // Valida pte_id: se a PTE referenciada não existir mais, limpa para evitar violação de FK
       let safePteId: string | null = apr.pte_id || null;
       if (safePteId) {
@@ -1078,7 +1082,7 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
                   </Select>
                 </div>
                 <div className="md:col-span-3">
-                  <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Casco / Embarcação</label>
+                  <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Local de trabalho (cadastrado)</label>
                   <Select value={apr.casco_id ?? "none"} onValueChange={(v) => setApr({ ...apr, casco_id: v === "none" ? null : v })}>
                     <SelectTrigger className="h-9 mt-1"><SelectValue placeholder="—" /></SelectTrigger>
                     <SelectContent>
@@ -1111,12 +1115,12 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
 
                 <div className="md:col-span-12">
                   <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Local da Atividade</label>
-                  <Input className="h-9 mt-1" value={apr.local ?? ""} onChange={(e) => setApr({ ...apr, local: e.target.value })} placeholder="Ex.: Casco 133, deck superior" />
+                  <Input className="h-9 mt-1" value={apr.local ?? ""} onChange={(e) => setApr({ ...apr, local: e.target.value })} placeholder="Ex.: Galpão 2, área de solda" />
                 </div>
 
                 <div className="md:col-span-8">
                   <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Atividade Principal *</label>
-                  <Textarea rows={2} className="mt-1 resize-none" value={apr.atividade_descricao} onChange={(e) => setApr({ ...apr, atividade_descricao: e.target.value })} placeholder="Ex.: Pintura e jateamento em altura no costado do casco…" />
+                  <Textarea rows={2} className="mt-1 resize-none" value={apr.atividade_descricao} onChange={(e) => setApr({ ...apr, atividade_descricao: e.target.value })} placeholder="Ex.: Pintura e jateamento em altura na fachada do galpão…" />
                 </div>
                 <div className="md:col-span-4">
                   <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Serviço Detalhado</label>

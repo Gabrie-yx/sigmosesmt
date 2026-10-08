@@ -377,7 +377,7 @@ function AprsPage() {
               onClick={() => { setLoteModeloId(null); setLoteCascoId(null); setLoteOpen(true); }}
               variant="outline"
             >
-              <LayoutGrid className="h-4 w-4 mr-1" /> Aplicar a vários cascos
+              <LayoutGrid className="h-4 w-4 mr-1" /> Aplicar a vários locais
             </Button>
             <Button
               onClick={() => setModeloPickerOpen(true)}
@@ -429,7 +429,7 @@ function AprsPage() {
             <Select value={filterCasco} onValueChange={setFilterCasco}>
               <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="ALL">Todos cascos</SelectItem>
+                <SelectItem value="ALL">Todos os locais</SelectItem>
                 {cascos.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.numero}</SelectItem>)}
               </SelectContent>
             </Select>
@@ -447,8 +447,8 @@ function AprsPage() {
           >
             <div className="flex items-center gap-2">
               <LayoutGrid className="h-4 w-4 text-red-700" />
-              <span className="font-bold text-sm">Cobertura por casco</span>
-              <span className="text-[11px] text-muted-foreground">— modelos × cascos. Clique na célula vazia para gerar APR.</span>
+              <span className="font-bold text-sm">Cobertura por local</span>
+              <span className="text-[11px] text-muted-foreground">— modelos × locais. Clique na célula vazia para gerar APR.</span>
             </div>
             {matrizOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
           </button>
@@ -676,7 +676,7 @@ function AprsPage() {
                                       )}
                                       {isEditor && (
                                         <DropdownMenuItem onClick={() => { setDupSource(a); setDupCascoIds([]); }}>
-                                          <Copy className="h-4 w-4 mr-2" /> Duplicar para outros cascos
+                                          <Copy className="h-4 w-4 mr-2" /> Duplicar para outros locais
                                         </DropdownMenuItem>
                                       )}
                                       {isAdmin && (
@@ -853,12 +853,12 @@ function AprsPage() {
           </DialogHeader>
           <div className="space-y-4 py-2">
             <p className="text-sm text-muted-foreground">
-              Será criada 1 APR (status <b>RASCUNHO</b>) para <b>cada casco</b> marcado, copiando atividade,
+              Será criada 1 APR (status <b>RASCUNHO</b>) para <b>cada local</b> marcado, copiando atividade,
               riscos, EPIs, NRs e assinaturas. Cada uma recebe número próprio; a PTE não é copiada.
             </p>
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-bold">Cascos destino</label>
+                <label className="text-xs font-bold">Locais destino</label>
                 {(() => {
                   const disponiveis = cascos.filter((c: any) => c.id !== dupSource?.casco_id);
                   const todos = disponiveis.length > 0 && disponiveis.every((c: any) => dupCascoIds.includes(c.id));
@@ -914,7 +914,7 @@ function AprsPage() {
               >
                 {duplicate.isPending
                   ? "Duplicando..."
-                  : `Duplicar para ${dupCascoIds.length || ""} casco${dupCascoIds.length !== 1 ? "s" : ""}`}
+                  : `Duplicar para ${dupCascoIds.length || ""} local${dupCascoIds.length !== 1 ? "is" : ""}`}
               </Button>
             </div>
           </div>

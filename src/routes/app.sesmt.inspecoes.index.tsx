@@ -216,7 +216,7 @@ function InspecoesList() {
               </div>
               <div>
                 <Label>Local / área inspecionada *</Label>
-                <Input value={form.local_descricao} onChange={(e) => setForm((f) => ({ ...f, local_descricao: e.target.value }))} placeholder="Ex.: Casco 421 — deck principal" />
+                <Input value={form.local_descricao} onChange={(e) => setForm((f) => ({ ...f, local_descricao: e.target.value }))} placeholder="Ex.: Galpão 2 — área de solda" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>

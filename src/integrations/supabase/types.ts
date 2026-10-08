@@ -739,6 +739,7 @@ export type Database = {
           hora_inicio_sexta: string | null
           id: string
           local: string | null
+          local_texto: string | null
           modelo_id: string | null
           numero: string
           observacoes_gerais: string | null
@@ -779,6 +780,7 @@ export type Database = {
           hora_inicio_sexta?: string | null
           id?: string
           local?: string | null
+          local_texto?: string | null
           modelo_id?: string | null
           numero: string
           observacoes_gerais?: string | null
@@ -819,6 +821,7 @@ export type Database = {
           hora_inicio_sexta?: string | null
           id?: string
           local?: string | null
+          local_texto?: string | null
           modelo_id?: string | null
           numero?: string
           observacoes_gerais?: string | null
@@ -11831,6 +11834,7 @@ export type Database = {
           hora_inicio: string | null
           id: string
           local: string | null
+          local_texto: string | null
           numero: string | null
           pdf_path: string | null
           plano_resgate: Json | null
@@ -11869,6 +11873,7 @@ export type Database = {
           hora_inicio?: string | null
           id?: string
           local?: string | null
+          local_texto?: string | null
           numero?: string | null
           pdf_path?: string | null
           plano_resgate?: Json | null
@@ -11907,6 +11912,7 @@ export type Database = {
           hora_inicio?: string | null
           id?: string
           local?: string | null
+          local_texto?: string | null
           numero?: string | null
           pdf_path?: string | null
           plano_resgate?: Json | null

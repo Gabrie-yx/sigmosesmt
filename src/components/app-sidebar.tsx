@@ -53,6 +53,7 @@ import {
   Building2,
   Briefcase,
   Anchor,
+  MapPin,
   ListChecks,
   BarChart3,
   FolderOpen,
@@ -213,7 +214,7 @@ const SESMT_GROUPS: { title: string; items: LeafItem[] }[] = [
     items: [
       { to: "/app/employees", label: "Funcionários", icon: UsersIcon },
       { to: "/app/employees/relatorio-admissoes", label: "Relatório de Admissões", icon: UsersIcon },
-      { to: "/app/cascos", label: "Cascos / Embarcações", icon: Anchor },
+      { to: "/app/cascos", label: "Locais de trabalho", icon: MapPin },
       { to: "/app/companies", label: "Empresas / Contratadas", icon: Building2 },
       { to: "/app/roles", label: "Cargos & Matriz de Riscos", icon: ShieldCheck },
       { to: "/app/matriz-riscos", label: "Matriz de Riscos (PGR/LTCAT)", icon: ShieldCheck },

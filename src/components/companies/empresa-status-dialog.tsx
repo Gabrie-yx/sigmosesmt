@@ -133,7 +133,7 @@ export function EmpresaStatusDialog({ company, ativosCount, open, iniciarExcluin
                 <li>A empresa é apagada de forma permanente</li>
                 <li><strong>Todos os funcionários</strong> dela são apagados junto</li>
                 <li><strong>Tudo vinculado</strong> some: PT, APR, EPIs e fichas, OS, exames/ASO, atestados, treinamentos, integrações, DDS, acidentes, NCs, planos de ação, inspeções, PPP, hora extra, saídas, portaria, CIPA, documentos</li>
-                <li>Cascos/obras não são apagados — só perdem o vínculo com a empresa</li>
+                <li>Locais de trabalho não são apagados — só perdem o vínculo com a empresa</li>
                 <li>Não há como desfazer. Se algo falhar no meio, nada é apagado</li>
                 <li>Fica registrado no histórico de auditoria (quem excluiu e por quê)</li>
               </ul>

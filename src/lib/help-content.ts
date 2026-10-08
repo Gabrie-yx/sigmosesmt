@@ -420,11 +420,11 @@ export const HELP_TOPICS: HelpTopic[] = [
   },
   {
     id: "cascos",
-    title: "Cascos / Embarcações",
+    title: "Locais de trabalho",
     categoria: "SESMT",
-    keywords: ["casco", "embarcação", "navio", "obra"],
+    keywords: ["local", "unidade", "obra", "loja", "planta", "casco", "setor"],
     oQueE:
-      "Cadastro das embarcações/cascos em manutenção no estaleiro. Cada casco tem cliente, previsão, docagem e ordens de serviço vinculadas. Base para APRs e PTs.",
+      "Cadastro dos locais de trabalho da empresa (obra, loja, planta, área, frota). Base para APRs e PTs; na APR/PT também é possível digitar um local livre.",
     rota: "/app/cascos",
   },
   {

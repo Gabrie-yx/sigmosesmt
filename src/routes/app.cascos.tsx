@@ -68,7 +68,7 @@ function CascosPage() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["cascos"] });
-      toast.success("Casco excluído");
+      toast.success("Local excluído");
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -93,14 +93,14 @@ function CascosPage() {
             <Ship className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-xl font-black tracking-tight">Cascos</h1>
+            <h1 className="text-xl font-black tracking-tight">Locais de trabalho</h1>
             <p className="text-xs text-muted-foreground">
               Cadastro usado em PT, APR, inspeções e demais documentos.
             </p>
           </div>
         </div>
         <Button onClick={() => { setEditing(null); setOpen(true); }}>
-          <Plus className="h-4 w-4 mr-1" /> Novo Casco
+          <Plus className="h-4 w-4 mr-1" /> Novo local
         </Button>
       </div>
 
@@ -185,7 +185,7 @@ function CascosPage() {
                         size="icon"
                         variant="ghost"
                         onClick={() => {
-                          if (confirm(`Excluir casco ${c.numero}?`)) del.mutate(c.id);
+                          if (confirm(`Excluir local ${c.numero}?`)) del.mutate(c.id);
                         }}
                         className="h-8 w-8 text-destructive hover:bg-destructive/10"
                       >
@@ -204,7 +204,7 @@ function CascosPage() {
         <DialogContent className="max-w-3xl max-h-[88vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editing ? `Editar Casco ${editing.numero}` : "Novo Casco"}
+              {editing ? `Editar local ${editing.numero}` : "Novo local"}
             </DialogTitle>
           </DialogHeader>
           <CascoForm

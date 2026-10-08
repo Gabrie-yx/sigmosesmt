@@ -76,7 +76,7 @@ export function AprsExecutadasPanel({ open, onOpenChange, aprs, cascoMap, compan
               APRs encerradas — visualizar, imprimir ou baixar
             </p>
           </DialogHeader>
-          <Input placeholder="Buscar por número, casco, atividade ou data…" value={busca} onChange={(e) => setBusca(e.target.value)} className="max-w-md" />
+          <Input placeholder="Buscar por número, local, atividade ou data…" value={busca} onChange={(e) => setBusca(e.target.value)} className="max-w-md" />
           {meses.length === 0 ? (
             <p className="py-10 text-center text-sm text-muted-foreground">Nenhuma APR encerrada ainda.</p>
           ) : (
@@ -101,7 +101,7 @@ export function AprsExecutadasPanel({ open, onOpenChange, aprs, cascoMap, compan
                       </span>
                     </div>
                     <div className="mt-4 flex justify-between border-t border-border pt-3 text-[10px] font-black uppercase tracking-widest">
-                      <span className="text-muted-foreground">{cascosQtd} casco{cascosQtd > 1 ? "s" : ""}</span>
+                      <span className="text-muted-foreground">{cascosQtd} {cascosQtd > 1 ? "locais" : "local"}</span>
                       <span className="text-primary">Ver detalhes</span>
                     </div>
                   </button>
@@ -136,7 +136,7 @@ export function AprsExecutadasPanel({ open, onOpenChange, aprs, cascoMap, compan
                         </div>
                         <div className="text-xs text-foreground line-clamp-2">{a.atividade_descricao}</div>
                         <div className="text-[11px] text-muted-foreground">
-                          {c ? `Casco ${c.numero}${c.nome ? ` — ${c.nome}` : ""}` : "Sem casco"}
+                          {c ? `${c.numero}${c.nome ? ` — ${c.nome}` : ""}` : "Sem local cadastrado"}
                           {a.empresa_id ? ` · ${companyMap.get(a.empresa_id) ?? ""}` : ""}
                           {` · emitida ${formatDateBR(a.data_emissao)}`}
                         </div>

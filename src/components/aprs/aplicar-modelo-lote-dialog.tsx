@@ -94,7 +94,7 @@ export function AplicarModeloLoteDialog({
   const aplicar = useMutation({
     mutationFn: async () => {
       if (!modelo) throw new Error("Selecione um modelo");
-      if (cascoIds.length === 0) throw new Error("Selecione ao menos um casco");
+      if (cascoIds.length === 0) throw new Error("Selecione ao menos um local");
 
       const hojeISO = new Date().toISOString().slice(0, 10);
       const riscosModelo = Array.isArray(modelo.riscos) ? modelo.riscos : [];
@@ -175,7 +175,7 @@ export function AplicarModeloLoteDialog({
       if (criados > 0)
         toast.success(`${criados} APR${criados !== 1 ? "s" : ""} criada${criados !== 1 ? "s" : ""} (RASCUNHO)`);
       if (skipped > 0)
-        toast.info(`${skipped} casco${skipped !== 1 ? "s" : ""} pulado${skipped !== 1 ? "s" : ""} (já tinha APR deste modelo)`);
+        toast.info(`${skipped} local${skipped !== 1 ? "is" : ""} pulado${skipped !== 1 ? "s" : ""} (já tinha APR deste modelo)`);
       if (erros > 0) toast.error(`${erros} falharam — veja o console`);
       onOpenChange(false);
       setCascoIds([]);
@@ -196,7 +196,7 @@ export function AplicarModeloLoteDialog({
             Aplicar modelo de APR a vários cascos
           </DialogTitle>
           <DialogDescription>
-            Escolha um modelo e marque os cascos. O sistema cria 1 APR (status <b>RASCUNHO</b>) por casco, já com riscos preenchidos.
+            Escolha um modelo e marque os locais. O sistema cria 1 APR (status <b>RASCUNHO</b>) por local, já com riscos preenchidos.
           </DialogDescription>
         </DialogHeader>
 
@@ -244,7 +244,7 @@ export function AplicarModeloLoteDialog({
           {/* Coluna 2: cascos */}
           <div className="flex flex-col overflow-hidden">
             <div className="px-4 py-3 border-b flex items-center justify-between">
-              <div className="text-[11px] font-black text-slate-500 uppercase">2. Cascos destino</div>
+              <div className="text-[11px] font-black text-slate-500 uppercase">2. Locais destino</div>
               {cascosSelecionaveis.length > 0 && (
                 <button
                   type="button"
@@ -291,7 +291,7 @@ export function AplicarModeloLoteDialog({
                 );
               })}
               {cascos.length === 0 && (
-                <div className="text-center text-xs text-slate-400 py-8">Nenhum casco cadastrado</div>
+                <div className="text-center text-xs text-slate-400 py-8">Nenhum local cadastrado</div>
               )}
             </div>
           </div>

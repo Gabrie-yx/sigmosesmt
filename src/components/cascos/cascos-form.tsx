@@ -59,11 +59,11 @@ export function CascoForm({ initial, companies, employees, onDone }: Props) {
       if (initial) {
         const { error } = await supabase.from("cascos").update(payload).eq("id", initial.id);
         if (error) throw error;
-        toast.success("Casco atualizado");
+        toast.success("Local atualizado");
       } else {
         const { error } = await supabase.from("cascos").insert(payload);
         if (error) throw error;
-        toast.success("Casco cadastrado");
+        toast.success("Local cadastrado");
       }
       onDone();
     } catch (e: any) {
@@ -84,7 +84,7 @@ export function CascoForm({ initial, companies, employees, onDone }: Props) {
         </div>
         <div className="md:col-span-2">
           <Label className="text-[10px] font-black uppercase">Nome</Label>
-          <Input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome do casco" />
+          <Input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome do local" />
         </div>
       </div>
 
