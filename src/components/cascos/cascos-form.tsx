@@ -29,7 +29,7 @@ interface Props {
 }
 
 export function CascoForm({ initial, companies, employees, onDone }: Props) {
-  const [numero, setNumero] = useState(initial?.numero ?? "");
+  const [numero] = useState(initial?.numero ?? "");
   const [nome, setNome] = useState(initial?.nome ?? "");
   const [empresaId, setEmpresaId] = useState(initial?.empresa_responsavel_id ?? "");
   const [encarregadoId, setEncarregadoId] = useState(initial?.encarregado_id ?? "");
@@ -40,14 +40,14 @@ export function CascoForm({ initial, companies, employees, onDone }: Props) {
   const [saving, setSaving] = useState(false);
 
   async function save() {
-    if (!numero.trim()) {
-      toast.error("O número é obrigatório");
+    if (!nome.trim()) {
+      toast.error("Informe o nome do local");
       return;
     }
     setSaving(true);
     try {
       const payload: any = {
-        numero: numero.trim(),
+        ...(initial ? {} : { numero: null }),
         nome: nome.trim() || null,
         empresa_responsavel_id: empresaId || null,
         encarregado_id: encarregadoId || null,
@@ -77,14 +77,14 @@ export function CascoForm({ initial, companies, employees, onDone }: Props) {
     <div className="space-y-3">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div>
-          <Label className="text-[10px] font-black uppercase">
-            Número <span className="text-destructive">*</span>
-          </Label>
-          <Input value={numero} onChange={(e) => setNumero(e.target.value)} placeholder="Ex: 2026-001" />
+          <Label className="text-[10px] font-black uppercase">Número</Label>
+          <Input value={initial ? numero : ""} readOnly disabled placeholder="Gerado automaticamente" />
         </div>
         <div className="md:col-span-2">
-          <Label className="text-[10px] font-black uppercase">Nome</Label>
-          <Input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome do local" />
+          <Label className="text-[10px] font-black uppercase">
+            Nome <span className="text-destructive">*</span>
+          </Label>
+          <Input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex.: Galpão 2, Obra Centro, Loja 05" />
         </div>
       </div>
 
