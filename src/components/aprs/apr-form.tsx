@@ -688,6 +688,10 @@ export function AprForm({ aprId, onClose }: { aprId?: string | null; onClose: ()
 
       const numero = apr.numero ?? (await supabase.rpc("gerar_numero_apr")).data as string;
 
+      if (!apr.casco_id && !String(apr.local ?? "").trim()) {
+        throw new Error("Informe o local de trabalho: escolha um cadastrado ou digite o local.");
+      }
+
       // Valida pte_id: se a PTE referenciada não existir mais, limpa para evitar violação de FK
       let safePteId: string | null = apr.pte_id || null;
       if (safePteId) {

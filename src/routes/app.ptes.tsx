@@ -343,6 +343,9 @@ function PtesPage() {
       if (soldaDetectada && !f.atv_trabalho_quente && f.tipo_pt !== "PTQ") {
         throw new Error(`Detectamos atividade de solda/corte (${soldaDetectada}). Marque "Trabalho a quente" em Atividades e preencha as precauções dessa seção (NR-34/NR-18).`);
       }
+      if (!f.casco_id && !String(f.local ?? "").trim()) {
+        throw new Error("Informe o local de trabalho: escolha um cadastrado ou digite o local.");
+      }
       if (f.tipo_pt === "PTS" && (f.pts_relacionadas ?? []).length === 0) {
         throw new Error("PT Simultânea (PTS) exige vincular ao menos 1 PT que ocorre ao mesmo tempo no mesmo local de trabalho.");
       }
