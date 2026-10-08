@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.cascos_auto_numero() FROM PUBLIC, anon, authenticated;

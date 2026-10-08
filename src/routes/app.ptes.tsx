@@ -227,6 +227,7 @@ function PtesPage() {
   const cascosMap = useMemo(() => new Map((cascos as any[]).map((c: any) => [c.id, c])), [cascos]);
   // Nº do casco sem repetir a palavra "CASCO" (o cadastro às vezes já traz no numero/nome)
   const cascoNumeroLimpo = (c: any): string => {
+    if (/^LT-\d+$/i.test(String(c?.numero ?? "")) && c?.nome) return String(c.nome).trim();
     const num = String(c?.numero ?? "").replace(/\bcasco\b/gi, "").trim();
     if (num) return num;
     const doNome = String(c?.nome ?? "").replace(/\bcasco\b/gi, "").trim().match(/\S*\d\S*/);
@@ -1076,10 +1077,10 @@ function PtesPage() {
               <Label className="text-xs font-black text-amber-50/85/70 uppercase tracking-wider">Local de trabalho (cadastrado)</Label>
               <Select value={f.casco_id || "none"} onValueChange={(v) => setF({ ...f, casco_id: v === "none" ? "" : v })}>
                 <SelectTrigger className="bg-black/30 border-white/10 text-rose-50 mt-2 text-xs font-bold uppercase">
-                  <SelectValue placeholder="-- SELECIONE O CASCO --" />
+                  <SelectValue placeholder="-- SELECIONE O LOCAL --" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">— SEM CASCO —</SelectItem>
+                  <SelectItem value="none">— SEM LOCAL CADASTRADO (digite abaixo) —</SelectItem>
                   {(cascos as any[]).map((c: any) => (
                     <SelectItem key={c.id} value={c.id}>
                       {cascoNumeroLimpo(c) || c.numero || c.nome}

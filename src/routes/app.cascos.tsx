@@ -67,7 +67,7 @@ function CascosPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["cascos"] });
+      qc.invalidateQueries({ predicate: (q) => String(q.queryKey[0] ?? "").startsWith("cascos") });
       toast.success("Local excluído");
     },
     onError: (e: any) => toast.error(e.message),
@@ -213,7 +213,7 @@ function CascosPage() {
             employees={employees as any}
             onDone={() => {
               setOpen(false);
-              qc.invalidateQueries({ queryKey: ["cascos"] });
+              qc.invalidateQueries({ predicate: (q) => String(q.queryKey[0] ?? "").startsWith("cascos") });
             }}
           />
         </DialogContent>

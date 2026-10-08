@@ -430,7 +430,7 @@ function AprsPage() {
               <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="ALL">Todos os locais</SelectItem>
-                {cascos.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.numero}</SelectItem>)}
+                {cascos.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.numero}{c.nome ? ` · ${c.nome}` : ""}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -502,7 +502,7 @@ function AprsPage() {
                                 <button
                                   type="button"
                                   className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-dashed border-muted-foreground/40 text-muted-foreground hover:border-red-500 hover:text-red-700 hover:bg-red-50"
-                                  title={`Gerar APR "${m.nome}" para CASCO ${c.numero}`}
+                                  title={`Gerar APR "${m.nome}" para ${c.nome || c.numero}`}
                                   onClick={() => { setLoteModeloId(m.id); setLoteCascoId(c.id); setLoteOpen(true); }}
                                 >
                                   <Plus className="h-3.5 w-3.5" />
@@ -892,7 +892,7 @@ function AprsPage() {
                           }
                         />
                         <div className="min-w-0">
-                          <div className="font-bold">CASCO {c.numero}</div>
+                          <div className="font-bold">{c.nome || c.numero}</div>
                           {c.nome && <div className="text-[10px] text-muted-foreground truncate">{c.nome}</div>}
                         </div>
                       </label>

@@ -193,7 +193,7 @@ export function AplicarModeloLoteDialog({
         <DialogHeader className="px-6 pt-6 pb-3 shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <Zap className="h-5 w-5 text-amber-500" />
-            Aplicar modelo de APR a vários cascos
+            Aplicar modelo de APR a vários locais
           </DialogTitle>
           <DialogDescription>
             Escolha um modelo e marque os locais. O sistema cria 1 APR (status <b>RASCUNHO</b>) por local, já com riscos preenchidos.
@@ -283,8 +283,8 @@ export function AplicarModeloLoteDialog({
                       />
                     )}
                     <div className="flex-1 min-w-0">
-                      <div className="font-bold">CASCO {c.numero}</div>
-                      {c.nome && <div className="text-[10px] text-slate-500 truncate">{c.nome}</div>}
+                      <div className="font-bold">{c.nome || c.numero}</div>
+                      {c.nome && <div className="text-[10px] text-slate-500 truncate">{c.numero}</div>}
                     </div>
                     {jaTem && <span className="text-[9px] font-black uppercase">já tem</span>}
                   </label>
@@ -301,7 +301,7 @@ export function AplicarModeloLoteDialog({
           <div className="text-xs text-slate-600">
             {modelo ? (
               <>
-                <b>{modelo.nome}</b> → {cascoIds.length} casco{cascoIds.length !== 1 ? "s" : ""}
+                <b>{modelo.nome}</b> → {cascoIds.length} {cascoIds.length !== 1 ? "locais" : "local"}
               </>
             ) : (
               <span className="text-slate-400">Selecione um modelo</span>
