@@ -227,6 +227,7 @@ function PtesPage() {
   const cascosMap = useMemo(() => new Map((cascos as any[]).map((c: any) => [c.id, c])), [cascos]);
   // Nº do casco sem repetir a palavra "CASCO" (o cadastro às vezes já traz no numero/nome)
   const cascoNumeroLimpo = (c: any): string => {
+    if (/^LT-\d+$/i.test(String(c?.numero ?? "")) && c?.nome) return String(c.nome).trim();
     const num = String(c?.numero ?? "").replace(/\bcasco\b/gi, "").trim();
     if (num) return num;
     const doNome = String(c?.nome ?? "").replace(/\bcasco\b/gi, "").trim().match(/\S*\d\S*/);

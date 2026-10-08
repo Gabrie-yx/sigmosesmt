@@ -430,7 +430,7 @@ function AprsPage() {
               <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="ALL">Todos os locais</SelectItem>
-                {cascos.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.numero}</SelectItem>)}
+                {cascos.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.numero}{c.nome ? ` · ${c.nome}` : ""}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>

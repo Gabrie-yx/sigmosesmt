@@ -150,7 +150,7 @@ export function PtsExecutadasPanel({ open, onOpenChange, ptes, cascosMap, compan
                               </div>
                               <div className="text-xs text-foreground">{p.local}</div>
                               <div className="text-[11px] text-muted-foreground">
-                                {c ? `${c.numero}` : "Sem local cadastrado"}
+                                {c ? `${c.numero}${c.nome ? ` — ${c.nome}` : ""}` : "Sem local cadastrado"}
                                 {compName(p.company_id) ? ` · ${compName(p.company_id)}` : ""}
                                 {p.employee_name ? ` · ${p.employee_name}` : ""}
                               </div>
